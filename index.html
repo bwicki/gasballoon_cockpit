@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d1117'/%3E%3Cellipse cx='32' cy='26' rx='16' ry='19' fill='%233fd0c9'/%3E%3Cpath d='M24 42 L28 50 L36 50 L40 42' fill='none' stroke='%23ffb454' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='27' y='50' width='10' height='7' rx='1.5' fill='%23ffb454'/%3E%3Cpath d='M32 45 L32 50' stroke='%230d1117' stroke-width='2'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gas Balloon Landing Predictor</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#0d1117; --panel:#141a21; --panel2:#1b232c; --border:#2a3540;
@@ -123,6 +124,11 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div class="wx-chip" id="versionChip" style="font-size:9px;color:var(--muted);"></div>
     <div id="testPill" class="pill testmode" style="display:none;">TEST MODE</div>
     <div class="spacer"></div>
+    <select id="altUnitSelect" class="iconbtn" style="padding:6px 4px;font-size:11px;width:56px;flex-shrink:0;">
+      <option value="m">m</option>
+      <option value="ft">ft</option>
+      <option value="FL">FL</option>
+    </select>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
     <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
     <button class="iconbtn" id="btnRec" title="Record">⏺</button>
@@ -138,6 +144,7 @@ canvas.mini{width:100% !important;height:130px !important;}
 
       <!-- POSITION -->
       <div class="card">
+        <h3 onclick="toggleCard(this)">Balloon Position <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell wide">
@@ -276,7 +283,7 @@ canvas.mini{width:100% !important;height:130px !important;}
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v5';
+const APP_VERSION = 'v8';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -449,10 +456,18 @@ function updatePosition(lat, lon, altAMSL, course, speedKn){
   recomputeAll();
 }
 
+function formatAltAMSL(altM){
+  const unit = document.getElementById('altUnitSelect').value;
+  if(unit==='ft') return Math.round(altM*3.28084)+' ft';
+  if(unit==='FL') return 'FL'+String(Math.round(altM*3.28084/100)).padStart(3,'0');
+  return Math.round(altM)+' m';
+}
+document.getElementById('altUnitSelect').addEventListener('change', renderSidebarPosition);
+
 function renderSidebarPosition(){
   document.getElementById('posDMS').textContent = toDMS(state.lat,true)+' '+toDMS(state.lon,false);
   document.getElementById('posCompact').textContent = toCompact(state.lat, state.lon);
-  document.getElementById('altAMSL').textContent = Math.round(state.altAMSL)+' m';
+  document.getElementById('altAMSL').textContent = formatAltAMSL(state.altAMSL);
   document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
   document.getElementById('courseVal').textContent = String(Math.round(state.course)%360).padStart(3,'0')+'°';
   document.getElementById('speedVal').textContent = state.speedKn.toFixed(1)+' kn';
@@ -473,6 +488,14 @@ function pressureToAltM(p){ // ISA approx
   const P0=1013.25;
   return (288.15/0.0065)*(1-Math.pow(p/P0, (0.0065*287.05)/9.80665));
 }
+const MODEL_LABELS = {
+  auto: 'Auto (best match)',
+  best_match: 'Best match',
+  icon_d2: 'ICON-D2 (2 km)',
+  icon_eu: 'ICON-EU (7 km)',
+  gfs_global: 'GFS Global (25 km)',
+  ecmwf_ifs04: 'ECMWF IFS (25 km)'
+};
 async function fetchWind(force){
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
@@ -488,7 +511,7 @@ async function fetchWind(force){
       return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
     }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
     state.windProfile = profile;
-    state.modelUsed = (j.generationtime_ms!=null ? (modelSel==='auto'?'auto→best_match':modelParam) : modelParam);
+    state.modelUsed = MODEL_LABELS[modelSel] || modelParam;
     state.modelRunAge = new Date();
     document.getElementById('wxModelName').textContent = 'Model: '+state.modelUsed;
     document.getElementById('wxModelAge').textContent = 'fetched just now';
@@ -497,6 +520,7 @@ async function fetchWind(force){
     document.getElementById('wxModelName').textContent = 'Model: offline (cached)';
   }
 }
+document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
 function windAt(altM){
   const p = state.windProfile;
   if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};

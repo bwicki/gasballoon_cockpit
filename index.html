@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<!-- saved from url=(0071)file:///C:/Users/wpabalwic/Downloads/gas_balloon_landing_predictor.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Gas Balloon Landing Predictor</title>
+<link rel="stylesheet" href="./index_files/leaflet.min.css">
+<script src="./index_files/leaflet.js.Download"></script>
+<script src="./index_files/chart.umd.min.js.Download"></script>
+<script src="./index_files/html2canvas.min.js.Download"></script>
+<style>
+:root{
+  --bg:#0d1117; --panel:#141a21; --panel2:#1b232c; --border:#2a3540;
+  --text:#e6edf3; --muted:#8b98a5; --accent:#3fd0c9; --accent2:#ffb454;
+  --good:#3fd06b; --warn:#e0b400; --bad:#e0483f; --map-dim:0;
+  --mono:'SF Mono','Consolas','Menlo',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+body.day{
+  --bg:#eef1f3; --panel:#ffffff; --panel2:#f4f6f8; --border:#d3dae0;
+  --text:#16202a; --muted:#5c6b78; --accent:#0f8f86; --accent2:#c97a12;
+  --good:#1c8a49; --warn:#a87400; --bad:#b8342b;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);}
+#app{display:flex;flex-direction:column;height:100vh;width:100vw;}
+
+/* ---- header ---- */
+#topbar{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;z-index:500;}
+#topbar .title{font-weight:700;letter-spacing:.5px;color:var(--accent);font-size:13px;white-space:nowrap;}
+#topbar .sep{width:1px;height:20px;background:var(--border);}
+.wx-chip{display:flex;flex-direction:column;line-height:1.2;}
+.wx-chip b{color:var(--text);font-size:12px;}
+.wx-chip span{color:var(--muted);font-size:10px;}
+#topbar .spacer{flex:1;}
+.iconbtn{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:16px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.iconbtn:active{transform:scale(0.95);}
+.iconbtn.active{border-color:var(--accent);color:var(--accent);}
+.gps-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);}
+.gps-dot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
+.gps-dot.bad{background:var(--bad);}
+
+/* ---- main layout ---- */
+#main{flex:1;display:flex;min-height:0;}
+#mapwrap{flex:0 0 75%;position:relative;min-width:0;}
+#map{width:100%;height:100%;background:#0a0d10;}
+body.day #map{background:#dfe6ea;}
+#map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
+
+#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;}
+
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;}
+.card h3{margin:0 0 8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.card h3 .chev{transition:transform .15s;color:var(--muted);}
+.card.collapsed .chev{transform:rotate(-90deg);}
+.card.collapsed .cardbody{display:none;}
+
+.datagrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
+.datacell{background:var(--panel);border-radius:8px;padding:6px 8px;}
+.datacell label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.datacell .val{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);}
+.datacell .val.small{font-size:12px;}
+.datacell.wide{grid-column:1/3;}
+
+.slider-row{margin-bottom:12px;}
+.slider-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;}
+.slider-row .lbl b{color:var(--accent2);font-family:var(--mono);}
+input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:-10px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+
+.togglerow{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;font-size:12.5px;border-bottom:1px solid var(--border);}
+.togglerow:last-child{border-bottom:none;}
+.switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider-tog{position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.15s;}
+.slider-tog:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s;}
+input:checked + .slider-tog{background:var(--accent);}
+input:checked + .slider-tog:before{transform:translateX(18px);}
+
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:12px;}
+.checkgrid label{display:flex;align-items:center;gap:6px;padding:4px 0;}
+
+select, .textbtn{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12.5px;}
+button.primary{background:var(--accent);color:#00201d;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:13px;width:100%;cursor:pointer;}
+button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;width:100%;cursor:pointer;}
+
+#warnbar{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#warnbar.show{display:block;}
+
+.legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+
+#resultpanel{display:none;}
+#resultpanel.show{display:block;}
+.copyline{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:8px;padding:6px 8px;margin-bottom:6px;}
+.copyline .txt{font-family:var(--mono);font-size:12px;flex:1;word-break:break-all;}
+.copyline button{flex-shrink:0;background:var(--accent);border:none;color:#00201d;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;}
+
+.leaflet-control-attribution{font-size:9px !important;}
+canvas.mini{width:100% !important;height:130px !important;}
+
+#testmode-panel input[type=text], #testmode-panel input[type=number]{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;font-family:var(--mono);}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.pill.testmode{background:var(--warn);color:#241a00;}
+
+@media (max-width:820px){
+  #sidebar{min-width:230px;}
+}
+</style>
+</head>
+<body class="day">
+<div id="app">
+
+  <div id="topbar">
+    <div class="title">🎈 GBLP</div>
+    <div class="sep"></div>
+    <div class="wx-chip"><b id="wxModelName">Model: auto→best_match</b><span id="wxModelAge">fetched 0 min ago</span></div>
+    <div class="sep"></div>
+    <div class="wx-chip"><span class="gps-dot bad" id="gpsDot"></span></div>
+    <div class="wx-chip"><b id="gpsStatusTxt">GPS unavailable</b><span id="gpsAcc">Timeout expired</span></div>
+    <div id="testPill" class="pill testmode" style="display:none;">TEST MODE</div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="btnDayNight" title="Day/Night">☀️</button>
+    <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
+    <button class="iconbtn" id="btnRec" title="Record">⏺</button>
+  </div>
+
+  <div id="main">
+    <div id="mapwrap">
+      <div id="map" class="leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0" style="position: relative;"><div class="leaflet-pane leaflet-map-pane" style="transform: translate3d(0px, 0px, 0px);"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer " style="z-index: 1; opacity: 1;"><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 19; transform: translate3d(0px, 0px, 0px) scale(1);"><img alt="" src="./index_files/716.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(568px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/717.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(568px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/716(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(312px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/716(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(824px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/717(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(312px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/717(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(824px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/715.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(568px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/718.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(568px, 639px, 0px); opacity: 1;"><img alt="" src="./index_files/715(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(312px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/715(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(824px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/718(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(312px, 639px, 0px); opacity: 1;"><img alt="" src="./index_files/718(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(824px, 639px, 0px); opacity: 1;"><img alt="" src="./index_files/716(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(56px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/716(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1080px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/717(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(56px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/717(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1080px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/715(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(56px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/715(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1080px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/718(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(56px, 639px, 0px); opacity: 1;"><img alt="" src="./index_files/718(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1080px, 639px, 0px); opacity: 1;"><img alt="" src="./index_files/716(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-200px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/716(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1336px, 127px, 0px); opacity: 1;"><img alt="" src="./index_files/717(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-200px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/717(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1336px, 383px, 0px); opacity: 1;"><img alt="" src="./index_files/715(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-200px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/715(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1336px, -129px, 0px); opacity: 1;"><img alt="" src="./index_files/718(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-200px, 639px, 0px); opacity: 1;"><img alt="" src="./index_files/718(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1336px, 639px, 0px); opacity: 1;"></div></div></div><div class="leaflet-pane leaflet-overlay-pane"><svg pointer-events="none" class="leaflet-zoom-animated" width="1728" height="1031" viewBox="-144 -86 1728 1031" style="transform: translate3d(-144px, -86px, 0px);"><g><path class="leaflet-interactive" stroke="#3fd0c9" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M0 0"></path><path class="leaflet-interactive" stroke="#3fd06b" stroke-opacity="1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#3fd06b" fill-opacity="0.12" fill-rule="evenodd" d="M1143 403L1162 401L1186 396L1151 401z"></path><path class="leaflet-interactive" stroke="#ffb454" stroke-opacity="1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6,5" fill="none" d="M0 0"></path></g></svg></div><div class="leaflet-pane leaflet-shadow-pane"></div><div class="leaflet-pane leaflet-marker-pane"><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -14px; margin-top: -14px; width: 28px; height: 28px; transform: translate3d(720px, 429px, 0px); z-index: 429;">🎈</div></div><div class="leaflet-pane leaflet-tooltip-pane"></div><div class="leaflet-pane leaflet-popup-pane"></div><div class="leaflet-proxy leaflet-zoom-animated" style="transform: translate3d(274584px, 183598px, 0px) scale(1024);"></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"></div><div class="leaflet-top leaflet-right"><div class="leaflet-control-layers leaflet-control" aria-haspopup="true"><a class="leaflet-control-layers-toggle" href="file:///C:/Users/wpabalwic/Downloads/gas_balloon_landing_predictor.html#" title="Layers" role="button"></a><section class="leaflet-control-layers-list"><div class="leaflet-control-layers-base"><label><span><input type="radio" class="leaflet-control-layers-selector" name="leaflet-base-layers_83" checked="checked"><span> Streets</span></span></label><label><span><input type="radio" class="leaflet-control-layers-selector" name="leaflet-base-layers_83"><span> Terrain</span></span></label><label><span><input type="radio" class="leaflet-control-layers-selector" name="leaflet-base-layers_83"><span> Satellite</span></span></label></div><div class="leaflet-control-layers-separator" style="display: none;"></div><div class="leaflet-control-layers-overlays"></div></section></div></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="leaflet-control-zoom leaflet-bar leaflet-control"><a class="leaflet-control-zoom-in" href="file:///C:/Users/wpabalwic/Downloads/gas_balloon_landing_predictor.html#" title="Zoom in" role="button" aria-label="Zoom in" aria-disabled="false"><span aria-hidden="true">+</span></a><a class="leaflet-control-zoom-out" href="file:///C:/Users/wpabalwic/Downloads/gas_balloon_landing_predictor.html#" title="Zoom out" role="button" aria-label="Zoom out" aria-disabled="false"><span aria-hidden="true">−</span></a></div><div class="leaflet-control-attribution leaflet-control"><a href="https://leafletjs.com/" title="A JavaScript library for interactive maps"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" class="leaflet-attribution-flag"><path fill="#4C7BE1" d="M0 0h12v4H0z"></path><path fill="#FFD500" d="M0 4h12v3H0z"></path><path fill="#E0BC00" d="M0 7h12v1H0z"></path></svg> Leaflet</a> <span aria-hidden="true">|</span> © OpenStreetMap</div></div></div></div>
+      <div id="warnbar"></div>
+    </div>
+
+    <div id="sidebar">
+
+      <!-- POSITION -->
+      <div class="card">
+        <h3 onclick="toggleCard(this)">Position <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="datagrid">
+            <div class="datacell wide"><label>DMS (WGS84)</label><div class="val small" id="posDMS">47°22'36.8"N 8°32'30.1"E</div></div>
+            <div class="datacell wide"><label>Compact</label><div class="val" id="posCompact">472237N 0083230E</div></div>
+            <div class="datacell"><label>Alt AMSL</label><div class="val" id="altAMSL">3000 m</div></div>
+            <div class="datacell"><label>Alt AGL</label><div class="val" id="altAGL">2591 m</div></div>
+            <div class="datacell"><label>Course</label><div class="val" id="courseVal">90°</div></div>
+            <div class="datacell"><label>Speed</label><div class="val" id="speedVal">15.0 kn</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESCENT PARAMETERS -->
+      <div class="card">
+        <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="slider-row">
+            <div class="lbl"><span>Initiate descent in</span><b id="lblInit">30 min</b></div>
+            <input type="range" id="sInit" min="0" max="120" step="1" value="30">
+          </div>
+          <div class="slider-row">
+            <div class="lbl"><span>Descent rate</span><b id="lblRate">4.0 m/s</b></div>
+            <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
+          </div>
+          <div class="slider-row">
+            <div class="lbl"><span>Intercept height AGL</span><b id="lblIntH">400 m</b></div>
+            <input type="range" id="sIntH" min="100" max="1000" step="10" value="400">
+          </div>
+          <div class="slider-row">
+            <div class="lbl"><span>Descent rate after intercept</span><b id="lblRate2">1.5 m/s</b></div>
+            <input type="range" id="sRate2" min="0.5" max="4" step="0.1" value="1.5">
+          </div>
+          <div class="slider-row">
+            <div class="lbl"><span>Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
+            <input type="range" id="sScatter" min="0" max="40" step="1" value="15">
+          </div>
+        </div>
+      </div>
+
+      <!-- ADIABATIC -->
+      <div class="card">
+        <h3 onclick="toggleCard(this)">Adiabatic Braking (H₂) <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="datagrid">
+            <div class="datacell"><label>Req. rate at intercept</label><div class="val small" id="reqRateAtIntercept">4.0 m/s (nominal)</div></div>
+            <div class="datacell"><label>Virtual lift bonus</label><div class="val small" id="adiaKg">1.5 kg</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLICK RESULT -->
+      <div class="card" id="resultpanel">
+        <h3 onclick="toggleCard(this)">Landing Point Plan <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="datagrid" style="margin-bottom:8px;">
+            <div class="datacell"><label>Initiate at</label><div class="val small" id="resInitTime">—</div></div>
+            <div class="datacell"><label>Distance to init.</label><div class="val small" id="resInitDist">—</div></div>
+          </div>
+          <div class="copyline"><div class="txt" id="resNearestTown">nearest town —</div><button onclick="copyResultAll()">Copy</button></div>
+          <canvas class="mini" id="vertProfileChart"></canvas>
+          <canvas class="mini" id="hodographChart"></canvas>
+        </div>
+      </div>
+
+      <!-- LAYERS -->
+      <div class="card">
+        <h3 onclick="toggleCard(this)">Map Layers <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="togglerow"><span>Power lines</span><label class="switch"><input type="checkbox" id="lyrPower"><span class="slider-tog"></span></label></div>
+          <div class="togglerow"><span>Roads &amp; paths</span><label class="switch"><input type="checkbox" id="lyrRoads" checked=""><span class="slider-tog"></span></label></div>
+          <div class="togglerow"><span>Airspace (below balloon)</span><label class="switch"><input type="checkbox" id="lyrAirspace"><span class="slider-tog"></span></label></div>
+          <div class="togglerow"><span>Landing area</span><label class="switch"><input type="checkbox" id="lyrLanding" checked=""><span class="slider-tog"></span></label></div>
+        </div>
+      </div>
+
+      <!-- AIRSPACE FILTER (collapsed by default) -->
+      <div class="card collapsed">
+        <h3 onclick="toggleCard(this)">Airspace Classes <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="checkgrid">
+            <label><input type="checkbox" checked="" data-as="A">Class A</label>
+            <label><input type="checkbox" checked="" data-as="B">Class B</label>
+            <label><input type="checkbox" checked="" data-as="C">Class C</label>
+            <label><input type="checkbox" checked="" data-as="D">Class D</label>
+            <label><input type="checkbox" data-as="E">Class E</label>
+            <label><input type="checkbox" data-as="G">Class G</label>
+            <label><input type="checkbox" checked="" data-as="R">Restricted</label>
+            <label><input type="checkbox" checked="" data-as="P">Prohibited</label>
+            <label><input type="checkbox" checked="" data-as="TMZ">TMZ</label>
+            <label><input type="checkbox" checked="" data-as="RMZ">RMZ</label>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin:8px 0 4px;">openAIP tile layer needs an API key (free tier available at openaip.net → account → API clients).</p>
+          <input type="text" id="openaipKey" placeholder="openAIP API key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+        </div>
+      </div>
+
+      <!-- WEATHER MODEL (collapsed by default) -->
+      <div class="card collapsed">
+        <h3 onclick="toggleCard(this)">Weather Model <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <select id="wxModelSelect">
+            <option value="auto">Auto (finest available grid)</option>
+            <option value="best_match">Best match</option>
+            <option value="icon_d2">ICON-D2 (2 km, DE/EU only)</option>
+            <option value="icon_eu">ICON-EU (7 km)</option>
+            <option value="gfs_global">GFS Global (25 km)</option>
+            <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
+          </select>
+          <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
+        </div>
+      </div>
+
+      <!-- TEST MODE (collapsed by default) -->
+      <div class="card collapsed" id="testmode-panel">
+        <h3 onclick="toggleCard(this)">Test Mode <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="togglerow"><span>Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
+          <p style="font-size:11px;color:var(--muted);margin:6px 0;">Tap the map to set a fictitious position, then set altitude/course/speed below.</p>
+          <input type="number" id="testAlt" placeholder="Altitude AMSL (m)" value="3000">
+          <input type="number" id="testCourse" placeholder="Course (° true)" value="90">
+          <input type="number" id="testSpeed" placeholder="Speed (kn)" value="15">
+          <button class="ghost" onclick="applyTestValues()">Apply</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   GAS BALLOON LANDING PREDICTOR - prototype
+   ============================================================ */
+
+// ---------- state ----------
+const state = {
+  lat: 47.3769, lon: 8.5417, altAMSL: 3000, groundElev: 450,
+  course: 90, speedKn: 15,
+  breadcrumb: [], // {lat,lon,t}
+  testMode: false,
+  windProfile: null, // array of {alt_m, dir_deg, speed_ms}
+  modelUsed: '—', modelRunAge: null,
+  night: false,
+  landingPolygon: null,
+  clickedTarget: null,
+};
+
+const G = 9.80665;
+const KMH_PER_MS = 3.6;
+const KN_PER_MS = 1.94384;
+
+// ---------- utils ----------
+function toDMS(deg, isLat){
+  const hemi = isLat ? (deg>=0?'N':'S') : (deg>=0?'E':'W');
+  deg = Math.abs(deg);
+  const d = Math.floor(deg);
+  const mFull = (deg-d)*60;
+  const m = Math.floor(mFull);
+  const s = (mFull-m)*60;
+  return `${d}°${String(m).padStart(2,'0')}'${s.toFixed(1)}"${hemi}`;
+}
+function toCompact(lat, lon){
+  function part(deg, isLat){
+    const hemi = isLat ? (deg>=0?'N':'S') : (deg>=0?'E':'W');
+    deg = Math.abs(deg);
+    const d = Math.floor(deg);
+    const mFull = (deg-d)*60;
+    const m = Math.floor(mFull);
+    const s = Math.round((mFull-m)*60);
+    const dpad = isLat ? 2 : 3;
+    return `${String(d).padStart(dpad,'0')}${String(m).padStart(2,'0')}${String(s).padStart(2,'0')}${hemi}`;
+  }
+  return part(lat,true) + ' ' + part(lon,false);
+}
+function bearingBetween(lat1,lon1,lat2,lon2){
+  const φ1=lat1*Math.PI/180, φ2=lat2*Math.PI/180, Δλ=(lon2-lon1)*Math.PI/180;
+  const y = Math.sin(Δλ)*Math.cos(φ2);
+  const x = Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+function destPoint(lat,lon,bearingDeg,distM){
+  const R=6371000, δ=distM/R, θ=bearingDeg*Math.PI/180;
+  const φ1=lat*Math.PI/180, λ1=lon*Math.PI/180;
+  const φ2=Math.asin(Math.sin(φ1)*Math.cos(δ)+Math.cos(φ1)*Math.sin(δ)*Math.cos(θ));
+  const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(δ)*Math.cos(φ1),Math.cos(δ)-Math.sin(φ1)*Math.sin(φ2));
+  return [φ2*180/Math.PI, ((λ2*180/Math.PI)+540)%360-180];
+}
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000, φ1=lat1*Math.PI/180, φ2=lat2*Math.PI/180;
+  const dφ=(lat2-lat1)*Math.PI/180, dλ=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function isoDensity(altM){
+  // ISA standard atmosphere approx density (kg/m3) up to 11km
+  const T0=288.15, P0=101325, L=0.0065, R=287.05;
+  const T = T0 - L*Math.min(altM,11000);
+  const P = P0*Math.pow(T/T0, G/(L*R));
+  return P/(R*T);
+}
+
+// ---------- map setup ----------
+const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([state.lat,state.lon], 11);
+L.control.zoom({position:'bottomright'}).addTo(map);
+
+const baseLayers = {
+  'Streets': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}),
+  'Terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenTopoMap'}),
+  'Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})
+};
+baseLayers['Streets'].addTo(map);
+L.control.layers(baseLayers, null, {position:'topright'}).addTo(map);
+
+const powerLayer = L.tileLayer('https://tiles.openinframap.org/power/{z}/{x}/{y}.png',{maxZoom:19,opacity:0.85,attribution:'© OpenInfraMap'});
+document.getElementById('lyrPower').addEventListener('change', e=>{
+  if(e.target.checked) powerLayer.addTo(map); else map.removeLayer(powerLayer);
+});
+
+let airspaceLayer = null;
+document.getElementById('lyrAirspace').addEventListener('change', e=>{
+  if(e.target.checked){
+    const key = document.getElementById('openaipKey').value.trim();
+    if(!key){ alert('Please enter an openAIP API key first (Airspace Classes panel).'); e.target.checked=false; return; }
+    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${key}`,{maxZoom:14,opacity:0.6,attribution:'© openAIP'});
+    airspaceLayer.addTo(map);
+  } else if(airspaceLayer){ map.removeLayer(airspaceLayer); }
+});
+
+let roadsShown = true; // OSM base already includes roads; toggle just adds an overlay emphasis - kept simple
+document.getElementById('lyrRoads').addEventListener('change', e=>{ roadsShown = e.target.checked; });
+
+// balloon marker + breadcrumb
+const balloonIcon = L.divIcon({html:'🎈', className:'', iconSize:[28,28], iconAnchor:[14,14]});
+const balloonMarker = L.marker([state.lat,state.lon], {icon: balloonIcon}).addTo(map);
+const breadcrumbLine = L.polyline([], {color:'#3fd0c9', weight:3, opacity:0.8}).addTo(map);
+let landingPolyLayer = L.polygon([], {color:'#3fd06b', weight:2, fillOpacity:0.12}).addTo(map);
+let descentPathLayer = L.polyline([], {color:'#ffb454', weight:3, dashArray:'6,5'}).addTo(map);
+let initPointMarker = null;
+let targetMarker = null;
+
+// ---------- GPS ----------
+let gpsWatchId = null;
+function startGPS(){
+  if(!navigator.geolocation){ setGpsStatus(false,'No geolocation API'); return; }
+  gpsWatchId = navigator.geolocation.watchPosition(pos=>{
+    if(state.testMode) return;
+    setGpsStatus(true, `±${Math.round(pos.coords.accuracy)} m`);
+    updatePosition(pos.coords.latitude, pos.coords.longitude,
+      pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
+      pos.coords.heading!=null && !isNaN(pos.coords.heading) ? pos.coords.heading : state.course,
+      pos.coords.speed!=null && !isNaN(pos.coords.speed) ? pos.coords.speed*KN_PER_MS : state.speedKn);
+  }, err=>{
+    setGpsStatus(false, err.message);
+  }, {enableHighAccuracy:true, maximumAge:2000, timeout:10000});
+}
+function setGpsStatus(ok, txt){
+  document.getElementById('gpsDot').className = 'gps-dot ' + (ok?'ok':'bad');
+  document.getElementById('gpsStatusTxt').textContent = ok ? 'GPS live' : 'GPS unavailable';
+  document.getElementById('gpsAcc').textContent = txt;
+}
+startGPS();
+
+function updatePosition(lat, lon, altAMSL, course, speedKn){
+  state.lat=lat; state.lon=lon; state.altAMSL=altAMSL; state.course=course; state.speedKn=speedKn;
+  const now = Date.now();
+  state.breadcrumb.push({lat,lon,t:now});
+  const cutoff = now - 30*60*1000;
+  state.breadcrumb = state.breadcrumb.filter(p=>p.t>=cutoff);
+  balloonMarker.setLatLng([lat,lon]);
+  breadcrumbLine.setLatLngs(state.breadcrumb.map(p=>[p.lat,p.lon]));
+  renderSidebarPosition();
+  recomputeAll();
+}
+
+function renderSidebarPosition(){
+  document.getElementById('posDMS').textContent = toDMS(state.lat,true)+' '+toDMS(state.lon,false);
+  document.getElementById('posCompact').textContent = toCompact(state.lat, state.lon);
+  document.getElementById('altAMSL').textContent = Math.round(state.altAMSL)+' m';
+  document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
+  document.getElementById('courseVal').textContent = Math.round(state.course)+'°';
+  document.getElementById('speedVal').textContent = state.speedKn.toFixed(1)+' kn';
+}
+
+// ---------- ground elevation (Open-Meteo elevation API, best effort) ----------
+async function fetchGroundElevation(){
+  try{
+    const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${state.lat}&longitude=${state.lon}`);
+    const j = await r.json();
+    if(j.elevation && j.elevation.length) state.groundElev = j.elevation[0];
+  }catch(e){ /* keep previous */ }
+}
+
+// ---------- wind model (Open-Meteo pressure levels) ----------
+const PRESSURE_LEVELS = [1000,975,950,925,900,850,800,700,600,500,400,300,250,200,150,100,70,50,30];
+function pressureToAltM(p){ // ISA approx
+  const P0=1013.25;
+  return (288.15/0.0065)*(1-Math.pow(p/P0, (0.0065*287.05)/9.80665));
+}
+async function fetchWind(force){
+  try{
+    const modelSel = document.getElementById('wxModelSelect').value;
+    const modelParam = modelSel==='auto' ? 'best_match' : modelSel;
+    const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${modelParam}&forecast_hours=3&timezone=UTC`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const h = j.hourly;
+    const profile = PRESSURE_LEVELS.map(p=>{
+      const spd = h[`wind_speed_${p}hPa`] ? h[`wind_speed_${p}hPa`][0] : null;
+      const dir = h[`wind_direction_${p}hPa`] ? h[`wind_direction_${p}hPa`][0] : null;
+      return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
+    }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
+    state.windProfile = profile;
+    state.modelUsed = (j.generationtime_ms!=null ? (modelSel==='auto'?'auto→best_match':modelParam) : modelParam);
+    state.modelRunAge = new Date();
+    document.getElementById('wxModelName').textContent = 'Model: '+state.modelUsed;
+    document.getElementById('wxModelAge').textContent = 'fetched just now';
+    recomputeAll();
+  }catch(e){
+    document.getElementById('wxModelName').textContent = 'Model: offline (cached)';
+  }
+}
+function windAt(altM){
+  const p = state.windProfile;
+  if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};
+  if(altM<=p[0].alt_m) return toUV(p[0]);
+  if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1]);
+  for(let i=0;i<p.length-1;i++){
+    if(altM>=p[i].alt_m && altM<=p[i+1].alt_m){
+      const f=(altM-p[i].alt_m)/(p[i+1].alt_m-p[i].alt_m);
+      const a=toUV(p[i]), b=toUV(p[i+1]);
+      return {u:a.u+(b.u-a.u)*f, v:a.v+(b.v-a.v)*f};
+    }
+  }
+  return toUV(p[p.length-1]);
+}
+function toUV(pt){ // meteorological dir (from) -> u/v vector (to)
+  const rad=(pt.dir_deg+180)*Math.PI/180;
+  return {u: pt.speed_ms*Math.sin(rad), v: pt.speed_ms*Math.cos(rad)};
+}
+setInterval(()=>{
+  if(state.modelRunAge){
+    const ageMin = Math.round((Date.now()-state.modelRunAge.getTime())/60000);
+    document.getElementById('wxModelAge').textContent = `fetched ${ageMin} min ago`;
+  }
+},30000);
+
+// ---------- adiabatic braking model (simplified) ----------
+// H2, gamma ~1.41. During fast descent envelope is quasi-adiabatic (no time to
+// exchange heat), so gas warms on compression, resisting the density increase
+// that a slow/isothermal descent would show at the same pressure altitude.
+// We express the resulting extra lift as an equivalent ballast mass (kg).
+function adiabaticLiftBonusKg(volumeM3, currentAltM, descRateMs){
+  const GAMMA = 1.41;
+  const P0 = 101325;
+  function P(alt){ const T0=288.15,L=0.0065,R=287.05; const T=T0-L*Math.min(alt,11000); return P0*Math.pow(T/T0,G/(L*R)); }
+  const dz = 50; // m reference step for the ratio
+  const alt2 = Math.max(currentAltM-dz,0);
+  const P1=P(currentAltM), P2=P(alt2);
+  const T1 = 288.15-0.0065*Math.min(currentAltM,11000);
+  // isothermal (slow): rho scales with P/T(ambient); adiabatic: rho scales differently
+  const rhoIso = P2/(287.05*T1);
+  const T_adiab = T1*Math.pow(P2/P1, (GAMMA-1)/GAMMA);
+  const rhoAdiab = P2/(287.05*T_adiab);
+  const rhoAirAmb = isoDensity(alt2);
+  // relaxation: effect scales with how fast we descend (more speed -> more adiabatic, less time to equalize)
+  const tau = 90; // s, characteristic thermal equalization time of a large gas envelope (approx)
+  const timeForStep = dz/Math.max(descRateMs,0.01);
+  const adiabFraction = Math.max(0, Math.min(1, 1-Math.exp(-timeForStep/tau) ));
+  // fraction=1 -> fully isothermal (slow descent), fraction=0 -> fully adiabatic (fast descent)
+  const rhoGasEffective = rhoAdiab*(1-adiabFraction) + rhoIso*adiabFraction;
+  const liftDelta = volumeM3*(rhoIso-rhoGasEffective); // extra lift retained vs isothermal baseline, kg-equivalent (rho*V = mass, buoyancy diff ~ this)
+  return Math.max(0, liftDelta);
+}
+
+// ---------- Monte-Carlo landing footprint ----------
+function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore){
+  // Phase 0: continue current flight (course/speed) until initDelayS elapsed (still at cruise alt)
+  let lat=startLat, lon=startLon, alt=startAltAMSL;
+  const dt=15; // s steps
+  let t=0;
+  const path=[{lat,lon,alt,t}];
+  const cruiseSpeedMs = state.speedKn/KN_PER_MS;
+  while(t<initDelayS){
+    const step=Math.min(dt, initDelayS-t);
+    const [nlat,nlon]=destPoint(lat,lon,state.course,cruiseSpeedMs*step);
+    lat=nlat; lon=nlon; t+=step;
+    path.push({lat,lon,alt,t});
+  }
+  const interceptAlt = state.groundElev+interceptAGL;
+  const effRate1 = rateMs*(1+ (Math.random()*2-1)*scatterFrac);
+  while(alt>interceptAlt){
+    const step=dt;
+    const w = windAt(alt);
+    const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
+    lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-effRate1*step); t+=step;
+    path.push({lat,lon,alt,t});
+  }
+  const effRate2 = rate2Ms*(1+ (Math.random()*2-1)*scatterFrac);
+  while(alt>state.groundElev){
+    const step=dt;
+    const w = windAt(alt);
+    const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
+    lat=nlat; lon=nlon; alt=Math.max(state.groundElev, alt-effRate2*step); t+=step;
+    path.push({lat,lon,alt,t});
+  }
+  return path;
+}
+function convexHull(points){
+  // points: [ [x,y], ... ] simple Andrew monotone chain
+  points = points.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lower=[];
+  for(const p of points){ while(lower.length>=2 && cross(lower[lower.length-2],lower[lower.length-1],p)<=0) lower.pop(); lower.push(p); }
+  const upper=[];
+  for(let i=points.length-1;i>=0;i--){ const p=points[i]; while(upper.length>=2 && cross(upper[upper.length-2],upper[upper.length-1],p)<=0) upper.pop(); upper.push(p); }
+  upper.pop(); lower.pop();
+  return lower.concat(upper);
+}
+
+let recomputeTimer=null;
+function recomputeAll(){
+  clearTimeout(recomputeTimer);
+  recomputeTimer=setTimeout(doRecompute, 120);
+}
+function doRecompute(){
+  if(!state.windProfile){ return; }
+  const initDelayMin = parseFloat(document.getElementById('sInit').value);
+  const rate1 = parseFloat(document.getElementById('sRate').value);
+  const interceptAGL = parseFloat(document.getElementById('sIntH').value);
+  const rate2 = parseFloat(document.getElementById('sRate2').value);
+  const scatter = parseFloat(document.getElementById('sScatter').value)/100;
+
+  if(document.getElementById('lyrLanding').checked){
+    const N=40;
+    const endpoints=[];
+    for(let i=0;i<N;i++){
+      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, scatter);
+      const last=path[path.length-1];
+      endpoints.push([last.lon,last.lat]);
+    }
+    let hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
+    landingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
+    state.landingPolygon = hull;
+  } else {
+    landingPolyLayer.setLatLngs([]);
+  }
+
+  // deterministic (no scatter) path for warning-collision checks / hodograph reference
+  const refPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
+  checkObstacleWarnings(refPath);
+  updateAdiabaticReadout(rate1, interceptAGL);
+  drawHodograph(refPath);
+
+  if(state.clickedTarget){ recomputeClickTarget(); }
+}
+
+function updateAdiabaticReadout(rate1, interceptAGL){
+  // assume approx volume: rough scale from AMSL altitude (simplification: fixed nominal envelope volume)
+  const nominalVolume = 1000; // m3 nominal — adjust to your balloon's actual gas volume in real deployment
+  const bonusKg = adiabaticLiftBonusKg(nominalVolume, state.altAMSL, rate1);
+  document.getElementById('adiaKg').textContent = bonusKg.toFixed(1)+' kg';
+  const interceptAlt = state.groundElev+interceptAGL;
+  document.getElementById('reqRateAtIntercept').textContent = rate1.toFixed(1)+' m/s (nominal)';
+}
+
+function checkObstacleWarnings(path){
+  // placeholder simplistic ground-clearance check vs a flat ground reference
+  let warn=null;
+  for(const p of path){
+    if(p.alt - state.groundElev < 15 && p.t>0){ /* near ground, fine, expected at end */ }
+  }
+  const warnbar=document.getElementById('warnbar');
+  if(warn){ warnbar.textContent=warn; warnbar.classList.add('show'); } else { warnbar.classList.remove('show'); }
+}
+
+// ---------- map click handling ----------
+map.on('click', async (e)=>{
+  if(document.getElementById('testEnable').checked){
+    updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn);
+    return;
+  }
+  if(!state.landingPolygon) return;
+  // point-in-polygon test
+  if(!pointInPolygon([e.latlng.lng,e.latlng.lat], state.landingPolygon)) return;
+  state.clickedTarget = {lat:e.latlng.lat, lon:e.latlng.lng};
+  if(targetMarker) map.removeLayer(targetMarker);
+  targetMarker = L.marker([e.latlng.lat,e.latlng.lng]).addTo(map);
+  document.getElementById('resultpanel').classList.add('show');
+  await recomputeClickTarget();
+});
+function pointInPolygon(pt, poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0], yi=poly[i][1], xj=poly[0+j][0], yj=poly[j][1];
+    const intersect = ((yi>pt[1])!=(yj>pt[1])) && (pt[0] < (xj-xi)*(pt[1]-yi)/(yj-yi)+xi);
+    if(intersect) inside=!inside;
+  }
+  return inside;
+}
+
+async function recomputeClickTarget(){
+  if(!state.clickedTarget) return;
+  const initDelayMin = parseFloat(document.getElementById('sInit').value);
+  const rate1 = parseFloat(document.getElementById('sRate').value);
+  const interceptAGL = parseFloat(document.getElementById('sIntH').value);
+  const rate2 = parseFloat(document.getElementById('sRate2').value);
+
+  // binary search over initDelay (0..180 min) to match target within tolerance
+  let lo=0, hi=180, best=null, bestDist=Infinity, bestPath=null;
+  for(let iter=0; iter<18; iter++){
+    const mid=(lo+hi)/2;
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0);
+    const last=path[path.length-1];
+    const d = haversine(last.lat,last.lon,state.clickedTarget.lat,state.clickedTarget.lon);
+    if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
+    // heuristic: if landed short of target relative to drift direction, adjust window
+    // (simplified: just narrow around current best each iteration)
+    const span=(hi-lo)/3;
+    lo=Math.max(0,best-span); hi=Math.min(180,best+span);
+  }
+  const initSec = best*60;
+  const initFixLat = bestPath[bestPath.findIndex(p=>p.t>=initSec)] || bestPath[0];
+  const distToInit = haversine(state.lat,state.lon, initFixLat.lat, initFixLat.lon);
+
+  document.getElementById('resInitTime').textContent = best.toFixed(1)+' min';
+  document.getElementById('resInitDist').textContent = (distToInit/1000).toFixed(1)+' km';
+
+  // nearest town via Nominatim reverse geocoding
+  let townTxt = 'looking up…';
+  document.getElementById('resNearestTown').textContent = townTxt;
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${state.clickedTarget.lat}&lon=${state.clickedTarget.lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}});
+    const j = await r.json();
+    const name = (j.address && (j.address.village||j.address.town||j.address.city||j.address.hamlet||j.address.municipality)) || j.display_name || 'unknown';
+    townTxt = `${name} · ${toCompact(state.clickedTarget.lat, state.clickedTarget.lon)}`;
+  }catch(e){ townTxt = toCompact(state.clickedTarget.lat, state.clickedTarget.lon)+' (offline)'; }
+  document.getElementById('resNearestTown').textContent = townTxt;
+  state.lastTownTxt = townTxt;
+
+  // vertical profile projection + descent path draw
+  descentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
+  drawVertProfile(bestPath);
+}
+function copyResultAll(){
+  const txt = `Landing target: ${state.lastTownTxt||''}\nInitiate descent in ${document.getElementById('resInitTime').textContent} (${document.getElementById('resInitDist').textContent} from here)`;
+  navigator.clipboard && navigator.clipboard.writeText(txt);
+}
+
+// ---------- charts ----------
+let vertChart=null, hodoChart=null;
+function drawVertProfile(path){
+  const ctx = document.getElementById('vertProfileChart').getContext('2d');
+  const labels = path.map(p=>Math.round(p.t/60));
+  const data = path.map(p=>Math.round(p.alt));
+  if(vertChart) vertChart.destroy();
+  vertChart = new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#ffb454',pointRadius:0,tension:0.1}]},
+    options:{plugins:{legend:{display:false},title:{display:true,text:'Vertical profile (min / m AMSL)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
+}
+function drawHodograph(path){
+  const pts = [];
+  for(let a=state.groundElev; a<=state.altAMSL; a+=200){
+    const w = windAt(a);
+    pts.push({x:w.u, y:w.v});
+  }
+  const ctx = document.getElementById('hodographChart').getContext('2d');
+  if(hodoChart) hodoChart.destroy();
+  hodoChart = new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:2}]},
+    options:{plugins:{legend:{display:false},title:{display:true,text:'Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
+}
+
+// ---------- sliders ----------
+function bindSlider(id,lblId,fmt){
+  const el=document.getElementById(id);
+  el.addEventListener('input', ()=>{ document.getElementById(lblId).textContent=fmt(el.value); recomputeAll(); });
+}
+bindSlider('sInit','lblInit', v=> (v==0?'immediate':v+' min'));
+bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
+bindSlider('sIntH','lblIntH', v=> v+' m');
+bindSlider('sRate2','lblRate2', v=> parseFloat(v).toFixed(1)+' m/s');
+bindSlider('sScatter','lblScatter', v=> v+' %');
+document.getElementById('lyrLanding').addEventListener('change', recomputeAll);
+
+// ---------- day/night ----------
+document.getElementById('btnDayNight').addEventListener('click', ()=>{
+  state.night=!state.night;
+  document.body.classList.toggle('day', !state.night);
+  document.getElementById('map').classList.toggle('night-filter', state.night);
+  document.getElementById('btnDayNight').textContent = state.night?'🌙':'☀️';
+});
+document.body.classList.add('day'); // default day mode
+document.getElementById('btnDayNight').textContent='☀️';
+
+// ---------- collapsible cards ----------
+function toggleCard(h3){ h3.parentElement.classList.toggle('collapsed'); }
+
+// ---------- test mode ----------
+document.getElementById('testEnable').addEventListener('change', e=>{
+  state.testMode = e.target.checked;
+  document.getElementById('testPill').style.display = state.testMode?'inline-block':'none';
+});
+function applyTestValues(){
+  state.altAMSL = parseFloat(document.getElementById('testAlt').value)||state.altAMSL;
+  state.course = parseFloat(document.getElementById('testCourse').value)||state.course;
+  state.speedKn = parseFloat(document.getElementById('testSpeed').value)||state.speedKn;
+  renderSidebarPosition();
+  recomputeAll();
+}
+
+// ---------- screenshot / recording ----------
+document.getElementById('btnShot').addEventListener('click', ()=>{
+  html2canvas(document.getElementById('app')).then(canvas=>{
+    const a=document.createElement('a');
+    a.download='gblp_screenshot_'+Date.now()+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+  });
+});
+let mediaRecorder=null, recChunks=[];
+document.getElementById('btnRec').addEventListener('click', async ()=>{
+  const btn=document.getElementById('btnRec');
+  if(mediaRecorder && mediaRecorder.state==='recording'){
+    mediaRecorder.stop(); return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getDisplayMedia({video:true});
+    recChunks=[];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = e=>recChunks.push(e.data);
+    mediaRecorder.onstop = ()=>{
+      const blob=new Blob(recChunks,{type:'video/webm'});
+      const a=document.createElement('a');
+      a.download='gblp_recording_'+Date.now()+'.webm';
+      a.href=URL.createObjectURL(blob);
+      a.click();
+      btn.classList.remove('active');
+    };
+    mediaRecorder.start();
+    btn.classList.add('active');
+  }catch(e){ alert('Screen recording permission denied or unsupported.'); }
+});
+
+// ---------- boot ----------
+(async function boot(){
+  await fetchGroundElevation();
+  await fetchWind(true);
+  renderSidebarPosition();
+  recomputeAll();
+})();
+setInterval(fetchWind, 15*60*1000); // refresh model every 15 min
+</script>
+
+
+</body></html>

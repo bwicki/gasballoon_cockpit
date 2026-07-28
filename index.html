@@ -103,7 +103,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- center-on-position button ---- */
-#btnCenterMap{position:absolute;bottom:10px;left:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
+#btnCenterMap{position:absolute;bottom:86px;right:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
 #btnCenterMap:active{transform:scale(0.93);}
 
 /* ---- layer toggle group (header, top-left) ---- */
@@ -220,10 +220,10 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
-      <button class="ltbtn active" id="tgPower" title="Power lines">⚡</button>
-      <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names">🛣️</button>
-      <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)">✈️</button>
-      <button class="ltbtn active" id="tgLanding" title="Landing area">🟢</button>
+      <button class="ltbtn active" id="tgPower" title="Power lines"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
+      <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
+      <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 12 L14 13 L13 20 L16 22 L12 21 L8 22 L11 20 L10 13 L3 12 L10 9 Z" fill="currentColor"/></svg></button>
+      <button class="ltbtn active" id="tgLanding" title="Landing area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -231,9 +231,12 @@ canvas.mini{width:100% !important;height:130px !important;}
       <option value="ft">ft</option>
       <option value="FL">FL</option>
     </select>
-    <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
+    <button class="iconbtn" id="btnDayNight" title="Day/Night">
+      <svg id="iconSun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      <svg id="iconMoon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
+    </button>
     <div style="position:relative;">
-      <button class="iconbtn" id="btnCapture" title="Screenshot / Recording">📷</button>
+      <button class="iconbtn" id="btnCapture" title="Screenshot / Recording"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 6.5 L9.3 4 h5.4 L16 6.5"/><rect x="2.5" y="6.5" width="19" height="13.5" rx="2"/><circle cx="12" cy="13" r="3.6"/></svg></button>
       <div id="capturePanel" class="settings-popover" style="width:220px;">
         <button class="ghost" id="capShotBtn">📷 Take screenshot</button>
         <button class="ghost" id="capRecBtn" style="margin-top:8px;">⏺ Start recording</button>
@@ -241,7 +244,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       </div>
     </div>
     <div style="position:relative;">
-      <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
+      <button class="iconbtn" id="btnSettings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
       <div id="settingsPanel">
         <div class="subhead" style="margin-top:0;">Altitude Unit</div>
         <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
@@ -316,10 +319,10 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div id="mapwrap">
       <div id="map"></div>
       <div id="modeToggle">
-        <button id="modeMonitor" class="active" title="Show landing area">🟢 Landing Area</button>
-        <button id="modePlan" title="Plan a descent point">✛ Plan Descent</button>
+        <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> Landing Area</button>
+        <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
       </div>
-      <button id="btnCenterMap" title="Center on current position">🎯</button>
+      <button id="btnCenterMap" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
       <div id="warnbar"></div>
     </div>
 
@@ -512,7 +515,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v34';
+const APP_VERSION = 'v35';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1534,10 +1537,12 @@ document.getElementById('btnDayNight').addEventListener('click', ()=>{
   state.night=!state.night;
   document.body.classList.toggle('day', !state.night);
   document.getElementById('map').classList.toggle('night-filter', state.night);
-  document.getElementById('btnDayNight').textContent = state.night?'🌙':'☀️';
+  document.getElementById('iconSun').style.display = state.night ? 'none' : 'block';
+  document.getElementById('iconMoon').style.display = state.night ? 'block' : 'none';
 });
 document.body.classList.add('day'); // default day mode
-document.getElementById('btnDayNight').textContent='☀️';
+document.getElementById('iconSun').style.display = 'block';
+document.getElementById('iconMoon').style.display = 'none';
 
 // ---------- collapsible cards ----------
 function toggleCard(h3){ h3.parentElement.classList.toggle('collapsed'); }

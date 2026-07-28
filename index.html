@@ -287,7 +287,8 @@ canvas.mini{width:100% !important;height:130px !important;}
           <label><input type="checkbox" checked data-as="TMZ">TMZ</label>
           <label><input type="checkbox" checked data-as="RMZ">RMZ</label>
         </div>
-        <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">openAIP key is fixed in code (not editable here) to avoid accidental changes.</p>
+        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not yet functional: openAIP's airspace layer is a single pre-rendered image (raster tiles), so individual classes can't be filtered client-side. These checkboxes are a placeholder for a future vector-tile-based implementation.</p>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">openAIP key is fixed in code (not editable here) to avoid accidental changes.</p>
 
         <hr>
         <div class="subhead">Offline Tile Cache Radius</div>
@@ -490,7 +491,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v27';
+const APP_VERSION = 'v28';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -703,14 +704,16 @@ bindLayerToggle('tgPower', true, on=>{
 });
 bindLayerToggle('tgAirspace', true, on=>{
   if(on){
-    // openAIP exposes separate raster layers per category. We deliberately
-    // omit "navaids" (VOR/DME/NDB) since those aren't relevant here, but
-    // keep airspaces, airports/airfields, and reporting points.
-    const cats = ['airspaces','airports','reporting-points'];
-    airspaceLayer = L.layerGroup(cats.map(cat =>
-      L.tileLayer(`https://api.tiles.openaip.net/api/data/${cat}/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
-        {maxZoom:14, opacity:0.95, className:'airspace-tiles', attribution:'© openAIP'})
-    ));
+    // NOTE: openAIP retired the separate per-category tile endpoints
+    // (airspaces/airports/reporting-points/navaids) in May 2023 to reduce
+    // server load - they now only serve a single combined "openaip" layer
+    // that includes everything (airspaces, airports, navaids/VOR, reporting
+    // points) baked into one raster tile. This means VOR/navaid symbols can
+    // no longer be selectively hidden via their public tile API - that would
+    // require switching to their vector tile (.pbf) endpoint with custom
+    // styling, which is a bigger separate piece of work.
+    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
+      {maxZoom:14, opacity:0.95, className:'airspace-tiles', attribution:'© openAIP'});
     airspaceLayer.addTo(map);
   } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
 });
@@ -723,13 +726,6 @@ document.getElementById('sCacheRadius').addEventListener('input', e=>{
   cacheRadiusKm = parseInt(e.target.value);
   document.getElementById('lblCacheRadius').textContent = cacheRadiusKm + ' km';
 });
-bindLayerToggle('tgRoads', false, on=>{
-  roadsShown = on;
-  if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); }
-  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); }
-  updateFineRoadsVisibility();
-});
-
 // ---- fine, class-styled roads (Satellite view only) ----
 // Satellite imagery has no road lines at all, and even the generic Esri
 // roads overlay doesn't distinguish farm/field tracks from proper roads -
@@ -741,6 +737,13 @@ const fineRoadsLayer = L.layerGroup();
 let fineRoadsFetchTimer = null;
 let fineRoadsAbortController = null;
 const FINE_ROADS_MIN_ZOOM = 14; // keep Overpass queries small/fast
+
+bindLayerToggle('tgRoads', false, on=>{
+  roadsShown = on;
+  if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); }
+  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); }
+  updateFineRoadsVisibility();
+});
 
 function fineRoadStyle(highwayTag){
   switch(highwayTag){
@@ -1587,9 +1590,7 @@ async function precacheAreaTiles(lat, lon, radiusKm){
       addTilesForZooms(zoomsBase, (z,x,y)=>`https://openinframap.org/tiles/${z}/${x}/${y}.pbf`);
     }
     if(document.getElementById('tgAirspace').classList.contains('active')){
-      ['airspaces','airports','reporting-points'].forEach(cat=>{
-        addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://api.tiles.openaip.net/api/data/${cat}/${z}/${x}/${y}.png?apiKey=${OPENAIP_API_KEY}`);
-      });
+      addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://api.tiles.openaip.net/api/data/openaip/${z}/${x}/${y}.png?apiKey=${OPENAIP_API_KEY}`);
     }
     if(document.getElementById('tgRoads').classList.contains('active')){
       addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`);

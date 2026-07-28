@@ -56,6 +56,13 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #positionCard.manual-active{border:2px solid var(--bad);}
 .manual-input{width:100%;background:var(--panel);border:1px solid var(--warn);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:16px;font-weight:700;margin-top:2px;}
 #posManualHint{cursor:default;font-weight:700;}
+.course-input-row{display:flex;gap:4px;align-items:stretch;margin-top:2px;}
+.course-input-row .manual-input{margin-top:0;flex:1;min-width:0;}
+.course-steppers{display:flex;flex-direction:column;flex-shrink:0;}
+.course-steppers button{background:var(--panel);border:1px solid var(--warn);color:var(--text);width:26px;flex:1;font-size:9px;line-height:1;cursor:pointer;padding:0;}
+.course-steppers button:first-child{border-radius:6px 6px 0 0;border-bottom:none;}
+.course-steppers button:last-child{border-radius:0 0 6px 6px;}
+.course-steppers button:active{background:var(--warn);}
 
 /* ---- password gate ---- */
 #passwordGate{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:5000;}
@@ -71,6 +78,12 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 
 /* ---- airspace tiles: boost contrast/saturation so boundaries stand out ---- */
 .airspace-tiles{filter:saturate(1.6) contrast(1.35) brightness(1.05);}
+
+/* ---- place-name labels: subtle white halo so they read as distinct "chips"
+   from the road lines/labels underneath. Both are pre-rendered raster tiles
+   from Esri, so individual per-label boxes aren't possible - this halo is
+   the closest achievable visual differentiation without vector data. ---- */
+.places-tiles{filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 2.5px rgba(255,255,255,.8));}
 
 /* ---- flown flight path: strong outline so it reads on any basemap ---- */
 .flightpath-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 4px rgba(0,0,0,0.6));}
@@ -110,7 +123,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;}
+#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;}
 
 .card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;}
 .card h3{margin:0 0 8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
@@ -226,7 +239,15 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
       <div id="settingsPanel">
-        <div class="subhead" style="margin-top:0;">Weather Model</div>
+        <div class="subhead" style="margin-top:0;">Altitude Unit</div>
+        <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
+          <label><input type="radio" name="altUnitRadio" value="m" checked>m AMSL</label>
+          <label><input type="radio" name="altUnitRadio" value="ft">ft AMSL</label>
+          <label><input type="radio" name="altUnitRadio" value="FL">FL</label>
+        </div>
+
+        <hr>
+        <div class="subhead">Weather Model</div>
         <select id="wxModelSelect">
           <option value="auto">Auto (finest available grid)</option>
           <option value="best_match">Best match</option>
@@ -271,32 +292,19 @@ canvas.mini{width:100% !important;height:130px !important;}
         <hr>
         <div class="subhead">Offline Tile Cache Radius</div>
         <div class="slider-row">
-          <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">50 km</b></div>
-          <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="50">
-        </div>
-
-        <hr>
-        <div class="subhead">Altitude Unit</div>
-        <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
-          <label><input type="radio" name="altUnitRadio" value="m" checked>m AMSL</label>
-          <label><input type="radio" name="altUnitRadio" value="ft">ft AMSL</label>
-          <label><input type="radio" name="altUnitRadio" value="FL">FL</label>
+          <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">75 km</b></div>
+          <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="75">
         </div>
       </div>
     </div>
-    <div style="position:relative;">
-      <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
-      <div id="testPanel" class="settings-popover">
-        <div class="subhead" id="testPanelTitle" style="margin-top:0;">Test Mode</div>
-        <div class="togglerow"><span id="testEnableLabel">Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
-        <p style="font-size:11px;color:var(--muted);margin:6px 0 0;">Tap the map to set position. Altitude, course and speed become editable directly in the "Current Position" card in the sidebar.</p>
-      </div>
-    </div>
+    <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
+    <input type="checkbox" id="testEnable" style="display:none;">
   </div>
   <div id="testCautionBar">⚠ CAUTION: TEST MODE ⚠</div>
   <div id="gpsWarnBar">
     <span>⚠ CAUTION: GPS DATA not available! ⚠</span>
-    <button id="btnManualMode">Manual Mode?</button>
+    <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
+    <span style="font-size:11px;font-weight:600;letter-spacing:normal;">Enable Manual Mode</span>
   </div>
 
   <div id="main">
@@ -331,7 +339,13 @@ canvas.mini{width:100% !important;height:130px !important;}
             <div class="datacell">
               <label>Course (° True GPS)</label>
               <div class="val" id="courseVal">—</div>
-              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" class="manual-input" id="courseValInput" style="display:none;" placeholder="090">
+              <div class="course-input-row" id="courseInputRow" style="display:none;">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" class="manual-input" id="courseValInput" placeholder="090">
+                <div class="course-steppers">
+                  <button type="button" id="courseUpBtn">▲</button>
+                  <button type="button" id="courseDownBtn">▼</button>
+                </div>
+              </div>
             </div>
             <div class="datacell">
               <label>Speed (GPS)</label>
@@ -339,6 +353,7 @@ canvas.mini{width:100% !important;height:130px !important;}
               <input type="number" step="0.1" class="manual-input" id="speedValInput" style="display:none;" placeholder="kn">
             </div>
           </div>
+          <div id="positionManualNote" style="display:none;color:var(--bad);font-size:11px;font-weight:600;margin-top:8px;">Tap the map to set position. Altitude, course and speed above are directly editable.</div>
         </div>
       </div>
 
@@ -347,7 +362,7 @@ canvas.mini{width:100% !important;height:130px !important;}
         <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="slider-row">
-            <div class="lbl"><span>Initiate descent in</span><b id="lblInitDist" style="color:#ff0090;">0.00 km</b> <b id="lblInit">30 min</b></div>
+            <div class="lbl"><span>Initiate descent in</span><b id="lblInitDist" style="color:#00e5c8;">0.00 km</b> <b id="lblInit">30 min</b></div>
             <input type="range" id="sInit" min="0" max="120" step="1" value="30">
           </div>
           <div class="slider-row">
@@ -475,7 +490,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v26';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -552,6 +567,14 @@ function isoDensity(altM){
 const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([state.lat,state.lon], 11);
 L.control.zoom({position:'bottomright'}).addTo(map);
 
+// Dedicated pane, above any base tile layer regardless of which one is
+// active or when it was (re-)added - this is what fixes roads/place-name
+// overlays disappearing when switching to the Satellite base layer (that
+// bug was really a stacking-order issue, not a visibility toggle issue).
+map.createPane('overlayTilesPane');
+map.getPane('overlayTilesPane').style.zIndex = 350;
+map.getPane('overlayTilesPane').style.pointerEvents = 'none';
+
 const baseLayers = {
   'Streets': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}),
   'Terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenTopoMap'}),
@@ -559,6 +582,8 @@ const baseLayers = {
 };
 baseLayers['Streets'].addTo(map);
 L.control.layers(baseLayers, null, {position:'topright'}).addTo(map);
+let activeBaseLayerName = 'Streets';
+map.on('baselayerchange', (e)=>{ activeBaseLayerName = e.name; updateFineRoadsVisibility(); });
 
 // --- robustness: force Leaflet to recompute its size once the real layout
 // (flexbox) has settled. Without this, a map initialized before the
@@ -690,15 +715,88 @@ bindLayerToggle('tgAirspace', true, on=>{
   } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
 });
 let roadsShown = true;
-const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,attribution:'Roads: Esri'});
-const placesOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.95,attribution:'Places: Esri'});
+const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,pane:'overlayTilesPane',attribution:'Roads: Esri'});
+const placesOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.95,className:'places-tiles',pane:'overlayTilesPane',attribution:'Places: Esri'});
 let landingLayerOn = true;
-let cacheRadiusKm = 50;
+let cacheRadiusKm = 75;
 document.getElementById('sCacheRadius').addEventListener('input', e=>{
   cacheRadiusKm = parseInt(e.target.value);
   document.getElementById('lblCacheRadius').textContent = cacheRadiusKm + ' km';
 });
-bindLayerToggle('tgRoads', false, on=>{ roadsShown = on; if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); } else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); } });
+bindLayerToggle('tgRoads', false, on=>{
+  roadsShown = on;
+  if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); }
+  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); }
+  updateFineRoadsVisibility();
+});
+
+// ---- fine, class-styled roads (Satellite view only) ----
+// Satellite imagery has no road lines at all, and even the generic Esri
+// roads overlay doesn't distinguish farm/field tracks from proper roads -
+// important for planning the access route after landing. So, only when the
+// Satellite base layer is active AND the roads layer is switched on, we
+// fetch actual OSM road geometry (via the public Overpass API) for the
+// current view and draw it styled by road class.
+const fineRoadsLayer = L.layerGroup();
+let fineRoadsFetchTimer = null;
+let fineRoadsAbortController = null;
+const FINE_ROADS_MIN_ZOOM = 14; // keep Overpass queries small/fast
+
+function fineRoadStyle(highwayTag){
+  switch(highwayTag){
+    case 'motorway': case 'motorway_link': case 'trunk': case 'trunk_link':
+      return {color:'#ff3b3b', weight:3, opacity:0.95};
+    case 'primary': case 'primary_link': case 'secondary': case 'secondary_link': case 'tertiary': case 'tertiary_link':
+      return {color:'#ffb400', weight:2.3, opacity:0.95};
+    case 'residential': case 'unclassified': case 'living_street': case 'service':
+      return {color:'#f2f2f2', weight:1.6, opacity:0.9};
+    case 'track': case 'path': case 'footway': case 'bridleway': case 'cycleway':
+      return {color:'#c98a4b', weight:1.3, opacity:0.85, dashArray:'2,4'};
+    default:
+      return {color:'#dddddd', weight:1.2, opacity:0.7};
+  }
+}
+
+function updateFineRoadsVisibility(){
+  const shouldShow = roadsShown && activeBaseLayerName==='Satellite';
+  if(shouldShow){
+    if(!map.hasLayer(fineRoadsLayer)) fineRoadsLayer.addTo(map);
+    scheduleFineRoadsFetch();
+  } else {
+    if(map.hasLayer(fineRoadsLayer)) map.removeLayer(fineRoadsLayer);
+    fineRoadsLayer.clearLayers();
+  }
+}
+function scheduleFineRoadsFetch(){
+  clearTimeout(fineRoadsFetchTimer);
+  fineRoadsFetchTimer = setTimeout(fetchFineRoads, 600);
+}
+async function fetchFineRoads(){
+  if(!(roadsShown && activeBaseLayerName==='Satellite')) return;
+  if(map.getZoom() < FINE_ROADS_MIN_ZOOM){
+    fineRoadsLayer.clearLayers();
+    return;
+  }
+  const b = map.getBounds();
+  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const query = `[out:json][timeout:20];way["highway"](${bbox});out geom;`;
+  if(fineRoadsAbortController) fineRoadsAbortController.abort();
+  fineRoadsAbortController = new AbortController();
+  try{
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method:'POST', body:'data='+encodeURIComponent(query), signal:fineRoadsAbortController.signal
+    });
+    const j = await r.json();
+    fineRoadsLayer.clearLayers();
+    for(const el of (j.elements||[])){
+      if(el.type!=='way' || !el.geometry) continue;
+      const latlngs = el.geometry.map(p=>[p.lat,p.lon]);
+      const style = fineRoadStyle(el.tags && el.tags.highway);
+      L.polyline(latlngs, {...style, pane:'overlayTilesPane'}).addTo(fineRoadsLayer);
+    }
+  }catch(e){ /* Overpass unavailable/slow - silently skip, generic roads overlay still shows */ }
+}
+map.on('moveend zoomend', scheduleFineRoadsFetch);
 bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });
 
 // balloon marker + breadcrumb
@@ -714,11 +812,12 @@ function updateAircraftRotation(){
   if(rotor) rotor.style.transform = `rotate(${state.course}deg)`;
 }
 setInterval(updateAircraftRotation, 2000);
-const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:5, opacity:1, lineCap:'round', className:'flightpath-glow'}).addTo(map);
+const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:2.5, opacity:0.75, lineCap:'round'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
-let descentPathLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round', className:'descent-path-glow'}).addTo(map);
-let predictedDescentLayer = L.polyline([], {color:'#ff0090', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
-const blueDotIcon = L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#ff0090;border:3px solid #fff;box-shadow:0 0 8px 2px #ff0090;"></div>', className:'', iconSize:[24,24], iconAnchor:[12,12]});
+let descentPathLayer = L.polyline([], {color:'#b026ff', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round', className:'descent-path-glow'}).addTo(map);
+let predictedCruiseLayer = L.polyline([], {color:'#00e5c8', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
+let predictedDescentSegmentLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round', className:'descent-path-glow'}).addTo(map);
+const blueDotIcon = L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#ffee00;border:3px solid #fff;box-shadow:0 0 8px 2px #ffee00;"></div>', className:'', iconSize:[24,24], iconAnchor:[12,12]});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
@@ -752,9 +851,7 @@ function setGpsStatus(ok, txt){
     // exit it automatically. A manually-opened Test Mode (for ground testing
     // with GPS still working) is left alone.
     if(activationReason==='manual' && state.testMode){
-      const cb = document.getElementById('testEnable');
-      cb.checked = false;
-      cb.dispatchEvent(new Event('change'));
+      setTestMode(false);
     }
   } else {
     // Only prompt if we're not already in Test/Manual mode.
@@ -763,14 +860,25 @@ function setGpsStatus(ok, txt){
     }
   }
 }
-document.getElementById('btnManualMode').addEventListener('click', (e)=>{
-  e.stopPropagation();
-  document.getElementById('gpsWarnBar').classList.remove('show');
-  activationReason = 'manual';
-  const cb = document.getElementById('testEnable');
-  if(!cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change')); }
-  else { updateCautionBar(); }
-  document.getElementById('btnTestMode').click(); // open the panel right away
+// Central place that turns Test/Manual mode on or off and keeps every UI
+// element (header button, GPS-bar toggle, caution bar, inline position
+// fields) in sync - no popover involved.
+function setTestMode(enable, reason){
+  state.testMode = enable;
+  activationReason = enable ? (reason || activationReason || 'test') : null;
+  document.getElementById('testEnable').checked = enable;
+  document.getElementById('manualModeToggle').checked = enable && activationReason==='manual';
+  document.getElementById('btnTestMode').classList.toggle('active', enable);
+  if(enable) state.manualPositionSet = false; // show "Click on Position" again each time we (re-)enter
+  updateCautionBar();
+  setManualModeUI(enable);
+}
+document.getElementById('btnTestMode').addEventListener('click', ()=>{
+  setTestMode(!state.testMode, 'test');
+});
+document.getElementById('manualModeToggle').addEventListener('change', (e)=>{
+  setTestMode(e.target.checked, 'manual');
+  if(e.target.checked) document.getElementById('gpsWarnBar').classList.remove('show');
 });
 function updateCautionBar(){
   const bar = document.getElementById('testCautionBar');
@@ -778,8 +886,6 @@ function updateCautionBar(){
     const isManual = activationReason==='manual';
     bar.textContent = isManual ? '⚠ CAUTION: Manual Mode ⚠' : '⚠ CAUTION: TEST MODE ⚠';
     bar.classList.add('show');
-    document.getElementById('testPanelTitle').textContent = isManual ? 'Manual Mode' : 'Test Mode';
-    document.getElementById('testEnableLabel').textContent = isManual ? 'Enable manual mode' : 'Enable test mode';
   } else {
     bar.classList.remove('show');
   }
@@ -1069,14 +1175,18 @@ function doRecompute(){
   updateAdiabaticReadout(rate1, interceptAGL);
   drawHodograph(refPath);
 
-  // Always-on projection: dotted line of the predicted descent path (from the
-  // predicted position at descent-initiation time, drifting with wind at each
-  // altitude per the current weather model, down to the ground), plus a blue
-  // dot marking exactly where/when the descent would be initiated.
-  predictedDescentLayer.setLatLngs(refPath.map(p=>[p.lat,p.lon]));
+  // Always-on projection, split into two colored segments at the descent
+  // initiation point: the still-cruising portion (teal), and the actual
+  // descent portion from that point down to the ground (yellow) - plus a
+  // marker dot exactly where/when the descent would be initiated.
   const initSecRef = initDelayMin*60;
   const initIdx = refPath.findIndex(p=>p.t>=initSecRef);
-  const initPt = refPath[initIdx>=0?initIdx:0];
+  const splitIdx = initIdx>=0 ? initIdx : refPath.length-1;
+  const cruiseSegment = refPath.slice(0, splitIdx+1);
+  const descentSegment = refPath.slice(splitIdx);
+  predictedCruiseLayer.setLatLngs(cruiseSegment.map(p=>[p.lat,p.lon]));
+  predictedDescentSegmentLayer.setLatLngs(descentSegment.map(p=>[p.lat,p.lon]));
+  const initPt = refPath[splitIdx];
   descentInitMarker.setLatLng([initPt.lat, initPt.lon]);
   descentInitMarker.setOpacity(1);
 
@@ -1128,6 +1238,11 @@ map.on('click', async (e)=>{
     updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn, false);
     state.manualPositionSet = true;
     setManualModeUI(true);
+    // Ground elevation only makes sense for the position just clicked, so
+    // re-fetch it here rather than relying on the one fetched at boot.
+    await fetchGroundElevation();
+    document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
+    recomputeAll();
     return;
   }
   if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
@@ -1284,24 +1399,12 @@ function setupPopover(btnId, panelId){
   panel.addEventListener('click', e=>e.stopPropagation());
 }
 setupPopover('btnSettings','settingsPanel');
-setupPopover('btnTestMode','testPanel');
 document.addEventListener('click', ()=>{
   document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
 });
 
 // ---------- test / manual mode ----------
-document.getElementById('testEnable').addEventListener('change', e=>{
-  state.testMode = e.target.checked;
-  if(state.testMode){
-    if(!activationReason) activationReason = 'test'; // direct manual toggle, not via GPS-loss flow
-    state.manualPositionSet = false; // show "click on Position" again each time we (re-)enter
-  } else {
-    activationReason = null;
-  }
-  document.getElementById('btnTestMode').classList.toggle('active', state.testMode);
-  updateCautionBar();
-  setManualModeUI(state.testMode);
-});
+// (state changes are centralized in setTestMode(), defined near the GPS code)
 
 // Show/hide the inline editable fields in the Current Position card.
 function setManualModeUI(active){
@@ -1309,7 +1412,7 @@ function setManualModeUI(active){
   document.getElementById('altAMSL').style.display = active ? 'none' : 'block';
   document.getElementById('altAMSLInput').style.display = active ? 'block' : 'none';
   document.getElementById('courseVal').style.display = active ? 'none' : 'block';
-  document.getElementById('courseValInput').style.display = active ? 'block' : 'none';
+  document.getElementById('courseInputRow').style.display = active ? 'flex' : 'none';
   document.getElementById('speedVal').style.display = active ? 'none' : 'block';
   document.getElementById('speedValInput').style.display = active ? 'block' : 'none';
   if(active){
@@ -1321,6 +1424,7 @@ function setManualModeUI(active){
   document.getElementById('posManualHint').style.display = showHint ? 'block' : 'none';
   document.getElementById('posDMS').style.display = showHint ? 'none' : 'block';
   document.getElementById('posCompact').style.display = showHint ? 'none' : 'block';
+  document.getElementById('positionManualNote').style.display = active ? 'block' : 'none';
 }
 
 document.getElementById('altAMSLInput').addEventListener('input', e=>{
@@ -1345,6 +1449,16 @@ document.getElementById('courseValInput').addEventListener('blur', e=>{
   v = ((v%360)+360)%360;
   e.target.value = String(v).padStart(3,'0');
 });
+function stepCourse(delta){
+  let v = parseInt(document.getElementById('courseValInput').value)||0;
+  v = ((v+delta)%360+360)%360;
+  document.getElementById('courseValInput').value = String(v).padStart(3,'0');
+  state.course = v;
+  updateAircraftRotation();
+  recomputeAll();
+}
+document.getElementById('courseUpBtn').addEventListener('click', ()=>stepCourse(1));
+document.getElementById('courseDownBtn').addEventListener('click', ()=>stepCourse(-1));
 
 // ---------- screenshot / recording (combined button + popover) ----------
 setupPopover('btnCapture','capturePanel');

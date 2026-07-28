@@ -56,13 +56,13 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #positionCard.manual-active{border:2px solid var(--bad);}
 .manual-input{width:100%;background:var(--panel);border:1px solid var(--warn);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:16px;font-weight:700;margin-top:2px;}
 #posManualHint{cursor:default;font-weight:700;}
-.course-input-row{display:flex;gap:4px;align-items:stretch;margin-top:2px;}
-.course-input-row .manual-input{margin-top:0;flex:1;min-width:0;}
-.course-steppers{display:flex;flex-direction:column;flex-shrink:0;}
-.course-steppers button{background:var(--panel);border:1px solid var(--warn);color:var(--text);width:26px;flex:1;font-size:9px;line-height:1;cursor:pointer;padding:0;}
-.course-steppers button:first-child{border-radius:6px 6px 0 0;border-bottom:none;}
-.course-steppers button:last-child{border-radius:0 0 6px 6px;}
-.course-steppers button:active{background:var(--warn);}
+.stepper-input-row{display:flex;gap:4px;align-items:stretch;margin-top:2px;}
+.stepper-input-row .manual-input{margin-top:0;flex:1;min-width:0;}
+.input-steppers{display:flex;flex-direction:column;flex-shrink:0;}
+.input-steppers button{background:var(--panel);border:1px solid var(--warn);color:var(--text);width:26px;flex:1;font-size:9px;line-height:1;cursor:pointer;padding:0;}
+.input-steppers button:first-child{border-radius:6px 6px 0 0;border-bottom:none;}
+.input-steppers button:last-child{border-radius:0 0 6px 6px;}
+.input-steppers button:active{background:var(--warn);}
 
 /* ---- password gate ---- */
 #passwordGate{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:5000;}
@@ -139,7 +139,8 @@ body.day #map{background:#dfe6ea;}
 .datacell.wide{grid-column:1/3;}
 
 .slider-row{margin-bottom:12px;}
-.slider-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;}
+.slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
+.dist-badge{color:#00e5c8;background:rgba(0,229,200,0.12);border:1px solid #00e5c8;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
 .slider-row .lbl b{color:var(--accent2);font-family:var(--mono);}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
@@ -334,15 +335,21 @@ canvas.mini{width:100% !important;height:130px !important;}
             <div class="datacell">
               <label>Alt AMSL (GPS)</label>
               <div class="val" id="altAMSL">—</div>
-              <input type="number" class="manual-input" id="altAMSLInput" style="display:none;" placeholder="m AMSL">
+              <div class="stepper-input-row" id="altAMSLInputRow" style="display:none;">
+                <input type="number" class="manual-input" id="altAMSLInput" placeholder="m AMSL">
+                <div class="input-steppers">
+                  <button type="button" id="altAMSLUpBtn">▲</button>
+                  <button type="button" id="altAMSLDownBtn">▼</button>
+                </div>
+              </div>
             </div>
             <div class="datacell"><label>Alt AGL</label><div class="val" id="altAGL">—</div></div>
             <div class="datacell">
               <label>Course (° True GPS)</label>
               <div class="val" id="courseVal">—</div>
-              <div class="course-input-row" id="courseInputRow" style="display:none;">
+              <div class="stepper-input-row" id="courseInputRow" style="display:none;">
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" class="manual-input" id="courseValInput" placeholder="090">
-                <div class="course-steppers">
+                <div class="input-steppers">
                   <button type="button" id="courseUpBtn">▲</button>
                   <button type="button" id="courseDownBtn">▼</button>
                 </div>
@@ -351,7 +358,13 @@ canvas.mini{width:100% !important;height:130px !important;}
             <div class="datacell">
               <label>Speed (GPS)</label>
               <div class="val" id="speedVal">—</div>
-              <input type="number" step="0.1" class="manual-input" id="speedValInput" style="display:none;" placeholder="kn">
+              <div class="stepper-input-row" id="speedValInputRow" style="display:none;">
+                <input type="number" step="0.1" class="manual-input" id="speedValInput" placeholder="kn">
+                <div class="input-steppers">
+                  <button type="button" id="speedUpBtn">▲</button>
+                  <button type="button" id="speedDownBtn">▼</button>
+                </div>
+              </div>
             </div>
           </div>
           <div id="positionManualNote" style="display:none;color:var(--bad);font-size:11px;font-weight:600;margin-top:8px;">Tap the map to set position. Altitude, course and speed above are directly editable.</div>
@@ -363,7 +376,7 @@ canvas.mini{width:100% !important;height:130px !important;}
         <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="slider-row">
-            <div class="lbl"><span>Initiate descent in</span><b id="lblInitDist" style="color:#00e5c8;">0.00 km</b> <b id="lblInit">30 min</b></div>
+            <div class="lbl"><span style="flex:1;">Initiate descent in</span><span id="lblInitDist" class="dist-badge">0.00 km</span><b id="lblInit">30 min</b></div>
             <input type="range" id="sInit" min="0" max="120" step="1" value="30">
           </div>
           <div class="slider-row">
@@ -491,7 +504,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v30';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1262,7 +1275,10 @@ function setAppMode(mode){
 
 // ---------- map click handling ----------
 map.on('click', async (e)=>{
-  if(document.getElementById('testEnable').checked){
+  if(document.getElementById('testEnable').checked && state.appMode!=='plan'){
+    // Manual/Test mode repositioning only applies while in "Landing Area"
+    // (monitor) mode - if the user has switched to "Plan Descent", a map
+    // click should pick a landing point instead, same as with live GPS.
     updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn, false);
     state.manualPositionSet = true;
     setManualModeUI(true);
@@ -1438,11 +1454,11 @@ document.addEventListener('click', ()=>{
 function setManualModeUI(active){
   document.getElementById('positionCard').classList.toggle('manual-active', active);
   document.getElementById('altAMSL').style.display = active ? 'none' : 'block';
-  document.getElementById('altAMSLInput').style.display = active ? 'block' : 'none';
+  document.getElementById('altAMSLInputRow').style.display = active ? 'flex' : 'none';
   document.getElementById('courseVal').style.display = active ? 'none' : 'block';
   document.getElementById('courseInputRow').style.display = active ? 'flex' : 'none';
   document.getElementById('speedVal').style.display = active ? 'none' : 'block';
-  document.getElementById('speedValInput').style.display = active ? 'block' : 'none';
+  document.getElementById('speedValInputRow').style.display = active ? 'flex' : 'none';
   if(active){
     document.getElementById('altAMSLInput').value = Math.round(state.altAMSL);
     document.getElementById('courseValInput').value = String(Math.round(state.course)%360).padStart(3,'0');
@@ -1487,6 +1503,25 @@ function stepCourse(delta){
 }
 document.getElementById('courseUpBtn').addEventListener('click', ()=>stepCourse(1));
 document.getElementById('courseDownBtn').addEventListener('click', ()=>stepCourse(-1));
+
+function stepAltAMSL(delta){
+  let v = (parseFloat(document.getElementById('altAMSLInput').value)||0) + delta;
+  document.getElementById('altAMSLInput').value = Math.round(v);
+  state.altAMSL = v;
+  document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
+  recomputeAll();
+}
+document.getElementById('altAMSLUpBtn').addEventListener('click', ()=>stepAltAMSL(10));
+document.getElementById('altAMSLDownBtn').addEventListener('click', ()=>stepAltAMSL(-10));
+
+function stepSpeed(delta){
+  let v = Math.max(0, (parseFloat(document.getElementById('speedValInput').value)||0) + delta);
+  document.getElementById('speedValInput').value = v.toFixed(1);
+  state.speedKn = v;
+  recomputeAll();
+}
+document.getElementById('speedUpBtn').addEventListener('click', ()=>stepSpeed(0.5));
+document.getElementById('speedDownBtn').addEventListener('click', ()=>stepSpeed(-0.5));
 
 // ---------- screenshot / recording (combined button + popover) ----------
 setupPopover('btnCapture','capturePanel');

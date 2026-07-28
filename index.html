@@ -24,8 +24,8 @@ body.day{
   --good:#1c8a49; --warn:#a87400; --bad:#b8342b;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);}
-#app{display:flex;flex-direction:column;height:100vh;width:100vw;}
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y;background:var(--bg);color:var(--text);font-family:var(--sans);position:fixed;inset:0;}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100vw;overscroll-behavior:none;}
 
 /* ---- header ---- */
 #topbar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;flex-wrap:nowrap;position:sticky;top:0;left:0;right:0;z-index:1000;min-height:44px;overflow-x:auto;overflow-y:hidden;}
@@ -79,11 +79,11 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 /* ---- airspace tiles: boost contrast/saturation so boundaries stand out ---- */
 .airspace-tiles{filter:saturate(1.6) contrast(1.35) brightness(1.05);}
 
-/* ---- place-name labels: subtle white halo so they read as distinct "chips"
-   from the road lines/labels underneath. Both are pre-rendered raster tiles
-   from Esri, so individual per-label boxes aren't possible - this halo is
-   the closest achievable visual differentiation without vector data. ---- */
-.places-tiles{filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 2.5px rgba(255,255,255,.8));}
+/* ---- place-name labels: real boxed chips (rendered as HTML markers from
+   live OSM data, not a raster tile), so they read as clearly distinct from
+   the road overlay underneath. ---- */
+.place-chip{background:rgba(20,26,33,0.85);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:4px;padding:1px 6px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5);}
+body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color:rgba(0,0,0,0.25);}
 
 /* ---- flown flight path: strong outline so it reads on any basemap ---- */
 .flightpath-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 4px rgba(0,0,0,0.6));}
@@ -100,7 +100,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- center-on-position button ---- */
-#btnCenterMap{position:absolute;top:8px;right:8px;z-index:550;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
+#btnCenterMap{position:absolute;bottom:10px;left:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
 #btnCenterMap:active{transform:scale(0.93);}
 
 /* ---- layer toggle group (header, top-left) ---- */
@@ -117,13 +117,17 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #gpsWarnBar button{background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 12px;font-weight:800;font-size:12px;letter-spacing:normal;cursor:pointer;}
 
 /* ---- main layout ---- */
-#main{flex:1;display:flex;flex-direction:row;min-height:0;height:100%;align-items:stretch;}
+#main{flex:1;display:flex;flex-direction:row;min-height:0;height:100%;align-items:stretch;position:relative;}
 #mapwrap{flex:0 0 75%;position:relative;min-width:0;height:100%;align-self:stretch;}
 #map{width:100%;height:100%;min-height:200px;background:#0a0d10;}
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;}
+#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;transition:flex-basis .25s ease, min-width .25s ease, padding .25s ease, border-left-width .25s ease;}
+#sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
+#sidebarHandle:active{background:var(--accent);color:#00201d;}
+#sidebar.collapsed{overflow:hidden !important;}
+#sidebar.collapsed{overflow:hidden !important;}
 
 .card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;}
 .card h3{margin:0 0 8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
@@ -220,14 +224,11 @@ canvas.mini{width:100% !important;height:130px !important;}
       <button class="ltbtn active" id="tgLanding" title="Landing area">🟢</button>
     </div>
     <div class="sep"></div>
-    <div style="display:flex;flex-direction:column;align-items:center;">
-      <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
-      <select id="altUnitSelect" class="iconbtn" style="padding:5px 4px;font-size:11px;width:56px;flex-shrink:0;">
-        <option value="m">m</option>
-        <option value="ft">ft</option>
-        <option value="FL">FL</option>
-      </select>
-    </div>
+    <select id="altUnitSelect" style="display:none;">
+      <option value="m">m</option>
+      <option value="ft">ft</option>
+      <option value="FL">FL</option>
+    </select>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
     <div style="position:relative;">
       <button class="iconbtn" id="btnCapture" title="Screenshot / Recording">📷</button>
@@ -320,6 +321,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       <div id="warnbar"></div>
     </div>
 
+    <button id="sidebarHandle" title="Collapse/expand sidebar">▶</button>
     <div id="sidebar">
 
       <!-- POSITION -->
@@ -403,9 +405,12 @@ canvas.mini{width:100% !important;height:130px !important;}
         <h3 onclick="toggleCard(this)">Adiabatic Braking (H₂) <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
-            <div class="datacell"><label>Req. rate at intercept</label><div class="val small" id="reqRateAtIntercept">—</div></div>
-            <div class="datacell"><label>Actual rate (adiabatic-limited)</label><div class="val small" id="actualRateAtIntercept">—</div></div>
-            <div class="datacell wide"><label>Virtual lift bonus</label><div class="val small" id="adiaKg">—</div></div>
+            <div class="datacell">
+              <label>Rate of Intercept</label>
+              <div class="val small" id="reqRateAtIntercept">—</div>
+              <div class="val small" id="actualRateAtIntercept" style="margin-top:2px;color:var(--muted);">—</div>
+            </div>
+            <div class="datacell"><label>Virtual Lift Bonus</label><div class="val small" id="adiaKg">—</div></div>
           </div>
         </div>
       </div>
@@ -504,7 +509,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v32';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -675,6 +680,7 @@ const powerLayer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}
   interactive: false,
   maxNativeZoom: 14,
   minZoom: 0,
+  pane: 'overlayTilesPane',
   attribution: '© OpenInfraMap / OpenStreetMap contributors'
 });
 document.getElementById('overheadOnly').addEventListener('change', e=>{
@@ -726,13 +732,19 @@ bindLayerToggle('tgAirspace', true, on=>{
     // require switching to their vector tile (.pbf) endpoint with custom
     // styling, which is a bigger separate piece of work.
     airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
-      {maxZoom:14, opacity:0.95, className:'airspace-tiles', attribution:'© openAIP'});
+      {maxZoom:14, opacity:0.95, className:'airspace-tiles', pane:'overlayTilesPane', attribution:'© openAIP'});
     airspaceLayer.addTo(map);
   } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
 });
 let roadsShown = true;
 const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,pane:'overlayTilesPane',attribution:'Roads: Esri'});
-const placesOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.95,className:'places-tiles',pane:'overlayTilesPane',attribution:'Places: Esri'});
+// Place names are rendered as real HTML markers (not a raster tile), so we
+// can give each one an actual boxed background - not possible with the
+// pre-rendered Esri "World Boundaries and Places" tiles used previously.
+const placeLabelsLayer = L.layerGroup();
+let placeLabelsFetchTimer = null;
+let placeLabelsAbortController = null;
+const PLACE_LABELS_MIN_ZOOM = 8;
 let landingLayerOn = true;
 let cacheRadiusKm = 75;
 document.getElementById('sCacheRadius').addEventListener('input', e=>{
@@ -753,10 +765,67 @@ const FINE_ROADS_MIN_ZOOM = 14; // keep Overpass queries small/fast
 
 bindLayerToggle('tgRoads', false, on=>{
   roadsShown = on;
-  if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); }
-  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); }
+  if(on){ roadsOverlay.addTo(map); if(!map.hasLayer(placeLabelsLayer)) placeLabelsLayer.addTo(map); schedulePlaceLabelsFetch(); }
+  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placeLabelsLayer)) map.removeLayer(placeLabelsLayer); placeLabelsLayer.clearLayers(); }
   updateFineRoadsVisibility();
 });
+
+function schedulePlaceLabelsFetch(){
+  clearTimeout(placeLabelsFetchTimer);
+  placeLabelsFetchTimer = setTimeout(fetchPlaceLabels, 600);
+}
+function placeLabelStyle(placeTag, zoom){
+  // Only show smaller settlement types once zoomed in far enough, to avoid
+  // cluttering the map with every hamlet at a wide overview zoom.
+  const rank = {city:1, town:2, suburb:3, village:4, hamlet:5}[placeTag] || 6;
+  const minZoomForRank = {1:0, 2:9, 3:11, 4:11, 5:13, 6:14}[rank];
+  return { visible: zoom>=minZoomForRank, fontWeight: rank<=2 ? 700 : 500, fontSize: rank<=2 ? 12 : 11 };
+}
+async function fetchPlaceLabels(){
+  if(!(roadsShown)) return;
+  if(map.getZoom() < PLACE_LABELS_MIN_ZOOM){ placeLabelsLayer.clearLayers(); return; }
+  const b = map.getBounds();
+  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const query = `[out:json][timeout:20];node["place"~"^(city|town|suburb|village|hamlet)$"](${bbox});out;`;
+  if(placeLabelsAbortController) placeLabelsAbortController.abort();
+  placeLabelsAbortController = new AbortController();
+  const cacheKey = `https://place-labels-cache.local/tile?z=${map.getZoom()}&s=${Math.round(b.getSouth()*50)}&w=${Math.round(b.getWest()*50)}&n=${Math.round(b.getNorth()*50)}&e=${Math.round(b.getEast()*50)}`;
+  try{
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method:'POST', body:'data='+encodeURIComponent(query), signal:placeLabelsAbortController.signal
+    });
+    const j = await r.json();
+    renderPlaceLabels(j);
+    if('caches' in window){
+      caches.open('gblp-tiles-v1').then(cache=>{
+        cache.put(cacheKey, new Response(JSON.stringify(j), {headers:{'Content-Type':'application/json'}}));
+      }).catch(()=>{});
+    }
+  }catch(e){
+    if('caches' in window){
+      try{
+        const cache = await caches.open('gblp-tiles-v1');
+        const cached = await cache.match(cacheKey);
+        if(cached){ renderPlaceLabels(await cached.json()); }
+      }catch(e2){ /* no cached fallback available */ }
+    }
+  }
+}
+function renderPlaceLabels(j){
+  placeLabelsLayer.clearLayers();
+  const zoom = map.getZoom();
+  for(const el of (j.elements||[])){
+    if(el.type!=='node' || !el.tags || !el.tags.name) continue;
+    const style = placeLabelStyle(el.tags.place, zoom);
+    if(!style.visible) continue;
+    const icon = L.divIcon({
+      html:`<div class="place-chip" style="font-weight:${style.fontWeight};font-size:${style.fontSize}px;">${el.tags.name}</div>`,
+      className:'', iconSize:null, iconAnchor:[0,8]
+    });
+    L.marker([el.lat, el.lon], {icon, pane:'overlayTilesPane', interactive:false}).addTo(placeLabelsLayer);
+  }
+}
+map.on('moveend zoomend', schedulePlaceLabelsFetch);
 
 function fineRoadStyle(highwayTag){
   switch(highwayTag){
@@ -853,12 +922,15 @@ function updateAircraftRotation(){
   if(rotor) rotor.style.transform = `rotate(${state.course}deg)`;
 }
 setInterval(updateAircraftRotation, 2000);
-const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:2.5, opacity:0.75, lineCap:'round'}).addTo(map);
+const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:4, opacity:0.85, lineCap:'butt', dashArray:'16,10'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
 let descentPathLayer = L.polyline([], {color:'#b026ff', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round', className:'descent-path-glow'}).addTo(map);
 let predictedCruiseLayer = L.polyline([], {color:'#00e5c8', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
 let predictedDescentSegmentLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round', className:'descent-path-glow'}).addTo(map);
-const blueDotIcon = L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#ffee00;border:3px solid #fff;box-shadow:0 0 8px 2px #ffee00;"></div>', className:'', iconSize:[24,24], iconAnchor:[12,12]});
+const blueDotIcon = L.divIcon({
+  html:'<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 L2 2 L24 2 Z" fill="#ffee00" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>',
+  className:'', iconSize:[26,24], iconAnchor:[13,20]
+});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
@@ -1261,6 +1333,44 @@ document.getElementById('modePlan').addEventListener('click', ()=>setAppMode('pl
 document.getElementById('btnCenterMap').addEventListener('click', ()=>{
   map.setView([state.lat, state.lon], map.getZoom());
 });
+
+// ---------- sidebar collapse handle ----------
+function positionSidebarHandle(){
+  const handle = document.getElementById('sidebarHandle');
+  const sidebar = document.getElementById('sidebar');
+  const collapsed = sidebar.classList.contains('collapsed');
+  if(collapsed){
+    handle.style.right = '0px';
+    handle.textContent = '◀';
+  } else {
+    const w = sidebar.getBoundingClientRect().width;
+    handle.style.right = w + 'px';
+    handle.textContent = '▶';
+  }
+}
+document.getElementById('sidebarHandle').addEventListener('click', ()=>{
+  const sidebar = document.getElementById('sidebar');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  if(collapsed){
+    sidebar.style.flex = '0 0 0';
+    sidebar.style.minWidth = '0';
+    sidebar.style.padding = '0';
+    sidebar.style.borderLeftWidth = '0';
+  } else {
+    sidebar.style.flex = '';
+    sidebar.style.minWidth = '';
+    sidebar.style.padding = '';
+    sidebar.style.borderLeftWidth = '';
+  }
+  positionSidebarHandle();
+  // Wait for the CSS transition to finish, then let Leaflet recompute its
+  // size (the map area grows/shrinks as the sidebar toggles) and reposition
+  // the handle at its final resting spot.
+  setTimeout(()=>{ map.invalidateSize(); positionSidebarHandle(); }, 280);
+});
+window.addEventListener('resize', positionSidebarHandle);
+window.addEventListener('load', positionSidebarHandle);
+positionSidebarHandle();
 function setAppMode(mode){
   state.appMode = mode;
   document.getElementById('modeMonitor').classList.toggle('active', mode==='monitor');
@@ -1459,6 +1569,7 @@ function setManualModeUI(active){
   document.getElementById('courseInputRow').style.display = active ? 'flex' : 'none';
   document.getElementById('speedVal').style.display = active ? 'none' : 'block';
   document.getElementById('speedValInputRow').style.display = active ? 'flex' : 'none';
+  document.getElementById('altAGL').style.opacity = active ? '0.55' : '1';
   if(active){
     document.getElementById('altAMSLInput').value = Math.round(state.altAMSL);
     document.getElementById('courseValInput').value = String(Math.round(state.course)%360).padStart(3,'0');
@@ -1629,7 +1740,6 @@ async function precacheAreaTiles(lat, lon, radiusKm){
     }
     if(document.getElementById('tgRoads').classList.contains('active')){
       addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`);
-      addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/${z}/${y}/${x}`);
     }
     console.log(`Pre-caching ${urls.length} tiles within ${radiusKm}km...`);
     // Fetch with modest concurrency so we don't hammer the connection.

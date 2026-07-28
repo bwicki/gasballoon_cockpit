@@ -102,6 +102,19 @@ A Service Worker (`sw.js`) caches map/data tile requests (base map, power lines,
 
 ---
 
+## New in this round (v37)
+
+- **Real obstacle warnings**: the descent path is now checked against real terrain elevation (Open-Meteo, sampled along the path) and real airspace polygons (openAIP **Core API**, not the raster tile layer) - warns if ground clearance drops below 50 m or the path crosses a mapped airspace. Debounced so it doesn't hammer these APIs on every slider tick. **Not covered**: power line collision - that would require parsing OpenInfraMap's raw vector tile data, which was out of scope here.
+- **Wind-forecast uncertainty in the landing footprint**: each Monte-Carlo run now also samples a random wind-direction/speed perturbation whose magnitude grows with the model run's age, on top of the existing descent-rate scatter.
+- **Emergency contact**: red header button opens a panel to prepare a position/altitude/course/landing-area report and send it via WhatsApp, SMS, or email (or just copy it).
+- **Wind Profile card**: classic sounding-style speed-vs-altitude chart (direction shown in the tooltip), alongside the existing hodograph.
+- **Hodograph toggle**: header button to show/hide the hodograph.
+- **Ground wind particle layer**: animated, colour-coded (blue→green→yellow→orange→red by knots) particle flow representing wind in the 0-200 m AGL band, with a legend.
+- **Flight logbook**: periodic position/altitude/course/speed logging (configurable interval), exportable as GPX or KML after landing; persists across reloads.
+- **Configurable balloon volume + adiabatic variance factor**: in Settings, so the adiabatic braking model matches your actual envelope and can be empirically tuned against real flight data.
+- **Settings persistence**: your configuration is saved automatically and restored on next launch; a "Reset all settings to defaults" button is available in Settings.
+- **Experimental Bluetooth GPS**: best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic (Bluetooth SIG spec 0x2A67). There is no universal BLE GPS standard for aviation receivers, so hardware compatibility varies - treat this as experimental, not a guaranteed integration.
+
 ## Known limitations & approximations
 
 - **Model run age**: Open-Meteo's simple forecast endpoint doesn't return the exact model-run timestamp. The "run age" shown is *estimated* from each model's publicly documented update cadence (e.g. ICON-D2 every 3h, GFS every 6h, ECMWF every 12h) plus typical publication latency — a realistic estimate, not a value confirmed by the data source itself.

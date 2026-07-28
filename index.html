@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d1117'/%3E%3Cellipse cx='32' cy='26' rx='16' ry='19' fill='%233fd0c9'/%3E%3Cpath d='M24 42 L28 50 L36 50 L40 42' fill='none' stroke='%23ffb454' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='27' y='50' width='10' height='7' rx='1.5' fill='%23ffb454'/%3E%3Cpath d='M32 45 L32 50' stroke='%230d1117' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d1117'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='%233fd0c9' stroke-width='3.5'/%3E%3Ccircle cx='32' cy='32' r='6.5' fill='%233fd0c9'/%3E%3Cpath d='M32 6v9M32 49v9M6 32h9M49 32h9' stroke='%233fd0c9' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -224,6 +224,19 @@ canvas.mini{width:100% !important;height:130px !important;}
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
       <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 12 L14 13 L13 20 L16 22 L12 21 L8 22 L11 20 L10 13 L3 12 L10 9 Z" fill="currentColor"/></svg></button>
       <button class="ltbtn active" id="tgLanding" title="Landing area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
+      <button class="ltbtn active" id="tgHodograph" title="Show/hide hodograph"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20 C 8 8, 16 16, 20 4" stroke-linecap="round"/></svg></button>
+      <div style="position:relative;">
+        <button class="ltbtn" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
+        <div id="groundWindLegendPanel" class="settings-popover" style="width:190px;">
+          <div class="subhead" style="margin-top:0;">Ground Wind (0-200m AGL)</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#3b82f6;"></span>&lt; 5 kn</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#22c55e;"></span>5-10 kn</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#eab308;"></span>10-15 kn</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#f97316;"></span>15-20 kn</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#ef4444;"></span>&gt; 20 kn</div>
+          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Particle motion direction = wind direction at ~100m AGL from the current model.</p>
+        </div>
+      </div>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -235,6 +248,26 @@ canvas.mini{width:100% !important;height:130px !important;}
       <svg id="iconSun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
       <svg id="iconMoon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
     </button>
+    <div style="position:relative;">
+      <button class="iconbtn" id="btnEmergency" title="Emergency contact" style="background:var(--bad);color:#fff;border-color:var(--bad);">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      </button>
+      <div id="emergencyPanel" class="settings-popover" style="width:280px;">
+        <div class="subhead" style="margin-top:0;">Emergency Contact</div>
+        <input type="tel" id="emergencyPhone" placeholder="Phone, intl. format e.g. +41791234567" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="email" id="emergencyEmail" placeholder="Email address (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:8px;">
+        <button class="ghost" id="btnPrepareEmergencyMsg">Prepare message now</button>
+        <div id="emergencyMsgPreview" style="display:none;margin-top:8px;">
+          <textarea id="emergencyMsgText" readonly style="width:100%;height:110px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);box-sizing:border-box;"></textarea>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="ghost" id="btnEmergencyCopy" style="flex:1;">Copy</button>
+            <button class="ghost" id="btnEmergencyWhatsapp" style="flex:1;">WhatsApp</button>
+            <button class="ghost" id="btnEmergencySms" style="flex:1;">SMS</button>
+            <button class="ghost" id="btnEmergencyEmailSend" style="flex:1;">Email</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="position:relative;">
       <button class="iconbtn" id="btnCapture" title="Screenshot / Recording"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 6.5 L9.3 4 h5.4 L16 6.5"/><rect x="2.5" y="6.5" width="19" height="13.5" rx="2"/><circle cx="12" cy="13" r="3.6"/></svg></button>
       <div id="capturePanel" class="settings-popover" style="width:220px;">
@@ -303,6 +336,44 @@ canvas.mini{width:100% !important;height:130px !important;}
           <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">75 km</b></div>
           <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="75">
         </div>
+
+        <hr>
+        <hr>
+        <div class="subhead">External GPS (Bluetooth, experimental)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic. Hardware compatibility varies widely - there is no universal BLE GPS standard for aviation receivers.</p>
+        <button class="ghost" id="btnConnectBleGps">Connect Bluetooth GPS</button>
+        <div id="bleGpsStatus" style="font-size:11px;color:var(--muted);margin-top:6px;">Not connected</div>
+
+        <div class="subhead">Adiabatic Braking Model</div>
+        <div class="slider-row">
+          <div class="lbl"><span>Balloon gas volume</span><b id="lblBalloonVolume" style="color:var(--accent2);">1050 m³</b></div>
+          <input type="range" id="sBalloonVolume" min="200" max="3000" step="10" value="1050">
+        </div>
+        <div class="slider-row">
+          <div class="lbl"><span>Empirical variance factor</span><b id="lblAdiaVariance" style="color:var(--accent2);">100 %</b></div>
+          <input type="range" id="sAdiaVariance" min="30" max="200" step="5" value="100">
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Scales the computed adiabatic lift bonus up or down to match your own empirical flight data (100% = model as-is).</p>
+
+        <hr>
+        <button class="ghost" id="btnResetDefaults">Reset all settings to defaults</button>
+      </div>
+    </div>
+    <div style="position:relative;">
+      <button class="iconbtn" id="btnLogbook" title="Flight Log">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      </button>
+      <div id="logbookPanel" class="settings-popover" style="width:230px;">
+        <div class="subhead" style="margin-top:0;">Flight Log</div>
+        <div class="datacell wide" style="margin-bottom:8px;"><label>Entries logged</label><div class="val small" id="logbookCount">0</div></div>
+        <div class="togglerow"><span>Logging enabled</span><label class="switch"><input type="checkbox" id="logbookEnabled" checked><span class="slider-tog"></span></label></div>
+        <div class="slider-row" style="margin-top:8px;">
+          <div class="lbl"><span>Log interval</span><b id="lblLogInterval" style="color:var(--accent2);">60 s</b></div>
+          <input type="range" id="sLogInterval" min="10" max="600" step="10" value="60">
+        </div>
+        <button class="ghost" id="btnExportGpx" style="margin-top:8px;">Export as GPX</button>
+        <button class="ghost" id="btnExportKml" style="margin-top:8px;">Export as KML</button>
+        <button class="ghost" id="btnClearLog" style="margin-top:8px;color:var(--bad);">Clear log</button>
       </div>
     </div>
     <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
@@ -442,6 +513,14 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
 
+      <!-- WIND PROFILE (classic sounding-style diagram, always shown from the current model) -->
+      <div class="card">
+        <h3 onclick="toggleCard(this)">Wind Profile <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <canvas class="mini" id="windProfileChart"></canvas>
+        </div>
+      </div>
+
       <!-- CLICK RESULT -->
       <div class="card" id="resultpanel">
         <h3 onclick="toggleCard(this)">Landing Point Plan <span class="chev">▾</span></h3>
@@ -452,7 +531,7 @@ canvas.mini{width:100% !important;height:130px !important;}
           </div>
           <div class="copyline"><div class="txt" id="resNearestTown">nearest town —</div><button onclick="copyResultAll()">Copy</button></div>
           <canvas class="mini" id="vertProfileChart"></canvas>
-          <canvas class="mini" id="hodographChart"></canvas>
+          <div id="hodographWrap"><canvas class="mini" id="hodographChart"></canvas></div>
         </div>
       </div>
 
@@ -515,7 +594,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v37';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1171,29 +1250,32 @@ async function fetchWind(force){
     state.modelRunAge = new Date();
     document.getElementById('wxModelName').textContent = state.modelUsed;
     document.getElementById('wxModelAge').textContent = `fetched just now · run ~${state.modelRunAgeH.toFixed(1)} h old`;
+    drawWindProfileChart();
     recomputeAll();
   }catch(e){
     document.getElementById('wxModelName').textContent = 'offline (cached)';
   }
 }
 document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
-function windAt(altM){
+function windAt(altM, dirBiasDeg, speedScale){
   const p = state.windProfile;
   if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};
-  if(altM<=p[0].alt_m) return toUV(p[0]);
-  if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1]);
+  if(altM<=p[0].alt_m) return toUV(p[0], dirBiasDeg, speedScale);
+  if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1], dirBiasDeg, speedScale);
   for(let i=0;i<p.length-1;i++){
     if(altM>=p[i].alt_m && altM<=p[i+1].alt_m){
       const f=(altM-p[i].alt_m)/(p[i+1].alt_m-p[i].alt_m);
-      const a=toUV(p[i]), b=toUV(p[i+1]);
+      const a=toUV(p[i], dirBiasDeg, speedScale), b=toUV(p[i+1], dirBiasDeg, speedScale);
       return {u:a.u+(b.u-a.u)*f, v:a.v+(b.v-a.v)*f};
     }
   }
-  return toUV(p[p.length-1]);
+  return toUV(p[p.length-1], dirBiasDeg, speedScale);
 }
-function toUV(pt){ // meteorological dir (from) -> u/v vector (to)
-  const rad=(pt.dir_deg+180)*Math.PI/180;
-  return {u: pt.speed_ms*Math.sin(rad), v: pt.speed_ms*Math.cos(rad)};
+function toUV(pt, dirBiasDeg, speedScale){ // meteorological dir (from) -> u/v vector (to)
+  const dir = pt.dir_deg + (dirBiasDeg||0);
+  const spd = pt.speed_ms * (speedScale||1);
+  const rad=(dir+180)*Math.PI/180;
+  return {u: spd*Math.sin(rad), v: spd*Math.cos(rad)};
 }
 setInterval(()=>{
   if(state.modelRunAge){
@@ -1218,7 +1300,18 @@ setInterval(()=>{
 // extra air => extra buoyancy => braking effect on the descent. No ballast,
 // valve, or payload mass is needed for this - it follows purely from the
 // fixed volume and the two altitudes.
-const NOMINAL_BALLOON_VOLUME_M3 = 1050;
+let balloonVolumeM3 = 1050; // configurable in Settings
+let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
+document.getElementById('sBalloonVolume').addEventListener('input', e=>{
+  balloonVolumeM3 = parseInt(e.target.value);
+  document.getElementById('lblBalloonVolume').textContent = balloonVolumeM3 + ' m³';
+  recomputeAll();
+});
+document.getElementById('sAdiaVariance').addEventListener('input', e=>{
+  adiaVarianceFactor = parseInt(e.target.value)/100;
+  document.getElementById('lblAdiaVariance').textContent = e.target.value + ' %';
+  recomputeAll();
+});
 function adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, descRateMs){
   const GAMMA = 1.41; // H2, diatomic
   function P(alt){ const T0=288.15,L=0.0065,R=287.05; return 101325*Math.pow((T0-L*Math.min(alt,11000))/T0, G/(L*R)); }
@@ -1238,7 +1331,7 @@ function adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, descRateMs){
   const V1_effective = V1_iso + (V1_adiabatic - V1_iso)*adiabFraction;
 
   const deltaV = Math.max(0, V1_effective - V1_iso); // retained "extra" volume vs. the isothermal baseline
-  const liftBonusKg = deltaV * isoDensity(interceptAltM); // extra buoyancy this represents, in kg
+  const liftBonusKg = deltaV * isoDensity(interceptAltM) * adiaVarianceFactor; // extra buoyancy this represents, in kg (scaled by empirical variance factor)
   return { liftBonusKg, V1_effective, V1_iso, V1_adiabatic, adiabFraction };
 }
 // Approximate the ACTUAL descent rate physically achieved at intercept once
@@ -1254,7 +1347,7 @@ function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1M
 }
 
 // ---------- Monte-Carlo landing footprint ----------
-function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore){
+function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale){
   // Phase 0: continue current flight (course/speed) until initDelayS elapsed (still at cruise alt)
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
@@ -1271,7 +1364,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   const effRate1 = rateMs*(1+ (Math.random()*2-1)*scatterFrac);
   while(alt>interceptAlt){
     const step=dt;
-    const w = windAt(alt);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-effRate1*step); t+=step;
     path.push({lat,lon,alt,t});
@@ -1279,7 +1372,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   const effRate2 = rate2Ms*(1+ (Math.random()*2-1)*scatterFrac);
   while(alt>state.groundElev){
     const step=dt;
-    const w = windAt(alt);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(state.groundElev, alt-effRate2*step); t+=step;
     path.push({lat,lon,alt,t});
@@ -1314,8 +1407,19 @@ function doRecompute(){
   if(landingLayerOn){
     const N=40;
     const endpoints=[];
+    // Wind-forecast uncertainty grows with the age of the model run: an old
+    // run is simply less trustworthy than a fresh one. Each Monte-Carlo
+    // sample draws its OWN random wind-direction bias and speed-scale factor
+    // (applied consistently across all altitudes for that one run), on top
+    // of the existing descent-rate scatter, so the landing footprint also
+    // reflects "the forecast itself could be off", not just piloting scatter.
+    const ageH = state.modelRunAgeH || 3;
+    const windDirUncertaintyDeg = Math.min(35, 5 + ageH*2.5);
+    const windSpeedUncertaintyFrac = Math.min(0.35, 0.05 + ageH*0.02);
     for(let i=0;i<N;i++){
-      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, scatter);
+      const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
+      const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
+      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale);
       const last=path[path.length-1];
       endpoints.push([last.lon,last.lat]);
     }
@@ -1353,22 +1457,197 @@ function doRecompute(){
 function updateAdiabaticReadout(rate1, interceptAGL){
   const interceptAlt = state.groundElev+interceptAGL;
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
-  const { liftBonusKg } = adiabaticVolumeAndLift(NOMINAL_BALLOON_VOLUME_M3, startAlt, interceptAlt, rate1);
-  const actualRate = computeActualRateAtIntercept(NOMINAL_BALLOON_VOLUME_M3, startAlt, interceptAlt, rate1);
+  const { liftBonusKg } = adiabaticVolumeAndLift(balloonVolumeM3, startAlt, interceptAlt, rate1);
+  const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
   document.getElementById('adiaKg').textContent = liftBonusKg.toFixed(1)+' kg';
   document.getElementById('reqRateAtIntercept').textContent = rate1.toFixed(1)+' m/s (nominal)';
   document.getElementById('actualRateAtIntercept').textContent = actualRate.toFixed(1)+' m/s (approx.)';
 }
 
 function checkObstacleWarnings(path){
-  // placeholder simplistic ground-clearance check vs a flat ground reference
-  let warn=null;
-  for(const p of path){
-    if(p.alt - state.groundElev < 15 && p.t>0){ /* near ground, fine, expected at end */ }
-  }
-  const warnbar=document.getElementById('warnbar');
-  if(warn){ warnbar.textContent=warn; warnbar.classList.add('show'); } else { warnbar.classList.remove('show'); }
+  scheduleObstacleCheck(path);
 }
+let obstacleCheckTimer = null;
+let obstacleCheckAbort = null;
+function scheduleObstacleCheck(path){
+  // Debounced: elevation + airspace lookups are real network calls, so we
+  // don't want to fire them on every single slider tick, only once things
+  // have settled for a moment.
+  clearTimeout(obstacleCheckTimer);
+  obstacleCheckTimer = setTimeout(()=>runObstacleCheck(path), 900);
+}
+async function runObstacleCheck(path){
+  if(obstacleCheckAbort) obstacleCheckAbort.abort();
+  obstacleCheckAbort = new AbortController();
+  const signal = obstacleCheckAbort.signal;
+  const warnbar = document.getElementById('warnbar');
+  const warnings = [];
+  try{
+    const terrainWarning = await checkTerrainClearance(path, signal);
+    if(terrainWarning) warnings.push(terrainWarning);
+    const airspaceWarning = await checkAirspaceIntrusion(path, signal);
+    if(airspaceWarning) warnings.push(airspaceWarning);
+  }catch(e){ /* network hiccup - don't block the UI on it */ }
+  if(signal.aborted) return; // a newer check has since superseded this one
+  if(warnings.length){
+    warnbar.textContent = '⚠ ' + warnings.join('  ·  ');
+    warnbar.classList.add('show');
+  } else {
+    warnbar.classList.remove('show');
+  }
+}
+// ---- terrain clearance along the descent path ----
+async function checkTerrainClearance(path, signal){
+  const MIN_CLEARANCE_M = 50;
+  const N = Math.min(20, path.length);
+  const step = Math.max(1, Math.floor(path.length/N));
+  const samples = [];
+  for(let i=0;i<path.length;i+=step) samples.push(path[i]);
+  if(samples[samples.length-1]!==path[path.length-1]) samples.push(path[path.length-1]);
+  const lats = samples.map(p=>p.lat.toFixed(5)).join(',');
+  const lons = samples.map(p=>p.lon.toFixed(5)).join(',');
+  const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`, {signal});
+  const j = await r.json();
+  if(!j.elevation) return null;
+  let worst = null;
+  for(let i=0;i<samples.length;i++){
+    const clearance = samples[i].alt - j.elevation[i];
+    if(clearance < MIN_CLEARANCE_M && (worst===null || clearance<worst.clearance)){
+      worst = {clearance, minAt: Math.round(samples[i].t/60)};
+    }
+  }
+  if(worst) return `Terrain clearance only ~${Math.round(worst.clearance)} m (~${worst.minAt} min into descent)`;
+  return null;
+}
+// ---- airspace intrusion along the descent path (real polygon geometry via
+// openAIP's Core API, not the raster tile layer - this needs its own,
+// separate endpoint/host from the map display) ----
+function pointInGeoJsonPolygon(lon, lat, geometry){
+  function ringContains(ring){
+    let inside=false;
+    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+      const xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1];
+      const intersect = ((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi);
+      if(intersect) inside=!inside;
+    }
+    return inside;
+  }
+  if(!geometry) return false;
+  if(geometry.type==='Polygon'){
+    return ringContains(geometry.coordinates[0]); // outer ring only, ignoring holes
+  }
+  if(geometry.type==='MultiPolygon'){
+    return geometry.coordinates.some(poly=>ringContains(poly[0]));
+  }
+  return false;
+}
+async function checkAirspaceIntrusion(path, signal){
+  if(!document.getElementById('tgAirspace').classList.contains('active')) return null;
+  const lats = path.map(p=>p.lat), lons = path.map(p=>p.lon);
+  const pad = 0.02;
+  const bbox = [Math.min(...lons)-pad, Math.min(...lats)-pad, Math.max(...lons)+pad, Math.max(...lats)+pad].join(',');
+  try{
+    const r = await fetch(`https://api.core.openaip.net/api/airspaces?bbox=${bbox}&apiKey=${OPENAIP_API_KEY}`, {signal});
+    if(!r.ok) return null; // e.g. rate limited (429) - just skip silently this round
+    const j = await r.json();
+    const items = j.items || j.data || [];
+    // Check only a thinned-out sample of path points against each airspace,
+    // to keep this cheap - horizontal intersection only (vertical/altitude
+    // limits use varying units in the API and aren't evaluated here yet).
+    const N = Math.min(15, path.length);
+    const step = Math.max(1, Math.floor(path.length/N));
+    for(const as of items){
+      const geom = as.geometry;
+      if(!geom) continue;
+      for(let i=0;i<path.length;i+=step){
+        if(pointInGeoJsonPolygon(path[i].lon, path[i].lat, geom)){
+          return `Descent path crosses airspace "${as.name||'unnamed'}" (~${Math.round(path[i].t/60)} min in) - horizontal check only, verify vertical limits yourself`;
+        }
+      }
+    }
+  }catch(e){ /* network hiccup or aborted - skip this round */ }
+  return null;
+}
+
+// ---------- ground wind particle flow layer (0-200m AGL) ----------
+const groundWindLayer = {canvas:null, ctx:null, particles:[], animId:null, active:false};
+function initGroundWindCanvas(){
+  const canvas = document.createElement('canvas');
+  canvas.id = 'groundWindCanvas';
+  canvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:450;display:none;';
+  document.getElementById('map').appendChild(canvas);
+  groundWindLayer.canvas = canvas;
+  groundWindLayer.ctx = canvas.getContext('2d');
+  function resizeCanvas(){
+    const size = map.getSize();
+    canvas.width = size.x; canvas.height = size.y;
+  }
+  map.on('resize move zoom', resizeCanvas);
+  resizeCanvas();
+}
+function groundWindSpeedColor(speedMs){
+  const kn = speedMs*KN_PER_MS;
+  if(kn<5) return '#3b82f6';
+  if(kn<10) return '#22c55e';
+  if(kn<15) return '#eab308';
+  if(kn<20) return '#f97316';
+  return '#ef4444';
+}
+function spawnGroundWindParticle(){
+  const b = map.getBounds();
+  return {
+    lat: b.getSouth() + Math.random()*(b.getNorth()-b.getSouth()),
+    lon: b.getWest() + Math.random()*(b.getEast()-b.getWest()),
+    age: Math.random()*120
+  };
+}
+function startGroundWindLayer(){
+  if(!groundWindLayer.canvas) initGroundWindCanvas();
+  groundWindLayer.canvas.style.display = 'block';
+  groundWindLayer.particles = Array.from({length:180}, spawnGroundWindParticle);
+  groundWindLayer.active = true;
+  animateGroundWind();
+}
+function stopGroundWindLayer(){
+  groundWindLayer.active = false;
+  if(groundWindLayer.animId) cancelAnimationFrame(groundWindLayer.animId);
+  if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
+}
+function animateGroundWind(){
+  if(!groundWindLayer.active) return;
+  const ctx = groundWindLayer.ctx;
+  ctx.clearRect(0,0,groundWindLayer.canvas.width, groundWindLayer.canvas.height);
+  // Representative near-surface level: ~100m AGL, i.e. mid-way through the
+  // 0-200m AGL band this layer is meant to visualize.
+  const w = windAt(state.groundElev+100);
+  const speed = Math.hypot(w.u, w.v);
+  const color = groundWindSpeedColor(speed);
+  const b = map.getBounds();
+  const centerLat = map.getCenter().lat;
+  const metersPerDegLat = 111320;
+  const metersPerDegLon = 111320*Math.cos(centerLat*Math.PI/180) || 1;
+  const SPEED_UP = 60; // purely visual scale factor, not a physical time step
+  groundWindLayer.particles.forEach(p=>{
+    p.lat += (w.v/metersPerDegLat)*SPEED_UP*0.016;
+    p.lon += (w.u/metersPerDegLon)*SPEED_UP*0.016;
+    p.age += 1;
+    if(p.age>200 || !b.contains([p.lat,p.lon])){
+      Object.assign(p, spawnGroundWindParticle());
+    }
+    const pt = map.latLngToContainerPoint([p.lat,p.lon]);
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 2.2, 0, 2*Math.PI);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.75;
+    ctx.fill();
+  });
+  groundWindLayer.animId = requestAnimationFrame(animateGroundWind);
+}
+document.getElementById('tgGroundWind').addEventListener('click', function(){
+  const active = this.classList.toggle('active');
+  if(active) startGroundWindLayer(); else stopGroundWindLayer();
+});
+setupPopover('tgGroundWind','groundWindLegendPanel');
 
 // ---------- mode toggle: monitor (function 1) vs plan descent (function 2) ----------
 state.appMode = 'monitor'; // 'monitor' | 'plan'
@@ -1546,6 +1825,43 @@ function drawHodograph(path){
     options:{plugins:{legend:{display:false},title:{display:true,text:'Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
 }
 
+// Classic sounding-style wind profile: speed vs altitude, with direction
+// shown via the tooltip (and as a compass letter annotation) at each level -
+// often more intuitive for flight planning than the hodograph alone.
+let windProfileChart = null;
+function drawWindProfileChart(){
+  const p = state.windProfile;
+  if(!p || !p.length) return;
+  const ctx = document.getElementById('windProfileChart').getContext('2d');
+  const labels = p.map(pt=>Math.round(pt.alt_m));
+  const speedsKn = p.map(pt=>(pt.speed_ms*KN_PER_MS).toFixed(1));
+  if(windProfileChart){ windProfileChart.destroy(); windProfileChart=null; }
+  windProfileChart = new Chart(ctx,{
+    type:'line',
+    data:{labels, datasets:[{data:speedsKn, borderColor:'#ffb454', backgroundColor:'rgba(255,180,84,.15)', fill:true, pointRadius:2, tension:0.15}]},
+    options:{
+      indexAxis:'y', // altitude runs vertically, like a real sounding plot
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{
+        legend:{display:false},
+        title:{display:true,text:'Wind speed (kn) by altitude (m AMSL)',color:'#8b98a5',font:{size:10}},
+        tooltip:{callbacks:{afterLabel:(ctx)=>{
+          const dir = p[ctx.dataIndex].dir_deg;
+          return `from ${Math.round(dir)}°`;
+        }}}
+      },
+      scales:{
+        x:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.15)'}},
+        y:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.15)'}}
+      }
+    }
+  });
+}
+document.getElementById('tgHodograph').addEventListener('click', function(){
+  const active = this.classList.toggle('active');
+  document.getElementById('hodographWrap').style.display = active ? 'block' : 'none';
+});
+
 // ---------- sliders ----------
 function bindSlider(id,lblId,fmt){
   const el=document.getElementById(id);
@@ -1676,6 +1992,54 @@ document.getElementById('speedUpBtn').addEventListener('click', ()=>stepSpeed(0.
 document.getElementById('speedDownBtn').addEventListener('click', ()=>stepSpeed(-0.5));
 
 // ---------- screenshot / recording (combined button + popover) ----------
+// ---------- emergency contact ----------
+setupPopover('btnEmergency','emergencyPanel');
+try{
+  document.getElementById('emergencyPhone').value = localStorage.getItem('gblp_emergency_phone') || '';
+  document.getElementById('emergencyEmail').value = localStorage.getItem('gblp_emergency_email') || '';
+}catch(e){}
+document.getElementById('emergencyPhone').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_emergency_phone', e.target.value); }catch(err){} });
+document.getElementById('emergencyEmail').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_emergency_email', e.target.value); }catch(err){} });
+function buildEmergencyMessage(){
+  const lines = [];
+  lines.push('GBLP EMERGENCY POSITION REPORT');
+  lines.push(toCompact(state.lat, state.lon));
+  lines.push(`Alt AMSL: ${Math.round(state.altAMSL)} m / AGL: ${Math.round(state.altAMSL-state.groundElev)} m`);
+  lines.push(`Course: ${String(Math.round(state.course)%360).padStart(3,'0')}°  Speed: ${state.speedKn.toFixed(1)} kn`);
+  const townTxt = document.getElementById('posNearestTown').textContent;
+  if(townTxt && townTxt!=='—') lines.push(`Nearest town: ${townTxt}`);
+  if(state.landingPolygon && state.landingPolygon.length){
+    const lats = state.landingPolygon.map(p=>p[1]), lons = state.landingPolygon.map(p=>p[0]);
+    const cLat = lats.reduce((a,b)=>a+b,0)/lats.length, cLon = lons.reduce((a,b)=>a+b,0)/lons.length;
+    lines.push(`Landing area (approx. center): ${toCompact(cLat,cLon)}`);
+  }
+  lines.push(`Time (UTC): ${new Date().toISOString()}`);
+  return lines.join('\n');
+}
+document.getElementById('btnPrepareEmergencyMsg').addEventListener('click', ()=>{
+  document.getElementById('emergencyMsgText').value = buildEmergencyMessage();
+  document.getElementById('emergencyMsgPreview').style.display = 'block';
+});
+document.getElementById('btnEmergencyCopy').addEventListener('click', ()=>{
+  navigator.clipboard && navigator.clipboard.writeText(document.getElementById('emergencyMsgText').value);
+});
+document.getElementById('btnEmergencyWhatsapp').addEventListener('click', ()=>{
+  const phone = document.getElementById('emergencyPhone').value.replace(/[^0-9]/g,'');
+  const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
+  window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+});
+document.getElementById('btnEmergencySms').addEventListener('click', ()=>{
+  const phone = document.getElementById('emergencyPhone').value;
+  const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
+  window.open(`sms:${phone}?body=${text}`, '_blank');
+});
+document.getElementById('btnEmergencyEmailSend').addEventListener('click', ()=>{
+  const email = document.getElementById('emergencyEmail').value;
+  const subject = encodeURIComponent('GBLP Emergency Position Report');
+  const body = encodeURIComponent(document.getElementById('emergencyMsgText').value);
+  window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+});
+
 setupPopover('btnCapture','capturePanel');
 document.getElementById('capShotBtn').addEventListener('click', ()=>{
   document.getElementById('capturePanel').classList.remove('open');
@@ -1817,6 +2181,144 @@ async function precacheAreaTiles(lat, lon, radiusKm){
   }
 }
 
+// ---------- flight logbook (GPX/KML export) ----------
+state.flightLog = []; // {t, lat, lon, altAMSL, course, speedKn}
+let logbookTimer = null;
+let logbookIntervalS = 60;
+function logCurrentPosition(){
+  if(!document.getElementById('logbookEnabled').checked) return;
+  state.flightLog.push({
+    t: Date.now(), lat: state.lat, lon: state.lon,
+    altAMSL: state.altAMSL, course: state.course, speedKn: state.speedKn
+  });
+  // Cap the in-memory log so a very long flight can't grow unbounded.
+  if(state.flightLog.length > 4000) state.flightLog.shift();
+  document.getElementById('logbookCount').textContent = state.flightLog.length;
+  try{ localStorage.setItem('gblp_flightlog_v1', JSON.stringify(state.flightLog.slice(-4000))); }catch(e){ /* storage full - keep logging in memory only */ }
+}
+function restartLogbookTimer(){
+  clearInterval(logbookTimer);
+  logbookTimer = setInterval(logCurrentPosition, logbookIntervalS*1000);
+}
+document.getElementById('sLogInterval').addEventListener('input', e=>{
+  logbookIntervalS = parseInt(e.target.value);
+  document.getElementById('lblLogInterval').textContent = logbookIntervalS + ' s';
+  restartLogbookTimer();
+});
+document.getElementById('btnClearLog').addEventListener('click', ()=>{
+  if(confirm('Clear the entire flight log? This cannot be undone.')){
+    state.flightLog = [];
+    document.getElementById('logbookCount').textContent = '0';
+    try{ localStorage.removeItem('gblp_flightlog_v1'); }catch(e){}
+  }
+});
+function downloadTextFile(filename, mimeType, text){
+  const blob = new Blob([text], {type: mimeType});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+function buildGpx(){
+  const points = state.flightLog.map(e=>
+    `      <trkpt lat="${e.lat.toFixed(6)}" lon="${e.lon.toFixed(6)}"><ele>${e.altAMSL.toFixed(1)}</ele><time>${new Date(e.t).toISOString()}</time></trkpt>`
+  ).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Gas Balloon Landing Predictor" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><name>GBLP Flight Log</name><trkseg>
+${points}
+  </trkseg></trk>
+</gpx>`;
+}
+function buildKml(){
+  const coords = state.flightLog.map(e=>`${e.lon.toFixed(6)},${e.lat.toFixed(6)},${e.altAMSL.toFixed(1)}`).join(' ');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+  <name>GBLP Flight Log</name>
+  <Placemark>
+    <name>Flight track</name>
+    <LineString><altitudeMode>absolute</altitudeMode><coordinates>${coords}</coordinates></LineString>
+  </Placemark>
+</Document></kml>`;
+}
+document.getElementById('btnExportGpx').addEventListener('click', ()=>{
+  if(!state.flightLog.length){ alert('No log entries yet.'); return; }
+  downloadTextFile('gblp_flight_log_'+Date.now()+'.gpx', 'application/gpx+xml', buildGpx());
+});
+document.getElementById('btnExportKml').addEventListener('click', ()=>{
+  if(!state.flightLog.length){ alert('No log entries yet.'); return; }
+  downloadTextFile('gblp_flight_log_'+Date.now()+'.kml', 'application/vnd.google-earth.kml+xml', buildKml());
+});
+setupPopover('btnLogbook','logbookPanel');
+// Restore a log from a previous session if the page was reloaded mid-flight.
+try{
+  const savedLog = localStorage.getItem('gblp_flightlog_v1');
+  if(savedLog){
+    state.flightLog = JSON.parse(savedLog);
+    document.getElementById('logbookCount').textContent = state.flightLog.length;
+  }
+}catch(e){}
+restartLogbookTimer();
+
+// ---------- external Bluetooth GPS receiver (experimental, best-effort) ----------
+// Uses the Bluetooth SIG standard "Location and Navigation" service (0x1819)
+// and its "Location and Speed" characteristic (0x2A67). This is the closest
+// thing to a standardized BLE GPS profile, but it was designed primarily for
+// fitness/cycling computers, not aviation receivers - many external GPS
+// pucks use entirely proprietary services instead and simply won't work
+// here. Treat this as a best-effort option, not a guaranteed integration.
+let bleGpsDevice = null;
+function parseLocationAndSpeed(dataView){
+  let offset = 0;
+  const flags = dataView.getUint16(offset, true); offset += 2;
+  const result = {};
+  if(flags & 0x0001){ result.speedMs = dataView.getUint16(offset, true)/100; offset += 2; }
+  if(flags & 0x0002){ offset += 3; } // total distance, not needed here
+  if(flags & 0x0004){
+    result.lat = dataView.getInt32(offset, true)/1e7; offset += 4;
+    result.lon = dataView.getInt32(offset, true)/1e7; offset += 4;
+  }
+  if(flags & 0x0008){ offset += 3; } // elevation (sint24) - not parsed, altitude comes from state instead
+  if(flags & 0x0010){ result.headingDeg = dataView.getUint16(offset, true)/100; offset += 2; }
+  return result;
+}
+document.getElementById('btnConnectBleGps').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('bleGpsStatus');
+  if(!navigator.bluetooth){
+    statusEl.textContent = 'Web Bluetooth not supported in this browser.';
+    return;
+  }
+  try{
+    statusEl.textContent = 'Requesting device...';
+    bleGpsDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [0x1819] }],
+      optionalServices: [0x1819]
+    });
+    statusEl.textContent = `Connecting to ${bleGpsDevice.name||'device'}...`;
+    const server = await bleGpsDevice.gatt.connect();
+    const service = await server.getPrimaryService(0x1819);
+    const char = await service.getCharacteristic(0x2A67);
+    await char.startNotifications();
+    char.addEventListener('characteristicvaluechanged', (e)=>{
+      const parsed = parseLocationAndSpeed(e.target.value);
+      if(parsed.lat!=null && parsed.lon!=null){
+        updatePosition(parsed.lat, parsed.lon,
+          state.altAMSL, // this characteristic doesn't reliably include altitude
+          parsed.headingDeg!=null ? parsed.headingDeg : null,
+          parsed.speedMs!=null ? parsed.speedMs*KN_PER_MS : null,
+          true);
+        setGpsStatus(true, 'via Bluetooth GPS');
+      }
+    });
+    statusEl.textContent = `Connected: ${bleGpsDevice.name||'BLE GPS device'}`;
+    bleGpsDevice.addEventListener('gattserverdisconnected', ()=>{
+      statusEl.textContent = 'Bluetooth GPS disconnected.';
+    });
+  }catch(e){
+    statusEl.textContent = 'Connection failed or cancelled: ' + (e.message||e);
+  }
+});
+
 // ---------- keep the screen awake while the app is open ----------
 let wakeLockSentinel = null;
 async function requestWakeLock(){
@@ -1833,8 +2335,59 @@ document.addEventListener('visibilitychange', ()=>{
 });
 requestWakeLock();
 
+// ---------- save / restore configuration ----------
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect'];
+const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph'];
+function saveConfig(){
+  try{
+    const cfg = {};
+    CONFIG_INPUT_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.value; });
+    CONFIG_CHECKBOX_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.checked; });
+    CONFIG_TOGGLE_BTN_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.classList.contains('active'); });
+    cfg.powerCat = {...powerCatVisible};
+    cfg.nightMode = state.night;
+    localStorage.setItem('gblp_config_v1', JSON.stringify(cfg));
+  }catch(e){ /* localStorage unavailable/full - config just won't persist */ }
+}
+function loadConfig(){
+  try{
+    const raw = localStorage.getItem('gblp_config_v1');
+    if(!raw) return;
+    const cfg = JSON.parse(raw);
+    CONFIG_INPUT_IDS.forEach(id=>{
+      if(cfg[id]!=null){ const el=document.getElementById(id); if(el){ el.value=cfg[id]; el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); } }
+    });
+    CONFIG_CHECKBOX_IDS.forEach(id=>{
+      if(cfg[id]!=null){ const el=document.getElementById(id); if(el){ el.checked=cfg[id]; el.dispatchEvent(new Event('change')); } }
+    });
+    CONFIG_TOGGLE_BTN_IDS.forEach(id=>{
+      if(cfg[id]!=null){ const el=document.getElementById(id); if(el && el.classList.contains('active')!==cfg[id]){ el.click(); } }
+    });
+    if(cfg.powerCat){
+      Object.assign(powerCatVisible, cfg.powerCat);
+      Object.keys(cfg.powerCat).forEach(k=>{ const cb=document.querySelector(`[data-powercat="${k}"]`); if(cb) cb.checked=cfg.powerCat[k]; });
+      if(map.hasLayer(powerLayer)) powerLayer.redraw();
+    }
+    if(cfg.nightMode && !state.night){ document.getElementById('btnDayNight').click(); }
+  }catch(e){ /* corrupt/old config - ignore and keep defaults */ }
+}
+let saveConfigTimer=null;
+function scheduleSaveConfig(){ clearTimeout(saveConfigTimer); saveConfigTimer=setTimeout(saveConfig, 800); }
+document.getElementById('settingsPanel').addEventListener('input', scheduleSaveConfig);
+document.getElementById('settingsPanel').addEventListener('change', scheduleSaveConfig);
+document.getElementById('layerToggleGroup').addEventListener('click', scheduleSaveConfig);
+document.getElementById('btnDayNight').addEventListener('click', scheduleSaveConfig);
+document.getElementById('btnResetDefaults').addEventListener('click', ()=>{
+  if(confirm('Reset all settings to their defaults? This reloads the app.')){
+    localStorage.removeItem('gblp_config_v1');
+    location.reload();
+  }
+});
+
 // ---------- boot ----------
 (async function boot(){
+  loadConfig();
   await fetchGroundElevation();
   await fetchWind(true);
   renderSidebarPosition();

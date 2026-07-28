@@ -49,7 +49,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #settingsPanel .subhead:first-child, .settings-popover .subhead:first-child{margin-top:2px;}
 #settingsPanel hr, .settings-popover hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
 .settings-popover input[type=number]{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:2px;font-family:var(--mono);}
-#btnTestMode{background:var(--warn);color:#241a00;border-color:var(--warn);font-weight:700;}
+#btnTestMode{background:var(--warn);color:#ffffff;border-color:var(--warn);font-weight:700;}
 #btnTestMode.active{background:var(--bad);color:#fff;border-color:var(--bad);}
 
 /* ---- password gate ---- */
@@ -131,6 +131,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 #warnbar.show{display:block;}
 
 .legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
 
 #resultpanel{display:none;}
 #resultpanel.show{display:block;}
@@ -169,7 +170,6 @@ canvas.mini{width:100% !important;height:130px !important;}
       <div class="wx-chip" id="versionChip" style="font-size:8px;color:var(--muted);"></div>
     </div>
     <div class="sep"></div>
-    <div class="sep"></div>
     <div class="wx-chip" style="align-items:flex-start;">
       <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
       <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
@@ -183,19 +183,6 @@ canvas.mini{width:100% !important;height:130px !important;}
       <button class="ltbtn active" id="tgRoads" title="Roads &amp; paths">🛣️</button>
       <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)">✈️</button>
       <button class="ltbtn active" id="tgLanding" title="Landing area">🟢</button>
-      <div style="position:relative;">
-        <button class="ltbtn" id="btnLegend" title="Power line legend">📊</button>
-        <div id="legendPanel" class="settings-popover" style="width:220px;">
-          <div class="subhead">Power line voltage</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥ 220 kV</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ff9d3b;"></span>≥ 100 kV</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ffe83b;"></span>≥ 50 kV</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#8bd3ff;"></span>&lt; 50 kV / unknown</div>
-          <hr>
-          <div class="togglerow"><span>Overhead lines only</span><label class="switch"><input type="checkbox" id="overheadOnly"><span class="slider-tog"></span></label></div>
-          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
-        </div>
-      </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;">
       <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
@@ -205,9 +192,18 @@ canvas.mini{width:100% !important;height:130px !important;}
         <option value="FL">FL</option>
       </select>
     </div>
+    </div>
+    <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
+    <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
+    <button class="iconbtn" id="btnRec" title="Record">⏺</button>
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
       <div id="settingsPanel">
+        <div class="subhead">Power Lines</div>
+        <div class="togglerow"><span>Overhead lines only</span><label class="switch"><input type="checkbox" id="overheadOnly" checked><span class="slider-tog"></span></label></div>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
+
+        <hr>
         <div class="subhead">Weather Model</div>
         <select id="wxModelSelect">
           <option value="auto">Auto (finest available grid)</option>
@@ -236,9 +232,6 @@ canvas.mini{width:100% !important;height:130px !important;}
         <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">openAIP key is fixed in code (not editable here) to avoid accidental changes.</p>
       </div>
     </div>
-    <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
-    <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
-    <button class="iconbtn" id="btnRec" title="Record">⏺</button>
     <div style="position:relative;">
       <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
       <div id="testPanel" class="settings-popover">
@@ -335,6 +328,27 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
 
+      <!-- POWER LINE LEGEND (only shown when the power layer is switched on) -->
+      <div class="card" id="powerLegendCard" style="display:none;">
+        <h3 onclick="toggleCard(this)">Power Line Legend <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="subhead" style="margin-top:0;">Lines, by voltage</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥ 220 kV (transmission)</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#ff9d3b;"></span>100 – 219 kV</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#ffe83b;"></span>50 – 99 kV</div>
+          <div class="legend-row"><span class="legend-swatch" style="background:#5bb8ff;"></span>&lt; 50 kV / voltage unknown</div>
+          <div class="subhead">Point symbols</div>
+          <div class="legend-row"><span class="legend-dot" style="background:#8bd3ff;"></span>Transformer <span style="color:var(--muted);">(small blue circle)</span></div>
+          <div class="legend-row"><span class="legend-dot" style="background:#ff9d3b;"></span>Substation <span style="color:var(--muted);">(orange circle)</span></div>
+          <div class="legend-row"><span class="legend-dot" style="background:#ff3b3b;"></span>Power plant <span style="color:var(--muted);">(red circle)</span></div>
+          <div class="legend-row"><span class="legend-dot" style="background:#ffe83b;"></span>Generator <span style="color:var(--muted);">(yellow circle)</span></div>
+          <div class="legend-row"><span class="legend-dot" style="background:#c58bff;"></span>Compensator <span style="color:var(--muted);">(purple circle)</span></div>
+          <div class="legend-row"><span class="legend-dot" style="background:#ffffff;border:1px solid #888;"></span>Switch <span style="color:var(--muted);">(white circle)</span></div>
+          <div class="legend-row"><span class="legend-dot" style="background:#ffcc66;width:6px;height:6px;"></span>Tower / pylon <span style="color:var(--muted);">(small light-yellow dot, appears from zoom ≈13)</span></div>
+          <p style="font-size:10.5px;color:var(--muted);margin:8px 0 0;">Note: OpenInfraMap's tile source only draws lower-voltage lines once you zoom in further (roughly zoom ≥ 8 shows all voltages; below that, only higher-voltage lines are included to limit tile size). If you only see tower/substation dots and no lines, try zooming in.</p>
+        </div>
+      </div>
+
       <!-- CLICK RESULT -->
       <div class="card" id="resultpanel">
         <h3 onclick="toggleCard(this)">Landing Point Plan <span class="chev">▾</span></h3>
@@ -408,7 +422,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v17';
+const APP_VERSION = 'v18';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -525,13 +539,12 @@ setTimeout(()=>{
 // We style only the power_* source-layers so non-power infra (telecoms/water/
 // petroleum, also present in the same tile) stays invisible.
 function powerLineColor(kv){
-  if(!kv) return '#9aa5ad';
   if(kv>=220) return '#ff3b3b';
   if(kv>=100) return '#ff9d3b';
   if(kv>=50)  return '#ffe83b';
-  return '#8bd3ff';
+  return '#5bb8ff'; // <50kV or voltage tag missing/unmapped
 }
-let overheadOnly = false; // toggled from the legend popover
+let overheadOnly = true; // default on; toggled from Settings
 function isUndergroundOrUnderwater(props){
   const loc = (props.location||'').toLowerCase();
   return loc==='underground' || loc==='underwater';
@@ -539,7 +552,9 @@ function isUndergroundOrUnderwater(props){
 const powerVectorStyles = {
   power_line: (props)=>{
     if(overheadOnly && isUndergroundOrUnderwater(props)) return {weight:0, opacity:0};
-    return { weight: Math.max(1, Math.min(4.5, (props.voltage||10)/60)), color: powerLineColor(props.voltage), opacity: 0.9 };
+    // Minimum weight of 1.8 so low/unknown-voltage distribution lines never
+    // render as near-invisible hairlines next to thick transmission lines.
+    return { weight: Math.max(1.8, Math.min(4.5, (props.voltage||30)/45)), color: powerLineColor(props.voltage), opacity: 1 };
   },
   power_tower:          {radius:2, color:'#ffcc66', fillColor:'#ffcc66', fill:true, fillOpacity:0.9, weight:1},
   power_substation:     {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22},
@@ -587,7 +602,10 @@ function bindLayerToggle(btnId, initiallyOn, onToggle){
     onToggle(on);
   });
 }
-bindLayerToggle('tgPower', false, on=>{ if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer); });
+bindLayerToggle('tgPower', false, on=>{
+  if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
+  document.getElementById('powerLegendCard').style.display = on ? 'block' : 'none';
+});
 bindLayerToggle('tgAirspace', false, on=>{
   if(on){
     airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,{maxZoom:14,opacity:0.95,className:'airspace-tiles',attribution:'© openAIP'});
@@ -599,7 +617,6 @@ const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/se
 let landingLayerOn = true;
 bindLayerToggle('tgRoads', true, on=>{ roadsShown = on; if(on) roadsOverlay.addTo(map); else if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); });
 bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });
-setupPopover('btnLegend','legendPanel');
 
 // balloon marker + breadcrumb
 const aircraftIconHtml = `<div style="width:30px;height:30px;transform:rotate(0deg);transition:transform .2s linear;" id="aircraftRotor">
@@ -1073,7 +1090,7 @@ function setupPopover(btnId, panelId){
       let left = r.right - panelWidth;
       if(left < 8) left = 8;
       if(left + panelWidth > window.innerWidth - 8) left = window.innerWidth - panelWidth - 8;
-      panel.style.top = (r.bottom + 6) + 'px';
+      panel.style.top = (r.bottom + 14) + 'px';
       panel.style.left = left + 'px';
       panel.classList.add('open');
     }

@@ -43,7 +43,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 .gps-dot.bad{background:var(--bad);}
 
 /* ---- settings popover ---- */
-#settingsPanel, .settings-popover{position:absolute;top:48px;right:10px;width:280px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;z-index:900;display:none;}
+#settingsPanel, .settings-popover{position:fixed;width:280px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;z-index:5000;display:none;}
 #settingsPanel.open, .settings-popover.open{display:block;}
 #settingsPanel .subhead, .settings-popover .subhead{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:10px 0 6px;}
 #settingsPanel .subhead:first-child, .settings-popover .subhead:first-child{margin-top:2px;}
@@ -169,6 +169,15 @@ canvas.mini{width:100% !important;height:130px !important;}
       <div class="wx-chip" id="versionChip" style="font-size:8px;color:var(--muted);"></div>
     </div>
     <div class="sep"></div>
+    <div class="sep"></div>
+    <div class="wx-chip" style="align-items:flex-start;">
+      <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
+      <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
+    </div>
+    <div class="sep"></div>
+    <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
+    <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
+    <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
       <button class="ltbtn" id="tgPower" title="Power lines">⚡</button>
       <button class="ltbtn active" id="tgRoads" title="Roads &amp; paths">🛣️</button>
@@ -188,15 +197,6 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
     </div>
-    <div class="sep"></div>
-    <div class="wx-chip" style="align-items:flex-start;">
-      <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
-      <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
-    </div>
-    <div class="sep"></div>
-    <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
-    <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
-    <div class="spacer"></div>
     <div style="display:flex;flex-direction:column;align-items:center;">
       <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
       <select id="altUnitSelect" class="iconbtn" style="padding:5px 4px;font-size:11px;width:56px;flex-shrink:0;">
@@ -408,7 +408,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v16';
+const APP_VERSION = 'v17';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -595,26 +595,29 @@ bindLayerToggle('tgAirspace', false, on=>{
   } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
 });
 let roadsShown = true;
+const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,attribution:'Roads: Esri'});
 let landingLayerOn = true;
-bindLayerToggle('tgRoads', true, on=>{ roadsShown = on; });
+bindLayerToggle('tgRoads', true, on=>{ roadsShown = on; if(on) roadsOverlay.addTo(map); else if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); });
 bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });
 setupPopover('btnLegend','legendPanel');
 
 // balloon marker + breadcrumb
 const aircraftIconHtml = `<div style="width:30px;height:30px;transform:rotate(0deg);transition:transform .2s linear;" id="aircraftRotor">
   <svg width="30" height="30" viewBox="0 0 30 30">
-    <g fill="#3fd0c9" stroke="#00201d" stroke-width="0.8">
-      <path d="M15 2 L18 12 L27 16 L27 18.5 L18 16.5 L16.3 24 L20 27 L20 28.5 L15 27.3 L10 28.5 L10 27 L13.7 24 L12 16.5 L3 18.5 L3 16 L12 12 Z"/>
-    </g>
+    <path d="M15 1 L21.5 27 L15 21.5 L8.5 27 Z" fill="#3fd0c9" stroke="#00201d" stroke-width="1"/>
   </svg>
 </div>`;
 const balloonIcon = L.divIcon({html: aircraftIconHtml, className:'', iconSize:[30,30], iconAnchor:[15,15]});
 const balloonMarker = L.marker([state.lat,state.lon], {icon: balloonIcon}).addTo(map);
+function updateAircraftRotation(){
+  const rotor = document.getElementById('aircraftRotor');
+  if(rotor) rotor.style.transform = `rotate(${state.course}deg)`;
+}
 const breadcrumbLine = L.polyline([], {color:'#3fd0c9', weight:3, opacity:0.8}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
-let descentPathLayer = L.polyline([], {color:'#ffb454', weight:3, dashArray:'6,5'}).addTo(map);
-let predictedDescentLayer = L.polyline([], {color:'#3fa9ff', weight:2.5, opacity:0.9, dashArray:'1,6', lineCap:'round'}).addTo(map);
-const blueDotIcon = L.divIcon({html:'<div style="width:14px;height:14px;border-radius:50%;background:#3fa9ff;border:2px solid #fff;box-shadow:0 0 4px #3fa9ff;"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7]});
+let descentPathLayer = L.polyline([], {color:'#ff2bd6', weight:3.5, opacity:1, dashArray:'9,6', lineCap:'round'}).addTo(map);
+let predictedDescentLayer = L.polyline([], {color:'#00e0ff', weight:3, opacity:1, dashArray:'3,7', lineCap:'round'}).addTo(map);
+const blueDotIcon = L.divIcon({html:'<div style="width:14px;height:14px;border-radius:50%;background:#00e0ff;border:2px solid #fff;box-shadow:0 0 5px #00e0ff;"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7]});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
@@ -652,8 +655,7 @@ function updatePosition(lat, lon, altAMSL, course, speedKn){
   const cutoff = now - 30*60*1000;
   state.breadcrumb = state.breadcrumb.filter(p=>p.t>=cutoff);
   balloonMarker.setLatLng([lat,lon]);
-  const rotor = document.getElementById('aircraftRotor');
-  if(rotor) rotor.style.transform = `rotate(${course}deg)`;
+  updateAircraftRotation();
   breadcrumbLine.setLatLngs(state.breadcrumb.map(p=>[p.lat,p.lon]));
   renderSidebarPosition();
   recomputeAll();
@@ -1065,7 +1067,16 @@ function setupPopover(btnId, panelId){
     e.stopPropagation();
     const willOpen = !panel.classList.contains('open');
     document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
-    if(willOpen) panel.classList.add('open');
+    if(willOpen){
+      const r = btn.getBoundingClientRect();
+      const panelWidth = panel.offsetWidth || 280;
+      let left = r.right - panelWidth;
+      if(left < 8) left = 8;
+      if(left + panelWidth > window.innerWidth - 8) left = window.innerWidth - panelWidth - 8;
+      panel.style.top = (r.bottom + 6) + 'px';
+      panel.style.left = left + 'px';
+      panel.classList.add('open');
+    }
   });
   panel.addEventListener('click', e=>e.stopPropagation());
 }
@@ -1094,6 +1105,7 @@ function applyTestValues(){
   if(!isNaN(courseRaw)) state.course = courseRaw;
 
   renderSidebarPosition();
+  updateAircraftRotation();
   recomputeAll();
 }
 

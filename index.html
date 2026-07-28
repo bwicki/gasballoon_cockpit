@@ -84,6 +84,9 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 /* ---- test mode caution bar ---- */
 #testCautionBar{display:none;background:var(--bad);color:#fff;text-align:center;font-weight:800;font-size:13px;letter-spacing:1px;padding:6px;flex-shrink:0;}
 #testCautionBar.show{display:block;}
+#gpsWarnBar{display:none;background:var(--bad);color:#fff;text-align:center;font-weight:800;font-size:13px;letter-spacing:1px;padding:6px 10px;flex-shrink:0;align-items:center;justify-content:center;gap:12px;}
+#gpsWarnBar.show{display:flex;}
+#gpsWarnBar button{background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 12px;font-weight:800;font-size:12px;letter-spacing:normal;cursor:pointer;}
 
 /* ---- main layout ---- */
 #main{flex:1;display:flex;flex-direction:row;min-height:0;height:100%;align-items:stretch;}
@@ -208,20 +211,7 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
       <div id="settingsPanel">
-        <div class="subhead">Power Lines</div>
-        <div class="togglerow"><span>Lines</span><label class="switch"><input type="checkbox" data-powercat="line" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Towers / pylons</span><label class="switch"><input type="checkbox" data-powercat="tower" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Substations</span><label class="switch"><input type="checkbox" data-powercat="substation" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Power plants</span><label class="switch"><input type="checkbox" data-powercat="plant" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Generators</span><label class="switch"><input type="checkbox" data-powercat="generator" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Transformers</span><label class="switch"><input type="checkbox" data-powercat="transformer" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Compensators</span><label class="switch"><input type="checkbox" data-powercat="compensator" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Switches</span><label class="switch"><input type="checkbox" data-powercat="switch" checked><span class="slider-tog"></span></label></div>
-        <div class="togglerow"><span>Overhead lines only</span><label class="switch"><input type="checkbox" id="overheadOnly" checked><span class="slider-tog"></span></label></div>
-        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
-
-        <hr>
-        <div class="subhead">Weather Model</div>
+        <div class="subhead" style="margin-top:0;">Weather Model</div>
         <select id="wxModelSelect">
           <option value="auto">Auto (finest available grid)</option>
           <option value="best_match">Best match</option>
@@ -231,6 +221,21 @@ canvas.mini{width:100% !important;height:130px !important;}
           <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
         </select>
         <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
+
+        <hr>
+        <div class="subhead">Power Line Categories</div>
+        <div class="checkgrid">
+          <label><input type="checkbox" data-powercat="line" checked>Lines</label>
+          <label><input type="checkbox" data-powercat="tower" checked>Towers</label>
+          <label><input type="checkbox" data-powercat="substation" checked>Substations</label>
+          <label><input type="checkbox" data-powercat="plant" checked>Power plants</label>
+          <label><input type="checkbox" data-powercat="generator" checked>Generators</label>
+          <label><input type="checkbox" data-powercat="transformer" checked>Transformers</label>
+          <label><input type="checkbox" data-powercat="compensator" checked>Compensators</label>
+          <label><input type="checkbox" data-powercat="switch" checked>Switches</label>
+        </div>
+        <div class="togglerow" style="margin-top:6px;"><span>Overhead lines only</span><label class="switch"><input type="checkbox" id="overheadOnly" checked><span class="slider-tog"></span></label></div>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
 
         <hr>
         <div class="subhead">Airspace Classes</div>
@@ -247,12 +252,20 @@ canvas.mini{width:100% !important;height:130px !important;}
           <label><input type="checkbox" checked data-as="RMZ">RMZ</label>
         </div>
         <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">openAIP key is fixed in code (not editable here) to avoid accidental changes.</p>
+
+        <hr>
+        <div class="subhead">Offline Tile Cache Radius</div>
+        <div class="slider-row">
+          <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">50 km</b></div>
+          <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="50">
+        </div>
       </div>
     </div>
     <div style="position:relative;">
       <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
       <div id="testPanel" class="settings-popover">
-        <div class="togglerow"><span>Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
+        <div class="subhead" id="testPanelTitle" style="margin-top:0;">Test Mode</div>
+        <div class="togglerow"><span id="testEnableLabel">Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
         <p style="font-size:11px;color:var(--muted);margin:6px 0;">Tap the map to set a fictitious position, then set altitude/course/speed below.</p>
         <div class="subhead">Altitude AMSL</div>
         <div style="display:flex;gap:6px;">
@@ -263,7 +276,7 @@ canvas.mini{width:100% !important;height:130px !important;}
           </select>
         </div>
         <div class="subhead">Course (° true)</div>
-        <input type="number" id="testCourse" value="90">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="testCourse" value="090" maxlength="3">
         <div class="subhead">Speed</div>
         <div style="display:flex;gap:6px;">
           <input type="number" id="testSpeed" value="15" style="flex:1;">
@@ -277,6 +290,10 @@ canvas.mini{width:100% !important;height:130px !important;}
     </div>
   </div>
   <div id="testCautionBar">⚠ CAUTION: TEST MODE ⚠</div>
+  <div id="gpsWarnBar">
+    <span>⚠ CAUTION: GPS DATA not available! ⚠</span>
+    <button id="btnManualMode">Manual Mode?</button>
+  </div>
 
   <div id="main">
     <div id="mapwrap">
@@ -299,10 +316,10 @@ canvas.mini{width:100% !important;height:130px !important;}
               <div class="val small" id="posDMS">—</div>
               <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);">—</div>
             </div>
-            <div class="datacell"><label>Alt AMSL</label><div class="val" id="altAMSL">—</div></div>
+            <div class="datacell"><label>Alt AMSL (GPS)</label><div class="val" id="altAMSL">—</div></div>
             <div class="datacell"><label>Alt AGL</label><div class="val" id="altAGL">—</div></div>
-            <div class="datacell"><label>Course GPS</label><div class="val" id="courseVal">—</div></div>
-            <div class="datacell"><label>Speed</label><div class="val" id="speedVal">—</div></div>
+            <div class="datacell"><label>Course (° True GPS)</label><div class="val" id="courseVal">—</div></div>
+            <div class="datacell"><label>Speed (GPS)</label><div class="val" id="speedVal">—</div></div>
           </div>
         </div>
       </div>
@@ -312,7 +329,7 @@ canvas.mini{width:100% !important;height:130px !important;}
         <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="slider-row">
-            <div class="lbl"><span>Initiate descent in</span><b id="lblInit">30 min</b></div>
+            <div class="lbl"><span>Initiate descent in</span><b id="lblInit">30 min</b> <b id="lblInitDist" style="color:#39ff14;">0.00 km</b></div>
             <input type="range" id="sInit" min="0" max="120" step="1" value="30">
           </div>
           <div class="slider-row">
@@ -340,7 +357,8 @@ canvas.mini{width:100% !important;height:130px !important;}
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell"><label>Req. rate at intercept</label><div class="val small" id="reqRateAtIntercept">—</div></div>
-            <div class="datacell"><label>Virtual lift bonus</label><div class="val small" id="adiaKg">—</div></div>
+            <div class="datacell"><label>Actual rate (adiabatic-limited)</label><div class="val small" id="actualRateAtIntercept">—</div></div>
+            <div class="datacell wide"><label>Virtual lift bonus</label><div class="val small" id="adiaKg">—</div></div>
           </div>
         </div>
       </div>
@@ -439,7 +457,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v22';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -454,6 +472,7 @@ const state = {
   night: false,
   landingPolygon: null,
   clickedTarget: null,
+  lastFix: null, // {lat,lon,t} of the previous GPS fix, used to derive course/speed
 };
 
 const G = 9.80665;
@@ -655,6 +674,11 @@ let roadsShown = true;
 const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,attribution:'Roads: Esri'});
 const placesOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.95,attribution:'Places: Esri'});
 let landingLayerOn = true;
+let cacheRadiusKm = 50;
+document.getElementById('sCacheRadius').addEventListener('input', e=>{
+  cacheRadiusKm = parseInt(e.target.value);
+  document.getElementById('lblCacheRadius').textContent = cacheRadiusKm + ' km';
+});
 bindLayerToggle('tgRoads', false, on=>{ roadsShown = on; if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); } else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); } });
 bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });
 
@@ -673,9 +697,9 @@ function updateAircraftRotation(){
 setInterval(updateAircraftRotation, 2000);
 const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:5, opacity:1, lineCap:'round', className:'flightpath-glow'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
-let descentPathLayer = L.polyline([], {color:'#ff2bd6', weight:3.5, opacity:1, dashArray:'9,6', lineCap:'round'}).addTo(map);
-let predictedDescentLayer = L.polyline([], {color:'#00e0ff', weight:3, opacity:1, dashArray:'3,7', lineCap:'round'}).addTo(map);
-const blueDotIcon = L.divIcon({html:'<div style="width:14px;height:14px;border-radius:50%;background:#00e0ff;border:2px solid #fff;box-shadow:0 0 5px #00e0ff;"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7]});
+let descentPathLayer = L.polyline([], {color:'#b026ff', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round'}).addTo(map);
+let predictedDescentLayer = L.polyline([], {color:'#39ff14', weight:4, opacity:1, dashArray:'4,7', lineCap:'round'}).addTo(map);
+const blueDotIcon = L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#39ff14;border:3px solid #fff;box-shadow:0 0 8px 2px #39ff14;"></div>', className:'', iconSize:[24,24], iconAnchor:[12,12]});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
@@ -686,6 +710,7 @@ const crossIcon = L.divIcon({
 
 // ---------- GPS ----------
 let gpsWatchId = null;
+let activationReason = null; // 'test' (user opened Test Mode manually) | 'manual' (auto-triggered by GPS loss)
 function startGPS(){
   if(!navigator.geolocation){ setGpsStatus(false,'No geolocation API'); return; }
   gpsWatchId = navigator.geolocation.watchPosition(pos=>{
@@ -693,8 +718,7 @@ function startGPS(){
     setGpsStatus(true, `±${Math.round(pos.coords.accuracy)} m`);
     updatePosition(pos.coords.latitude, pos.coords.longitude,
       pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
-      pos.coords.heading!=null && !isNaN(pos.coords.heading) ? pos.coords.heading : state.course,
-      pos.coords.speed!=null && !isNaN(pos.coords.speed) ? pos.coords.speed*KN_PER_MS : state.speedKn);
+      null, null, true);
   }, err=>{
     setGpsStatus(false, err.message);
   }, {enableHighAccuracy:true, maximumAge:2000, timeout:10000});
@@ -703,12 +727,70 @@ function setGpsStatus(ok, txt){
   document.getElementById('gpsDot').className = 'gps-dot ' + (ok?'ok':'bad');
   document.getElementById('gpsStatusTxt').textContent = ok ? 'GPS live' : 'GPS unavailable';
   document.getElementById('gpsAcc').textContent = txt;
+  if(ok){
+    document.getElementById('gpsWarnBar').classList.remove('show');
+    // GPS is back: if we're in Manual Mode purely because GPS had dropped,
+    // exit it automatically. A manually-opened Test Mode (for ground testing
+    // with GPS still working) is left alone.
+    if(activationReason==='manual' && state.testMode){
+      const cb = document.getElementById('testEnable');
+      cb.checked = false;
+      cb.dispatchEvent(new Event('change'));
+    }
+  } else {
+    // Only prompt if we're not already in Test/Manual mode.
+    if(!state.testMode){
+      document.getElementById('gpsWarnBar').classList.add('show');
+    }
+  }
+}
+document.getElementById('btnManualMode').addEventListener('click', ()=>{
+  document.getElementById('gpsWarnBar').classList.remove('show');
+  activationReason = 'manual';
+  const cb = document.getElementById('testEnable');
+  if(!cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change')); }
+  else { updateCautionBar(); }
+  document.getElementById('btnTestMode').click(); // open the panel right away
+});
+function updateCautionBar(){
+  const bar = document.getElementById('testCautionBar');
+  if(state.testMode){
+    const isManual = activationReason==='manual';
+    bar.textContent = isManual ? '⚠ CAUTION: Manual Mode ⚠' : '⚠ CAUTION: TEST MODE ⚠';
+    bar.classList.add('show');
+    document.getElementById('testPanelTitle').textContent = isManual ? 'Manual Mode' : 'Test Mode';
+    document.getElementById('testEnableLabel').textContent = isManual ? 'Enable manual mode' : 'Enable test mode';
+  } else {
+    bar.classList.remove('show');
+  }
 }
 startGPS();
 
-function updatePosition(lat, lon, altAMSL, course, speedKn){
-  state.lat=lat; state.lon=lon; state.altAMSL=altAMSL; state.course=course; state.speedKn=speedKn;
+function updatePosition(lat, lon, altAMSL, deviceCourse, deviceSpeedKn, computeFromGPS){
   const now = Date.now();
+  // Course and speed are derived from consecutive GPS fixes (like a real GPS
+  // track), not taken from the device's own heading/speed report, which can
+  // be missing, stale, or unreliable. Device values are only used as an
+  // initial fallback before we have a second fix to compare against.
+  if(computeFromGPS){
+    if(state.lastFix){
+      const dt = (now - state.lastFix.t)/1000;
+      const dist = haversine(state.lastFix.lat, state.lastFix.lon, lat, lon);
+      if(dt >= 1 && dist > 2){ // ignore GPS jitter at near-zero movement
+        state.course = bearingBetween(state.lastFix.lat, state.lastFix.lon, lat, lon);
+        state.speedKn = (dist/dt) * KN_PER_MS;
+      }
+      // else: keep previous course/speed (too little movement to derive a reliable value)
+    } else if(deviceCourse!=null || deviceSpeedKn!=null){
+      state.course = deviceCourse!=null ? deviceCourse : state.course;
+      state.speedKn = deviceSpeedKn!=null ? deviceSpeedKn : state.speedKn;
+    }
+    state.lastFix = {lat, lon, t: now};
+  } else {
+    // Manual/test-mode position set: course & speed come from the Test Mode
+    // panel inputs directly (already applied to state before this call).
+  }
+  state.lat=lat; state.lon=lon; state.altAMSL=altAMSL;
   state.breadcrumb.push({lat,lon,t:now});
   const cutoff = now - 30*60*1000;
   state.breadcrumb = state.breadcrumb.filter(p=>p.t>=cutoff);
@@ -828,32 +910,54 @@ setInterval(()=>{
   }
 },30000);
 
-// ---------- adiabatic braking model (simplified) ----------
-// H2, gamma ~1.41. During fast descent envelope is quasi-adiabatic (no time to
-// exchange heat), so gas warms on compression, resisting the density increase
-// that a slow/isothermal descent would show at the same pressure altitude.
-// We express the resulting extra lift as an equivalent ballast mass (kg).
-function adiabaticLiftBonusKg(volumeM3, currentAltM, descRateMs){
-  const GAMMA = 1.41;
-  const P0 = 101325;
-  function P(alt){ const T0=288.15,L=0.0065,R=287.05; const T=T0-L*Math.min(alt,11000); return P0*Math.pow(T/T0,G/(L*R)); }
-  const dz = 50; // m reference step for the ratio
-  const alt2 = Math.max(currentAltM-dz,0);
-  const P1=P(currentAltM), P2=P(alt2);
-  const T1 = 288.15-0.0065*Math.min(currentAltM,11000);
-  // isothermal (slow): rho scales with P/T(ambient); adiabatic: rho scales differently
-  const rhoIso = P2/(287.05*T1);
-  const T_adiab = T1*Math.pow(P2/P1, (GAMMA-1)/GAMMA);
-  const rhoAdiab = P2/(287.05*T_adiab);
-  const rhoAirAmb = isoDensity(alt2);
-  // relaxation: effect scales with how fast we descend (more speed -> more adiabatic, less time to equalize)
-  const tau = 90; // s, characteristic thermal equalization time of a large gas envelope (approx)
-  const timeForStep = dz/Math.max(descRateMs,0.01);
-  const adiabFraction = Math.max(0, Math.min(1, 1-Math.exp(-timeForStep/tau) ));
-  // fraction=1 -> fully isothermal (slow descent), fraction=0 -> fully adiabatic (fast descent)
-  const rhoGasEffective = rhoAdiab*(1-adiabFraction) + rhoIso*adiabFraction;
-  const liftDelta = volumeM3*(rhoIso-rhoGasEffective); // extra lift retained vs isothermal baseline, kg-equivalent (rho*V = mass, buoyancy diff ~ this)
-  return Math.max(0, liftDelta);
+// ---------- adiabatic braking model ----------
+// Physical picture: a 1050 m³ H2 gas balloon in force equilibrium at the
+// CURRENT (starting) altitude. As it descends toward the intercept altitude,
+// ambient pressure rises, compressing the enclosed gas. Compared purely from
+// start altitude to intercept altitude:
+//   - Isothermal case (classical Boyle's law, gas stays at its starting
+//     temperature T0 throughout): V1_iso = V0 * (P0/P1)
+//   - Adiabatic case (fast descent, no time for heat exchange through the
+//     envelope): V1_adiabatic = V0 * (P0/P1)^(1/gamma)
+// Since gamma>1, the adiabatic volume at intercept stays LARGER than the
+// isothermal volume at the same altitude (the gas resists compression more
+// because compression heats it). That retained "extra" volume displaces
+// extra air => extra buoyancy => braking effect on the descent. No ballast,
+// valve, or payload mass is needed for this - it follows purely from the
+// fixed volume and the two altitudes.
+const NOMINAL_BALLOON_VOLUME_M3 = 1050;
+function adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, descRateMs){
+  const GAMMA = 1.41; // H2, diatomic
+  function P(alt){ const T0=288.15,L=0.0065,R=287.05; return 101325*Math.pow((T0-L*Math.min(alt,11000))/T0, G/(L*R)); }
+  const P0 = P(startAltM), P1 = P(Math.max(interceptAltM,0));
+  const ratio = P0/Math.max(P1,1); // <1 since P1>P0 when descending (pressure rises)
+  const V1_iso = volumeM3 * ratio;                 // Boyle's law: V1 = V0*(P0/P1)
+  const V1_adiabatic = volumeM3 * Math.pow(ratio, 1/GAMMA); // V1 = V0*(P0/P1)^(1/gamma), stays larger since ratio<1
+
+  // A slower descent allows some heat exchange with the surrounding air via
+  // the envelope, blending the result back toward isothermal; a fast descent
+  // stays closer to the fully-adiabatic case. Approximated with a thermal
+  // relaxation time constant, same idea as before.
+  const tau = 90; // s, characteristic thermal equalization time (approx.)
+  const altDrop = Math.max(0, startAltM - interceptAltM);
+  const descentTimeS = altDrop / Math.max(descRateMs, 0.01);
+  const adiabFraction = Math.max(0, Math.min(1, Math.exp(-descentTimeS/tau))); // 1=fully adiabatic (fast), 0=fully isothermal (slow)
+  const V1_effective = V1_iso + (V1_adiabatic - V1_iso)*adiabFraction;
+
+  const deltaV = Math.max(0, V1_effective - V1_iso); // retained "extra" volume vs. the isothermal baseline
+  const liftBonusKg = deltaV * isoDensity(interceptAltM); // extra buoyancy this represents, in kg
+  return { liftBonusKg, V1_effective, V1_iso, V1_adiabatic, adiabFraction };
+}
+// Approximate the ACTUAL descent rate physically achieved at intercept once
+// the adiabatic lift bonus has been braking the descent, expressed as a
+// fraction of the balloon's own total buoyant capacity (V * air density at
+// intercept). This is a first-order engineering approximation (quadratic-drag
+// terminal-velocity scaling), not a full transient simulation.
+function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1Ms){
+  const { liftBonusKg } = adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, rate1Ms);
+  const totalBuoyantMassKg = volumeM3 * isoDensity(interceptAltM);
+  const brakingFraction = Math.min(0.85, liftBonusKg/totalBuoyantMassKg);
+  return Math.max(0.1, rate1Ms*Math.sqrt(Math.max(0, 1-brakingFraction)));
 }
 
 // ---------- Monte-Carlo landing footprint ----------
@@ -909,6 +1013,11 @@ function doRecompute(){
   const rate2 = parseFloat(document.getElementById('sRate2').value);
   const scatter = parseFloat(document.getElementById('sScatter').value)/100;
 
+  // Distance to the point where descent would be initiated, using the
+  // GPS-derived ground speed (state.speedKn) at the current course.
+  const initDistKm = (state.speedKn/KN_PER_MS) * (initDelayMin*60) / 1000;
+  document.getElementById('lblInitDist').textContent = initDistKm.toFixed(2)+' km';
+
   if(landingLayerOn){
     const N=40;
     const endpoints=[];
@@ -945,12 +1054,13 @@ function doRecompute(){
 }
 
 function updateAdiabaticReadout(rate1, interceptAGL){
-  // assume approx volume: rough scale from AMSL altitude (simplification: fixed nominal envelope volume)
-  const nominalVolume = 1000; // m3 nominal — adjust to your balloon's actual gas volume in real deployment
-  const bonusKg = adiabaticLiftBonusKg(nominalVolume, state.altAMSL, rate1);
-  document.getElementById('adiaKg').textContent = bonusKg.toFixed(1)+' kg';
   const interceptAlt = state.groundElev+interceptAGL;
+  const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
+  const { liftBonusKg } = adiabaticVolumeAndLift(NOMINAL_BALLOON_VOLUME_M3, startAlt, interceptAlt, rate1);
+  const actualRate = computeActualRateAtIntercept(NOMINAL_BALLOON_VOLUME_M3, startAlt, interceptAlt, rate1);
+  document.getElementById('adiaKg').textContent = liftBonusKg.toFixed(1)+' kg';
   document.getElementById('reqRateAtIntercept').textContent = rate1.toFixed(1)+' m/s (nominal)';
+  document.getElementById('actualRateAtIntercept').textContent = actualRate.toFixed(1)+' m/s (approx.)';
 }
 
 function checkObstacleWarnings(path){
@@ -982,7 +1092,7 @@ function setAppMode(mode){
 // ---------- map click handling ----------
 map.on('click', async (e)=>{
   if(document.getElementById('testEnable').checked){
-    updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn);
+    updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn, false);
     return;
   }
   if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
@@ -1140,6 +1250,14 @@ function setupPopover(btnId, panelId){
 }
 setupPopover('btnSettings','settingsPanel');
 setupPopover('btnTestMode','testPanel');
+document.getElementById('testCourse').addEventListener('input', e=>{
+  e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,3);
+});
+document.getElementById('testCourse').addEventListener('blur', e=>{
+  let v = parseInt(e.target.value)||0;
+  v = ((v%360)+360)%360;
+  e.target.value = String(v).padStart(3,'0');
+});
 document.addEventListener('click', ()=>{
   document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
 });
@@ -1147,8 +1265,13 @@ document.addEventListener('click', ()=>{
 // ---------- test mode ----------
 document.getElementById('testEnable').addEventListener('change', e=>{
   state.testMode = e.target.checked;
+  if(state.testMode){
+    if(!activationReason) activationReason = 'test'; // direct manual toggle, not via GPS-loss flow
+  } else {
+    activationReason = null;
+  }
   document.getElementById('btnTestMode').classList.toggle('active', state.testMode);
-  document.getElementById('testCautionBar').classList.toggle('show', state.testMode);
+  updateCautionBar();
 });
 function applyTestValues(){
   const altRaw = parseFloat(document.getElementById('testAlt').value);
@@ -1241,7 +1364,8 @@ let precacheInFlight = false;
 async function precacheAreaTiles(lat, lon, radiusKm){
   radiusKm = radiusKm || 70;
   if(precacheInFlight) return;
-  if(lastCachedCenter && haversine(lastCachedCenter.lat, lastCachedCenter.lon, lat, lon) < 15000) return; // only re-cache after ~15km move
+  const moveThresholdM = Math.max(5000, radiusKm*200); // re-cache after moving ~20% of the radius
+  if(lastCachedCenter && haversine(lastCachedCenter.lat, lastCachedCenter.lon, lat, lon) < moveThresholdM) return;
   if(!('caches' in window)) return;
   precacheInFlight = true;
   lastCachedCenter = {lat, lon};
@@ -1299,10 +1423,10 @@ async function precacheAreaTiles(lat, lon, radiusKm){
   await fetchWind(true);
   renderSidebarPosition();
   recomputeAll();
-  precacheAreaTiles(state.lat, state.lon, 70);
+  precacheAreaTiles(state.lat, state.lon, cacheRadiusKm);
 })();
 setInterval(fetchWind, 15*60*1000); // refresh model every 15 min
-setInterval(()=>precacheAreaTiles(state.lat, state.lon, 70), 10*60*1000); // re-check every 10 min, only acts if moved >15km
+setInterval(()=>precacheAreaTiles(state.lat, state.lon, cacheRadiusKm), 10*60*1000); // re-check every 10 min, only acts if moved far enough
 </script>
 </body>
 </html>

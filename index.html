@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d1117'/%3E%3Cellipse cx='32' cy='26' rx='16' ry='19' fill='%233fd0c9'/%3E%3Cpath d='M24 42 L28 50 L36 50 L40 42' fill='none' stroke='%23ffb454' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='27' y='50' width='10' height='7' rx='1.5' fill='%23ffb454'/%3E%3Cpath d='M32 45 L32 50' stroke='%230d1117' stroke-width='2'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Gas Balloon Landing Predictor</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -117,14 +120,14 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #gpsWarnBar button{background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 12px;font-weight:800;font-size:12px;letter-spacing:normal;cursor:pointer;}
 
 /* ---- main layout ---- */
-#main{flex:1;display:flex;flex-direction:row;min-height:0;height:100%;align-items:stretch;position:relative;}
-#mapwrap{flex:0 0 75%;position:relative;min-width:0;height:100%;align-self:stretch;}
+#main{flex:1;position:relative;min-height:0;height:100%;overflow:hidden;}
+#mapwrap{position:absolute;inset:0;}
 #map{width:100%;height:100%;min-height:200px;background:#0a0d10;}
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overscroll-behavior:contain;transition:flex-basis .25s ease, min-width .25s ease, width .25s ease, padding .25s ease, border-left-width .25s ease;}
-#sidebar.collapsed{flex:0 0 0 !important;width:0 !important;min-width:0 !important;padding:0 !important;border-left-width:0 !important;overflow:hidden !important;}
+#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;}
+#sidebar.collapsed{transform:translateX(100%);}
 #sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
 #sidebarHandle:active{background:var(--accent);color:#00201d;}
 
@@ -509,7 +512,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v33';
+const APP_VERSION = 'v34';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1374,10 +1377,6 @@ document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');
   sidebar.classList.toggle('collapsed');
   positionSidebarHandle();
-  // Wait for the CSS transition to finish, then let Leaflet recompute its
-  // size (the map area grows/shrinks as the sidebar toggles) and reposition
-  // the handle at its final resting spot.
-  setTimeout(()=>{ map.invalidateSize(); positionSidebarHandle(); }, 280);
 });
 window.addEventListener('resize', positionSidebarHandle);
 window.addEventListener('load', positionSidebarHandle);
@@ -1728,8 +1727,15 @@ async function precacheAreaTiles(lat, lon, radiusKm){
     const cache = await caches.open('gblp-tiles-v1');
     const dLat = radiusKm/111;
     const dLon = radiusKm/(111*Math.cos(lat*Math.PI/180));
-    const zoomsBase = [9,11,13];   // base map + power lines (vector pbf tiles use same z/x/y scheme)
-    const zoomsOverlay = [10,12,13]; // airspace/roads/places (raster, coarser is fine)
+    // Coarser zoom levels for larger radii - a 75km+ radius simply doesn't
+    // need house-level tile detail pre-fetched everywhere, and requesting
+    // that many tiles at once triggers rate limiting (429) on the free
+    // openAIP/OpenInfraMap services. Scale zoom levels down as radius grows.
+    let zoomsBase, zoomsOverlay;
+    if(radiusKm <= 25){ zoomsBase=[9,11,13]; zoomsOverlay=[10,12,13]; }
+    else if(radiusKm <= 100){ zoomsBase=[8,10,11]; zoomsOverlay=[9,10,11]; }
+    else { zoomsBase=[7,9]; zoomsOverlay=[7,9]; }
+
     const urls = [];
     function addTilesForZooms(zooms, urlBuilder){
       for(const z of zooms){
@@ -1752,14 +1758,25 @@ async function precacheAreaTiles(lat, lon, radiusKm){
     if(document.getElementById('tgRoads').classList.contains('active')){
       addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`);
     }
-    console.log(`Pre-caching ${urls.length} tiles within ${radiusKm}km...`);
-    // Fetch with modest concurrency so we don't hammer the connection.
-    const CONCURRENCY = 6;
+
+    // Hard cap regardless of the above, so a badly-chosen radius/zoom combo
+    // can never flood the network with thousands of requests at once.
+    const MAX_TILES = 1200;
+    const finalUrls = urls.length > MAX_TILES
+      ? urls.filter((_,i)=> i % Math.ceil(urls.length/MAX_TILES) === 0)
+      : urls;
+
+    console.log(`Pre-caching ${finalUrls.length} tiles within ${radiusKm}km (of ${urls.length} candidates)...`);
+    // Low concurrency + a small stagger between requests, specifically to
+    // avoid tripping rate limits (openAIP returned 429 under the previous,
+    // much more aggressive settings).
+    const CONCURRENCY = 3;
     let i = 0;
     async function worker(){
-      while(i < urls.length){
-        const u = urls[i++];
+      while(i < finalUrls.length){
+        const u = finalUrls[i++];
         try{ const r = await fetch(u); if(r.ok) await cache.put(u, r.clone()); }catch(e){ /* ignore individual tile failures */ }
+        await new Promise(res=>setTimeout(res, 40));
       }
     }
     await Promise.all(Array.from({length:CONCURRENCY}, worker));

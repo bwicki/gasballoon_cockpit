@@ -95,7 +95,8 @@ A Service Worker (`sw.js`) caches map/data tile requests (base map, power lines,
 | Base map tiles | OpenStreetMap, OpenTopoMap, Esri World Imagery | Via Leaflet. |
 | Power infrastructure | [OpenInfraMap](https://openinframap.org) (vector tiles, via Leaflet.VectorGrid) | Only `power_*` sub-layers are rendered; other infra types (telecoms, water, petroleum) present in the same tiles are hidden. |
 | Airspace / airports / navaids / reporting points | [openAIP](https://www.openaip.net) (single combined raster layer) | openAIP retired separate per-category tile endpoints in May 2023; everything (including VOR/navaids) now comes baked into one combined raster image, so individual categories/classes can no longer be filtered client-side. The "Airspace Classes" checkboxes in Settings are currently a non-functional placeholder for a possible future vector-tile implementation. |
-| Roads & place name overlays | Esri "World Transportation" / "World Boundaries and Places" reference layers | |
+| Roads overlay | Esri "World Transportation" reference layer | |
+| Place name labels | Live OSM place nodes via Overpass API, rendered as real HTML markers with a boxed background (not a raster tile) | |
 | Fine, class-styled roads (Satellite view only, zoom ≥ 14) | [OpenStreetMap Overpass API](https://overpass-api.de) | Live query for the current view; styled by road class (motorway/trunk red, primary–tertiary orange, residential/service light grey, track/path/footway dashed tan) — useful for planning the access route after landing, since satellite imagery alone shows no road classification. Public Overpass instance, so it may be slow or rate-limited under heavy use. |
 | Reverse geocoding (nearest town) | OpenStreetMap Nominatim | |
 
@@ -116,5 +117,7 @@ A Service Worker (`sw.js`) caches map/data tile requests (base map, power lines,
 ## Device requirements
 
 - Designed for an 11" iPad running Chrome, but works in any modern browser (desktop window works best with a portrait aspect ratio similar to an 11" iPad).
+- **Strongly recommended for real flight use**: add the page to the iPad Home Screen (Share button → "Add to Home Screen") and launch it from there, rather than as a normal browser tab. This removes Safari/Chrome's own address bar and toolbar entirely, which is the only fully reliable way to stop iOS from occasionally showing/hiding browser chrome on scroll gestures - a known iOS quirk that CSS alone can reduce but not 100% eliminate when running in a regular browser tab.
 - Requires an internet connection for live data (GPS itself works offline, but wind/weather, elevation, reverse geocoding, and any non-cached map tiles require connectivity).
 - Screen recording uses `getDisplayMedia`, which requires explicit browser permission each session.
+- The screen is kept awake automatically (Wake Lock API) while the app is open and visible.

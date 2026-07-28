@@ -490,7 +490,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v26';
+const APP_VERSION = 'v27';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -782,19 +782,44 @@ async function fetchFineRoads(){
   const query = `[out:json][timeout:20];way["highway"](${bbox});out geom;`;
   if(fineRoadsAbortController) fineRoadsAbortController.abort();
   fineRoadsAbortController = new AbortController();
+  // Synthetic cache key bucketed onto a ~0.02° grid (~2km) around the map
+  // center, so revisits to roughly the same area reuse a cached result even
+  // though the exact viewport bounds differ slightly each time.
+  const center = map.getCenter();
+  const gridLat = Math.round(center.lat/0.02)*0.02;
+  const gridLon = Math.round(center.lng/0.02)*0.02;
+  const cacheKey = `https://fine-roads-cache.local/tile?z=${map.getZoom()}&lat=${gridLat.toFixed(2)}&lon=${gridLon.toFixed(2)}`;
   try{
     const r = await fetch('https://overpass-api.de/api/interpreter', {
       method:'POST', body:'data='+encodeURIComponent(query), signal:fineRoadsAbortController.signal
     });
     const j = await r.json();
-    fineRoadsLayer.clearLayers();
-    for(const el of (j.elements||[])){
-      if(el.type!=='way' || !el.geometry) continue;
-      const latlngs = el.geometry.map(p=>[p.lat,p.lon]);
-      const style = fineRoadStyle(el.tags && el.tags.highway);
-      L.polyline(latlngs, {...style, pane:'overlayTilesPane'}).addTo(fineRoadsLayer);
+    renderFineRoads(j);
+    if('caches' in window){
+      caches.open('gblp-tiles-v1').then(cache=>{
+        cache.put(cacheKey, new Response(JSON.stringify(j), {headers:{'Content-Type':'application/json'}}));
+      }).catch(()=>{});
     }
-  }catch(e){ /* Overpass unavailable/slow - silently skip, generic roads overlay still shows */ }
+  }catch(e){
+    // Offline or Overpass unreachable - fall back to the last successfully
+    // cached result for roughly this same area, if we have one.
+    if('caches' in window){
+      try{
+        const cache = await caches.open('gblp-tiles-v1');
+        const cached = await cache.match(cacheKey);
+        if(cached){ renderFineRoads(await cached.json()); }
+      }catch(e2){ /* no cached fallback available either - generic roads overlay still shows */ }
+    }
+  }
+}
+function renderFineRoads(j){
+  fineRoadsLayer.clearLayers();
+  for(const el of (j.elements||[])){
+    if(el.type!=='way' || !el.geometry) continue;
+    const latlngs = el.geometry.map(p=>[p.lat,p.lon]);
+    const style = fineRoadStyle(el.tags && el.tags.highway);
+    L.polyline(latlngs, {...style, pane:'overlayTilesPane'}).addTo(fineRoadsLayer);
+  }
 }
 map.on('moveend zoomend', scheduleFineRoadsFetch);
 bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });

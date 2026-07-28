@@ -41,6 +41,16 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 .gps-dot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
 .gps-dot.bad{background:var(--bad);}
 
+/* ---- settings popover ---- */
+#settingsPanel{position:absolute;top:48px;right:10px;width:300px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;z-index:900;display:none;}
+#settingsPanel.open{display:block;}
+#settingsPanel .subhead{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:10px 0 6px;}
+#settingsPanel .subhead:first-child{margin-top:2px;}
+#settingsPanel hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+
+/* ---- landing area glow ---- */
+.landing-glow{filter:drop-shadow(0 0 5px #00ff7f) drop-shadow(0 0 2px #00ff7f);}
+
 /* ---- main layout ---- */
 #main{flex:1;display:flex;flex-direction:row;min-height:0;height:100%;align-items:stretch;}
 #mapwrap{flex:0 0 75%;position:relative;min-width:0;height:100%;align-self:stretch;}
@@ -116,7 +126,11 @@ canvas.mini{width:100% !important;height:130px !important;}
   <div id="topbar">
     <div class="title">GBLP</div>
     <div class="sep"></div>
-    <div class="wx-chip"><b id="wxModelName">Loading…</b><span id="wxModelAge">model age —</span></div>
+    <div class="wx-chip" style="flex-direction:row;align-items:baseline;gap:5px;">
+      <span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model</span>
+      <b id="wxModelName">Loading…</b>
+      <span id="wxModelAge" style="color:var(--muted);">—</span>
+    </div>
     <div class="sep"></div>
     <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
@@ -124,11 +138,53 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div class="wx-chip" id="versionChip" style="font-size:9px;color:var(--muted);"></div>
     <div id="testPill" class="pill testmode" style="display:none;">TEST MODE</div>
     <div class="spacer"></div>
-    <select id="altUnitSelect" class="iconbtn" style="padding:6px 4px;font-size:11px;width:56px;flex-shrink:0;">
-      <option value="m">m</option>
-      <option value="ft">ft</option>
-      <option value="FL">FL</option>
-    </select>
+    <div style="position:relative;">
+      <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
+      <div id="settingsPanel">
+        <div class="subhead">Map Layers</div>
+        <div class="togglerow"><span>Power lines</span><label class="switch"><input type="checkbox" id="lyrPower"><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Roads &amp; paths</span><label class="switch"><input type="checkbox" id="lyrRoads" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Airspace (below balloon)</span><label class="switch"><input type="checkbox" id="lyrAirspace"><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Landing area</span><label class="switch"><input type="checkbox" id="lyrLanding" checked><span class="slider-tog"></span></label></div>
+
+        <hr>
+        <div class="subhead">Weather Model</div>
+        <select id="wxModelSelect">
+          <option value="auto">Auto (finest available grid)</option>
+          <option value="best_match">Best match</option>
+          <option value="icon_d2">ICON-D2 (2 km, DE/EU only)</option>
+          <option value="icon_eu">ICON-EU (7 km)</option>
+          <option value="gfs_global">GFS Global (25 km)</option>
+          <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
+        </select>
+        <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
+
+        <hr>
+        <div class="subhead">Airspace Classes</div>
+        <div class="checkgrid">
+          <label><input type="checkbox" checked data-as="A">Class A</label>
+          <label><input type="checkbox" checked data-as="B">Class B</label>
+          <label><input type="checkbox" checked data-as="C">Class C</label>
+          <label><input type="checkbox" checked data-as="D">Class D</label>
+          <label><input type="checkbox" data-as="E">Class E</label>
+          <label><input type="checkbox" data-as="G">Class G</label>
+          <label><input type="checkbox" checked data-as="R">Restricted</label>
+          <label><input type="checkbox" checked data-as="P">Prohibited</label>
+          <label><input type="checkbox" checked data-as="TMZ">TMZ</label>
+          <label><input type="checkbox" checked data-as="RMZ">RMZ</label>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin:8px 0 4px;">openAIP tile layer needs an API key (free tier available at openaip.net → account → API clients).</p>
+        <input type="text" id="openaipKey" placeholder="openAIP API key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
+      <select id="altUnitSelect" class="iconbtn" style="padding:5px 4px;font-size:11px;width:56px;flex-shrink:0;">
+        <option value="m">m</option>
+        <option value="ft">ft</option>
+        <option value="FL">FL</option>
+      </select>
+    </div>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
     <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
     <button class="iconbtn" id="btnRec" title="Record">⏺</button>
@@ -211,54 +267,6 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
 
-      <!-- LAYERS -->
-      <div class="card">
-        <h3 onclick="toggleCard(this)">Map Layers <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <div class="togglerow"><span>Power lines</span><label class="switch"><input type="checkbox" id="lyrPower"><span class="slider-tog"></span></label></div>
-          <div class="togglerow"><span>Roads &amp; paths</span><label class="switch"><input type="checkbox" id="lyrRoads" checked><span class="slider-tog"></span></label></div>
-          <div class="togglerow"><span>Airspace (below balloon)</span><label class="switch"><input type="checkbox" id="lyrAirspace"><span class="slider-tog"></span></label></div>
-          <div class="togglerow"><span>Landing area</span><label class="switch"><input type="checkbox" id="lyrLanding" checked><span class="slider-tog"></span></label></div>
-        </div>
-      </div>
-
-      <!-- AIRSPACE FILTER (collapsed by default) -->
-      <div class="card collapsed">
-        <h3 onclick="toggleCard(this)">Airspace Classes <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <div class="checkgrid">
-            <label><input type="checkbox" checked data-as="A">Class A</label>
-            <label><input type="checkbox" checked data-as="B">Class B</label>
-            <label><input type="checkbox" checked data-as="C">Class C</label>
-            <label><input type="checkbox" checked data-as="D">Class D</label>
-            <label><input type="checkbox" data-as="E">Class E</label>
-            <label><input type="checkbox" data-as="G">Class G</label>
-            <label><input type="checkbox" checked data-as="R">Restricted</label>
-            <label><input type="checkbox" checked data-as="P">Prohibited</label>
-            <label><input type="checkbox" checked data-as="TMZ">TMZ</label>
-            <label><input type="checkbox" checked data-as="RMZ">RMZ</label>
-          </div>
-          <p style="font-size:11px;color:var(--muted);margin:8px 0 4px;">openAIP tile layer needs an API key (free tier available at openaip.net → account → API clients).</p>
-          <input type="text" id="openaipKey" placeholder="openAIP API key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
-        </div>
-      </div>
-
-      <!-- WEATHER MODEL (collapsed by default) -->
-      <div class="card collapsed">
-        <h3 onclick="toggleCard(this)">Weather Model <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <select id="wxModelSelect">
-            <option value="auto">Auto (finest available grid)</option>
-            <option value="best_match">Best match</option>
-            <option value="icon_d2">ICON-D2 (2 km, DE/EU only)</option>
-            <option value="icon_eu">ICON-EU (7 km)</option>
-            <option value="gfs_global">GFS Global (25 km)</option>
-            <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
-          </select>
-          <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
-        </div>
-      </div>
-
       <!-- TEST MODE (collapsed by default) -->
       <div class="card collapsed" id="testmode-panel">
         <h3 onclick="toggleCard(this)">Test Mode <span class="chev">▾</span></h3>
@@ -283,7 +291,7 @@ canvas.mini{width:100% !important;height:130px !important;}
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v9';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -417,10 +425,14 @@ document.getElementById('lyrRoads').addEventListener('change', e=>{ roadsShown =
 const balloonIcon = L.divIcon({html:'🎈', className:'', iconSize:[28,28], iconAnchor:[14,14]});
 const balloonMarker = L.marker([state.lat,state.lon], {icon: balloonIcon}).addTo(map);
 const breadcrumbLine = L.polyline([], {color:'#3fd0c9', weight:3, opacity:0.8}).addTo(map);
-let landingPolyLayer = L.polygon([], {color:'#3fd06b', weight:2, fillOpacity:0.12}).addTo(map);
+let landingPolyLayer = L.polygon([], {color:'#00ff7f', weight:4, opacity:1, fillColor:'#00ff7f', fillOpacity:0.16, className:'landing-glow'}).addTo(map);
 let descentPathLayer = L.polyline([], {color:'#ffb454', weight:3, dashArray:'6,5'}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
+const crossIcon = L.divIcon({
+  html:'<svg width="28" height="28" viewBox="0 0 28 28"><line x1="14" y1="2" x2="14" y2="26" stroke="#ff5a3c" stroke-width="3"/><line x1="2" y1="14" x2="26" y2="14" stroke="#ff5a3c" stroke-width="3"/><circle cx="14" cy="14" r="5" fill="none" stroke="#ff5a3c" stroke-width="2.5"/></svg>',
+  className:'', iconSize:[28,28], iconAnchor:[14,14]
+});
 
 // ---------- GPS ----------
 let gpsWatchId = null;
@@ -513,11 +525,11 @@ async function fetchWind(force){
     state.windProfile = profile;
     state.modelUsed = MODEL_LABELS[modelSel] || modelParam;
     state.modelRunAge = new Date();
-    document.getElementById('wxModelName').textContent = 'Model: '+state.modelUsed;
+    document.getElementById('wxModelName').textContent = state.modelUsed;
     document.getElementById('wxModelAge').textContent = 'fetched just now';
     recomputeAll();
   }catch(e){
-    document.getElementById('wxModelName').textContent = 'Model: offline (cached)';
+    document.getElementById('wxModelName').textContent = 'offline (cached)';
   }
 }
 document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
@@ -686,7 +698,7 @@ map.on('click', async (e)=>{
   if(!pointInPolygon([e.latlng.lng,e.latlng.lat], state.landingPolygon)) return;
   state.clickedTarget = {lat:e.latlng.lat, lon:e.latlng.lng};
   if(targetMarker) map.removeLayer(targetMarker);
-  targetMarker = L.marker([e.latlng.lat,e.latlng.lng]).addTo(map);
+  targetMarker = L.marker([e.latlng.lat,e.latlng.lng], {icon: crossIcon}).addTo(map);
   document.getElementById('resultpanel').classList.add('show');
   await recomputeClickTarget();
 });
@@ -751,12 +763,30 @@ function copyResultAll(){
 // ---------- charts ----------
 let vertChart=null, hodoChart=null;
 function drawVertProfile(path){
-  const ctx = document.getElementById('vertProfileChart').getContext('2d');
-  const labels = path.map(p=>Math.round(p.t/60));
-  const data = path.map(p=>Math.round(p.alt));
-  if(vertChart) vertChart.destroy();
-  vertChart = new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#ffb454',pointRadius:0,tension:0.1}]},
-    options:{plugins:{legend:{display:false},title:{display:true,text:'Vertical profile (min / m AMSL)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
+  const canvas = document.getElementById('vertProfileChart');
+  const ctx = canvas.getContext('2d');
+  // cumulative horizontal distance (km) along the path -> true side-view profile
+  let cumKm = 0;
+  const labels = [];
+  const data = [];
+  for(let i=0;i<path.length;i++){
+    if(i>0) cumKm += haversine(path[i-1].lat,path[i-1].lon,path[i].lat,path[i].lon)/1000;
+    labels.push(cumKm.toFixed(1));
+    data.push(Math.round(path[i].alt));
+  }
+  if(vertChart){ vertChart.destroy(); vertChart=null; }
+  vertChart = new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data,borderColor:'#ffb454',backgroundColor:'rgba(255,180,84,0.15)',fill:true,pointRadius:0,tension:0.1,borderWidth:2}]},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{legend:{display:false},title:{display:true,text:'Descent profile (km horiz. / m AMSL)',color:'#8b98a5',font:{size:10}}},
+      scales:{
+        x:{ticks:{color:'#8b98a5',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(139,152,165,0.15)'}},
+        y:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.15)'}}
+      }
+    }
+  });
 }
 function drawHodograph(path){
   const pts = [];
@@ -794,6 +824,14 @@ document.getElementById('btnDayNight').textContent='☀️';
 
 // ---------- collapsible cards ----------
 function toggleCard(h3){ h3.parentElement.classList.toggle('collapsed'); }
+
+// ---------- settings popover ----------
+document.getElementById('btnSettings').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('settingsPanel').classList.toggle('open');
+});
+document.getElementById('settingsPanel').addEventListener('click', e=>e.stopPropagation());
+document.addEventListener('click', ()=>{ document.getElementById('settingsPanel').classList.remove('open'); });
 
 // ---------- test mode ----------
 document.getElementById('testEnable').addEventListener('change', e=>{

@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.min.js"></script>
 <style>
 :root{
   --bg:#0d1117; --panel:#141a21; --panel2:#1b232c; --border:#2a3540;
@@ -27,7 +28,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #app{display:flex;flex-direction:column;height:100vh;width:100vw;}
 
 /* ---- header ---- */
-#topbar{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;z-index:500;}
+#topbar{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;flex-wrap:nowrap;position:sticky;top:0;left:0;right:0;z-index:1000;min-height:44px;}
 #topbar .title{font-weight:700;letter-spacing:.5px;color:var(--accent);font-size:13px;white-space:nowrap;}
 #topbar .sep{width:1px;height:20px;background:var(--border);}
 .wx-chip{display:flex;flex-direction:column;line-height:1.2;}
@@ -42,14 +43,31 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 .gps-dot.bad{background:var(--bad);}
 
 /* ---- settings popover ---- */
-#settingsPanel{position:absolute;top:48px;right:10px;width:300px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;z-index:900;display:none;}
-#settingsPanel.open{display:block;}
-#settingsPanel .subhead{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:10px 0 6px;}
-#settingsPanel .subhead:first-child{margin-top:2px;}
-#settingsPanel hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+#settingsPanel, .settings-popover{position:absolute;top:48px;right:10px;width:280px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;z-index:900;display:none;}
+#settingsPanel.open, .settings-popover.open{display:block;}
+#settingsPanel .subhead, .settings-popover .subhead{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:10px 0 6px;}
+#settingsPanel .subhead:first-child, .settings-popover .subhead:first-child{margin-top:2px;}
+#settingsPanel hr, .settings-popover hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+.settings-popover input[type=number]{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:2px;font-family:var(--mono);}
+#btnTestMode{background:var(--warn);color:#241a00;border-color:var(--warn);font-weight:700;}
+#btnTestMode.active{background:var(--bad);color:#fff;border-color:var(--bad);}
+
+/* ---- password gate ---- */
+#passwordGate{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:5000;}
+#passwordGate .box{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(90vw,320px);text-align:center;}
+#passwordGate .box h2{margin:0 0 4px;color:var(--accent);font-size:16px;}
+#passwordGate .box p{color:var(--muted);font-size:12px;margin:0 0 16px;}
+#passwordGate input{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-size:16px;text-align:center;margin-bottom:10px;}
+#passwordGate button{width:100%;background:var(--accent);color:#00201d;border:none;border-radius:8px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;}
+#passwordGate .err{color:var(--bad);font-size:12px;margin-top:8px;min-height:16px;}
 
 /* ---- landing area glow ---- */
-.landing-glow{filter:drop-shadow(0 0 5px #00ff7f) drop-shadow(0 0 2px #00ff7f);}
+.landing-glow{filter:drop-shadow(0 0 5px #ff2b2b) drop-shadow(0 0 2px #ff2b2b);}
+
+/* ---- floating mode toggle on map ---- */
+#modeToggle{position:absolute;top:8px;left:8px;z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+#modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- main layout ---- */
 #main{flex:1;display:flex;flex-direction:row;min-height:0;height:100%;align-items:stretch;}
@@ -121,6 +139,15 @@ canvas.mini{width:100% !important;height:130px !important;}
 </style>
 </head>
 <body>
+<div id="passwordGate">
+  <div class="box">
+    <h2>🎈 GBLP</h2>
+    <p>Enter password to continue</p>
+    <input type="password" id="gatePw" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password">
+    <button onclick="checkGatePassword()">Unlock</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+</div>
 <div id="app">
 
   <div id="topbar">
@@ -136,8 +163,15 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
     <div class="sep"></div>
     <div class="wx-chip" id="versionChip" style="font-size:9px;color:var(--muted);"></div>
-    <div id="testPill" class="pill testmode" style="display:none;">TEST MODE</div>
     <div class="spacer"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
+      <select id="altUnitSelect" class="iconbtn" style="padding:5px 4px;font-size:11px;width:56px;flex-shrink:0;">
+        <option value="m">m</option>
+        <option value="ft">ft</option>
+        <option value="FL">FL</option>
+      </select>
+    </div>
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
       <div id="settingsPanel">
@@ -174,25 +208,47 @@ canvas.mini{width:100% !important;height:130px !important;}
           <label><input type="checkbox" checked data-as="RMZ">RMZ</label>
         </div>
         <p style="font-size:11px;color:var(--muted);margin:8px 0 4px;">openAIP tile layer needs an API key (free tier available at openaip.net → account → API clients).</p>
-        <input type="text" id="openaipKey" placeholder="openAIP API key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+        <input type="text" id="openaipKey" value="e9946fdef0b38f6540986cb7045f893a" placeholder="openAIP API key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
       </div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center;">
-      <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
-      <select id="altUnitSelect" class="iconbtn" style="padding:5px 4px;font-size:11px;width:56px;flex-shrink:0;">
-        <option value="m">m</option>
-        <option value="ft">ft</option>
-        <option value="FL">FL</option>
-      </select>
     </div>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
     <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
     <button class="iconbtn" id="btnRec" title="Record">⏺</button>
+    <div style="position:relative;">
+      <button class="iconbtn" id="btnTestMode" title="Test Mode">🧪 TEST</button>
+      <div id="testPanel" class="settings-popover">
+        <div class="togglerow"><span>Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
+        <p style="font-size:11px;color:var(--muted);margin:6px 0;">Tap the map to set a fictitious position, then set altitude/course/speed below.</p>
+        <div class="subhead">Altitude</div>
+        <div style="display:flex;gap:6px;">
+          <input type="number" id="testAlt" value="3000" style="flex:1;">
+          <select id="testAltUnit" style="width:64px;">
+            <option value="m">m</option>
+            <option value="ft">ft</option>
+          </select>
+        </div>
+        <div class="subhead">Course (° true)</div>
+        <input type="number" id="testCourse" value="90">
+        <div class="subhead">Speed</div>
+        <div style="display:flex;gap:6px;">
+          <input type="number" id="testSpeed" value="15" style="flex:1;">
+          <select id="testSpeedUnit" style="width:64px;">
+            <option value="kn">kn</option>
+            <option value="kmh">km/h</option>
+          </select>
+        </div>
+        <button class="ghost" style="margin-top:8px;" onclick="applyTestValues()">Apply</button>
+      </div>
+    </div>
   </div>
 
   <div id="main">
     <div id="mapwrap">
       <div id="map"></div>
+      <div id="modeToggle">
+        <button id="modeMonitor" class="active">🟢 Landing Area</button>
+        <button id="modePlan">✛ Plan Descent</button>
+      </div>
       <div id="warnbar"></div>
     </div>
 
@@ -200,7 +256,7 @@ canvas.mini{width:100% !important;height:130px !important;}
 
       <!-- POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Balloon Position <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)">Current Position <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell wide">
@@ -267,19 +323,6 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
 
-      <!-- TEST MODE (collapsed by default) -->
-      <div class="card collapsed" id="testmode-panel">
-        <h3 onclick="toggleCard(this)">Test Mode <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <div class="togglerow"><span>Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
-          <p style="font-size:11px;color:var(--muted);margin:6px 0;">Tap the map to set a fictitious position, then set altitude/course/speed below.</p>
-          <input type="number" id="testAlt" placeholder="Altitude AMSL (m)" value="3000">
-          <input type="number" id="testCourse" placeholder="Course (° true)" value="90">
-          <input type="number" id="testSpeed" placeholder="Speed (kn)" value="15">
-          <button class="ghost" onclick="applyTestValues()">Apply</button>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -289,9 +332,57 @@ canvas.mini{width:100% !important;height:130px !important;}
    GAS BALLOON LANDING PREDICTOR - prototype
    ============================================================ */
 
+// ---------- password gate ----------
+// Soft client-side gate only (GitHub Pages has no server-side auth - anyone
+// opening devtools can read this hash / bypass the check). Good enough to
+// keep casual visitors out, NOT real access control.
+//
+// To set your OWN password: open the browser console on this page and run
+//   crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourNewPassword'))
+//     .then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
+// then paste the resulting hash below, replacing GATE_HASH.
+const GATE_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // default password: 1234
+const GATE_STORAGE_KEY = 'gblp_unlocked_v1';
+
+async function sha256Hex(text){
+  if(window.crypto && crypto.subtle && crypto.subtle.digest){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  // Fallback (e.g. when opened via file:// without a secure context, where
+  // SubtleCrypto is unavailable): simple non-cryptographic hash, good enough
+  // to keep local testing working. On real https hosting the strong hash above is used.
+  let h = 0;
+  for(let i=0;i<text.length;i++){ h = (Math.imul(31,h) + text.charCodeAt(i))|0; }
+  return 'fallback-'+(h>>>0).toString(16);
+}
+async function checkGatePassword(){
+  const pw = document.getElementById('gatePw').value;
+  const hash = await sha256Hex(pw);
+  if(hash === GATE_HASH){
+    localStorage.setItem(GATE_STORAGE_KEY, '1');
+    document.getElementById('passwordGate').style.display = 'none';
+  } else {
+    document.getElementById('gateErr').textContent = 'Incorrect password';
+    document.getElementById('gatePw').value = '';
+  }
+}
+document.getElementById('gatePw').addEventListener('keydown', e=>{ if(e.key==='Enter') checkGatePassword(); });
+if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
+  // No secure context (e.g. opened via file:// for local testing) - the
+  // password check can't run reliably here, so skip the gate rather than
+  // false-block. On real https hosting (GitHub Pages) this branch won't fire.
+  console.warn('GBLP: SubtleCrypto unavailable (no secure context) - password gate skipped for local testing.');
+  document.getElementById('passwordGate').style.display = 'none';
+} else if(localStorage.getItem(GATE_STORAGE_KEY) === '1'){
+  document.getElementById('passwordGate').style.display = 'none';
+} else {
+  document.getElementById('gatePw').focus();
+}
+
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v9';
+const APP_VERSION = 'v14';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -403,7 +494,40 @@ setTimeout(()=>{
   }
 }, 6000);
 
-const powerLayer = L.tileLayer('https://tiles.openinframap.org/power/{z}/{x}/{y}.png',{maxZoom:19,opacity:0.85,attribution:'© OpenInfraMap'});
+// OpenInfraMap serves Mapbox/MapLibre VECTOR tiles (.pbf), not raster PNGs,
+// with several distinct sub-layers (power_line, power_tower, power_substation, ...).
+// We style only the power_* source-layers so non-power infra (telecoms/water/
+// petroleum, also present in the same tile) stays invisible.
+function powerLineColor(kv){
+  if(!kv) return '#9aa5ad';
+  if(kv>=220) return '#ff3b3b';
+  if(kv>=100) return '#ff9d3b';
+  if(kv>=50)  return '#ffe83b';
+  return '#8bd3ff';
+}
+const powerVectorStyles = {
+  power_line: (props)=>({
+    weight: Math.max(1, Math.min(4.5, (props.voltage||10)/60)),
+    color: powerLineColor(props.voltage), opacity: 0.9
+  }),
+  power_tower:          {radius:2, color:'#ffcc66', fillColor:'#ffcc66', fill:true, fillOpacity:0.9, weight:1},
+  power_substation:     {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22},
+  power_substation_point:{radius:4, color:'#ff9d3b', fillColor:'#ff9d3b', fill:true, fillOpacity:0.9, weight:1},
+  power_plant:          {color:'#ff3b3b', weight:1, fillColor:'#ff3b3b', fillOpacity:0.18},
+  power_plant_point:    {radius:5, color:'#ff3b3b', fillColor:'#ff3b3b', fill:true, fillOpacity:0.9, weight:1},
+  power_generator:      {radius:3, color:'#ffe83b', fillColor:'#ffe83b', fill:true, fillOpacity:0.9, weight:1},
+  power_generator_area: {color:'#ffe83b', weight:1, fillColor:'#ffe83b', fillOpacity:0.15},
+  power_transformer:    {radius:3, color:'#8bd3ff', fillColor:'#8bd3ff', fill:true, fillOpacity:0.9, weight:1},
+  power_compensator:    {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1},
+  power_switch:         {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1}
+};
+const powerLayer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}/{y}.pbf', {
+  vectorTileLayerStyles: powerVectorStyles,
+  interactive: false,
+  maxNativeZoom: 14,
+  minZoom: 0,
+  attribution: '© OpenInfraMap / OpenStreetMap contributors'
+});
 document.getElementById('lyrPower').addEventListener('change', e=>{
   if(e.target.checked) powerLayer.addTo(map); else map.removeLayer(powerLayer);
 });
@@ -425,7 +549,7 @@ document.getElementById('lyrRoads').addEventListener('change', e=>{ roadsShown =
 const balloonIcon = L.divIcon({html:'🎈', className:'', iconSize:[28,28], iconAnchor:[14,14]});
 const balloonMarker = L.marker([state.lat,state.lon], {icon: balloonIcon}).addTo(map);
 const breadcrumbLine = L.polyline([], {color:'#3fd0c9', weight:3, opacity:0.8}).addTo(map);
-let landingPolyLayer = L.polygon([], {color:'#00ff7f', weight:4, opacity:1, fillColor:'#00ff7f', fillOpacity:0.16, className:'landing-glow'}).addTo(map);
+let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:4, opacity:1, fillColor:'#00ff7f', fillOpacity:0.28, className:'landing-glow'}).addTo(map);
 let descentPathLayer = L.polyline([], {color:'#ffb454', weight:3, dashArray:'6,5'}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
@@ -500,20 +624,36 @@ function pressureToAltM(p){ // ISA approx
   const P0=1013.25;
   return (288.15/0.0065)*(1-Math.pow(p/P0, (0.0065*287.05)/9.80665));
 }
-const MODEL_LABELS = {
-  auto: 'Auto (best match)',
-  best_match: 'Best match',
-  icon_d2: 'ICON-D2 (2 km)',
-  icon_eu: 'ICON-EU (7 km)',
-  gfs_global: 'GFS Global (25 km)',
-  ecmwf_ifs04: 'ECMWF IFS (25 km)'
+const MODEL_META = {
+  best_match:   {label:'Best match',        cadenceH:6,  latencyH:2.5},
+  icon_d2:      {label:'ICON-D2 (2 km)',    cadenceH:3,  latencyH:1.5},
+  icon_eu:      {label:'ICON-EU (7 km)',    cadenceH:6,  latencyH:2},
+  gfs_global:   {label:'GFS Global (25 km)',cadenceH:6,  latencyH:3.5},
+  ecmwf_ifs04:  {label:'ECMWF IFS (25 km)', cadenceH:12, latencyH:6}
 };
+// Resolve "auto" to the finest grid that actually covers the current position,
+// so we always know (and can display) exactly which concrete model is in use.
+function pickAutoModel(lat, lon){
+  if(lat>=43.18 && lat<=58.08 && lon>=-3.94 && lon<=20.34) return 'icon_d2';   // DACH/Central Europe, 2km
+  if(lat>=29.5  && lat<=70.5  && lon>=-23.5 && lon<=45)    return 'icon_eu';   // wider Europe, 7km
+  return 'gfs_global';                                                        // global fallback
+}
+function estimateModelRunAgeHours(modelKey){
+  const meta = MODEL_META[modelKey] || MODEL_META.best_match;
+  const now = new Date();
+  const nowH = now.getUTCHours() + now.getUTCMinutes()/60;
+  const availableH = nowH - meta.latencyH;
+  let lastRunH = Math.floor(availableH/meta.cadenceH)*meta.cadenceH;
+  let ageH = availableH - lastRunH + meta.latencyH;
+  if(ageH<0) ageH += 24;
+  return ageH;
+}
 async function fetchWind(force){
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
-    const modelParam = modelSel==='auto' ? 'best_match' : modelSel;
+    const resolvedModel = modelSel==='auto' ? pickAutoModel(state.lat, state.lon) : modelSel;
     const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${modelParam}&forecast_hours=3&timezone=UTC`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=3&timezone=UTC`;
     const r = await fetch(url);
     const j = await r.json();
     const h = j.hourly;
@@ -523,10 +663,12 @@ async function fetchWind(force){
       return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
     }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
     state.windProfile = profile;
-    state.modelUsed = MODEL_LABELS[modelSel] || modelParam;
+    const meta = MODEL_META[resolvedModel] || MODEL_META.best_match;
+    state.modelUsed = modelSel==='auto' ? (meta.label+' · auto') : meta.label;
+    state.modelRunAgeH = estimateModelRunAgeHours(resolvedModel);
     state.modelRunAge = new Date();
     document.getElementById('wxModelName').textContent = state.modelUsed;
-    document.getElementById('wxModelAge').textContent = 'fetched just now';
+    document.getElementById('wxModelAge').textContent = `fetched just now · run ~${state.modelRunAgeH.toFixed(1)} h old`;
     recomputeAll();
   }catch(e){
     document.getElementById('wxModelName').textContent = 'offline (cached)';
@@ -554,7 +696,8 @@ function toUV(pt){ // meteorological dir (from) -> u/v vector (to)
 setInterval(()=>{
   if(state.modelRunAge){
     const ageMin = Math.round((Date.now()-state.modelRunAge.getTime())/60000);
-    document.getElementById('wxModelAge').textContent = `fetched ${ageMin} min ago`;
+    const runAgeNow = (state.modelRunAgeH||0) + ageMin/60;
+    document.getElementById('wxModelAge').textContent = `fetched ${ageMin} min ago · run ~${runAgeNow.toFixed(1)} h old`;
   }
 },30000);
 
@@ -687,12 +830,29 @@ function checkObstacleWarnings(path){
   if(warn){ warnbar.textContent=warn; warnbar.classList.add('show'); } else { warnbar.classList.remove('show'); }
 }
 
+// ---------- mode toggle: monitor (function 1) vs plan descent (function 2) ----------
+state.appMode = 'monitor'; // 'monitor' | 'plan'
+document.getElementById('modeMonitor').addEventListener('click', ()=>setAppMode('monitor'));
+document.getElementById('modePlan').addEventListener('click', ()=>setAppMode('plan'));
+function setAppMode(mode){
+  state.appMode = mode;
+  document.getElementById('modeMonitor').classList.toggle('active', mode==='monitor');
+  document.getElementById('modePlan').classList.toggle('active', mode==='plan');
+  if(mode==='monitor'){
+    state.clickedTarget = null;
+    if(targetMarker){ map.removeLayer(targetMarker); targetMarker=null; }
+    descentPathLayer.setLatLngs([]);
+    document.getElementById('resultpanel').classList.remove('show');
+  }
+}
+
 // ---------- map click handling ----------
 map.on('click', async (e)=>{
   if(document.getElementById('testEnable').checked){
     updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn);
     return;
   }
+  if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
   if(!state.landingPolygon) return;
   // point-in-polygon test
   if(!pointInPolygon([e.latlng.lng,e.latlng.lat], state.landingPolygon)) return;
@@ -825,23 +985,40 @@ document.getElementById('btnDayNight').textContent='☀️';
 // ---------- collapsible cards ----------
 function toggleCard(h3){ h3.parentElement.classList.toggle('collapsed'); }
 
-// ---------- settings popover ----------
-document.getElementById('btnSettings').addEventListener('click', (e)=>{
-  e.stopPropagation();
-  document.getElementById('settingsPanel').classList.toggle('open');
+// ---------- header popovers (settings + test mode) ----------
+function setupPopover(btnId, panelId){
+  const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const willOpen = !panel.classList.contains('open');
+    document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
+    if(willOpen) panel.classList.add('open');
+  });
+  panel.addEventListener('click', e=>e.stopPropagation());
+}
+setupPopover('btnSettings','settingsPanel');
+setupPopover('btnTestMode','testPanel');
+document.addEventListener('click', ()=>{
+  document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
 });
-document.getElementById('settingsPanel').addEventListener('click', e=>e.stopPropagation());
-document.addEventListener('click', ()=>{ document.getElementById('settingsPanel').classList.remove('open'); });
 
 // ---------- test mode ----------
 document.getElementById('testEnable').addEventListener('change', e=>{
   state.testMode = e.target.checked;
-  document.getElementById('testPill').style.display = state.testMode?'inline-block':'none';
+  document.getElementById('btnTestMode').classList.toggle('active', state.testMode);
 });
 function applyTestValues(){
-  state.altAMSL = parseFloat(document.getElementById('testAlt').value)||state.altAMSL;
-  state.course = parseFloat(document.getElementById('testCourse').value)||state.course;
-  state.speedKn = parseFloat(document.getElementById('testSpeed').value)||state.speedKn;
+  const altRaw = parseFloat(document.getElementById('testAlt').value);
+  const altUnit = document.getElementById('testAltUnit').value;
+  if(!isNaN(altRaw)) state.altAMSL = altUnit==='ft' ? altRaw/3.28084 : altRaw;
+
+  const speedRaw = parseFloat(document.getElementById('testSpeed').value);
+  const speedUnit = document.getElementById('testSpeedUnit').value;
+  if(!isNaN(speedRaw)) state.speedKn = speedUnit==='kmh' ? speedRaw/1.852 : speedRaw;
+
+  const courseRaw = parseFloat(document.getElementById('testCourse').value);
+  if(!isNaN(courseRaw)) state.course = courseRaw;
+
   renderSidebarPosition();
   recomputeAll();
 }

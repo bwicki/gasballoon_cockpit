@@ -123,11 +123,10 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;transition:flex-basis .25s ease, min-width .25s ease, padding .25s ease, border-left-width .25s ease;}
+#sidebar{flex:0 0 25%;min-width:280px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overscroll-behavior:contain;transition:flex-basis .25s ease, min-width .25s ease, width .25s ease, padding .25s ease, border-left-width .25s ease;}
+#sidebar.collapsed{flex:0 0 0 !important;width:0 !important;min-width:0 !important;padding:0 !important;border-left-width:0 !important;overflow:hidden !important;}
 #sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
 #sidebarHandle:active{background:var(--accent);color:#00201d;}
-#sidebar.collapsed{overflow:hidden !important;}
-#sidebar.collapsed{overflow:hidden !important;}
 
 .card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;}
 .card h3{margin:0 0 8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
@@ -144,7 +143,7 @@ body.day #map{background:#dfe6ea;}
 
 .slider-row{margin-bottom:12px;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
-.dist-badge{color:#00e5c8;background:rgba(0,229,200,0.12);border:1px solid #00e5c8;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
+.dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
 .slider-row .lbl b{color:var(--accent2);font-family:var(--mono);}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
@@ -332,6 +331,7 @@ canvas.mini{width:100% !important;height:130px !important;}
             <div class="datacell wide" id="posDisplayWrap">
               <div class="val small" id="posDMS">—</div>
               <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);">—</div>
+              <div class="val small" id="posNearestTown" style="margin-top:2px;color:var(--muted);font-size:11px;">—</div>
               <div class="val small" id="posManualHint" style="display:none;color:var(--warn);">📍 Click on Position</div>
             </div>
             <div class="datacell">
@@ -373,6 +373,21 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
 
+      <!-- ADIABATIC -->
+      <div class="card">
+        <h3 onclick="toggleCard(this)">Adiabatic Braking (H₂) <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <div class="datagrid">
+            <div class="datacell">
+              <label>Rate of Intercept</label>
+              <div class="val small" id="reqRateAtIntercept" style="font-weight:400;">—</div>
+              <div class="val small" id="actualRateAtIntercept" style="margin-top:2px;font-weight:700;color:var(--text);">—</div>
+            </div>
+            <div class="datacell"><label>Virtual Lift Bonus</label><div class="val small" id="adiaKg">—</div></div>
+          </div>
+        </div>
+      </div>
+
       <!-- DESCENT PARAMETERS -->
       <div class="card">
         <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
@@ -396,21 +411,6 @@ canvas.mini{width:100% !important;height:130px !important;}
           <div class="slider-row">
             <div class="lbl"><span>Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
             <input type="range" id="sScatter" min="0" max="40" step="1" value="15">
-          </div>
-        </div>
-      </div>
-
-      <!-- ADIABATIC -->
-      <div class="card">
-        <h3 onclick="toggleCard(this)">Adiabatic Braking (H₂) <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <div class="datagrid">
-            <div class="datacell">
-              <label>Rate of Intercept</label>
-              <div class="val small" id="reqRateAtIntercept">—</div>
-              <div class="val small" id="actualRateAtIntercept" style="margin-top:2px;color:var(--muted);">—</div>
-            </div>
-            <div class="datacell"><label>Virtual Lift Bonus</label><div class="val small" id="adiaKg">—</div></div>
           </div>
         </div>
       </div>
@@ -509,7 +509,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v33';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1065,6 +1065,28 @@ function renderSidebarPosition(){
   document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
   document.getElementById('courseVal').textContent = String(Math.round(state.course)%360).padStart(3,'0')+'°';
   document.getElementById('speedVal').textContent = state.speedKn.toFixed(1)+' kn';
+  scheduleNearestTownFetch();
+}
+
+// ---------- nearest town for the CURRENT position (always shown, throttled) ----------
+let lastTownFetchCenter = null;
+let nearestTownFetchTimer = null;
+function scheduleNearestTownFetch(){
+  // Only re-query once we've moved a meaningful distance, to avoid hammering
+  // the free Nominatim service on every GPS update.
+  if(lastTownFetchCenter && haversine(lastTownFetchCenter.lat, lastTownFetchCenter.lon, state.lat, state.lon) < 3000) return;
+  clearTimeout(nearestTownFetchTimer);
+  nearestTownFetchTimer = setTimeout(fetchNearestTownForCurrentPosition, 1000);
+}
+async function fetchNearestTownForCurrentPosition(){
+  const lat = state.lat, lon = state.lon;
+  lastTownFetchCenter = {lat, lon};
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}});
+    const j = await r.json();
+    const name = (j.address && (j.address.village||j.address.town||j.address.city||j.address.hamlet||j.address.municipality)) || null;
+    document.getElementById('posNearestTown').textContent = name ? `near ${name}` : '—';
+  }catch(e){ /* keep previous value on failure */ }
 }
 
 // ---------- ground elevation (Open-Meteo elevation API, best effort) ----------
@@ -1350,18 +1372,7 @@ function positionSidebarHandle(){
 }
 document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');
-  const collapsed = sidebar.classList.toggle('collapsed');
-  if(collapsed){
-    sidebar.style.flex = '0 0 0';
-    sidebar.style.minWidth = '0';
-    sidebar.style.padding = '0';
-    sidebar.style.borderLeftWidth = '0';
-  } else {
-    sidebar.style.flex = '';
-    sidebar.style.minWidth = '';
-    sidebar.style.padding = '';
-    sidebar.style.borderLeftWidth = '';
-  }
+  sidebar.classList.toggle('collapsed');
   positionSidebarHandle();
   // Wait for the CSS transition to finish, then let Leaflet recompute its
   // size (the map area grows/shrinks as the sidebar toggles) and reposition
@@ -1757,6 +1768,22 @@ async function precacheAreaTiles(lat, lon, radiusKm){
     precacheInFlight = false;
   }
 }
+
+// ---------- keep the screen awake while the app is open ----------
+let wakeLockSentinel = null;
+async function requestWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  try{
+    wakeLockSentinel = await navigator.wakeLock.request('screen');
+    wakeLockSentinel.addEventListener('release', ()=>{ wakeLockSentinel = null; });
+  }catch(e){ /* e.g. denied, or unsupported in this browser - app still works, screen may sleep */ }
+}
+document.addEventListener('visibilitychange', ()=>{
+  // The Wake Lock is automatically released when the tab is hidden/backgrounded
+  // (e.g. switching apps) - re-acquire it once the app is visible again.
+  if(document.visibilityState === 'visible') requestWakeLock();
+});
+requestWakeLock();
 
 // ---------- boot ----------
 (async function boot(){

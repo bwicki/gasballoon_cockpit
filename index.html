@@ -64,9 +64,12 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 /* ---- landing area glow ---- */
 .landing-glow{filter:drop-shadow(0 0 5px #ff2b2b) drop-shadow(0 0 2px #ff2b2b);}
 
+/* ---- airspace tiles: boost contrast/saturation so boundaries stand out ---- */
+.airspace-tiles{filter:saturate(1.6) contrast(1.35) brightness(1.05);}
+
 /* ---- floating mode toggle (now docked in header) ---- */
-#modeToggle{display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0;}
-#modeToggle button{background:transparent;border:none;color:var(--muted);padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;}
+#modeToggle{position:absolute;top:8px;left:8px;z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- layer toggle group (header, top-left) ---- */
@@ -186,11 +189,6 @@ canvas.mini{width:100% !important;height:130px !important;}
       </div>
     </div>
     <div class="sep"></div>
-    <div id="modeToggle">
-      <button id="modeMonitor" class="active" title="Show landing area">🟢 Landing Area</button>
-      <button id="modePlan" title="Plan a descent point">✛ Plan Descent</button>
-    </div>
-    <div class="sep"></div>
     <div class="wx-chip" style="align-items:flex-start;">
       <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
       <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
@@ -273,6 +271,10 @@ canvas.mini{width:100% !important;height:130px !important;}
   <div id="main">
     <div id="mapwrap">
       <div id="map"></div>
+      <div id="modeToggle">
+        <button id="modeMonitor" class="active" title="Show landing area">🟢 Landing Area</button>
+        <button id="modePlan" title="Plan a descent point">✛ Plan Descent</button>
+      </div>
       <div id="warnbar"></div>
     </div>
 
@@ -406,7 +408,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v15';
+const APP_VERSION = 'v16';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -569,6 +571,11 @@ const OPENAIP_API_KEY = 'e9946fdef0b38f6540986cb7045f893a';
 let airspaceLayer = null;
 
 // ---- compact icon-button layer toggles (top-left of header) ----
+let recomputeTimer=null;
+function recomputeAll(){
+  clearTimeout(recomputeTimer);
+  recomputeTimer=setTimeout(doRecompute, 120);
+}
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
   let on = initiallyOn;
@@ -583,7 +590,7 @@ function bindLayerToggle(btnId, initiallyOn, onToggle){
 bindLayerToggle('tgPower', false, on=>{ if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer); });
 bindLayerToggle('tgAirspace', false, on=>{
   if(on){
-    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,{maxZoom:14,opacity:0.6,attribution:'© openAIP'});
+    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,{maxZoom:14,opacity:0.95,className:'airspace-tiles',attribution:'© openAIP'});
     airspaceLayer.addTo(map);
   } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
 });
@@ -834,11 +841,6 @@ function convexHull(points){
   return lower.concat(upper);
 }
 
-let recomputeTimer=null;
-function recomputeAll(){
-  clearTimeout(recomputeTimer);
-  recomputeTimer=setTimeout(doRecompute, 120);
-}
 function doRecompute(){
   if(!state.windProfile){ return; }
   const initDelayMin = parseFloat(document.getElementById('sInit').value);

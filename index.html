@@ -67,6 +67,9 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 /* ---- airspace tiles: boost contrast/saturation so boundaries stand out ---- */
 .airspace-tiles{filter:saturate(1.6) contrast(1.35) brightness(1.05);}
 
+/* ---- flown flight path: strong outline so it reads on any basemap ---- */
+.flightpath-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 4px rgba(0,0,0,0.6));}
+
 /* ---- floating mode toggle (now docked in header) ---- */
 #modeToggle{position:absolute;top:8px;left:8px;z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
@@ -179,11 +182,12 @@ canvas.mini{width:100% !important;height:130px !important;}
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
-      <button class="ltbtn" id="tgPower" title="Power lines">⚡</button>
-      <button class="ltbtn active" id="tgRoads" title="Roads &amp; paths">🛣️</button>
-      <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)">✈️</button>
+      <button class="ltbtn active" id="tgPower" title="Power lines">⚡</button>
+      <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names">🛣️</button>
+      <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)">✈️</button>
       <button class="ltbtn active" id="tgLanding" title="Landing area">🟢</button>
     </div>
+    <div class="sep"></div>
     <div style="display:flex;flex-direction:column;align-items:center;">
       <span style="font-size:8px;color:var(--muted);letter-spacing:.5px;">ALT UNIT</span>
       <select id="altUnitSelect" class="iconbtn" style="padding:5px 4px;font-size:11px;width:56px;flex-shrink:0;">
@@ -193,12 +197,26 @@ canvas.mini{width:100% !important;height:130px !important;}
       </select>
     </div>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">🌙</button>
-    <button class="iconbtn" id="btnShot" title="Screenshot">📷</button>
-    <button class="iconbtn" id="btnRec" title="Record">⏺</button>
+    <div style="position:relative;">
+      <button class="iconbtn" id="btnCapture" title="Screenshot / Recording">📷</button>
+      <div id="capturePanel" class="settings-popover" style="width:220px;">
+        <button class="ghost" id="capShotBtn">📷 Take screenshot</button>
+        <button class="ghost" id="capRecBtn" style="margin-top:8px;">⏺ Start recording</button>
+        <button class="ghost" id="capPauseBtn" style="margin-top:8px;display:none;">⏸ Pause recording</button>
+      </div>
+    </div>
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
       <div id="settingsPanel">
         <div class="subhead">Power Lines</div>
+        <div class="togglerow"><span>Lines</span><label class="switch"><input type="checkbox" data-powercat="line" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Towers / pylons</span><label class="switch"><input type="checkbox" data-powercat="tower" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Substations</span><label class="switch"><input type="checkbox" data-powercat="substation" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Power plants</span><label class="switch"><input type="checkbox" data-powercat="plant" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Generators</span><label class="switch"><input type="checkbox" data-powercat="generator" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Transformers</span><label class="switch"><input type="checkbox" data-powercat="transformer" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Compensators</span><label class="switch"><input type="checkbox" data-powercat="compensator" checked><span class="slider-tog"></span></label></div>
+        <div class="togglerow"><span>Switches</span><label class="switch"><input type="checkbox" data-powercat="switch" checked><span class="slider-tog"></span></label></div>
         <div class="togglerow"><span>Overhead lines only</span><label class="switch"><input type="checkbox" id="overheadOnly" checked><span class="slider-tog"></span></label></div>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
 
@@ -421,7 +439,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v19';
+const APP_VERSION = 'v20';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -548,23 +566,32 @@ function isUndergroundOrUnderwater(props){
   const loc = (props.location||'').toLowerCase();
   return loc==='underground' || loc==='underwater';
 }
+// Per-category visibility, editable from Settings. Lines and towers are the
+// primary interest and default ON; the rest default ON too but can be
+// switched off individually to reduce clutter.
+const powerCatVisible = {
+  line:true, tower:true, substation:true, plant:true,
+  generator:true, transformer:true, compensator:true, switch:true
+};
+const HIDDEN_STYLE = {weight:0, opacity:0, radius:0, fillOpacity:0};
 const powerVectorStyles = {
   power_line: (props)=>{
+    if(!powerCatVisible.line) return HIDDEN_STYLE;
     if(overheadOnly && isUndergroundOrUnderwater(props)) return {weight:0, opacity:0};
     // Minimum weight of 1.8 so low/unknown-voltage distribution lines never
     // render as near-invisible hairlines next to thick transmission lines.
     return { weight: Math.max(1.8, Math.min(4.5, (props.voltage||30)/45)), color: powerLineColor(props.voltage), opacity: 1 };
   },
-  power_tower:          {radius:2, color:'#ffcc66', fillColor:'#ffcc66', fill:true, fillOpacity:0.9, weight:1},
-  power_substation:     {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22},
-  power_substation_point:{radius:4, color:'#ff9d3b', fillColor:'#ff9d3b', fill:true, fillOpacity:0.9, weight:1},
-  power_plant:          {color:'#ff3b3b', weight:1, fillColor:'#ff3b3b', fillOpacity:0.18},
-  power_plant_point:    {radius:5, color:'#ff3b3b', fillColor:'#ff3b3b', fill:true, fillOpacity:0.9, weight:1},
-  power_generator:      {radius:3, color:'#ffe83b', fillColor:'#ffe83b', fill:true, fillOpacity:0.9, weight:1},
-  power_generator_area: {color:'#ffe83b', weight:1, fillColor:'#ffe83b', fillOpacity:0.15},
-  power_transformer:    {radius:3, color:'#8bd3ff', fillColor:'#8bd3ff', fill:true, fillOpacity:0.9, weight:1},
-  power_compensator:    {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1},
-  power_switch:         {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1}
+  power_tower:          (p)=> powerCatVisible.tower ? {radius:2, color:'#ffcc66', fillColor:'#ffcc66', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  power_substation:     (p)=> powerCatVisible.substation ? {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22} : HIDDEN_STYLE,
+  power_substation_point:(p)=> powerCatVisible.substation ? {radius:4, color:'#ff9d3b', fillColor:'#ff9d3b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  power_plant:          (p)=> powerCatVisible.plant ? {color:'#ff3b3b', weight:1, fillColor:'#ff3b3b', fillOpacity:0.18} : HIDDEN_STYLE,
+  power_plant_point:    (p)=> powerCatVisible.plant ? {radius:5, color:'#ff3b3b', fillColor:'#ff3b3b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  power_generator:      (p)=> powerCatVisible.generator ? {radius:3, color:'#ffe83b', fillColor:'#ffe83b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  power_generator_area: (p)=> powerCatVisible.generator ? {color:'#ffe83b', weight:1, fillColor:'#ffe83b', fillOpacity:0.15} : HIDDEN_STYLE,
+  power_transformer:    (p)=> powerCatVisible.transformer ? {radius:3, color:'#8bd3ff', fillColor:'#8bd3ff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  power_compensator:    (p)=> powerCatVisible.compensator ? {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  power_switch:         (p)=> powerCatVisible.switch ? {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE
 };
 const powerLayer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}/{y}.pbf', {
   vectorTileLayerStyles: powerVectorStyles,
@@ -577,12 +604,18 @@ document.getElementById('overheadOnly').addEventListener('change', e=>{
   overheadOnly = e.target.checked;
   if(map.hasLayer(powerLayer)) powerLayer.redraw();
 });
+document.querySelectorAll('[data-powercat]').forEach(cb=>{
+  cb.addEventListener('change', e=>{
+    powerCatVisible[e.target.dataset.powercat] = e.target.checked;
+    if(map.hasLayer(powerLayer)) powerLayer.redraw();
+  });
+});
 
 // Fixed in code on purpose (not exposed as an editable settings field) so it
 // can't be accidentally cleared/changed. Change this constant if you need a
 // different openAIP key.
 const OPENAIP_API_KEY = 'e9946fdef0b38f6540986cb7045f893a';
-let airspaceLayer = null;
+let airspaceLayer = null; // L.layerGroup of the openAIP categories we DO want
 
 // ---- compact icon-button layer toggles (top-left of header) ----
 let recomputeTimer=null;
@@ -601,35 +634,44 @@ function bindLayerToggle(btnId, initiallyOn, onToggle){
     onToggle(on);
   });
 }
-bindLayerToggle('tgPower', false, on=>{
+bindLayerToggle('tgPower', true, on=>{
   if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
   document.getElementById('powerLegendCard').style.display = on ? 'block' : 'none';
 });
-bindLayerToggle('tgAirspace', false, on=>{
+bindLayerToggle('tgAirspace', true, on=>{
   if(on){
-    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,{maxZoom:14,opacity:0.95,className:'airspace-tiles',attribution:'© openAIP'});
+    // openAIP exposes separate raster layers per category. We deliberately
+    // omit "navaids" (VOR/DME/NDB) since those aren't relevant here, but
+    // keep airspaces, airports/airfields, and reporting points.
+    const cats = ['airspaces','airports','reporting-points'];
+    airspaceLayer = L.layerGroup(cats.map(cat =>
+      L.tileLayer(`https://api.tiles.openaip.net/api/data/${cat}/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
+        {maxZoom:14, opacity:0.95, className:'airspace-tiles', attribution:'© openAIP'})
+    ));
     airspaceLayer.addTo(map);
   } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
 });
 let roadsShown = true;
 const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,attribution:'Roads: Esri'});
+const placesOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.95,attribution:'Places: Esri'});
 let landingLayerOn = true;
-bindLayerToggle('tgRoads', true, on=>{ roadsShown = on; if(on) roadsOverlay.addTo(map); else if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); });
+bindLayerToggle('tgRoads', false, on=>{ roadsShown = on; if(on){ roadsOverlay.addTo(map); placesOverlay.addTo(map); } else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placesOverlay)) map.removeLayer(placesOverlay); } });
 bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });
 
 // balloon marker + breadcrumb
-const aircraftIconHtml = `<div style="width:30px;height:30px;transform:rotate(0deg);transition:transform .2s linear;" id="aircraftRotor">
-  <svg width="30" height="30" viewBox="0 0 30 30">
-    <path d="M15 1 L21.5 27 L15 21.5 L8.5 27 Z" fill="#3fd0c9" stroke="#00201d" stroke-width="1"/>
+const aircraftIconHtml = `<div style="width:36px;height:36px;transform:rotate(0deg);transition:transform .15s linear;" id="aircraftRotor">
+  <svg width="36" height="36" viewBox="0 0 36 36">
+    <path d="M18 1 L25.5 32 L18 25.5 L10.5 32 Z" fill="#ffb400" stroke="#000000" stroke-width="1.6"/>
   </svg>
 </div>`;
-const balloonIcon = L.divIcon({html: aircraftIconHtml, className:'', iconSize:[30,30], iconAnchor:[15,15]});
+const balloonIcon = L.divIcon({html: aircraftIconHtml, className:'', iconSize:[36,36], iconAnchor:[18,18]});
 const balloonMarker = L.marker([state.lat,state.lon], {icon: balloonIcon}).addTo(map);
 function updateAircraftRotation(){
   const rotor = document.getElementById('aircraftRotor');
   if(rotor) rotor.style.transform = `rotate(${state.course}deg)`;
 }
-const breadcrumbLine = L.polyline([], {color:'#3fd0c9', weight:3, opacity:0.8}).addTo(map);
+setInterval(updateAircraftRotation, 2000);
+const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:5, opacity:1, lineCap:'round', className:'flightpath-glow'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
 let descentPathLayer = L.polyline([], {color:'#ff2bd6', weight:3.5, opacity:1, dashArray:'9,6', lineCap:'round'}).addTo(map);
 let predictedDescentLayer = L.polyline([], {color:'#00e0ff', weight:3, opacity:1, dashArray:'3,7', lineCap:'round'}).addTo(map);
@@ -1125,8 +1167,10 @@ function applyTestValues(){
   recomputeAll();
 }
 
-// ---------- screenshot / recording ----------
-document.getElementById('btnShot').addEventListener('click', ()=>{
+// ---------- screenshot / recording (combined button + popover) ----------
+setupPopover('btnCapture','capturePanel');
+document.getElementById('capShotBtn').addEventListener('click', ()=>{
+  document.getElementById('capturePanel').classList.remove('open');
   html2canvas(document.getElementById('app')).then(canvas=>{
     const a=document.createElement('a');
     a.download='gblp_screenshot_'+Date.now()+'.png';
@@ -1135,10 +1179,13 @@ document.getElementById('btnShot').addEventListener('click', ()=>{
   });
 });
 let mediaRecorder=null, recChunks=[];
-document.getElementById('btnRec').addEventListener('click', async ()=>{
-  const btn=document.getElementById('btnRec');
-  if(mediaRecorder && mediaRecorder.state==='recording'){
-    mediaRecorder.stop(); return;
+const capRecBtn = document.getElementById('capRecBtn');
+const capPauseBtn = document.getElementById('capPauseBtn');
+const btnCapture = document.getElementById('btnCapture');
+capRecBtn.addEventListener('click', async ()=>{
+  if(mediaRecorder && mediaRecorder.state!=='inactive'){
+    mediaRecorder.stop();
+    return;
   }
   try{
     const stream = await navigator.mediaDevices.getDisplayMedia({video:true});
@@ -1151,12 +1198,100 @@ document.getElementById('btnRec').addEventListener('click', async ()=>{
       a.download='gblp_recording_'+Date.now()+'.webm';
       a.href=URL.createObjectURL(blob);
       a.click();
-      btn.classList.remove('active');
+      btnCapture.classList.remove('active');
+      capRecBtn.textContent = '⏺ Start recording';
+      capPauseBtn.style.display = 'none';
+      capPauseBtn.textContent = '⏸ Pause recording';
     };
     mediaRecorder.start();
-    btn.classList.add('active');
+    btnCapture.classList.add('active');
+    capRecBtn.textContent = '⏹ Stop recording';
+    capPauseBtn.style.display = 'block';
+    document.getElementById('capturePanel').classList.remove('open');
   }catch(e){ alert('Screen recording permission denied or unsupported.'); }
 });
+capPauseBtn.addEventListener('click', ()=>{
+  if(!mediaRecorder) return;
+  if(mediaRecorder.state==='recording'){
+    mediaRecorder.pause();
+    capPauseBtn.textContent = '▶ Resume recording';
+  } else if(mediaRecorder.state==='paused'){
+    mediaRecorder.resume();
+    capPauseBtn.textContent = '⏸ Pause recording';
+  }
+});
+
+// ---------- offline tile caching (70 km radius around current position) ----------
+// Registers a service worker that caches tile requests (base map, power
+// lines, airspace, roads/place names) so they remain available if the
+// connection drops. This uses real network bandwidth to pre-fetch tiles, so
+// it's throttled to only run when the balloon has moved appreciably.
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW registration failed (offline caching disabled):', e));
+}
+function lonLatToTileXY(lon, lat, z){
+  const n = Math.pow(2, z);
+  const x = Math.floor((lon + 180) / 360 * n);
+  const latRad = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1/Math.cos(latRad)) / Math.PI) / 2 * n);
+  return [x, y];
+}
+let lastCachedCenter = null;
+let precacheInFlight = false;
+async function precacheAreaTiles(lat, lon, radiusKm){
+  radiusKm = radiusKm || 70;
+  if(precacheInFlight) return;
+  if(lastCachedCenter && haversine(lastCachedCenter.lat, lastCachedCenter.lon, lat, lon) < 15000) return; // only re-cache after ~15km move
+  if(!('caches' in window)) return;
+  precacheInFlight = true;
+  lastCachedCenter = {lat, lon};
+  try{
+    const cache = await caches.open('gblp-tiles-v1');
+    const dLat = radiusKm/111;
+    const dLon = radiusKm/(111*Math.cos(lat*Math.PI/180));
+    const zoomsBase = [9,11,13];   // base map + power lines (vector pbf tiles use same z/x/y scheme)
+    const zoomsOverlay = [10,12,13]; // airspace/roads/places (raster, coarser is fine)
+    const urls = [];
+    function addTilesForZooms(zooms, urlBuilder){
+      for(const z of zooms){
+        const [x1,y1] = lonLatToTileXY(lon-dLon, lat+dLat, z);
+        const [x2,y2] = lonLatToTileXY(lon+dLon, lat-dLat, z);
+        for(let x=Math.min(x1,x2); x<=Math.max(x1,x2); x++){
+          for(let y=Math.min(y1,y2); y<=Math.max(y1,y2); y++){
+            urls.push(urlBuilder(z,x,y));
+          }
+        }
+      }
+    }
+    addTilesForZooms(zoomsBase, (z,x,y)=>`https://tile.openstreetmap.org/${z}/${x}/${y}.png`);
+    if(document.getElementById('tgPower').classList.contains('active')){
+      addTilesForZooms(zoomsBase, (z,x,y)=>`https://openinframap.org/tiles/${z}/${x}/${y}.pbf`);
+    }
+    if(document.getElementById('tgAirspace').classList.contains('active')){
+      ['airspaces','airports','reporting-points'].forEach(cat=>{
+        addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://api.tiles.openaip.net/api/data/${cat}/${z}/${x}/${y}.png?apiKey=${OPENAIP_API_KEY}`);
+      });
+    }
+    if(document.getElementById('tgRoads').classList.contains('active')){
+      addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`);
+      addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/${z}/${y}/${x}`);
+    }
+    console.log(`Pre-caching ${urls.length} tiles within ${radiusKm}km...`);
+    // Fetch with modest concurrency so we don't hammer the connection.
+    const CONCURRENCY = 6;
+    let i = 0;
+    async function worker(){
+      while(i < urls.length){
+        const u = urls[i++];
+        try{ const r = await fetch(u); if(r.ok) await cache.put(u, r.clone()); }catch(e){ /* ignore individual tile failures */ }
+      }
+    }
+    await Promise.all(Array.from({length:CONCURRENCY}, worker));
+    console.log('Pre-caching done.');
+  } finally {
+    precacheInFlight = false;
+  }
+}
 
 // ---------- boot ----------
 (async function boot(){
@@ -1164,8 +1299,10 @@ document.getElementById('btnRec').addEventListener('click', async ()=>{
   await fetchWind(true);
   renderSidebarPosition();
   recomputeAll();
+  precacheAreaTiles(state.lat, state.lon, 70);
 })();
 setInterval(fetchWind, 15*60*1000); // refresh model every 15 min
+setInterval(()=>precacheAreaTiles(state.lat, state.lon, 70), 10*60*1000); // re-check every 10 min, only acts if moved >15km
 </script>
 </body>
 </html>

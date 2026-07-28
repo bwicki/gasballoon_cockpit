@@ -168,8 +168,19 @@ select, .textbtn{width:100%;background:var(--panel);color:var(--text);border:1px
 button.primary{background:var(--accent);color:#00201d;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:13px;width:100%;cursor:pointer;}
 button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;width:100%;cursor:pointer;}
 
-#warnbar{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);}
-#warnbar.show{display:block;}
+#warnbar{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+#warnbar.show{display:flex;}
+.yellow-warn{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,178,0,.95);color:#241a00;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:599;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+.yellow-warn.show{display:flex;}
+#warnbar.show ~ .yellow-warn.show{top:52px;}
+.banner-close{flex-shrink:0;background:rgba(0,0,0,0.15);border:none;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;margin-left:auto;}
+.reopen-icon{position:absolute;top:8px;left:8px;z-index:600;width:34px;height:34px;border-radius:50%;border:2px solid #fff;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.reopen-icon.red{background:var(--bad);color:#fff;}
+.reopen-icon.yellow{background:var(--warn);color:#241a00;left:50px;}
+#groundWindLegendBar{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(20,26,33,0.88);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:14px;white-space:nowrap;overflow-x:auto;}
+#groundWindLegendBar.show{display:flex;}
+#groundWindLegendBar .gwl-title{color:#aab4c0;font-weight:600;flex-shrink:0;}
+#groundWindLegendBar .gwl-item{display:flex;align-items:center;gap:5px;flex-shrink:0;}
 
 .legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;}
 .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
@@ -225,18 +236,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 12 L14 13 L13 20 L16 22 L12 21 L8 22 L11 20 L10 13 L3 12 L10 9 Z" fill="currentColor"/></svg></button>
       <button class="ltbtn active" id="tgLanding" title="Landing area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
       <button class="ltbtn active" id="tgHodograph" title="Show/hide hodograph"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20 C 8 8, 16 16, 20 4" stroke-linecap="round"/></svg></button>
-      <div style="position:relative;">
-        <button class="ltbtn" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
-        <div id="groundWindLegendPanel" class="settings-popover" style="width:190px;">
-          <div class="subhead" style="margin-top:0;">Ground Wind (0-200m AGL)</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#3b82f6;"></span>&lt; 5 kn</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#22c55e;"></span>5-10 kn</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#eab308;"></span>10-15 kn</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#f97316;"></span>15-20 kn</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ef4444;"></span>&gt; 20 kn</div>
-          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Particle motion direction = wind direction at ~100m AGL from the current model.</p>
-        </div>
-      </div>
+      <button class="ltbtn active" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -254,8 +254,8 @@ canvas.mini{width:100% !important;height:130px !important;}
       </button>
       <div id="emergencyPanel" class="settings-popover" style="width:280px;">
         <div class="subhead" style="margin-top:0;">Emergency Contact</div>
-        <input type="tel" id="emergencyPhone" placeholder="Phone, intl. format e.g. +41791234567" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="email" id="emergencyEmail" placeholder="Email address (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:8px;">
+        <div id="emergencyContactStatus" style="font-size:11px;color:var(--muted);margin-bottom:8px;">—</div>
+        <button class="ghost" id="btnEditEmergencyContact" style="margin-bottom:8px;">Edit contact in Settings</button>
         <button class="ghost" id="btnPrepareEmergencyMsg">Prepare message now</button>
         <div id="emergencyMsgPreview" style="display:none;margin-top:8px;">
           <textarea id="emergencyMsgText" readonly style="width:100%;height:110px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);box-sizing:border-box;"></textarea>
@@ -265,6 +265,7 @@ canvas.mini{width:100% !important;height:130px !important;}
             <button class="ghost" id="btnEmergencySms" style="flex:1;">SMS</button>
             <button class="ghost" id="btnEmergencyEmailSend" style="flex:1;">Email</button>
           </div>
+          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">These open WhatsApp/SMS/Email with the message pre-filled - you still need to tap "send" yourself in that app. No message is sent silently in the background.</p>
         </div>
       </div>
     </div>
@@ -296,6 +297,7 @@ canvas.mini{width:100% !important;height:130px !important;}
           <option value="gfs_global">GFS Global (25 km)</option>
           <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
         </select>
+        <div id="wxModelSettingsStatus" style="font-size:10px;color:var(--muted);margin-top:4px;">—</div>
         <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
 
         <hr>
@@ -309,9 +311,9 @@ canvas.mini{width:100% !important;height:130px !important;}
           <label><input type="checkbox" data-powercat="transformer" checked>Transformers</label>
           <label><input type="checkbox" data-powercat="compensator" checked>Compensators</label>
           <label><input type="checkbox" data-powercat="switch" checked>Switches</label>
+          <label><input type="checkbox" id="overheadOnly" checked>Overhead only</label>
         </div>
-        <div class="togglerow" style="margin-top:6px;"><span>Overhead lines only</span><label class="switch"><input type="checkbox" id="overheadOnly" checked><span class="slider-tog"></span></label></div>
-        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">"Overhead only" hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
 
         <hr>
         <div class="subhead">Airspace Classes</div>
@@ -327,7 +329,7 @@ canvas.mini{width:100% !important;height:130px !important;}
           <label><input type="checkbox" checked data-as="TMZ">TMZ</label>
           <label><input type="checkbox" checked data-as="RMZ">RMZ</label>
         </div>
-        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not yet functional: openAIP's airspace layer is a single pre-rendered image (raster tiles), so individual classes can't be filtered client-side. These checkboxes are a placeholder for a future vector-tile-based implementation.</p>
+        <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">Draws real airspace boundaries (openAIP Core API) filtered to the checked classes/types, as an overlay on top of the general airspace image layer.</p>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">openAIP key is fixed in code (not editable here) to avoid accidental changes.</p>
 
         <hr>
@@ -343,6 +345,14 @@ canvas.mini{width:100% !important;height:130px !important;}
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic. Hardware compatibility varies widely - there is no universal BLE GPS standard for aviation receivers.</p>
         <button class="ghost" id="btnConnectBleGps">Connect Bluetooth GPS</button>
         <div id="bleGpsStatus" style="font-size:11px;color:var(--muted);margin-top:6px;">Not connected</div>
+
+        <hr>
+        <div class="subhead">Pilot &amp; Emergency Contact</div>
+        <input type="text" id="cfgPilotName" placeholder="Pilot name, e.g. Peter Müller" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="cfgAircraftReg" placeholder="Aircraft registration, e.g. HB-XXX" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="tel" id="cfgEmergencyPhone" placeholder="Emergency phone, intl. format e.g. +41791234567" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="email" id="cfgEmergencyEmail" placeholder="Emergency email address" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
 
         <div class="subhead">Adiabatic Braking Model</div>
         <div class="slider-row">
@@ -394,7 +404,19 @@ canvas.mini{width:100% !important;height:130px !important;}
         <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
       </div>
       <button id="btnCenterMap" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
-      <div id="warnbar"></div>
+      <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
+      <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
+      <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
+      <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
+      <div id="groundWindLegendBar">
+        <span class="gwl-title">Ground wind (0-200m AGL):</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#3b82f6;"></span>&lt;5kn</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#22c55e;"></span>5-10kn</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#eab308;"></span>10-15kn</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#f97316;"></span>15-20kn</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#ef4444;"></span>&gt;20kn</span>
+        <span class="gwl-item" id="groundWindSpeedLabel" style="margin-left:auto;font-weight:700;">—</span>
+      </div>
     </div>
 
     <button id="sidebarHandle" title="Collapse/expand sidebar">▶</button>
@@ -471,7 +493,7 @@ canvas.mini{width:100% !important;height:130px !important;}
         <div class="cardbody">
           <div class="slider-row">
             <div class="lbl"><span style="flex:1;">Initiate descent in</span><span id="lblInitDist" class="dist-badge">0.00 km</span><b id="lblInit">30 min</b></div>
-            <input type="range" id="sInit" min="0" max="120" step="1" value="30">
+            <input type="range" id="sInit" min="0" max="240" step="1" value="30">
           </div>
           <div class="slider-row">
             <div class="lbl"><span>Descent rate</span><b id="lblRate">4.0 m/s</b></div>
@@ -521,6 +543,17 @@ canvas.mini{width:100% !important;height:130px !important;}
         </div>
       </div>
 
+      <!-- DESCENT HODOGRAPH: always computed from the current descent path,
+           toggled via the header button - previously nested inside the
+           click-triggered "Landing Point Plan" card, which is hidden until
+           a landing point is clicked. That's why it never appeared. -->
+      <div class="card" id="hodographCard">
+        <h3 onclick="toggleCard(this)">Descent Hodograph <span class="chev">▾</span></h3>
+        <div class="cardbody">
+          <canvas class="mini" id="hodographChart"></canvas>
+        </div>
+      </div>
+
       <!-- CLICK RESULT -->
       <div class="card" id="resultpanel">
         <h3 onclick="toggleCard(this)">Landing Point Plan <span class="chev">▾</span></h3>
@@ -531,7 +564,6 @@ canvas.mini{width:100% !important;height:130px !important;}
           </div>
           <div class="copyline"><div class="txt" id="resNearestTown">nearest town —</div><button onclick="copyResultAll()">Copy</button></div>
           <canvas class="mini" id="vertProfileChart"></canvas>
-          <div id="hodographWrap"><canvas class="mini" id="hodographChart"></canvas></div>
         </div>
       </div>
 
@@ -594,7 +626,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v37';
+const APP_VERSION = 'v38';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -806,6 +838,51 @@ bindLayerToggle('tgPower', true, on=>{
   if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
   document.getElementById('powerLegendCard').style.display = on ? 'block' : 'none';
 });
+// Real, class-filtered airspace boundaries (openAIP Core API, actual GeoJSON
+// polygons) drawn as an overlay on top of the general raster airspace image.
+// This is what finally makes the Airspace Class checkboxes functional -
+// the raster tile layer alone can't be filtered by class.
+const filteredAirspaceLayer = L.layerGroup();
+const AIRSPACE_CLASS_MAP = {A:0,B:1,C:2,D:3,E:4,G:6};
+const AIRSPACE_TYPE_MAP = {R:1,P:3,TMZ:5,RMZ:6};
+let airspaceFetchTimer = null;
+function scheduleFilteredAirspaceFetch(){
+  clearTimeout(airspaceFetchTimer);
+  airspaceFetchTimer = setTimeout(fetchFilteredAirspaces, 700);
+}
+function geoJsonRingToLatLngs(ring){ return ring.map(c=>[c[1],c[0]]); }
+async function fetchFilteredAirspaces(){
+  if(!document.getElementById('tgAirspace').classList.contains('active')){ filteredAirspaceLayer.clearLayers(); return; }
+  if(map.getZoom() < 7){ filteredAirspaceLayer.clearLayers(); return; }
+  const checked = [...document.querySelectorAll('[data-as]')].filter(cb=>cb.checked).map(cb=>cb.dataset.as);
+  if(!checked.length){ filteredAirspaceLayer.clearLayers(); return; }
+  const b = map.getBounds();
+  const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
+  try{
+    const r = await fetch(`https://api.core.openaip.net/api/airspaces?bbox=${bbox}&apiKey=${OPENAIP_API_KEY}&limit=500`);
+    if(!r.ok) return; // e.g. 429 rate limit or 400 bbox too large - just skip this round
+    const j = await r.json();
+    const items = j.items || j.data || [];
+    filteredAirspaceLayer.clearLayers();
+    for(const as of items){
+      const classLetter = Object.keys(AIRSPACE_CLASS_MAP).find(k=>AIRSPACE_CLASS_MAP[k]===as.icaoClass);
+      const typeLetter = Object.keys(AIRSPACE_TYPE_MAP).find(k=>AIRSPACE_TYPE_MAP[k]===as.type);
+      const matches = (classLetter && checked.includes(classLetter)) || (typeLetter && checked.includes(typeLetter));
+      if(!matches || !as.geometry) continue;
+      const color = typeLetter==='P' ? '#ff2b2b' : typeLetter==='R' ? '#ff8a00' : typeLetter==='TMZ' ? '#c58bff' : typeLetter==='RMZ' ? '#3fa9ff' : '#3fd0c9';
+      const geom = as.geometry;
+      const polys = geom.type==='Polygon' ? [geom.coordinates] : geom.type==='MultiPolygon' ? geom.coordinates : [];
+      for(const poly of polys){
+        L.polygon(geoJsonRingToLatLngs(poly[0]), {color, weight:1.6, fillOpacity:0.07, pane:'overlayTilesPane'})
+          .bindTooltip(as.name||'Airspace', {sticky:true})
+          .addTo(filteredAirspaceLayer);
+      }
+    }
+  }catch(e){ /* network hiccup - keep showing whatever was last rendered */ }
+}
+map.on('moveend zoomend', scheduleFilteredAirspaceFetch);
+document.querySelectorAll('[data-as]').forEach(cb=>cb.addEventListener('change', scheduleFilteredAirspaceFetch));
+
 bindLayerToggle('tgAirspace', true, on=>{
   if(on){
     // NOTE: openAIP retired the separate per-category tile endpoints
@@ -819,7 +896,13 @@ bindLayerToggle('tgAirspace', true, on=>{
     airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
       {maxZoom:14, opacity:0.95, className:'airspace-tiles', pane:'overlayTilesPane', attribution:'© openAIP'});
     airspaceLayer.addTo(map);
-  } else if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
+    filteredAirspaceLayer.addTo(map);
+    scheduleFilteredAirspaceFetch();
+  } else {
+    if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
+    if(map.hasLayer(filteredAirspaceLayer)) map.removeLayer(filteredAirspaceLayer);
+    filteredAirspaceLayer.clearLayers();
+  }
 });
 let roadsShown = true;
 const roadsOverlay = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:0.9,pane:'overlayTilesPane',attribution:'Roads: Esri'});
@@ -1234,22 +1317,33 @@ async function fetchWind(force){
     const modelSel = document.getElementById('wxModelSelect').value;
     const resolvedModel = modelSel==='auto' ? pickAutoModel(state.lat, state.lon) : modelSel;
     const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=3&timezone=UTC`;
+    const FORECAST_HOURS = 12; // enough headroom to cover a multi-hour descent
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
     const r = await fetch(url);
     const j = await r.json();
     const h = j.hourly;
-    const profile = PRESSURE_LEVELS.map(p=>{
-      const spd = h[`wind_speed_${p}hPa`] ? h[`wind_speed_${p}hPa`][0] : null;
-      const dir = h[`wind_direction_${p}hPa`] ? h[`wind_direction_${p}hPa`][0] : null;
-      return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
-    }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
-    state.windProfile = profile;
+    const nHours = (h.time||[]).length || FORECAST_HOURS;
+    const profilesByHour = [];
+    for(let hourIdx=0; hourIdx<nHours; hourIdx++){
+      const profile = PRESSURE_LEVELS.map(p=>{
+        const spdArr = h[`wind_speed_${p}hPa`], dirArr = h[`wind_direction_${p}hPa`];
+        const spd = spdArr ? spdArr[hourIdx] : null;
+        const dir = dirArr ? dirArr[hourIdx] : null;
+        return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
+      }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
+      profilesByHour.push(profile);
+    }
+    state.windProfilesByHour = profilesByHour;
+    state.windProfile = profilesByHour[0]; // "now" - kept for existing code that expects this
     const meta = MODEL_META[resolvedModel] || MODEL_META.best_match;
     state.modelUsed = modelSel==='auto' ? (meta.label+' · auto') : meta.label;
     state.modelRunAgeH = estimateModelRunAgeHours(resolvedModel);
     state.modelRunAge = new Date();
     document.getElementById('wxModelName').textContent = state.modelUsed;
     document.getElementById('wxModelAge').textContent = `fetched just now · run ~${state.modelRunAgeH.toFixed(1)} h old`;
+    document.getElementById('wxModelSettingsStatus').textContent = modelSel==='auto'
+      ? `Using: ${meta.label} · run ~${state.modelRunAgeH.toFixed(1)} h old`
+      : `Run age: ~${state.modelRunAgeH.toFixed(1)} h old`;
     drawWindProfileChart();
     recomputeAll();
   }catch(e){
@@ -1257,8 +1351,9 @@ async function fetchWind(force){
   }
 }
 document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
-function windAt(altM, dirBiasDeg, speedScale){
-  const p = state.windProfile;
+function windAt(altM, dirBiasDeg, speedScale, hourIdx){
+  const profiles = state.windProfilesByHour;
+  const p = (hourIdx!=null && profiles && profiles.length) ? profiles[Math.max(0,Math.min(profiles.length-1, hourIdx))] : state.windProfile;
   if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};
   if(altM<=p[0].alt_m) return toUV(p[0], dirBiasDeg, speedScale);
   if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1], dirBiasDeg, speedScale);
@@ -1432,6 +1527,7 @@ function doRecompute(){
 
   // deterministic (no scatter) path for warning-collision checks / hodograph reference
   const refPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
+  state.secondsToLanding = refPath.length ? refPath[refPath.length-1].t : 0;
   checkObstacleWarnings(refPath);
   updateAdiabaticReadout(rate1, interceptAGL);
   drawHodograph(refPath);
@@ -1480,7 +1576,6 @@ async function runObstacleCheck(path){
   if(obstacleCheckAbort) obstacleCheckAbort.abort();
   obstacleCheckAbort = new AbortController();
   const signal = obstacleCheckAbort.signal;
-  const warnbar = document.getElementById('warnbar');
   const warnings = [];
   try{
     const terrainWarning = await checkTerrainClearance(path, signal);
@@ -1489,21 +1584,52 @@ async function runObstacleCheck(path){
     if(airspaceWarning) warnings.push(airspaceWarning);
   }catch(e){ /* network hiccup - don't block the UI on it */ }
   if(signal.aborted) return; // a newer check has since superseded this one
-  if(warnings.length){
-    warnbar.textContent = '⚠ ' + warnings.join('  ·  ');
-    warnbar.classList.add('show');
-  } else {
-    warnbar.classList.remove('show');
+  setWarnbarContent(warnings.length ? '⚠ ' + warnings.join('  ·  ') : null);
+}
+// ---- generic dismiss-to-icon banner system, shared by the red obstacle
+// warning and the yellow descent-time wind notice ----
+function dismissBanner(bannerId, iconId){
+  document.getElementById(bannerId).classList.remove('show');
+  document.getElementById(iconId).style.display = 'block';
+}
+function reopenBanner(bannerId, iconId){
+  document.getElementById(bannerId).classList.add('show');
+  document.getElementById(iconId).style.display = 'none';
+}
+function setWarnbarContent(text){
+  const bar = document.getElementById('warnbar');
+  const icon = document.getElementById('warnbarIcon');
+  if(!text){
+    bar.classList.remove('show');
+    icon.style.display = 'none';
+    return;
+  }
+  const changed = document.getElementById('warnbarText').textContent !== text;
+  document.getElementById('warnbarText').textContent = text;
+  // Only pop the full banner back open if this is a genuinely new warning -
+  // if the user already dismissed this exact same warning, respect that.
+  if(changed || icon.style.display!=='block'){
+    bar.classList.add('show');
+    icon.style.display = 'none';
   }
 }
 // ---- terrain clearance along the descent path ----
 async function checkTerrainClearance(path, signal){
   const MIN_CLEARANCE_M = 50;
-  const N = Math.min(20, path.length);
-  const step = Math.max(1, Math.floor(path.length/N));
+  // The path necessarily reaches the ground AT ITS END - that's the whole
+  // point of a landing prediction, so checking clearance there would always
+  // trigger a false warning. We only want to catch an unexpected obstacle
+  // ALONG THE WAY (e.g. a ridge or hill higher than the intended final
+  // approach), not the intentional touchdown itself. So we exclude the
+  // final ~20% of the path's timeline - that's the deliberate final
+  // approach/landing phase - from the check.
+  const cutoffIdx = Math.floor(path.length*0.8);
+  const checkable = path.slice(0, Math.max(1,cutoffIdx));
+  const N = Math.min(20, checkable.length);
+  const step = Math.max(1, Math.floor(checkable.length/N));
   const samples = [];
-  for(let i=0;i<path.length;i+=step) samples.push(path[i]);
-  if(samples[samples.length-1]!==path[path.length-1]) samples.push(path[path.length-1]);
+  for(let i=0;i<checkable.length;i+=step) samples.push(checkable[i]);
+  if(!samples.length) return null;
   const lats = samples.map(p=>p.lat.toFixed(5)).join(',');
   const lons = samples.map(p=>p.lon.toFixed(5)).join(',');
   const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`, {signal});
@@ -1516,7 +1642,7 @@ async function checkTerrainClearance(path, signal){
       worst = {clearance, minAt: Math.round(samples[i].t/60)};
     }
   }
-  if(worst) return `Terrain clearance only ~${Math.round(worst.clearance)} m (~${worst.minAt} min into descent)`;
+  if(worst) return `Terrain clearance only ~${Math.round(worst.clearance)} m (~${worst.minAt} min into descent, before final approach)`;
   return null;
 }
 // ---- airspace intrusion along the descent path (real polygon geometry via
@@ -1598,56 +1724,87 @@ function spawnGroundWindParticle(){
   return {
     lat: b.getSouth() + Math.random()*(b.getNorth()-b.getSouth()),
     lon: b.getWest() + Math.random()*(b.getEast()-b.getWest()),
-    age: Math.random()*120
+    age: Math.random()*120,
+    trail: [] // recent screen positions, for the comet-tail effect
   };
 }
 function startGroundWindLayer(){
   if(!groundWindLayer.canvas) initGroundWindCanvas();
   groundWindLayer.canvas.style.display = 'block';
-  groundWindLayer.particles = Array.from({length:180}, spawnGroundWindParticle);
+  groundWindLayer.particles = Array.from({length:420}, spawnGroundWindParticle);
   groundWindLayer.active = true;
+  document.getElementById('groundWindLegendBar').classList.add('show');
   animateGroundWind();
+  checkDescentTimeWindWarning();
 }
 function stopGroundWindLayer(){
   groundWindLayer.active = false;
   if(groundWindLayer.animId) cancelAnimationFrame(groundWindLayer.animId);
   if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
+  document.getElementById('groundWindLegendBar').classList.remove('show');
+  hideYellowWarning();
 }
+const TRAIL_LENGTH = 7;
 function animateGroundWind(){
   if(!groundWindLayer.active) return;
   const ctx = groundWindLayer.ctx;
   ctx.clearRect(0,0,groundWindLayer.canvas.width, groundWindLayer.canvas.height);
-  // Representative near-surface level: ~100m AGL, i.e. mid-way through the
-  // 0-200m AGL band this layer is meant to visualize.
-  const w = windAt(state.groundElev+100);
-  const speed = Math.hypot(w.u, w.v);
-  const color = groundWindSpeedColor(speed);
+  // Representative near-surface level (~100m AGL, mid-way through the
+  // 0-200m AGL band), evaluated at the ESTIMATED LANDING TIME (not "now") -
+  // that's the wind that will actually matter when you're down there.
+  const hourIdx = Math.round((state.secondsToLanding||0)/3600);
+  const w = windAt(state.groundElev+100, 0, 1, hourIdx);
+  const speedMs = Math.hypot(w.u, w.v);
+  const color = groundWindSpeedColor(speedMs);
   const b = map.getBounds();
   const centerLat = map.getCenter().lat;
   const metersPerDegLat = 111320;
   const metersPerDegLon = 111320*Math.cos(centerLat*Math.PI/180) || 1;
-  const SPEED_UP = 60; // purely visual scale factor, not a physical time step
+  // Movement is directly proportional to the real wind vector (m/s) - a
+  // calm 2kn breeze crawls, a 25kn blow visibly races across the screen.
+  const SPEED_UP = 90;
   groundWindLayer.particles.forEach(p=>{
     p.lat += (w.v/metersPerDegLat)*SPEED_UP*0.016;
     p.lon += (w.u/metersPerDegLon)*SPEED_UP*0.016;
     p.age += 1;
-    if(p.age>200 || !b.contains([p.lat,p.lon])){
+    if(p.age>220 || !b.contains([p.lat,p.lon])){
       Object.assign(p, spawnGroundWindParticle());
+      return;
     }
     const pt = map.latLngToContainerPoint([p.lat,p.lon]);
+    p.trail.push({x:pt.x, y:pt.y});
+    if(p.trail.length>TRAIL_LENGTH) p.trail.shift();
+    // Comet tail: draw the trail with increasing opacity/width toward the head.
+    for(let i=1;i<p.trail.length;i++){
+      const t = i/p.trail.length;
+      ctx.beginPath();
+      ctx.moveTo(p.trail[i-1].x, p.trail[i-1].y);
+      ctx.lineTo(p.trail[i].x, p.trail[i].y);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.12 + t*0.55;
+      ctx.lineWidth = 1 + t*2.2;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+    // Bright head dot.
+    const head = p.trail[p.trail.length-1];
     ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 2.2, 0, 2*Math.PI);
+    ctx.arc(head.x, head.y, 2.4, 0, 2*Math.PI);
     ctx.fillStyle = color;
-    ctx.globalAlpha = 0.75;
+    ctx.globalAlpha = 0.9;
     ctx.fill();
   });
+  ctx.globalAlpha = 1;
+  document.getElementById('groundWindSpeedLabel').textContent = `${(speedMs*KN_PER_MS).toFixed(1)} kn at landing time`;
   groundWindLayer.animId = requestAnimationFrame(animateGroundWind);
 }
 document.getElementById('tgGroundWind').addEventListener('click', function(){
   const active = this.classList.toggle('active');
   if(active) startGroundWindLayer(); else stopGroundWindLayer();
 });
-setupPopover('tgGroundWind','groundWindLegendPanel');
+// Default: particles visible.
+document.getElementById('tgGroundWind').classList.add('active');
+startGroundWindLayer();
 
 // ---------- mode toggle: monitor (function 1) vs plan descent (function 2) ----------
 state.appMode = 'monitor'; // 'monitor' | 'plan'
@@ -1822,7 +1979,7 @@ function drawHodograph(path){
   const ctx = document.getElementById('hodographChart').getContext('2d');
   if(hodoChart) hodoChart.destroy();
   hodoChart = new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:2}]},
-    options:{plugins:{legend:{display:false},title:{display:true,text:'Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
+    options:{plugins:{legend:{display:false},title:{display:true,text:'Descent Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
 }
 
 // Classic sounding-style wind profile: speed vs altitude, with direction
@@ -1859,7 +2016,7 @@ function drawWindProfileChart(){
 }
 document.getElementById('tgHodograph').addEventListener('click', function(){
   const active = this.classList.toggle('active');
-  document.getElementById('hodographWrap').style.display = active ? 'block' : 'none';
+  document.getElementById('hodographCard').style.display = active ? 'block' : 'none';
 });
 
 // ---------- sliders ----------
@@ -1868,6 +2025,30 @@ function bindSlider(id,lblId,fmt){
   el.addEventListener('input', ()=>{ document.getElementById(lblId).textContent=fmt(el.value); recomputeAll(); });
 }
 bindSlider('sInit','lblInit', v=> (v==0?'immediate':v+' min'));
+document.getElementById('sInit').addEventListener('input', checkDescentTimeWindWarning);
+
+// ---- yellow notice: ground wind is shown for the PLANNED descent time,
+// not right now, whenever that time isn't "immediate" ----
+function checkDescentTimeWindWarning(){
+  const initMin = parseFloat(document.getElementById('sInit').value);
+  const shouldShow = groundWindLayer.active && initMin > 0;
+  if(!shouldShow){
+    hideYellowWarning();
+    return;
+  }
+  const text = `⚠ Ground wind particles are modeled for the PLANNED descent time (in ~${initMin} min), not right now.`;
+  const changed = document.getElementById('descentWindWarnText').textContent !== text;
+  document.getElementById('descentWindWarnText').textContent = text;
+  const icon = document.getElementById('descentWindWarnIcon');
+  if(changed || icon.style.display!=='block'){
+    document.getElementById('descentWindWarnBar').classList.add('show');
+    icon.style.display = 'none';
+  }
+}
+function hideYellowWarning(){
+  document.getElementById('descentWindWarnBar').classList.remove('show');
+  document.getElementById('descentWindWarnIcon').style.display = 'none';
+}
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
 bindSlider('sIntH','lblIntH', v=> v+' m');
 bindSlider('sRate2','lblRate2', v=> parseFloat(v).toFixed(1)+' m/s');
@@ -1994,15 +2175,49 @@ document.getElementById('speedDownBtn').addEventListener('click', ()=>stepSpeed(
 // ---------- screenshot / recording (combined button + popover) ----------
 // ---------- emergency contact ----------
 setupPopover('btnEmergency','emergencyPanel');
+const EMERGENCY_FIELD_IDS = {
+  cfgPilotName: 'gblp_pilot_name',
+  cfgAircraftReg: 'gblp_aircraft_reg',
+  cfgEmergencyPhone: 'gblp_emergency_phone',
+  cfgEmergencyEmail: 'gblp_emergency_email'
+};
 try{
-  document.getElementById('emergencyPhone').value = localStorage.getItem('gblp_emergency_phone') || '';
-  document.getElementById('emergencyEmail').value = localStorage.getItem('gblp_emergency_email') || '';
+  Object.entries(EMERGENCY_FIELD_IDS).forEach(([id,key])=>{
+    document.getElementById(id).value = localStorage.getItem(key) || '';
+  });
 }catch(e){}
-document.getElementById('emergencyPhone').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_emergency_phone', e.target.value); }catch(err){} });
-document.getElementById('emergencyEmail').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_emergency_email', e.target.value); }catch(err){} });
+Object.entries(EMERGENCY_FIELD_IDS).forEach(([id,key])=>{
+  document.getElementById(id).addEventListener('change', e=>{
+    try{ localStorage.setItem(key, e.target.value); }catch(err){}
+    updateEmergencyContactStatus();
+  });
+});
+function updateEmergencyContactStatus(){
+  const name = document.getElementById('cfgPilotName').value.trim();
+  const reg = document.getElementById('cfgAircraftReg').value.trim();
+  const phone = document.getElementById('cfgEmergencyPhone').value.trim();
+  const email = document.getElementById('cfgEmergencyEmail').value.trim();
+  const el = document.getElementById('emergencyContactStatus');
+  if(!name && !reg && !phone && !email){
+    el.textContent = '⚠ Not configured yet - set it up in Settings.';
+    el.style.color = 'var(--bad)';
+  } else {
+    el.textContent = `${name||'(no name)'} · ${reg||'(no reg.)'} · ${phone||'no phone'} · ${email||'no email'}`;
+    el.style.color = 'var(--muted)';
+  }
+}
+updateEmergencyContactStatus();
+document.getElementById('btnEditEmergencyContact').addEventListener('click', ()=>{
+  document.getElementById('emergencyPanel').classList.remove('open');
+  document.getElementById('btnSettings').click();
+});
 function buildEmergencyMessage(){
   const lines = [];
   lines.push('GBLP EMERGENCY POSITION REPORT');
+  const name = document.getElementById('cfgPilotName').value.trim();
+  const reg = document.getElementById('cfgAircraftReg').value.trim();
+  if(name) lines.push(`Pilot: ${name}`);
+  if(reg) lines.push(`Aircraft: ${reg}`);
   lines.push(toCompact(state.lat, state.lon));
   lines.push(`Alt AMSL: ${Math.round(state.altAMSL)} m / AGL: ${Math.round(state.altAMSL-state.groundElev)} m`);
   lines.push(`Course: ${String(Math.round(state.course)%360).padStart(3,'0')}°  Speed: ${state.speedKn.toFixed(1)} kn`);
@@ -2023,22 +2238,41 @@ document.getElementById('btnPrepareEmergencyMsg').addEventListener('click', ()=>
 document.getElementById('btnEmergencyCopy').addEventListener('click', ()=>{
   navigator.clipboard && navigator.clipboard.writeText(document.getElementById('emergencyMsgText').value);
 });
+// How these actually work: there is no way for a webpage to silently send a
+// WhatsApp message, SMS, or email on your behalf - browsers/OSes deliberately
+// don't allow that (it would be a spam/abuse vector). Instead, each of these
+// opens the corresponding app (WhatsApp via its wa.me web link, the phone's
+// SMS composer via an sms: link, or the default mail app via a mailto: link)
+// with the message already typed in - you still tap "send" yourself in that
+// app. WhatsApp specifically requires the recipient's number to already be
+// reachable via WhatsApp (i.e. have the app), and wa.me only prefills text,
+// it can't attach files/location beyond what's in the text itself.
 document.getElementById('btnEmergencyWhatsapp').addEventListener('click', ()=>{
-  const phone = document.getElementById('emergencyPhone').value.replace(/[^0-9]/g,'');
+  const phone = document.getElementById('cfgEmergencyPhone').value.replace(/[^0-9]/g,'');
   const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
   window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
 });
 document.getElementById('btnEmergencySms').addEventListener('click', ()=>{
-  const phone = document.getElementById('emergencyPhone').value;
+  const phone = document.getElementById('cfgEmergencyPhone').value;
   const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
   window.open(`sms:${phone}?body=${text}`, '_blank');
 });
 document.getElementById('btnEmergencyEmailSend').addEventListener('click', ()=>{
-  const email = document.getElementById('emergencyEmail').value;
+  const email = document.getElementById('cfgEmergencyEmail').value;
   const subject = encodeURIComponent('GBLP Emergency Position Report');
   const body = encodeURIComponent(document.getElementById('emergencyMsgText').value);
   window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
 });
+// One-time-per-load reminder if nothing has been configured yet.
+setTimeout(()=>{
+  const anySet = Object.keys(EMERGENCY_FIELD_IDS).some(id=>document.getElementById(id).value.trim());
+  if(!anySet){
+    const w = document.getElementById('warnbar');
+    w.textContent = '⚠ No emergency contact set up yet - tap 🆘 → "Edit contact in Settings" to add your name, aircraft registration, and a contact.';
+    w.classList.add('show');
+    setTimeout(()=>w.classList.remove('show'), 8000);
+  }
+}, 1500);
 
 setupPopover('btnCapture','capturePanel');
 document.getElementById('capShotBtn').addEventListener('click', ()=>{
@@ -2338,7 +2572,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph','tgGroundWind'];
 function saveConfig(){
   try{
     const cfg = {};

@@ -52,7 +52,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 #settingsPanel .subhead:first-child, .settings-popover .subhead:first-child{margin-top:2px;}
 #settingsPanel hr, .settings-popover hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
 .settings-popover input[type=number]{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:2px;font-family:var(--mono);}
-#btnTestMode{background:var(--warn);color:#ffffff;border-color:var(--warn);font-weight:700;}
+#btnTestMode{background:var(--warn);color:#ffffff;border-color:var(--warn);font-weight:700;padding:8px 9px;font-size:12px;max-width:90px;}
 #btnTestMode.active{background:var(--bad);color:#fff;border-color:var(--bad);}
 
 /* ---- manual position entry inline in the Current Position card ---- */
@@ -515,7 +515,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v35';
+const APP_VERSION = 'v36';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -988,7 +988,23 @@ function setTestMode(enable, reason){
   document.getElementById('testEnable').checked = enable;
   document.getElementById('manualModeToggle').checked = enable && activationReason==='manual';
   document.getElementById('btnTestMode').classList.toggle('active', enable);
-  if(enable) state.manualPositionSet = false; // show "Click on Position" again each time we (re-)enter
+  if(enable){
+    state.manualPositionSet = false; // show "Click on Position" again each time we (re-)enter
+  } else {
+    // Switching back to live GPS: the watchPosition callback was skipping
+    // all updates while test mode was on (position/course/speed are stale),
+    // and the next natural GPS tick might not fire for a while. Force an
+    // immediate fresh fix right now instead of waiting for it.
+    state.lastFix = null; // avoid computing a bogus course/speed jump vs. the stale test-mode position
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        setGpsStatus(true, `±${Math.round(pos.coords.accuracy)} m`);
+        updatePosition(pos.coords.latitude, pos.coords.longitude,
+          pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
+          null, null, true);
+      }, err=>{ setGpsStatus(false, err.message); }, {enableHighAccuracy:true, maximumAge:0, timeout:10000});
+    }
+  }
   updateCautionBar();
   setManualModeUI(enable);
 }
@@ -1367,14 +1383,24 @@ function positionSidebarHandle(){
   const handle = document.getElementById('sidebarHandle');
   const sidebar = document.getElementById('sidebar');
   const collapsed = sidebar.classList.contains('collapsed');
+  const offset = collapsed ? 0 : sidebar.getBoundingClientRect().width;
   if(collapsed){
     handle.style.right = '0px';
     handle.textContent = '◀';
   } else {
-    const w = sidebar.getBoundingClientRect().width;
-    handle.style.right = w + 'px';
+    handle.style.right = offset + 'px';
     handle.textContent = '▶';
   }
+  // Leaflet's own controls (zoom, base-layer switcher) and our center-map
+  // button must stay anchored to the MAP's right edge, i.e. always just to
+  // the left of the sidebar - not the true screen edge, which the sidebar
+  // itself now occupies as an overlay when open.
+  const topRight = document.querySelector('#map .leaflet-top.leaflet-right');
+  const bottomRight = document.querySelector('#map .leaflet-bottom.leaflet-right');
+  if(topRight) topRight.style.right = offset + 'px';
+  if(bottomRight) bottomRight.style.right = offset + 'px';
+  const centerBtn = document.getElementById('btnCenterMap');
+  if(centerBtn) centerBtn.style.right = (offset + 10) + 'px';
 }
 document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');

@@ -52,6 +52,11 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 #btnTestMode{background:var(--warn);color:#ffffff;border-color:var(--warn);font-weight:700;}
 #btnTestMode.active{background:var(--bad);color:#fff;border-color:var(--bad);}
 
+/* ---- manual position entry inline in the Current Position card ---- */
+#positionCard.manual-active{border:2px solid var(--bad);}
+.manual-input{width:100%;background:var(--panel);border:1px solid var(--warn);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:16px;font-weight:700;margin-top:2px;}
+#posManualHint{cursor:default;font-weight:700;}
+
 /* ---- password gate ---- */
 #passwordGate{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:5000;}
 #passwordGate .box{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(90vw,320px);text-align:center;}
@@ -70,10 +75,20 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:v
 /* ---- flown flight path: strong outline so it reads on any basemap ---- */
 .flightpath-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 4px rgba(0,0,0,0.6));}
 
+/* ---- predicted continuous flight path (pink) / planned descent path (yellow):
+   both get a dark outline so they stay legible over green terrain, satellite
+   imagery, or light basemaps alike ---- */
+.predicted-path-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 3px #000000);}
+.descent-path-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 3px #000000);}
+
 /* ---- floating mode toggle (now docked in header) ---- */
 #modeToggle{position:absolute;top:8px;left:8px;z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
+
+/* ---- center-on-position button ---- */
+#btnCenterMap{position:absolute;top:8px;right:8px;z-index:550;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
+#btnCenterMap:active{transform:scale(0.93);}
 
 /* ---- layer toggle group (header, top-left) ---- */
 .layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
@@ -259,6 +274,14 @@ canvas.mini{width:100% !important;height:130px !important;}
           <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">50 km</b></div>
           <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="50">
         </div>
+
+        <hr>
+        <div class="subhead">Altitude Unit</div>
+        <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
+          <label><input type="radio" name="altUnitRadio" value="m" checked>m AMSL</label>
+          <label><input type="radio" name="altUnitRadio" value="ft">ft AMSL</label>
+          <label><input type="radio" name="altUnitRadio" value="FL">FL</label>
+        </div>
       </div>
     </div>
     <div style="position:relative;">
@@ -266,26 +289,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       <div id="testPanel" class="settings-popover">
         <div class="subhead" id="testPanelTitle" style="margin-top:0;">Test Mode</div>
         <div class="togglerow"><span id="testEnableLabel">Enable test mode</span><label class="switch"><input type="checkbox" id="testEnable"><span class="slider-tog"></span></label></div>
-        <p style="font-size:11px;color:var(--muted);margin:6px 0;">Tap the map to set a fictitious position, then set altitude/course/speed below.</p>
-        <div class="subhead">Altitude AMSL</div>
-        <div style="display:flex;gap:6px;">
-          <input type="number" id="testAlt" value="3000" style="flex:1;">
-          <select id="testAltUnit" style="width:64px;">
-            <option value="m">m</option>
-            <option value="ft">ft</option>
-          </select>
-        </div>
-        <div class="subhead">Course (° true)</div>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="testCourse" value="090" maxlength="3">
-        <div class="subhead">Speed</div>
-        <div style="display:flex;gap:6px;">
-          <input type="number" id="testSpeed" value="15" style="flex:1;">
-          <select id="testSpeedUnit" style="width:64px;">
-            <option value="kn">kn</option>
-            <option value="kmh">km/h</option>
-          </select>
-        </div>
-        <button class="ghost" style="margin-top:8px;" onclick="applyTestValues()">Apply</button>
+        <p style="font-size:11px;color:var(--muted);margin:6px 0 0;">Tap the map to set position. Altitude, course and speed become editable directly in the "Current Position" card in the sidebar.</p>
       </div>
     </div>
   </div>
@@ -302,24 +306,38 @@ canvas.mini{width:100% !important;height:130px !important;}
         <button id="modeMonitor" class="active" title="Show landing area">🟢 Landing Area</button>
         <button id="modePlan" title="Plan a descent point">✛ Plan Descent</button>
       </div>
+      <button id="btnCenterMap" title="Center on current position">🎯</button>
       <div id="warnbar"></div>
     </div>
 
     <div id="sidebar">
 
       <!-- POSITION -->
-      <div class="card">
+      <div class="card" id="positionCard">
         <h3 onclick="toggleCard(this)">Current Position <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
-            <div class="datacell wide">
+            <div class="datacell wide" id="posDisplayWrap">
               <div class="val small" id="posDMS">—</div>
               <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);">—</div>
+              <div class="val small" id="posManualHint" style="display:none;color:var(--warn);">📍 Click on Position</div>
             </div>
-            <div class="datacell"><label>Alt AMSL (GPS)</label><div class="val" id="altAMSL">—</div></div>
+            <div class="datacell">
+              <label>Alt AMSL (GPS)</label>
+              <div class="val" id="altAMSL">—</div>
+              <input type="number" class="manual-input" id="altAMSLInput" style="display:none;" placeholder="m AMSL">
+            </div>
             <div class="datacell"><label>Alt AGL</label><div class="val" id="altAGL">—</div></div>
-            <div class="datacell"><label>Course (° True GPS)</label><div class="val" id="courseVal">—</div></div>
-            <div class="datacell"><label>Speed (GPS)</label><div class="val" id="speedVal">—</div></div>
+            <div class="datacell">
+              <label>Course (° True GPS)</label>
+              <div class="val" id="courseVal">—</div>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" class="manual-input" id="courseValInput" style="display:none;" placeholder="090">
+            </div>
+            <div class="datacell">
+              <label>Speed (GPS)</label>
+              <div class="val" id="speedVal">—</div>
+              <input type="number" step="0.1" class="manual-input" id="speedValInput" style="display:none;" placeholder="kn">
+            </div>
           </div>
         </div>
       </div>
@@ -329,7 +347,7 @@ canvas.mini{width:100% !important;height:130px !important;}
         <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="slider-row">
-            <div class="lbl"><span>Initiate descent in</span><b id="lblInit">30 min</b> <b id="lblInitDist" style="color:#39ff14;">0.00 km</b></div>
+            <div class="lbl"><span>Initiate descent in</span><b id="lblInitDist" style="color:#ff0090;">0.00 km</b> <b id="lblInit">30 min</b></div>
             <input type="range" id="sInit" min="0" max="120" step="1" value="30">
           </div>
           <div class="slider-row">
@@ -364,7 +382,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       </div>
 
       <!-- POWER LINE LEGEND (only shown when the power layer is switched on) -->
-      <div class="card" id="powerLegendCard" style="display:none;">
+      <div class="card collapsed" id="powerLegendCard" style="display:none;">
         <h3 onclick="toggleCard(this)">Power Line Legend <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="subhead" style="margin-top:0;">Lines, by voltage</div>
@@ -457,7 +475,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v24';
 const APP_DATE = '27.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -473,6 +491,7 @@ const state = {
   landingPolygon: null,
   clickedTarget: null,
   lastFix: null, // {lat,lon,t} of the previous GPS fix, used to derive course/speed
+  manualPositionSet: false, // whether a position has been tapped on the map while in manual/test mode
 };
 
 const G = 9.80665;
@@ -697,9 +716,9 @@ function updateAircraftRotation(){
 setInterval(updateAircraftRotation, 2000);
 const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:5, opacity:1, lineCap:'round', className:'flightpath-glow'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
-let descentPathLayer = L.polyline([], {color:'#b026ff', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round'}).addTo(map);
-let predictedDescentLayer = L.polyline([], {color:'#39ff14', weight:4, opacity:1, dashArray:'4,7', lineCap:'round'}).addTo(map);
-const blueDotIcon = L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#39ff14;border:3px solid #fff;box-shadow:0 0 8px 2px #39ff14;"></div>', className:'', iconSize:[24,24], iconAnchor:[12,12]});
+let descentPathLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round', className:'descent-path-glow'}).addTo(map);
+let predictedDescentLayer = L.polyline([], {color:'#ff0090', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
+const blueDotIcon = L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#ff0090;border:3px solid #fff;box-shadow:0 0 8px 2px #ff0090;"></div>', className:'', iconSize:[24,24], iconAnchor:[12,12]});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 let targetMarker = null;
@@ -744,7 +763,8 @@ function setGpsStatus(ok, txt){
     }
   }
 }
-document.getElementById('btnManualMode').addEventListener('click', ()=>{
+document.getElementById('btnManualMode').addEventListener('click', (e)=>{
+  e.stopPropagation();
   document.getElementById('gpsWarnBar').classList.remove('show');
   activationReason = 'manual';
   const cb = document.getElementById('testEnable');
@@ -807,7 +827,17 @@ function formatAltAMSL(altM){
   if(unit==='FL') return 'FL'+String(Math.round(altM*3.28084/100)).padStart(3,'0');
   return Math.round(altM)+' m';
 }
-document.getElementById('altUnitSelect').addEventListener('change', renderSidebarPosition);
+document.getElementById('altUnitSelect').addEventListener('change', e=>{
+  renderSidebarPosition();
+  const radio = document.querySelector(`input[name="altUnitRadio"][value="${e.target.value}"]`);
+  if(radio) radio.checked = true;
+});
+document.querySelectorAll('input[name="altUnitRadio"]').forEach(r=>{
+  r.addEventListener('change', e=>{
+    document.getElementById('altUnitSelect').value = e.target.value;
+    renderSidebarPosition();
+  });
+});
 
 function renderSidebarPosition(){
   document.getElementById('posDMS').textContent = toDMS(state.lat,true)+' '+toDMS(state.lon,false);
@@ -1077,6 +1107,9 @@ function checkObstacleWarnings(path){
 state.appMode = 'monitor'; // 'monitor' | 'plan'
 document.getElementById('modeMonitor').addEventListener('click', ()=>setAppMode('monitor'));
 document.getElementById('modePlan').addEventListener('click', ()=>setAppMode('plan'));
+document.getElementById('btnCenterMap').addEventListener('click', ()=>{
+  map.setView([state.lat, state.lon], map.getZoom());
+});
 function setAppMode(mode){
   state.appMode = mode;
   document.getElementById('modeMonitor').classList.toggle('active', mode==='monitor');
@@ -1093,6 +1126,8 @@ function setAppMode(mode){
 map.on('click', async (e)=>{
   if(document.getElementById('testEnable').checked){
     updatePosition(e.latlng.lat, e.latlng.lng, state.altAMSL, state.course, state.speedKn, false);
+    state.manualPositionSet = true;
+    setManualModeUI(true);
     return;
   }
   if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
@@ -1250,45 +1285,66 @@ function setupPopover(btnId, panelId){
 }
 setupPopover('btnSettings','settingsPanel');
 setupPopover('btnTestMode','testPanel');
-document.getElementById('testCourse').addEventListener('input', e=>{
-  e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,3);
-});
-document.getElementById('testCourse').addEventListener('blur', e=>{
-  let v = parseInt(e.target.value)||0;
-  v = ((v%360)+360)%360;
-  e.target.value = String(v).padStart(3,'0');
-});
 document.addEventListener('click', ()=>{
   document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
 });
 
-// ---------- test mode ----------
+// ---------- test / manual mode ----------
 document.getElementById('testEnable').addEventListener('change', e=>{
   state.testMode = e.target.checked;
   if(state.testMode){
     if(!activationReason) activationReason = 'test'; // direct manual toggle, not via GPS-loss flow
+    state.manualPositionSet = false; // show "click on Position" again each time we (re-)enter
   } else {
     activationReason = null;
   }
   document.getElementById('btnTestMode').classList.toggle('active', state.testMode);
   updateCautionBar();
+  setManualModeUI(state.testMode);
 });
-function applyTestValues(){
-  const altRaw = parseFloat(document.getElementById('testAlt').value);
-  const altUnit = document.getElementById('testAltUnit').value;
-  if(!isNaN(altRaw)) state.altAMSL = altUnit==='ft' ? altRaw/3.28084 : altRaw;
 
-  const speedRaw = parseFloat(document.getElementById('testSpeed').value);
-  const speedUnit = document.getElementById('testSpeedUnit').value;
-  if(!isNaN(speedRaw)) state.speedKn = speedUnit==='kmh' ? speedRaw/1.852 : speedRaw;
-
-  const courseRaw = parseFloat(document.getElementById('testCourse').value);
-  if(!isNaN(courseRaw)) state.course = courseRaw;
-
-  renderSidebarPosition();
-  updateAircraftRotation();
-  recomputeAll();
+// Show/hide the inline editable fields in the Current Position card.
+function setManualModeUI(active){
+  document.getElementById('positionCard').classList.toggle('manual-active', active);
+  document.getElementById('altAMSL').style.display = active ? 'none' : 'block';
+  document.getElementById('altAMSLInput').style.display = active ? 'block' : 'none';
+  document.getElementById('courseVal').style.display = active ? 'none' : 'block';
+  document.getElementById('courseValInput').style.display = active ? 'block' : 'none';
+  document.getElementById('speedVal').style.display = active ? 'none' : 'block';
+  document.getElementById('speedValInput').style.display = active ? 'block' : 'none';
+  if(active){
+    document.getElementById('altAMSLInput').value = Math.round(state.altAMSL);
+    document.getElementById('courseValInput').value = String(Math.round(state.course)%360).padStart(3,'0');
+    document.getElementById('speedValInput').value = state.speedKn.toFixed(1);
+  }
+  const showHint = active && !state.manualPositionSet;
+  document.getElementById('posManualHint').style.display = showHint ? 'block' : 'none';
+  document.getElementById('posDMS').style.display = showHint ? 'none' : 'block';
+  document.getElementById('posCompact').style.display = showHint ? 'none' : 'block';
 }
+
+document.getElementById('altAMSLInput').addEventListener('input', e=>{
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v)){
+    state.altAMSL = v;
+    document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
+    recomputeAll();
+  }
+});
+document.getElementById('speedValInput').addEventListener('input', e=>{
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v)){ state.speedKn = v; recomputeAll(); }
+});
+document.getElementById('courseValInput').addEventListener('input', e=>{
+  e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,3);
+  const v = parseInt(e.target.value);
+  if(!isNaN(v)){ state.course = v%360; updateAircraftRotation(); recomputeAll(); }
+});
+document.getElementById('courseValInput').addEventListener('blur', e=>{
+  let v = parseInt(e.target.value)||0;
+  v = ((v%360)+360)%360;
+  e.target.value = String(v).padStart(3,'0');
+});
 
 // ---------- screenshot / recording (combined button + popover) ----------
 setupPopover('btnCapture','capturePanel');

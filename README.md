@@ -162,6 +162,15 @@ This requires your own free Dropbox app (Anthropic/Claude cannot provision one o
 - **Power line legend** now includes all point symbols (tower, substation, plant, generator, transformer, compensator, switch), and only shows the categories currently enabled in Settings.
 - **Nature reserves / protected areas layer** (new toggle button): drawn from OpenStreetMap data via Overpass (free, no API key, ODbL-licensed) - the official WDPA database was considered too but requires registration and restricts commercial use, so OSM's own protected-area tagging is used instead.
 
+## New in this round (v46)
+
+- **Vertical particle-height slider fixed (real bug)**: it had a leftover inline `style="display:none"` in the HTML, which always wins over CSS class-based show/hide rules - the slider could never actually appear no matter what the JS did. Now also shows the AMSL altitude alongside the AGL value.
+- **Sidebar scrollbar no longer always visible**: switched from `overflow-y:scroll` (always shows a scrollbar track) to `overflow-y:auto` (only appears when actually needed), plus an overall compactness pass (smaller padding/gaps/chart heights) to reduce how much scrolling is needed in the first place - this is very likely what looked like "sliders in every box".
+- **Map-bottom legend bars fixed (real bug)**: the shared `.banner-close` button class had `margin-left:auto` baked in from the red/yellow warning banners (where the button sits last); reused on the legend bars (where the button now sits first), that same rule pushed the *entire row* to the right. Fixed so it only applies where it belongs.
+- **GPS-unavailable warning bar**: no longer bold, left-aligned instead of centered.
+- **Removed the explanatory paragraph** at the bottom of "Projected Landing Area" to save space.
+- **Hodograph now shows concentric speed-reference rings** (e.g. every few m/s), labeled, as in a standard hodograph plot.
+
 ## Known limitations & approximations
 
 

@@ -109,7 +109,8 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #particleHeightSliderWrap{position:absolute;bottom:176px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #particleHeightSliderWrap.show{display:flex;}
 #particleHeightSlider{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
-#particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;}
+#particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;text-align:center;line-height:1.2;}
+#particleHeightLabelAmsl{font-size:8px;color:var(--muted);white-space:nowrap;}
 
 /* ---- layer toggle group (header, top-left) ---- */
 .layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
@@ -120,7 +121,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 /* ---- test mode caution bar ---- */
 #testCautionBar{display:none;background:var(--bad);color:#fff;text-align:center;font-weight:800;font-size:13px;letter-spacing:1px;padding:6px;flex-shrink:0;}
 #testCautionBar.show{display:block;}
-#gpsWarnBar{display:none;background:var(--bad);color:#fff;text-align:center;font-weight:800;font-size:13px;letter-spacing:1px;padding:6px 10px;flex-shrink:0;align-items:center;justify-content:center;gap:12px;}
+#gpsWarnBar{display:none;background:var(--bad);color:#fff;text-align:left;font-weight:400;font-size:13px;letter-spacing:normal;padding:6px 10px;flex-shrink:0;align-items:center;justify-content:flex-start;gap:12px;}
 #gpsWarnBar.show{display:flex;}
 #gpsWarnBar button{background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 12px;font-weight:800;font-size:12px;letter-spacing:normal;cursor:pointer;}
 
@@ -131,25 +132,25 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;}
+#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;}
 #sidebar.collapsed{transform:translateX(100%);}
 #sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
 #sidebarHandle:active{background:var(--accent);color:#00201d;}
 
-.card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px;overflow-x:hidden;}
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:7px;overflow-x:hidden;}
 .card h3{margin:0 0 6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
 .card h3 .chev{transition:transform .15s;color:var(--muted);}
 .card.collapsed .chev{transform:rotate(-90deg);}
 .card.collapsed .cardbody{display:none;}
 
-.datagrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
-.datacell{background:var(--panel);border-radius:8px;padding:6px 8px;overflow:hidden;}
+.datagrid{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px;}
+.datacell{background:var(--panel);border-radius:7px;padding:5px 7px;overflow:hidden;}
 .datacell label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
 .datacell .val{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .datacell .val.small{font-size:11.5px;}
 .datacell.wide{grid-column:1/3;}
 
-.slider-row{margin-bottom:6px;}
+.slider-row{margin-bottom:4px;}
 .slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
@@ -179,7 +180,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .yellow-warn{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,178,0,.95);color:#241a00;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:599;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
 .yellow-warn.show{display:flex;}
 #warnbar.show ~ .yellow-warn.show{top:52px;}
-.banner-close{flex-shrink:0;background:rgba(0,0,0,0.15);border:none;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;margin-left:auto;}
+.banner-close{flex-shrink:0;background:rgba(0,0,0,0.15);border:none;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;}
 .reopen-icon{position:absolute;top:8px;left:8px;z-index:600;width:34px;height:34px;border-radius:50%;border:2px solid #fff;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 .reopen-icon.red{background:var(--bad);color:#fff;}
 .reopen-icon.yellow{background:var(--warn);color:#241a00;left:50px;}
@@ -202,7 +203,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .copyline button{flex-shrink:0;background:var(--accent);border:none;color:#00201d;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;}
 
 .leaflet-control-attribution{font-size:9px !important;}
-canvas.mini{width:100% !important;height:130px !important;}
+canvas.mini{width:100% !important;height:115px !important;}
 canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 #hodographChart{aspect-ratio:1/1;height:auto !important;}
 #chartExpandOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5000;display:none;align-items:center;justify-content:center;}
@@ -458,13 +459,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       </div>
       <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
       <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
-      <div id="particleHeightSliderWrap" style="display:none;">
+      <div id="particleHeightSliderWrap">
         <input type="range" id="particleHeightSlider" min="0" max="1200" step="10" value="100">
-        <div id="particleHeightLabel">+100m</div>
+        <div id="particleHeightLabel">+100m<br>AGL</div>
+        <div id="particleHeightLabelAmsl">—m AMSL</div>
       </div>
-      <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
+      <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
       <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
-      <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
+      <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
       <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
       <div id="powerLegendBar" class="legend-bar" style="bottom:46px;">
         <button class="banner-close" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
@@ -571,7 +573,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               <div class="val small" id="inversionNoteText" style="color:var(--accent2);">—</div>
             </div>
           </div>
-          <p style="font-size:9.5px;color:var(--muted);margin:6px 0 0;">Adiabatic braking (H₂, ≈1050 m³ default) reduces the descent rate as configured in Settings - see badges on the sliders below.</p>
         </div>
       </div>
 
@@ -699,7 +700,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v45';
+const APP_VERSION = 'v46';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2045,14 +2046,16 @@ function startGroundWindLayer(){
   slider.max = maxAGL;
   if(particleHeightAGL > maxAGL) particleHeightAGL = 100;
   slider.value = particleHeightAGL;
-  document.getElementById('particleHeightLabel').textContent = '+'+particleHeightAGL+'m';
+  document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
+  document.getElementById('particleHeightLabelAmsl').textContent = Math.round(state.groundElev+particleHeightAGL)+'m AMSL';
   document.getElementById('particleHeightSliderWrap').classList.add('show');
   animateGroundWind();
   checkDescentTimeWindWarning();
 }
 document.getElementById('particleHeightSlider').addEventListener('input', e=>{
   particleHeightAGL = parseInt(e.target.value);
-  document.getElementById('particleHeightLabel').textContent = '+'+particleHeightAGL+'m';
+  document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
+  document.getElementById('particleHeightLabelAmsl').textContent = Math.round(state.groundElev+particleHeightAGL)+'m AMSL';
 });
 function stopGroundWindLayer(){
   groundWindLayer.active = false;
@@ -2324,22 +2327,54 @@ function drawHodograph(path, canvasId){
   // data ourselves and apply it to both x and y.
   const maxComponent = Math.max(2, ...pts.map(p=>Math.max(Math.abs(p.x), Math.abs(p.y))));
   const range = Math.ceil(maxComponent/2)*2 * 1.15; // a little headroom
+  // Concentric speed-reference rings (a standard feature of real hodograph
+  // plots) at evenly spaced radii, each ring being the locus of all wind
+  // vectors of that one constant speed.
+  const ringStep = Math.max(2, Math.round(range/4/2)*2);
+  const rings = [];
+  for(let r=ringStep; r<range; r+=ringStep) rings.push(r);
+  function circlePoints(radius){
+    const out = [];
+    for(let i=0;i<=64;i++){ const a=(i/64)*2*Math.PI; out.push({x:radius*Math.sin(a), y:radius*Math.cos(a)}); }
+    return out;
+  }
+  const ringDatasets = rings.map(r=>({
+    data: circlePoints(r), showLine:true, borderColor:'rgba(139,152,165,0.35)', borderWidth:1,
+    borderDash:[3,3], pointRadius:0, fill:false, order:1
+  }));
   const isThumb = canvasId==='hodographChart';
   if(isThumb){ if(hodoChart){ hodoChart.destroy(); hodoChart=null; } }
   else { if(hodoChartExpanded){ hodoChartExpanded.destroy(); hodoChartExpanded=null; } }
-  const newChart = new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:3,pointBackgroundColor:'#3fd0c9'}]},
+  const ringLabelPlugin = {
+    id: 'hodoRingLabels',
+    afterDraw(chart){
+      const {ctx, scales} = chart;
+      ctx.save();
+      ctx.font = '9px sans-serif';
+      ctx.fillStyle = 'rgba(139,152,165,0.7)';
+      ctx.textAlign = 'left';
+      rings.forEach(r=>{
+        const px = scales.x.getPixelForValue(1); // small offset right of center
+        const py = scales.y.getPixelForValue(r); // top of this ring (v=r, u=0)
+        ctx.fillText(r+' m/s', px+2, py+3);
+      });
+      ctx.restore();
+    }
+  };
+  const newChart = new Chart(ctx,{type:'scatter',data:{datasets:[...ringDatasets, {data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:3,pointBackgroundColor:'#3fd0c9',order:0}]},
     options:{
       responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{
         legend:{display:false},
         title:{display:true,text:'Descent Hodograph (u/v, m/s) - height increases along the curve',color:'#8b98a5',font:{size:10}},
-        tooltip:{callbacks:{label:(ctx)=>`${ctx.raw.alt} m: ${Math.hypot(ctx.raw.x,ctx.raw.y).toFixed(1)} m/s`}}
+        tooltip:{filter:(item)=>item.datasetIndex===ringDatasets.length, callbacks:{label:(ctx)=>`${ctx.raw.alt} m: ${Math.hypot(ctx.raw.x,ctx.raw.y).toFixed(1)} m/s`}}
       },
       scales:{
         x:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.15)'}, title:{display:true,text:'u (m/s, east+)',color:'#8b98a5',font:{size:9}}},
         y:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.15)'}, title:{display:true,text:'v (m/s, north+)',color:'#8b98a5',font:{size:9}}}
       }
-    }});
+    },
+    plugins:[ringLabelPlugin]});
   if(isThumb) hodoChart = newChart; else hodoChartExpanded = newChart;
 }
 

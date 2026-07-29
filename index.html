@@ -103,8 +103,13 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- center-on-position button ---- */
-#btnCenterMap{position:absolute;bottom:86px;right:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
-#btnCenterMap:active{transform:scale(0.93);}
+.center-map-btn{position:absolute;bottom:86px;right:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
+.center-map-btn:active{transform:scale(0.93);}
+#btnCenterLanding{bottom:130px;}
+#particleHeightSliderWrap{position:absolute;bottom:176px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#particleHeightSliderWrap.show{display:flex;}
+#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
+#particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;}
 
 /* ---- layer toggle group (header, top-left) ---- */
 .layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
@@ -126,13 +131,13 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;}
+#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;}
 #sidebar.collapsed{transform:translateX(100%);}
 #sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
 #sidebarHandle:active{background:var(--accent);color:#00201d;}
 
-.card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;}
-.card h3{margin:0 0 8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px;overflow-x:hidden;}
+.card h3{margin:0 0 6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
 .card h3 .chev{transition:transform .15s;color:var(--muted);}
 .card.collapsed .chev{transform:rotate(-90deg);}
 .card.collapsed .cardbody{display:none;}
@@ -144,7 +149,8 @@ body.day #map{background:#dfe6ea;}
 .datacell .val.small{font-size:12px;}
 .datacell.wide{grid-column:1/3;}
 
-.slider-row{margin-bottom:12px;}
+.slider-row{margin-bottom:6px;}
+.slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
 .slider-row .lbl b{color:var(--accent2);font-family:var(--mono);}
@@ -177,10 +183,14 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .reopen-icon{position:absolute;top:8px;left:8px;z-index:600;width:34px;height:34px;border-radius:50%;border:2px solid #fff;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 .reopen-icon.red{background:var(--bad);color:#fff;}
 .reopen-icon.yellow{background:var(--warn);color:#241a00;left:50px;}
-#groundWindLegendBar{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(20,26,33,0.88);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:14px;white-space:nowrap;overflow-x:auto;}
-#groundWindLegendBar.show{display:flex;}
-#groundWindLegendBar .gwl-title{color:#aab4c0;font-weight:600;flex-shrink:0;}
-#groundWindLegendBar .gwl-item{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.legend-bar{position:absolute;left:8px;right:8px;background:rgba(20,26,33,0.88);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:14px;white-space:nowrap;overflow-x:auto;}
+.legend-bar.show{display:flex;}
+.legend-bar .gwl-title{color:#aab4c0;font-weight:600;flex-shrink:0;}
+.legend-bar .gwl-item{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.reopen-icon.bottom-left-1{top:auto;bottom:8px;left:8px;background:var(--panel2);color:var(--text);border-color:var(--border);}
+.reopen-icon.bottom-left-2{top:auto;bottom:8px;left:50px;background:var(--panel2);color:var(--text);border-color:var(--border);}
+#modeToggle{transition:top .15s ease;}
+
 
 .legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;}
 .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
@@ -226,6 +236,12 @@ canvas.mini{width:100% !important;height:130px !important;}
       <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
       <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
     </div>
+    <button id="btnUseSondeData" class="iconbtn" style="display:none;background:var(--accent);color:#00201d;font-size:11px;padding:6px 8px;" title="Switch to loaded sonde data">Use sonde data</button>
+    <div id="sondeActiveChip" class="wx-chip" style="display:none;align-items:flex-start;">
+      <b style="color:var(--bad);font-size:11px;">⚠ Sonde Data Applied</b>
+      <span id="sondeActiveTime" style="color:var(--muted);font-size:10px;">—</span>
+    </div>
+    <button id="btnCancelSonde" class="iconbtn" style="display:none;background:var(--bad);color:#fff;font-size:11px;padding:6px 8px;" title="Switch back to weather model">Cancel</button>
     <div class="sep"></div>
     <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
@@ -299,6 +315,24 @@ canvas.mini{width:100% !important;height:130px !important;}
         </select>
         <div id="wxModelSettingsStatus" style="font-size:10px;color:var(--muted);margin-top:4px;">—</div>
         <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
+        <div class="subhead" style="margin-top:10px;">Auto-refresh interval</div>
+        <select id="wxRefreshInterval">
+          <option value="5">5 min</option>
+          <option value="10">10 min</option>
+          <option value="15" selected>15 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">60 min</option>
+          <option value="90">90 min</option>
+          <option value="120">120 min</option>
+        </select>
+        <div class="subhead" style="margin-top:10px;">Radiosonde Data</div>
+        <label class="ghost" style="display:block;text-align:center;cursor:pointer;">
+          Upload CSV with sonde data
+          <input type="file" id="sondeFileInput" accept=".csv" style="display:none;">
+        </label>
+        <div id="sondeUploadStatus" style="font-size:10px;color:var(--muted);margin-top:6px;">No sonde data loaded - using the weather model above.</div>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Expected columns: utc_time, altitude_m_msl, pressure_hPa, temperature_C, wind_speed_kt, wind_direction_from_deg. Auto-clears 12h after upload or on app restart.</p>
 
         <hr>
         <div class="subhead">Power Line Categories</div>
@@ -366,6 +400,14 @@ canvas.mini{width:100% !important;height:130px !important;}
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Scales the computed adiabatic lift bonus up or down to match your own empirical flight data (100% = model as-is).</p>
 
         <hr>
+        <div class="subhead">Dropbox Auto-Backup (Flight Log)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own Dropbox app key (free, from dropbox.com/developers/apps) with this page's exact URL registered as a redirect URI.</p>
+        <input type="text" id="dropboxAppKey" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="dropboxFolder" placeholder="/GBLP_Logs" value="/GBLP_Logs" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <button class="ghost" id="btnDropboxConnect">Connect Dropbox</button>
+        <div id="dropboxStatus" style="font-size:10px;color:var(--muted);margin-top:6px;">Not connected.</div>
+
+        <hr>
         <button class="ghost" id="btnResetDefaults">Reset all settings to defaults</button>
       </div>
     </div>
@@ -403,20 +445,35 @@ canvas.mini{width:100% !important;height:130px !important;}
         <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> Landing Area</button>
         <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
       </div>
-      <button id="btnCenterMap" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+      <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+      <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
+      <div id="particleHeightSliderWrap" style="display:none;">
+        <input type="range" id="particleHeightSlider" min="0" max="1200" step="10" value="100">
+        <div id="particleHeightLabel">+100m</div>
+      </div>
       <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
       <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
       <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
       <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
-      <div id="groundWindLegendBar">
+      <div id="powerLegendBar" class="legend-bar" style="bottom:46px;">
+        <span class="gwl-title">Power lines (kV):</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥220</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#ff9d3b;"></span>100-219</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#ffe83b;"></span>50-99</span>
+        <span class="gwl-item"><span class="legend-swatch" style="background:#5bb8ff;"></span>&lt;50/unknown</span>
+        <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
+      </div>
+      <button id="powerLegendIcon" class="reopen-icon bottom-left-2" style="display:none;" onclick="reopenBanner('powerLegendBar','powerLegendIcon')" title="Show power line legend">⚡</button>
+      <div id="groundWindLegendBar" class="legend-bar" style="bottom:8px;">
         <span class="gwl-title">Ground wind (0-200m AGL):</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#3b82f6;"></span>&lt;5kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#22c55e;"></span>5-10kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#eab308;"></span>10-15kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#f97316;"></span>15-20kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#ef4444;"></span>&gt;20kn</span>
-        <span class="gwl-item" id="groundWindSpeedLabel" style="margin-left:auto;font-weight:700;">—</span>
+        <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('groundWindLegendBar','groundWindLegendIcon')">✕</button>
       </div>
+      <button id="groundWindLegendIcon" class="reopen-icon bottom-left-1" style="display:none;" onclick="reopenBanner('groundWindLegendBar','groundWindLegendIcon')" title="Show ground wind legend">🌬</button>
     </div>
 
     <button id="sidebarHandle" title="Collapse/expand sidebar">▶</button>
@@ -468,22 +525,31 @@ canvas.mini{width:100% !important;height:130px !important;}
               </div>
             </div>
           </div>
+          <div id="inversionNote" style="display:none;font-size:11px;font-weight:600;margin-top:6px;color:var(--accent2);"></div>
           <div id="positionManualNote" style="display:none;color:var(--bad);font-size:11px;font-weight:600;margin-top:8px;">Tap the map to set position. Altitude, course and speed above are directly editable.</div>
         </div>
       </div>
 
-      <!-- ADIABATIC -->
+      <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Adiabatic Braking (H₂) <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)">Landing Position <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell">
-              <label>Rate of Intercept</label>
-              <div class="val small" id="reqRateAtIntercept" style="font-weight:400;">—</div>
-              <div class="val small" id="actualRateAtIntercept" style="margin-top:2px;font-weight:700;color:var(--text);">—</div>
+              <label>Approx. Landing Position</label>
+              <div class="val small" id="landingPosCoords">—</div>
+              <div class="val small" id="landingPosTown" style="margin-top:2px;color:var(--muted);">—</div>
             </div>
-            <div class="datacell"><label>Virtual Lift Bonus</label><div class="val small" id="adiaKg">—</div></div>
+            <div class="datacell"><label>Center height</label><div class="val small" id="landingPosAlt">—</div></div>
+            <div class="datacell wide">
+              <label>Ground Wind at Landing Site</label>
+              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:8px;">
+                <svg id="landingWindArrow" width="18" height="18" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
+                <span id="landingWindText">—</span>
+              </div>
+            </div>
           </div>
+          <p style="font-size:9.5px;color:var(--muted);margin:6px 0 0;">Adiabatic braking (H₂, ≈1050 m³ default) reduces the descent rate as configured in Settings - see badges on the sliders below.</p>
         </div>
       </div>
 
@@ -496,15 +562,15 @@ canvas.mini{width:100% !important;height:130px !important;}
             <input type="range" id="sInit" min="0" max="240" step="1" value="30">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span>Descent rate</span><b id="lblRate">4.0 m/s</b></div>
+            <div class="lbl"><span style="flex:1;">Descent rate</span><span id="lblAdiaRateBadge" class="dist-badge">—</span><b id="lblRate">4.0 m/s</b></div>
             <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span>Intercept height AGL</span><b id="lblIntH">400 m</b></div>
+            <div class="lbl"><span style="flex:1;">Intercept height AGL</span><span id="lblInterceptTimeBadge" class="dist-badge">—</span><b id="lblIntH">400 m</b></div>
             <input type="range" id="sIntH" min="100" max="1000" step="10" value="400">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span>Descent rate after intercept</span><b id="lblRate2">1.5 m/s</b></div>
+            <div class="lbl"><span style="flex:1;">Descent rate after intercept</span><span id="lblGroundTimeBadge" class="dist-badge">—</span><b id="lblRate2">1.5 m/s</b></div>
             <input type="range" id="sRate2" min="0.5" max="4" step="0.1" value="1.5">
           </div>
           <div class="slider-row">
@@ -515,25 +581,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       </div>
 
       <!-- POWER LINE LEGEND (only shown when the power layer is switched on) -->
-      <div class="card collapsed" id="powerLegendCard" style="display:none;">
-        <h3 onclick="toggleCard(this)">Power Line Legend <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <div class="subhead" style="margin-top:0;">Lines, by voltage</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥ 220 kV (transmission)</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ff9d3b;"></span>100 – 219 kV</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#ffe83b;"></span>50 – 99 kV</div>
-          <div class="legend-row"><span class="legend-swatch" style="background:#5bb8ff;"></span>&lt; 50 kV / voltage unknown</div>
-          <div class="subhead">Point symbols</div>
-          <div class="legend-row"><span class="legend-dot" style="background:#8bd3ff;"></span>Transformer <span style="color:var(--muted);">(small blue circle)</span></div>
-          <div class="legend-row"><span class="legend-dot" style="background:#ff9d3b;"></span>Substation <span style="color:var(--muted);">(orange circle)</span></div>
-          <div class="legend-row"><span class="legend-dot" style="background:#ff3b3b;"></span>Power plant <span style="color:var(--muted);">(red circle)</span></div>
-          <div class="legend-row"><span class="legend-dot" style="background:#ffe83b;"></span>Generator <span style="color:var(--muted);">(yellow circle)</span></div>
-          <div class="legend-row"><span class="legend-dot" style="background:#c58bff;"></span>Compensator <span style="color:var(--muted);">(purple circle)</span></div>
-          <div class="legend-row"><span class="legend-dot" style="background:#ffffff;border:1px solid #888;"></span>Switch <span style="color:var(--muted);">(white circle)</span></div>
-          <div class="legend-row"><span class="legend-dot" style="background:#ffcc66;width:6px;height:6px;"></span>Tower / pylon <span style="color:var(--muted);">(small light-yellow dot, appears from zoom ≈13)</span></div>
-          <p style="font-size:10.5px;color:var(--muted);margin:8px 0 0;">Note: OpenInfraMap's tile source only draws lower-voltage lines once you zoom in further (roughly zoom ≥ 8 shows all voltages; below that, only higher-voltage lines are included to limit tile size). If you only see tower/substation dots and no lines, try zooming in.</p>
-        </div>
-      </div>
+
 
       <!-- WIND PROFILE (classic sounding-style diagram, always shown from the current model) -->
       <div class="card">
@@ -563,6 +611,7 @@ canvas.mini{width:100% !important;height:130px !important;}
             <div class="datacell"><label>Distance to init.</label><div class="val small" id="resInitDist">—</div></div>
           </div>
           <div class="copyline"><div class="txt" id="resNearestTown">nearest town —</div><button onclick="copyResultAll()">Copy</button></div>
+          <div id="resAccuracyNote" style="display:none;color:var(--warn);font-size:10.5px;font-weight:600;margin-bottom:6px;"></div>
           <canvas class="mini" id="vertProfileChart"></canvas>
         </div>
       </div>
@@ -626,8 +675,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v38';
-const APP_DATE = '27.07.2026';
+const APP_VERSION = 'v41';
+const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
 // ---------- state ----------
@@ -836,7 +885,8 @@ function bindLayerToggle(btnId, initiallyOn, onToggle){
 }
 bindLayerToggle('tgPower', true, on=>{
   if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
-  document.getElementById('powerLegendCard').style.display = on ? 'block' : 'none';
+  if(on){ reopenBanner('powerLegendBar','powerLegendIcon'); }
+  else { document.getElementById('powerLegendBar').classList.remove('show'); document.getElementById('powerLegendIcon').style.display='none'; }
 });
 // Real, class-filtered airspace boundaries (openAIP Core API, actual GeoJSON
 // polygons) drawn as an overlay on top of the general raster airspace image.
@@ -1250,6 +1300,29 @@ function renderSidebarPosition(){
   document.getElementById('courseVal').textContent = String(Math.round(state.course)%360).padStart(3,'0')+'°';
   document.getElementById('speedVal').textContent = state.speedKn.toFixed(1)+' kn';
   scheduleNearestTownFetch();
+  updateInversionNote();
+}
+// ---- detect an inversion or isothermal layer below the current (descent)
+// position, using the model's temperature-by-altitude data ----
+function detectInversionOrIsothermal(profile, belowAltM){
+  if(!profile) return null;
+  const levels = profile.filter(p=>p.temp_c!=null && p.alt_m<=belowAltM).sort((a,b)=>b.alt_m-a.alt_m); // top-down, from just below current alt to ground
+  for(let i=0;i<levels.length-1;i++){
+    const upper = levels[i], lower = levels[i+1]; // upper.alt_m > lower.alt_m
+    const dT = upper.temp_c - lower.temp_c; // normally negative (colder higher up)
+    if(dT > 0.3) return {type:'inversion', altM: upper.alt_m};
+    if(Math.abs(dT) <= 0.3) return {type:'isothermal', altM: upper.alt_m};
+  }
+  return null;
+}
+function updateInversionNote(){
+  const el = document.getElementById('inversionNote');
+  const found = detectInversionOrIsothermal(getActiveWindProfile(), state.altAMSL);
+  if(!found){ el.style.display = 'none'; return; }
+  const agl = Math.round(found.altM - state.groundElev);
+  const label = found.type==='inversion' ? 'Inversion below descent position modelled' : 'Isothermal layer below descent position modelled';
+  el.textContent = `⚠ ${label}: ${Math.round(found.altM)} m AMSL / ${agl} m AGL`;
+  el.style.display = 'block';
 }
 
 // ---------- nearest town for the CURRENT position (always shown, throttled) ----------
@@ -1316,7 +1389,7 @@ async function fetchWind(force){
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
     const resolvedModel = modelSel==='auto' ? pickAutoModel(state.lat, state.lon) : modelSel;
-    const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
+    const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
     const FORECAST_HOURS = 12; // enough headroom to cover a multi-hour descent
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
     const r = await fetch(url);
@@ -1326,10 +1399,11 @@ async function fetchWind(force){
     const profilesByHour = [];
     for(let hourIdx=0; hourIdx<nHours; hourIdx++){
       const profile = PRESSURE_LEVELS.map(p=>{
-        const spdArr = h[`wind_speed_${p}hPa`], dirArr = h[`wind_direction_${p}hPa`];
+        const spdArr = h[`wind_speed_${p}hPa`], dirArr = h[`wind_direction_${p}hPa`], tempArr = h[`temperature_${p}hPa`];
         const spd = spdArr ? spdArr[hourIdx] : null;
         const dir = dirArr ? dirArr[hourIdx] : null;
-        return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
+        const temp = tempArr ? tempArr[hourIdx] : null;
+        return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir, temp_c: temp };
       }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
       profilesByHour.push(profile);
     }
@@ -1351,9 +1425,13 @@ async function fetchWind(force){
   }
 }
 document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
-function windAt(altM, dirBiasDeg, speedScale, hourIdx){
+function getActiveWindProfile(hourIdx){
+  if(state.sondeActive && state.sondeProfile) return state.sondeProfile;
   const profiles = state.windProfilesByHour;
-  const p = (hourIdx!=null && profiles && profiles.length) ? profiles[Math.max(0,Math.min(profiles.length-1, hourIdx))] : state.windProfile;
+  return (hourIdx!=null && profiles && profiles.length) ? profiles[Math.max(0,Math.min(profiles.length-1, hourIdx))] : state.windProfile;
+}
+function windAt(altM, dirBiasDeg, speedScale, hourIdx){
+  const p = getActiveWindProfile(hourIdx);
   if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};
   if(altM<=p[0].alt_m) return toUV(p[0], dirBiasDeg, speedScale);
   if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1], dirBiasDeg, speedScale);
@@ -1457,14 +1535,31 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   }
   const interceptAlt = state.groundElev+interceptAGL;
   const effRate1 = rateMs*(1+ (Math.random()*2-1)*scatterFrac);
+  const effRate2 = rate2Ms*(1+ (Math.random()*2-1)*scatterFrac);
+  // Realistic free-flight behaviour, not an instant rate switch:
+  //  - Spool-up: the balloon doesn't jump straight to the nominal descent
+  //    rate the instant descent is initiated - it takes roughly 30-60s to
+  //    actually accelerate down to that rate (envelope/gas inertia).
+  //  - Anticipated braking: a real pilot starts reducing the rate (via
+  //    ballast) BEFORE reaching the intercept height, not exactly at it, so
+  //    the transition to the post-intercept rate is smooth rather than a
+  //    sudden step change right at the intercept altitude.
+  const ACCEL_S = 45; // time to spool up to the nominal descent rate
+  const decelWindowM = Math.max(80, effRate1*45); // distance over which the pilot bleeds off rate before intercept
+  let tSincePhase1Start = 0;
   while(alt>interceptAlt){
     const step=dt;
+    tSincePhase1Start += step;
+    const accelFactor = Math.min(1, tSincePhase1Start/ACCEL_S);
+    const altAboveIntercept = alt - interceptAlt;
+    const decelFactor = Math.max(0, Math.min(1, altAboveIntercept/decelWindowM)); // 1=full nominal rate, 0=already at post-intercept rate
+    const targetRate = effRate2 + (effRate1-effRate2)*decelFactor;
+    const instantRate = targetRate*accelFactor;
     const w = windAt(alt, windDirBiasDeg, windSpeedScale);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
-    lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-effRate1*step); t+=step;
+    lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-instantRate*step); t+=step;
     path.push({lat,lon,alt,t});
   }
-  const effRate2 = rate2Ms*(1+ (Math.random()*2-1)*scatterFrac);
   while(alt>state.groundElev){
     const step=dt;
     const w = windAt(alt, windDirBiasDeg, windSpeedScale);
@@ -1487,7 +1582,7 @@ function convexHull(points){
 }
 
 function doRecompute(){
-  if(!state.windProfile){ return; }
+  if(!getActiveWindProfile()){ return; }
   const initDelayMin = parseFloat(document.getElementById('sInit').value);
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
@@ -1532,6 +1627,18 @@ function doRecompute(){
   updateAdiabaticReadout(rate1, interceptAGL);
   drawHodograph(refPath);
 
+  // Time badges: how long from the descent-initiation point to reaching the
+  // intercept height, and from there down to the ground.
+  const initSecRef0 = initDelayMin*60;
+  const interceptAlt0 = state.groundElev+interceptAGL;
+  const idxAtIntercept = refPath.findIndex(p=>p.t>=initSecRef0 && p.alt<=interceptAlt0);
+  if(idxAtIntercept>=0){
+    const descentMin = (refPath[idxAtIntercept].t - initSecRef0)/60;
+    const groundMin = (refPath[refPath.length-1].t - refPath[idxAtIntercept].t)/60;
+    document.getElementById('lblInterceptTimeBadge').textContent = descentMin.toFixed(1)+' min descent';
+    document.getElementById('lblGroundTimeBadge').textContent = groundMin.toFixed(1)+' min to ground';
+  }
+
   // Always-on projection, split into two colored segments at the descent
   // initiation point: the still-cruising portion (teal), and the actual
   // descent portion from that point down to the ground (yellow) - plus a
@@ -1547,7 +1654,52 @@ function doRecompute(){
   descentInitMarker.setLatLng([initPt.lat, initPt.lon]);
   descentInitMarker.setOpacity(1);
 
+  updateLandingPositionCard();
+
   if(state.clickedTarget){ recomputeClickTarget(); }
+}
+
+// ---- "Landing Position" card: approx. center of the landing footprint,
+// nearest town, center ground height, and ground wind at that site (at the
+// estimated landing TIME, reusing the wind profile fetched for the current
+// regional position as an approximation for the nearby landing site). ----
+let lastLandingPosFetchCenter = null;
+let landingPosFetchTimer = null;
+function updateLandingPositionCard(){
+  if(!state.landingPolygon || !state.landingPolygon.length) return;
+  const lats = state.landingPolygon.map(p=>p[1]), lons = state.landingPolygon.map(p=>p[0]);
+  const cLat = lats.reduce((a,b)=>a+b,0)/lats.length, cLon = lons.reduce((a,b)=>a+b,0)/lons.length;
+  document.getElementById('landingPosCoords').textContent = toCompact(cLat, cLon);
+
+  // Ground wind at the landing site, evaluated at the estimated landing time.
+  const hourIdx = Math.round((state.secondsToLanding||0)/3600);
+  const w = windAt(state.groundElev+50, 0, 1, hourIdx);
+  const speedKmh = Math.hypot(w.u,w.v)*3.6;
+  const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360; // meteorological "from" direction
+  document.getElementById('landingWindText').textContent = `${Math.round(dirFrom)}° · ${speedKmh.toFixed(1)} km/h`;
+  document.getElementById('landingWindArrow').style.transform = `rotate(${dirFrom}deg)`;
+
+  // Throttled: reverse-geocode + elevation lookups only when the landing
+  // center has moved meaningfully, to avoid hammering free APIs every tick.
+  if(lastLandingPosFetchCenter && haversine(lastLandingPosFetchCenter.lat, lastLandingPosFetchCenter.lon, cLat, cLon) < 500) return;
+  clearTimeout(landingPosFetchTimer);
+  landingPosFetchTimer = setTimeout(()=>fetchLandingPositionDetails(cLat, cLon), 800);
+}
+async function fetchLandingPositionDetails(lat, lon){
+  lastLandingPosFetchCenter = {lat, lon};
+  try{
+    const [geoR, elevR] = await Promise.all([
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
+      fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`)
+    ]);
+    const geoJ = await geoR.json();
+    const name = (geoJ.address && (geoJ.address.village||geoJ.address.town||geoJ.address.city||geoJ.address.hamlet||geoJ.address.municipality)) || null;
+    document.getElementById('landingPosTown').textContent = name ? `near ${name}` : '—';
+    const elevJ = await elevR.json();
+    if(elevJ.elevation && elevJ.elevation.length){
+      document.getElementById('landingPosAlt').textContent = Math.round(elevJ.elevation[0])+' m AMSL';
+    }
+  }catch(e){ /* keep previous values on failure */ }
 }
 
 function updateAdiabaticReadout(rate1, interceptAGL){
@@ -1555,9 +1707,7 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
   const { liftBonusKg } = adiabaticVolumeAndLift(balloonVolumeM3, startAlt, interceptAlt, rate1);
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  document.getElementById('adiaKg').textContent = liftBonusKg.toFixed(1)+' kg';
-  document.getElementById('reqRateAtIntercept').textContent = rate1.toFixed(1)+' m/s (nominal)';
-  document.getElementById('actualRateAtIntercept').textContent = actualRate.toFixed(1)+' m/s (approx.)';
+  document.getElementById('lblAdiaRateBadge').textContent = `Adiabatic: ${actualRate.toFixed(1)} m/s (approx.), ${liftBonusKg.toFixed(1)}kg lift`;
 }
 
 function checkObstacleWarnings(path){
@@ -1591,10 +1741,12 @@ async function runObstacleCheck(path){
 function dismissBanner(bannerId, iconId){
   document.getElementById(bannerId).classList.remove('show');
   document.getElementById(iconId).style.display = 'block';
+  repositionModeToggle();
 }
 function reopenBanner(bannerId, iconId){
   document.getElementById(bannerId).classList.add('show');
   document.getElementById(iconId).style.display = 'none';
+  repositionModeToggle();
 }
 function setWarnbarContent(text){
   const bar = document.getElementById('warnbar');
@@ -1602,6 +1754,7 @@ function setWarnbarContent(text){
   if(!text){
     bar.classList.remove('show');
     icon.style.display = 'none';
+    repositionModeToggle();
     return;
   }
   const changed = document.getElementById('warnbarText').textContent !== text;
@@ -1612,6 +1765,18 @@ function setWarnbarContent(text){
     bar.classList.add('show');
     icon.style.display = 'none';
   }
+  repositionModeToggle();
+}
+// The mode toggle (Landing Area / Plan Descent) sits top-left of the map,
+// exactly where the warning banners also appear - push it down below
+// whichever banners are currently visible so it's never covered.
+function repositionModeToggle(){
+  let top = 8;
+  const warnbar = document.getElementById('warnbar');
+  const yellowBar = document.getElementById('descentWindWarnBar');
+  if(warnbar.classList.contains('show')) top += warnbar.offsetHeight + 8;
+  if(yellowBar.classList.contains('show')) top += yellowBar.offsetHeight + 8;
+  document.getElementById('modeToggle').style.top = top + 'px';
 }
 // ---- terrain clearance along the descent path ----
 async function checkTerrainClearance(path, signal){
@@ -1728,32 +1893,48 @@ function spawnGroundWindParticle(){
     trail: [] // recent screen positions, for the comet-tail effect
   };
 }
+let particleHeightAGL = 100;
 function startGroundWindLayer(){
   if(!groundWindLayer.canvas) initGroundWindCanvas();
   groundWindLayer.canvas.style.display = 'block';
   groundWindLayer.particles = Array.from({length:420}, spawnGroundWindParticle);
   groundWindLayer.active = true;
   document.getElementById('groundWindLegendBar').classList.add('show');
+  document.getElementById('groundWindLegendIcon').style.display = 'none';
+  const slider = document.getElementById('particleHeightSlider');
+  const maxAGL = Math.max(1000, Math.round(state.altAMSL - state.groundElev) + 1000);
+  slider.max = maxAGL;
+  if(particleHeightAGL > maxAGL) particleHeightAGL = 100;
+  slider.value = particleHeightAGL;
+  document.getElementById('particleHeightLabel').textContent = '+'+particleHeightAGL+'m';
+  document.getElementById('particleHeightSliderWrap').classList.add('show');
   animateGroundWind();
   checkDescentTimeWindWarning();
 }
+document.getElementById('particleHeightSlider').addEventListener('input', e=>{
+  particleHeightAGL = parseInt(e.target.value);
+  document.getElementById('particleHeightLabel').textContent = '+'+particleHeightAGL+'m';
+});
 function stopGroundWindLayer(){
   groundWindLayer.active = false;
   if(groundWindLayer.animId) cancelAnimationFrame(groundWindLayer.animId);
   if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
   document.getElementById('groundWindLegendBar').classList.remove('show');
+  document.getElementById('groundWindLegendIcon').style.display = 'none';
+  document.getElementById('particleHeightSliderWrap').classList.remove('show');
   hideYellowWarning();
 }
-const TRAIL_LENGTH = 7;
+const TRAIL_LENGTH = 12;
 function animateGroundWind(){
   if(!groundWindLayer.active) return;
   const ctx = groundWindLayer.ctx;
   ctx.clearRect(0,0,groundWindLayer.canvas.width, groundWindLayer.canvas.height);
-  // Representative near-surface level (~100m AGL, mid-way through the
-  // 0-200m AGL band), evaluated at the ESTIMATED LANDING TIME (not "now") -
-  // that's the wind that will actually matter when you're down there.
+  // Level to sample, adjustable via the vertical slider (default ~100m AGL,
+  // can go up to current altitude + 1000m), evaluated at the ESTIMATED
+  // LANDING TIME (not "now") - that's the wind that will actually matter.
+  const particleAltM = state.groundElev + particleHeightAGL;
   const hourIdx = Math.round((state.secondsToLanding||0)/3600);
-  const w = windAt(state.groundElev+100, 0, 1, hourIdx);
+  const w = windAt(particleAltM, 0, 1, hourIdx);
   const speedMs = Math.hypot(w.u, w.v);
   const color = groundWindSpeedColor(speedMs);
   const b = map.getBounds();
@@ -1795,7 +1976,7 @@ function animateGroundWind(){
     ctx.fill();
   });
   ctx.globalAlpha = 1;
-  document.getElementById('groundWindSpeedLabel').textContent = `${(speedMs*KN_PER_MS).toFixed(1)} kn at landing time`;
+  // (ground-wind speed reading now lives in the "Landing Position" card, updated separately)
   groundWindLayer.animId = requestAnimationFrame(animateGroundWind);
 }
 document.getElementById('tgGroundWind').addEventListener('click', function(){
@@ -1812,6 +1993,11 @@ document.getElementById('modeMonitor').addEventListener('click', ()=>setAppMode(
 document.getElementById('modePlan').addEventListener('click', ()=>setAppMode('plan'));
 document.getElementById('btnCenterMap').addEventListener('click', ()=>{
   map.setView([state.lat, state.lon], map.getZoom());
+});
+document.getElementById('btnCenterLanding').addEventListener('click', ()=>{
+  if(state.landingPolygon && state.landingPolygon.length){
+    map.fitBounds(state.landingPolygon.map(p=>[p[1],p[0]]), {padding:[30,30]});
+  }
 });
 
 // ---------- sidebar collapse handle ----------
@@ -1837,6 +2023,8 @@ function positionSidebarHandle(){
   if(bottomRight) bottomRight.style.right = offset + 'px';
   const centerBtn = document.getElementById('btnCenterMap');
   if(centerBtn) centerBtn.style.right = (offset + 10) + 'px';
+  const centerLandingBtn = document.getElementById('btnCenterLanding');
+  if(centerLandingBtn) centerLandingBtn.style.right = (offset + 10) + 'px';
 }
 document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');
@@ -1901,9 +2089,9 @@ async function recomputeClickTarget(){
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const rate2 = parseFloat(document.getElementById('sRate2').value);
 
-  // binary search over initDelay (0..180 min) to match target within tolerance
-  let lo=0, hi=180, best=null, bestDist=Infinity, bestPath=null;
-  for(let iter=0; iter<18; iter++){
+  // binary search over initDelay (0..240 min, matching the slider's range) to match target within tolerance
+  let lo=0, hi=240, best=null, bestDist=Infinity, bestPath=null;
+  for(let iter=0; iter<20; iter++){
     const mid=(lo+hi)/2;
     const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0);
     const last=path[path.length-1];
@@ -1912,7 +2100,7 @@ async function recomputeClickTarget(){
     // heuristic: if landed short of target relative to drift direction, adjust window
     // (simplified: just narrow around current best each iteration)
     const span=(hi-lo)/3;
-    lo=Math.max(0,best-span); hi=Math.min(180,best+span);
+    lo=Math.max(0,best-span); hi=Math.min(240,best+span);
   }
   const initSec = best*60;
   const initFixLat = bestPath[bestPath.findIndex(p=>p.t>=initSec)] || bestPath[0];
@@ -1920,6 +2108,16 @@ async function recomputeClickTarget(){
 
   document.getElementById('resInitTime').textContent = best.toFixed(1)+' min';
   document.getElementById('resInitDist').textContent = (distToInit/1000).toFixed(1)+' km';
+  // Only the descent-initiation TIME is varied to hit the clicked point, so
+  // not every point in the (Monte-Carlo-widened) landing area is exactly
+  // reachable this way - flag it plainly if the match is not close.
+  const accuracyNote = document.getElementById('resAccuracyNote');
+  if(bestDist > 1500){
+    accuracyNote.textContent = `⚠ Best achievable point is ~${(bestDist/1000).toFixed(1)} km from where you tapped (only descent timing is varied to match it).`;
+    accuracyNote.style.display = 'block';
+  } else {
+    accuracyNote.style.display = 'none';
+  }
 
   // nearest town via Nominatim reverse geocoding
   let townTxt = 'looking up…';
@@ -1977,9 +2175,13 @@ function drawHodograph(path){
     pts.push({x:w.u, y:w.v});
   }
   const ctx = document.getElementById('hodographChart').getContext('2d');
-  if(hodoChart) hodoChart.destroy();
+  if(hodoChart){ hodoChart.destroy(); hodoChart=null; }
   hodoChart = new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:2}]},
-    options:{plugins:{legend:{display:false},title:{display:true,text:'Descent Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}}});
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{legend:{display:false},title:{display:true,text:'Descent Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},
+      scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}
+    }});
 }
 
 // Classic sounding-style wind profile: speed vs altitude, with direction
@@ -1987,7 +2189,7 @@ function drawHodograph(path){
 // often more intuitive for flight planning than the hodograph alone.
 let windProfileChart = null;
 function drawWindProfileChart(){
-  const p = state.windProfile;
+  const p = getActiveWindProfile();
   if(!p || !p.length) return;
   const ctx = document.getElementById('windProfileChart').getContext('2d');
   const labels = p.map(pt=>Math.round(pt.alt_m));
@@ -2029,25 +2231,30 @@ document.getElementById('sInit').addEventListener('input', checkDescentTimeWindW
 
 // ---- yellow notice: ground wind is shown for the PLANNED descent time,
 // not right now, whenever that time isn't "immediate" ----
+let lastWindWarnInitMin = null;
 function checkDescentTimeWindWarning(){
   const initMin = parseFloat(document.getElementById('sInit').value);
-  const shouldShow = groundWindLayer.active && initMin > 0;
+  const shouldShow = groundWindLayer.active && initMin > 30;
   if(!shouldShow){
     hideYellowWarning();
+    lastWindWarnInitMin = null;
     return;
   }
   const text = `⚠ Ground wind particles are modeled for the PLANNED descent time (in ~${initMin} min), not right now.`;
-  const changed = document.getElementById('descentWindWarnText').textContent !== text;
   document.getElementById('descentWindWarnText').textContent = text;
   const icon = document.getElementById('descentWindWarnIcon');
-  if(changed || icon.style.display!=='block'){
+  const increased = lastWindWarnInitMin==null || initMin > lastWindWarnInitMin;
+  if(increased || icon.style.display!=='block'){
     document.getElementById('descentWindWarnBar').classList.add('show');
     icon.style.display = 'none';
   }
+  lastWindWarnInitMin = initMin;
+  repositionModeToggle();
 }
 function hideYellowWarning(){
   document.getElementById('descentWindWarnBar').classList.remove('show');
   document.getElementById('descentWindWarnIcon').style.display = 'none';
+  repositionModeToggle();
 }
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
 bindSlider('sIntH','lblIntH', v=> v+' m');
@@ -2227,6 +2434,9 @@ function buildEmergencyMessage(){
     const lats = state.landingPolygon.map(p=>p[1]), lons = state.landingPolygon.map(p=>p[0]);
     const cLat = lats.reduce((a,b)=>a+b,0)/lats.length, cLon = lons.reduce((a,b)=>a+b,0)/lons.length;
     lines.push(`Landing area (approx. center): ${toCompact(cLat,cLon)}`);
+    const landingTownTxt = document.getElementById('landingPosTown').textContent;
+    if(landingTownTxt && landingTownTxt!=='—') lines.push(`Landing area near: ${landingTownTxt}`);
+    lines.push(`Landing area on map: https://www.google.com/maps?q=${cLat.toFixed(6)},${cLon.toFixed(6)}`);
   }
   lines.push(`Time (UTC): ${new Date().toISOString()}`);
   return lines.join('\n');
@@ -2494,6 +2704,96 @@ try{
 }catch(e){}
 restartLogbookTimer();
 
+// ---------- Dropbox auto-backup (OAuth 2.0 PKCE, no server needed) ----------
+// PKCE is used (rather than the older implicit-grant "token" flow, which
+// Dropbox has been phasing out) since it doesn't require a client secret -
+// safe to run entirely from a static page. The redirect target is this same
+// page; on return, the authorization code in the URL is exchanged for an
+// access token client-side.
+const DROPBOX_REDIRECT_URI = location.origin + location.pathname;
+function base64UrlEncode(bytes){
+  let str = btoa(String.fromCharCode(...bytes));
+  return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function sha256(text){
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return new Uint8Array(hash);
+}
+function randomString(len){
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  return base64UrlEncode(arr);
+}
+try{
+  document.getElementById('dropboxAppKey').value = localStorage.getItem('gblp_dropbox_appkey') || 'wujo04yixt2tfxq';
+  document.getElementById('dropboxFolder').value = localStorage.getItem('gblp_dropbox_folder') || '/GBLP_Logs';
+}catch(e){}
+document.getElementById('dropboxAppKey').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_dropbox_appkey', e.target.value); }catch(err){} });
+document.getElementById('dropboxFolder').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_dropbox_folder', e.target.value); }catch(err){} });
+document.getElementById('btnDropboxConnect').addEventListener('click', async ()=>{
+  const appKey = document.getElementById('dropboxAppKey').value.trim();
+  if(!appKey){ alert('Enter your Dropbox App Key first (see note above).'); return; }
+  const verifier = randomString(64);
+  try{ sessionStorage.setItem('gblp_dropbox_pkce_verifier', verifier); }catch(e){}
+  const challenge = base64UrlEncode(await sha256(verifier));
+  const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${encodeURIComponent(appKey)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(DROPBOX_REDIRECT_URI)}&token_access_type=offline`;
+  location.href = authUrl;
+});
+async function completeDropboxOAuthIfReturning(){
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  if(!code) return;
+  const appKey = localStorage.getItem('gblp_dropbox_appkey');
+  const verifier = sessionStorage.getItem('gblp_dropbox_pkce_verifier');
+  if(!appKey || !verifier) return;
+  try{
+    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({
+        code, grant_type:'authorization_code', client_id: appKey,
+        code_verifier: verifier, redirect_uri: DROPBOX_REDIRECT_URI
+      })
+    });
+    const j = await r.json();
+    if(j.access_token){
+      localStorage.setItem('gblp_dropbox_token', j.access_token);
+      if(j.refresh_token) localStorage.setItem('gblp_dropbox_refresh_token', j.refresh_token);
+      document.getElementById('dropboxStatus').textContent = '✅ Connected.';
+    } else {
+      document.getElementById('dropboxStatus').textContent = '⚠ Connection failed: '+(j.error_description||JSON.stringify(j));
+    }
+  }catch(e){
+    document.getElementById('dropboxStatus').textContent = '⚠ Connection failed: '+e.message;
+  }
+  // Clean the ?code=... out of the visible URL without reloading.
+  history.replaceState(null, '', location.pathname);
+}
+function updateDropboxStatus(){
+  const token = localStorage.getItem('gblp_dropbox_token');
+  document.getElementById('dropboxStatus').textContent = token ? '✅ Connected. Log backs up automatically.' : 'Not connected.';
+}
+async function uploadLogToDropbox(){
+  const token = localStorage.getItem('gblp_dropbox_token');
+  if(!token || !state.flightLog.length) return;
+  const folder = (document.getElementById('dropboxFolder').value || '/GBLP_Logs').replace(/\/+$/,'');
+  const path = `${folder}/gblp_flight_log.gpx`;
+  try{
+    await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method:'POST',
+      headers:{
+        'Authorization': 'Bearer '+token,
+        'Dropbox-API-Arg': JSON.stringify({path, mode:'overwrite', mute:true}),
+        'Content-Type':'application/octet-stream'
+      },
+      body: buildGpx()
+    });
+  }catch(e){ /* offline or token expired - will retry on the next scheduled upload */ }
+}
+completeDropboxOAuthIfReturning();
+updateDropboxStatus();
+setInterval(uploadLogToDropbox, 10*60*1000); // back up every 10 minutes
+
 // ---------- external Bluetooth GPS receiver (experimental, best-effort) ----------
 // Uses the Bluetooth SIG standard "Location and Navigation" service (0x1819)
 // and its "Location and Speed" characteristic (0x2A67). This is the closest
@@ -2553,6 +2853,101 @@ document.getElementById('btnConnectBleGps').addEventListener('click', async ()=>
   }
 });
 
+// ---------- radiosonde CSV upload ----------
+// Format expected (comment lines starting with # are skipped):
+// utc_time,altitude_m_msl,pressure_hPa,temperature_C,dewpoint_C,relative_humidity_pct,wind_speed_kt,wind_direction_from_deg
+function parseSondeCsv(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim() && !l.startsWith('#'));
+  if(!lines.length) return null;
+  const header = lines[0].split(',').map(h=>h.trim());
+  const idx = {};
+  header.forEach((h,i)=>idx[h]=i);
+  const dataLines = lines.slice(1);
+  if(!dataLines.length || idx.altitude_m_msl==null || idx.wind_speed_kt==null || idx.wind_direction_from_deg==null) return null;
+  const firstRow = dataLines[0].split(',');
+  let launchTime = null;
+  if(idx.utc_time!=null){
+    const raw = firstRow[idx.utc_time];
+    const d = new Date(raw.replace(' ','T')+'Z');
+    if(!isNaN(d.getTime())) launchTime = d;
+  }
+  const seenBuckets = new Set();
+  const profile = [];
+  for(const line of dataLines){
+    const r = line.split(',');
+    const alt = parseFloat(r[idx.altitude_m_msl]);
+    const spdKt = parseFloat(r[idx.wind_speed_kt]);
+    const dir = parseFloat(r[idx.wind_direction_from_deg]);
+    const temp = idx.temperature_C!=null ? parseFloat(r[idx.temperature_C]) : NaN;
+    if(isNaN(alt) || isNaN(spdKt) || isNaN(dir)) continue;
+    const bucket = Math.round(alt/50); // ~50m resolution is plenty and keeps the array small
+    if(seenBuckets.has(bucket)) continue;
+    seenBuckets.add(bucket);
+    profile.push({ alt_m: alt, speed_ms: spdKt*0.514444, dir_deg: dir, temp_c: isNaN(temp)?null:temp });
+  }
+  profile.sort((a,b)=>a.alt_m-b.alt_m);
+  return profile.length ? { profile, launchTime } : null;
+}
+document.getElementById('sondeFileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('sondeUploadStatus');
+  try{
+    const text = await file.text();
+    const parsed = parseSondeCsv(text);
+    if(!parsed){
+      statusEl.textContent = '⚠ Could not parse this CSV - check the expected columns (see note above).';
+      return;
+    }
+    state.sondeProfile = parsed.profile;
+    state.sondeLaunchTime = parsed.launchTime;
+    state.sondeUploadedAt = Date.now();
+    const launchTxt = parsed.launchTime ? parsed.launchTime.toISOString().replace('T',' ').slice(0,16)+' UTC' : 'unknown time';
+    statusEl.textContent = `Loaded ${parsed.profile.length} levels (launched ${launchTxt}). Applied automatically.`;
+    activateSondeData();
+  }catch(err){
+    statusEl.textContent = '⚠ Error reading file: '+err.message;
+  }
+});
+function activateSondeData(){
+  if(!state.sondeProfile) return;
+  state.sondeActive = true;
+  updateSondeHeaderUI();
+  recomputeAll();
+  drawWindProfileChart();
+}
+function deactivateSondeData(){
+  state.sondeActive = false;
+  updateSondeHeaderUI();
+  recomputeAll();
+  drawWindProfileChart();
+}
+function updateSondeHeaderUI(){
+  const hasSonde = !!state.sondeProfile;
+  const active = hasSonde && state.sondeActive;
+  document.getElementById('sondeActiveChip').style.display = active ? 'flex' : 'none';
+  document.getElementById('btnCancelSonde').style.display = active ? 'inline-flex' : 'none';
+  document.getElementById('btnUseSondeData').style.display = (hasSonde && !active) ? 'inline-flex' : 'none';
+  if(active && state.sondeLaunchTime){
+    document.getElementById('sondeActiveTime').textContent = state.sondeLaunchTime.toISOString().replace('T',' ').slice(0,16)+' UTC';
+  } else if(active){
+    document.getElementById('sondeActiveTime').textContent = 'launch time unknown';
+  }
+}
+document.getElementById('btnCancelSonde').addEventListener('click', deactivateSondeData);
+document.getElementById('btnUseSondeData').addEventListener('click', activateSondeData);
+// Auto-expiry: 12h after upload, or naturally on reload since this all lives
+// only in the in-memory `state` object (never written to localStorage).
+setInterval(()=>{
+  if(state.sondeProfile && state.sondeUploadedAt && (Date.now()-state.sondeUploadedAt) > 12*3600*1000){
+    state.sondeProfile = null;
+    state.sondeActive = false;
+    document.getElementById('sondeUploadStatus').textContent = 'Sonde data expired (12h) - using the weather model above.';
+    updateSondeHeaderUI();
+    recomputeAll();
+  }
+}, 60000);
+
 // ---------- keep the screen awake while the app is open ----------
 let wakeLockSentinel = null;
 async function requestWakeLock(){
@@ -2570,7 +2965,7 @@ document.addEventListener('visibilitychange', ()=>{
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph','tgGroundWind'];
 function saveConfig(){
@@ -2628,7 +3023,14 @@ document.getElementById('btnResetDefaults').addEventListener('click', ()=>{
   recomputeAll();
   precacheAreaTiles(state.lat, state.lon, cacheRadiusKm);
 })();
-setInterval(fetchWind, 15*60*1000); // refresh model every 15 min
+let wxRefreshTimer = null;
+function restartWxRefreshTimer(){
+  clearInterval(wxRefreshTimer);
+  const minutes = parseInt(document.getElementById('wxRefreshInterval').value) || 15;
+  wxRefreshTimer = setInterval(fetchWind, minutes*60*1000);
+}
+document.getElementById('wxRefreshInterval').addEventListener('change', restartWxRefreshTimer);
+restartWxRefreshTimer();
 setInterval(()=>precacheAreaTiles(state.lat, state.lon, cacheRadiusKm), 10*60*1000); // re-check every 10 min, only acts if moved far enough
 </script>
 </body>

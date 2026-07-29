@@ -115,7 +115,26 @@ A Service Worker (`sw.js`) caches map/data tile requests (base map, power lines,
 - **Settings persistence**: your configuration is saved automatically and restored on next launch; a "Reset all settings to defaults" button is available in Settings.
 - **Experimental Bluetooth GPS**: best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic (Bluetooth SIG spec 0x2A67). There is no universal BLE GPS standard for aviation receivers, so hardware compatibility varies - treat this as experimental, not a guaranteed integration.
 
+## New in this round (v40)
+
+- **Radiosonde CSV upload**: Settings → below Weather Model → "Upload CSV with sonde data". Expects columns `utc_time, altitude_m_msl, temperature_C, wind_speed_kt, wind_direction_from_deg` (comment lines starting with `#` are skipped). Applied automatically on upload; header shows a clear "⚠ Sonde Data Applied" indicator with the launch time and a "Cancel" button to switch back to the weather model (a "Use sonde data" button reappears next to the model name if you cancel without re-uploading). Auto-expires 12h after upload or on app restart (kept in memory only, never saved to disk).
+- **Emergency message** now includes the nearest town to the landing area center and a Google Maps link to it.
+- **Plan Descent bug fix**: the search for a matching descent-initiation time was still capped at 180 minutes after the "Initiate descent" slider was extended to 240 - fixed. Also added a warning note when the tapped point isn't closely achievable (only descent timing is varied to match it, not every point in the scatter-widened landing area is reachable this way).
+- **Warning banners no longer cover the Landing Area / Plan Descent toggle** - it now shifts down automatically below any visible warnings.
+- **Ground wind particle height slider**: a vertical slider above the center-map buttons, active while the particle layer is on, lets you pick any level from the ground up to current altitude + 1000m.
+- **Longer particle comet trails** for clearer direction reading.
+- **Second center-map button**: "center on landing area" alongside the existing "center on current position".
+- **Dropbox auto-backup** for the flight log: Settings → enter your own Dropbox App Key (see below) and a folder path, connect once, and the GPX log backs up automatically every 10 minutes.
+
+### Setting up Dropbox auto-backup
+This requires your own free Dropbox app (Anthropic/Claude cannot provision one on your behalf):
+1. Go to [dropbox.com/developers/apps](https://www.dropbox.com/developers/apps) → "Create app" → Scoped access → choose a folder or full access → give it a name.
+2. Under "OAuth 2" → "Redirect URIs", add the exact URL where you host `index.html` (e.g. `https://yourname.github.io/yourrepo/`).
+3. Under "Permissions", enable `files.content.write`.
+4. Copy the "App key" into the app's Settings → Dropbox App Key field, set your folder path, and tap "Connect Dropbox".
+
 ## Known limitations & approximations
+
 
 - **Model run age**: Open-Meteo's simple forecast endpoint doesn't return the exact model-run timestamp. The "run age" shown is *estimated* from each model's publicly documented update cadence (e.g. ICON-D2 every 3h, GFS every 6h, ECMWF every 12h) plus typical publication latency — a realistic estimate, not a value confirmed by the data source itself.
 - **Adiabatic braking model**: assumes a fixed 1050 m³ H₂ envelope in force equilibrium at the current altitude, and compares adiabatic vs. isothermal gas compression from the current altitude down to the intercept altitude to estimate the "virtual lift bonus" and the resulting braked descent rate. The blend between fully-adiabatic and fully-isothermal behavior (based on how fast the descent happens) uses an assumed thermal relaxation time constant (~90 s) that hasn't been calibrated against a real envelope — treat the actual-rate number as a sanity-check estimate, not a certified value.

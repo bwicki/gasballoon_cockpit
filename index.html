@@ -733,7 +733,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v47';
+const APP_VERSION = 'v48';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1074,6 +1074,26 @@ function ensureNatureHatchPattern(){
   pattern.appendChild(line);
   defs.appendChild(pattern);
 }
+// Shared, throttled queue for ALL Overpass API calls across the app (nature
+// reserves, fine roads, place labels) - without this, multiple layers could
+// each fire their own burst of requests at the same free public instance at
+// the same time (e.g. right after a pan/zoom), which is exactly what was
+// tripping rate limits (429) and then timeouts in practice. Serializing
+// everything through one queue with a minimum gap between requests fixes that.
+let lastOverpassCallTime = 0;
+const OVERPASS_MIN_INTERVAL_MS = 2500;
+let overpassQueue = Promise.resolve();
+function fetchOverpassThrottled(query, signal){
+  const run = async ()=>{
+    const wait = Math.max(0, lastOverpassCallTime + OVERPASS_MIN_INTERVAL_MS - Date.now());
+    if(wait>0) await new Promise(res=>setTimeout(res, wait));
+    lastOverpassCallTime = Date.now();
+    return fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:'data='+encodeURIComponent(query), signal});
+  };
+  const result = overpassQueue.then(run, run);
+  overpassQueue = result.catch(()=>{});
+  return result;
+}
 async function fetchNatureReserves(){
   if(!natureReservesActive || map.getZoom()<8){ return; }
   const b = map.getBounds();
@@ -1096,7 +1116,7 @@ async function fetchNatureReserves(){
 );
 out geom;`;
   try{
-    const r = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(query) });
+    const r = await fetchOverpassThrottled(query);
     const j = await r.json();
     ensureNatureHatchPattern();
     natureReservesLayer.clearLayers();
@@ -1151,9 +1171,7 @@ async function fetchPlaceLabels(){
   placeLabelsAbortController = new AbortController();
   const cacheKey = `https://place-labels-cache.local/tile?z=${map.getZoom()}&s=${Math.round(b.getSouth()*50)}&w=${Math.round(b.getWest()*50)}&n=${Math.round(b.getNorth()*50)}&e=${Math.round(b.getEast()*50)}`;
   try{
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
-      method:'POST', body:'data='+encodeURIComponent(query), signal:placeLabelsAbortController.signal
-    });
+    const r = await fetchOverpassThrottled(query, placeLabelsAbortController.signal);
     const j = await r.json();
     renderPlaceLabels(j);
     if('caches' in window){
@@ -1235,9 +1253,7 @@ async function fetchFineRoads(){
   const gridLon = Math.round(center.lng/0.02)*0.02;
   const cacheKey = `https://fine-roads-cache.local/tile?z=${map.getZoom()}&lat=${gridLat.toFixed(2)}&lon=${gridLon.toFixed(2)}`;
   try{
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
-      method:'POST', body:'data='+encodeURIComponent(query), signal:fineRoadsAbortController.signal
-    });
+    const r = await fetchOverpassThrottled(query, fineRoadsAbortController.signal);
     const j = await r.json();
     renderFineRoads(j);
     if('caches' in window){
@@ -1283,7 +1299,7 @@ function updateAircraftRotation(){
 }
 setInterval(updateAircraftRotation, 2000);
 const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:4, opacity:0.85, lineCap:'butt', dashArray:'16,10'}).addTo(map);
-let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
+let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25, interactive:false}).addTo(map);
 let predictedCruiseLayer = L.polyline([], {color:'#00e5c8', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
 let predictedDescentSegmentLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round', className:'descent-path-glow'}).addTo(map);
 const blueDotIcon = L.divIcon({
@@ -1304,7 +1320,7 @@ const smallCrossIcon = L.divIcon({
 let liveLandingCenterMarker = null;
 let intendedLandingMarker = null;
 let plannedLandingCenterMarker = null;
-const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:2, dashArray:'6,4', fillColor:'#ff8a00', fillOpacity:0.15});
+const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:3, dashArray:'8,5', fillColor:'#ff8a00', fillOpacity:0.28, interactive:false});
 const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:2.5});
 
 // ---------- GPS ----------
@@ -2343,22 +2359,24 @@ async function planDescentToTarget(lat, lon){
   // the slider's range) for the deterministic path that lands closest to
   // the clicked point - this is a heuristic local search (not a guaranteed
   // global optimum), since the achievable landing point isn't necessarily a
-  // monotonic function of that one parameter.
+  // monotonic function of that one parameter. The wind-hour estimate used
+  // for each trial self-corrects as the search converges, so the FINAL
+  // result already reflects the forecast for the actual arrival time -
+  // rather than searching against "now" and only switching to the correct
+  // future hour afterward, which could then land somewhere else entirely.
+  const roughPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, 60*60, rate1, interceptAGL, rate2, 0);
+  let arrivalHourIdx = Math.round(roughPath[roughPath.length-1].t/3600);
   let lo=0, hi=240, best=null, bestDist=Infinity, bestPath=null;
   for(let iter=0; iter<20; iter++){
     const mid=(lo+hi)/2;
-    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0);
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
     const last=path[path.length-1];
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
     const span=(hi-lo)/3;
     lo=Math.max(0,best-span); hi=Math.min(240,best+span);
+    arrivalHourIdx = Math.round(last.t/3600); // refine the wind-hour estimate as the search converges
   }
-  // Pass 2: re-run using the wind forecast for the hour this flight would
-  // actually ARRIVE at, rather than "now" - a multi-hour-out descent should
-  // be planned against the forecast for that future time, not the present.
-  const arrivalHourIdx = Math.round(bestPath[bestPath.length-1].t/3600);
-  bestPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
 
   const initSec = best*60;
   const initFix = bestPath[bestPath.findIndex(p=>p.t>=initSec)] || bestPath[0];
@@ -2403,6 +2421,12 @@ async function planDescentToTarget(lat, lon){
   await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
   drawVertProfile(bestPath);
   document.getElementById('resultpanel').style.display = 'block';
+
+  // Make sure the result is actually visible - the intended point, the
+  // extended path, and the resulting area could easily be outside the
+  // current view, especially for a distant/long-delay target.
+  const allPts = [[state.lat,state.lon],[lat,lon], ...hull.map(p=>[p[1],p[0]])];
+  map.fitBounds(allPts, {padding:[40,40]});
 }
 function clearPlannedLandingArea(){
   state.plannedLandingActive = false;

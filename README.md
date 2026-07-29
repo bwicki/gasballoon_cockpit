@@ -189,6 +189,16 @@ This requires your own free Dropbox app (Anthropic/Claude cannot provision one o
   - A dedicated "center on planned landing area" zoom button appears only while a planned area exists.
   - All landing areas (live and planned) now show a small crosshair marking their center.
 
+## New in this round (v48) - Plan Descent reliability fixes
+
+The console log didn't show a crash in Plan Descent itself, but pointed to real problems elsewhere and prompted a closer look that found three likely causes for it feeling broken:
+
+- **Overpass API flooding fixed**: nature reserves, fine roads, and place labels were each firing their own requests at the same free `overpass-api.de` instance independently, which is exactly what caused the 429/timeout cascade in the log. All three now share one throttled queue (min. 2.5s between requests app-wide).
+- **Map clicks could be silently swallowed**: Leaflet polygons are interactive (click-catching) by default. Since the landing-area and planned-area polygons often cover a large part of the visible map, clicking on top of them to plan a new point could be captured by the polygon itself and never reach the map's click handler - `interactive:false` now set on both, so map clicks always get through.
+- **Wind-hour inconsistency during planning fixed**: the search for the best descent-initiation time ran against "now"'s wind, then only switched to the correct future arrival-hour forecast for the final result - meaning the actual landing point could drift from what the search had targeted. The hour estimate now self-corrects during the search itself, so the final result is consistent with what was searched for.
+- **Result visibility**: after planning, the map now automatically zooms to show the current position, the extended path, and the resulting planned area together - previously, a distant or long-delay target's result could end up entirely outside the current view with nothing visibly changing.
+- Planned landing area styling made more prominent (thicker outline, higher fill opacity).
+
 ## Known limitations & approximations
 
 

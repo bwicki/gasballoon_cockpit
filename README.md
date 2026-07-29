@@ -208,6 +208,17 @@ The console log didn't show a crash in Plan Descent itself, but pointed to real 
 - **Redundant "Landing Area" layer toggle removed** from the header - the first main function now always computes and shows it.
 - **Console cleanup**: removed the deprecated `-webkit-appearance:slider-vertical` (silences the Chrome warning; the `writing-mode` fallback alone is sufficient here). Overpass calls now back off for 45s after a 429/timeout instead of letting every layer immediately retry and pile on more load.
 
+## New in this round (v50)
+
+- **GPS warning + Manual Mode toggle consolidated**: both now live in the same floating red banner - no more separate strip popping up elsewhere.
+- **Sidebar "slider" complaint addressed definitively**: the sidebar's own scrollbar (the only remaining `overflow-y:auto` in the whole app) is now visually hidden entirely (`scrollbar-width:none` / `::-webkit-scrollbar{display:none}`) while touch/wheel scrolling still works - this was very likely what kept looking like "a slider in every box".
+- **"PLANNED Landing Area"** is now the card's permanent title (the word PLANNED in red); the "Estimated Descent Point" box gets a thin red outline.
+- **Extended course vs. actual descent** are now visually distinct in Plan Descent too (teal dashed vs. violet dashed), matching function 1's teal/yellow split.
+- **"Planned Descent Profile" chart removed**; Wind Profile and Hodograph now fetch and show conditions specifically at the **planned descent point's own location and arrival time** instead of the balloon's current position.
+- **Likely root cause of "unreachable" downwind/upwind points found**: the cruise phase (before descent starts) was extrapolating the CURRENT observed course/speed in a straight line indefinitely, even for multi-hour delays - it now switches to the forecast wind (at the appropriate future hour) after the first 15 minutes, so the reachable path can curve the way the forecast actually expects the wind to shift, rather than assuming today's heading holds for hours.
+- **Draggable descent point**: the violet descent-initiation marker can now be dragged directly, recalculating the landing area/charts from that manually-chosen point (bypassing the search).
+- **Console**: the two Overpass network errors are the browser's own network-level logging for a request that genuinely failed/timed out against a free public server under load - our request throttling and 45s cooldown (added last round) reduce how often this happens, but can't suppress the browser's console message for an attempt that *is* actually made. The tile 404 is a normal, harmless occasional miss from OpenStreetMap's tile servers, already handled gracefully.
+
 ## Known limitations & approximations
 
 

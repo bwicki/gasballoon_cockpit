@@ -130,7 +130,8 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;}
+#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;scrollbar-width:none;-ms-overflow-style:none;}
+#sidebar::-webkit-scrollbar{width:0;height:0;background:transparent;display:none;}
 #sidebar.collapsed{transform:translateX(100%);}
 #sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
 #sidebarHandle:active{background:var(--accent);color:#00201d;}
@@ -199,8 +200,6 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;}
 .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
 
-#resultpanel{display:none;}
-#resultpanel.show{display:block;}
 .copyline{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:8px;padding:6px 8px;margin-bottom:6px;}
 .copyline .txt{font-family:var(--mono);font-size:12px;flex:1;word-break:break-all;}
 .copyline button{flex-shrink:0;background:var(--accent);border:none;color:#00201d;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;}
@@ -471,13 +470,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
     <input type="checkbox" id="testEnable" style="display:none;">
   </div>
-  <div id="testCautionBar">
-    <span id="testCautionText">⚠ CAUTION: TEST MODE ⚠</span>
-    <span id="manualModeOffSwitch" style="display:none;align-items:center;gap:6px;margin-left:10px;">
-      <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
-      <span style="font-size:11px;font-weight:600;letter-spacing:normal;">Manual Mode</span>
-    </span>
-  </div>
+  <div id="testCautionBar">⚠ CAUTION: TEST MODE ⚠</div>
 
   <div id="main">
     <div id="mapwrap">
@@ -499,9 +492,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
       <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
       <div id="gpsWarnBar" class="gps-warn">
-        <span>GPS data not available</span>
+        <span id="gpsWarnText">GPS data not available</span>
+        <span id="manualModeSwitchInWarn" style="display:none;align-items:center;gap:6px;">
+          <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
+          <span style="font-size:11px;font-weight:600;white-space:nowrap;">Manual Mode</span>
+        </span>
         <button class="ghost-inline" id="btnEnableManualModeFromWarn">Enable Manual Mode</button>
-        <button class="banner-close" style="margin-left:0;" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
+        <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
       </div>
       <button id="gpsWarnIcon" class="reopen-icon red" style="display:none;left:92px;" onclick="reopenBanner('gpsWarnBar','gpsWarnIcon')" title="Show GPS warning">📡</button>
       <div id="powerLegendBar" class="legend-bar">
@@ -587,7 +584,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Projected Landing Area<span id="plannedBadge" style="color:var(--bad);display:none;"> - PLANNED</span> <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span style="color:var(--bad);">PLANNED</span> Landing Area <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell">
@@ -606,7 +603,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 <span id="landingWindTrend" style="font-size:12px;" title="Trend vs. 1h earlier"></span>
               </div>
             </div>
-            <div class="datacell" id="estimatedDescentPointCell" style="display:none;">
+            <div class="datacell" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
               <label>Estimated Descent Point</label>
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
@@ -672,13 +669,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
       </div>
 
-      <!-- PLANNED DESCENT PROFILE (only shown while a planned landing area exists) -->
-      <div class="card" id="resultpanel" style="display:none;">
-        <h3 onclick="toggleCard(this)">Planned Descent Profile <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <canvas class="mini" id="vertProfileChart"></canvas>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -739,7 +729,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v49';
+const APP_VERSION = 'v50';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1333,7 +1323,7 @@ const violetDotIcon = L.divIcon({
   html:'<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>',
   className:'', iconSize:[26,24], iconAnchor:[13,20]
 });
-let plannedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon, opacity:0});
+let plannedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon, opacity:0, draggable:true});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 const crossIcon = L.divIcon({
@@ -1349,6 +1339,10 @@ let liveLandingCenterMarker = null;
 let intendedLandingMarker = null;
 let plannedLandingCenterMarker = null;
 const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:3, dashArray:'8,5', fillColor:'#ff8a00', fillOpacity:0.28, interactive:false});
+// Extended course (cruise continuation to the descent point) vs. the actual
+// descent - kept visually distinct, same idea as the live projection in
+// function 1 (teal cruise / yellow descent), just in the planning colors.
+const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e5c8', weight:3, dashArray:'2,8', lineCap:'round'});
 const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:3, dashArray:'8,6', lineCap:'round'});
 
 // ---------- GPS ----------
@@ -1371,21 +1365,35 @@ function setGpsStatus(ok, txt){
   document.getElementById('gpsStatusTxt').textContent = ok ? 'GPS live' : 'GPS unavailable';
   document.getElementById('gpsAcc').textContent = txt;
   if(ok){
-    document.getElementById('gpsWarnBar').classList.remove('show');
-    document.getElementById('gpsWarnIcon').style.display = 'none';
-    repositionModeToggle();
     // GPS is back: if we're in Manual Mode purely because GPS had dropped,
     // exit it automatically. A manually-opened Test Mode (for ground testing
-    // with GPS still working) is left alone.
+    // with GPS still working) is left alone. setTestMode() below will hide
+    // the banner for us via updateGpsWarnBar().
     if(activationReason==='manual' && state.testMode){
       setTestMode(false);
+    } else if(!state.testMode){
+      document.getElementById('gpsWarnBar').classList.remove('show');
+      document.getElementById('gpsWarnIcon').style.display = 'none';
+      repositionModeToggle();
     }
   } else {
-    // Only prompt if we're not already in Test/Manual mode.
+    updateGpsWarnBar();
+    // Only auto-pop the banner open if we're not already in Test/Manual mode
+    // (where the user is deliberately overriding GPS anyway).
     if(!state.testMode){
       reopenBanner('gpsWarnBar','gpsWarnIcon');
     }
   }
+}
+// Single floating banner covers BOTH states: "GPS is down, want Manual Mode?"
+// and, once enabled, "Manual Mode is on [toggle to turn off]" - so the
+// on/off control always lives in the same place instead of a separate strip
+// popping up elsewhere on the page.
+function updateGpsWarnBar(){
+  const isManual = state.testMode && activationReason==='manual';
+  document.getElementById('gpsWarnText').textContent = isManual ? '⚠ CAUTION: Manual Mode' : 'GPS data not available';
+  document.getElementById('manualModeSwitchInWarn').style.display = isManual ? 'inline-flex' : 'none';
+  document.getElementById('btnEnableManualModeFromWarn').style.display = isManual ? 'none' : 'inline-block';
 }
 // Central place that turns Test/Manual mode on or off and keeps every UI
 // element (header button, GPS-bar toggle, caution bar, inline position
@@ -1414,6 +1422,21 @@ function setTestMode(enable, reason){
     }
   }
   updateCautionBar();
+  updateGpsWarnBar();
+  if(enable && activationReason==='manual'){
+    // Keep the banner open (in its "Manual Mode active" form) so the toggle
+    // is immediately visible - it was very likely already open from the GPS
+    // prompt, but make sure regardless of how Manual Mode got turned on.
+    reopenBanner('gpsWarnBar','gpsWarnIcon');
+  } else if(!enable){
+    // Test/Manual Mode just got turned off - nothing more to show here
+    // unless GPS is still down, which setGpsStatus will handle on its own.
+    if(document.getElementById('gpsDot').classList.contains('ok')){
+      document.getElementById('gpsWarnBar').classList.remove('show');
+      document.getElementById('gpsWarnIcon').style.display = 'none';
+      repositionModeToggle();
+    }
+  }
   setManualModeUI(enable);
 }
 document.getElementById('btnTestMode').addEventListener('click', ()=>{
@@ -1427,14 +1450,11 @@ document.getElementById('btnEnableManualModeFromWarn').addEventListener('click',
 });
 function updateCautionBar(){
   const bar = document.getElementById('testCautionBar');
-  const offSwitch = document.getElementById('manualModeOffSwitch');
-  if(state.testMode){
-    const isManual = activationReason==='manual';
-    document.getElementById('testCautionText').textContent = isManual ? '⚠ CAUTION: Manual Mode ⚠' : '⚠ CAUTION: TEST MODE ⚠';
-    // The manual-mode off-switch stays visible here (not tied to the
-    // dismissible GPS warning banner) precisely so it can always be reached
-    // to turn Manual Mode back off again.
-    offSwitch.style.display = isManual ? 'inline-flex' : 'none';
+  const isManual = activationReason==='manual';
+  // The plain "TEST MODE" strip (triggered via the header button, unrelated
+  // to a GPS failure) still shows at the top - Manual Mode itself now lives
+  // entirely in the GPS warning banner instead, so it never pops up here.
+  if(state.testMode && !isManual){
     bar.classList.add('show');
   } else {
     bar.classList.remove('show');
@@ -1587,6 +1607,28 @@ function estimateModelRunAgeHours(modelKey){
   let ageH = availableH - lastRunH + meta.latencyH;
   if(ageH<0) ageH += 24;
   return ageH;
+}
+// Fetches a wind profile for a SPECIFIC location and future hour (not the
+// balloon's own position) - used so the Wind Profile / Hodograph charts can
+// reflect conditions at the planned descent point during planning, rather
+// than always showing the current position's profile.
+async function fetchWindProfileAtLocation(lat, lon, hourIdx){
+  const modelSel = document.getElementById('wxModelSelect').value;
+  const resolvedModel = modelSel==='auto' ? pickAutoModel(lat, lon) : modelSel;
+  const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
+  const forecastHours = Math.max(hourIdx+1, 3);
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${forecastHours}&timezone=UTC`;
+  const r = await fetch(url);
+  const j = await r.json();
+  const h = j.hourly;
+  const idx = Math.max(0, Math.min(hourIdx, (h.time||[]).length-1));
+  return PRESSURE_LEVELS.map(p=>{
+    const spdArr = h[`wind_speed_${p}hPa`], dirArr = h[`wind_direction_${p}hPa`], tempArr = h[`temperature_${p}hPa`];
+    const spd = spdArr ? spdArr[idx] : null;
+    const dir = dirArr ? dirArr[idx] : null;
+    const temp = tempArr ? tempArr[idx] : null;
+    return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir, temp_c: temp };
+  }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
 }
 async function fetchWind(force){
   try{
@@ -1762,18 +1804,45 @@ function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1M
 }
 
 // ---------- Monte-Carlo landing footprint ----------
-function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride){
-  // Phase 0: continue current flight (course/speed) until initDelayS elapsed (still at cruise alt)
+function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride, startOverride){
+  // Phase 0: continue toward the descent-initiation point. For the first
+  // few minutes we're still extrapolating the OBSERVED GPS course/speed
+  // (the most reliable data we have for what's happening right now), but for
+  // longer delays we switch to the FORECAST wind at cruise altitude for the
+  // hour actually being flown through - a free gas balloon's ground track
+  // already IS essentially "the wind pushing it", so a multi-hour wait
+  // should follow however the model expects that wind to evolve/shift over
+  // time, not a straight-line extrapolation of the current heading forever.
+  // This matters directly for reachability: a point that requires the
+  // cruise-phase drift to curve along with a forecast wind shift wouldn't
+  // otherwise be found by varying the delay alone.
+  const OBSERVED_COURSE_PHASE_S = 900; // first 15 min: trust the GPS-derived course/speed as-is
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
   let t=0;
   const path=[{lat,lon,alt,t}];
   const cruiseSpeedMs = state.speedKn/KN_PER_MS;
+  if(startOverride){
+    // Skip the cruise simulation entirely and start the descent phase
+    // exactly from a manually-specified point (e.g. the draggable descent
+    // marker) instead of wherever the delay-based cruise would have landed.
+    lat = startOverride.lat; lon = startOverride.lon; t = startOverride.t;
+    path[0] = {lat,lon,alt,t};
+  } else {
   while(t<initDelayS){
     const step=Math.min(dt, initDelayS-t);
-    const [nlat,nlon]=destPoint(lat,lon,state.course,cruiseSpeedMs*step);
+    let nlat, nlon;
+    if(t<OBSERVED_COURSE_PHASE_S){
+      [nlat,nlon]=destPoint(lat,lon,state.course,cruiseSpeedMs*step);
+    } else {
+      const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+      const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
+      const bearingTo = (Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
+      [nlat,nlon]=destPoint(lat,lon, bearingTo, Math.hypot(w.u,w.v)*step);
+    }
     lat=nlat; lon=nlon; t+=step;
     path.push({lat,lon,alt,t});
+  }
   }
   const interceptAlt = state.groundElev+interceptAGL;
   const effRate1 = rateMs*(1+ (Math.random()*2-1)*scatterFrac);
@@ -2354,7 +2423,6 @@ function setAppMode(mode){
     predictedCruiseLayer.addTo(map);
     predictedDescentSegmentLayer.addTo(map);
     descentInitMarker.addTo(map);
-    document.getElementById('plannedBadge').style.display = 'none';
     updateLandingPositionCard();
   }
 }
@@ -2470,7 +2538,12 @@ async function planDescentToTarget(lat, lon){
   state.plannedLandingPolygon = hull;
   plannedLandingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
   if(!map.hasLayer(plannedLandingPolyLayer)) plannedLandingPolyLayer.addTo(map);
-  plannedDescentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
+  const plannedSplitIdx = Math.max(0, bestPath.findIndex(p=>p.t>=initSec));
+  const plannedCruiseSeg = bestPath.slice(0, plannedSplitIdx+1);
+  const plannedDescentSeg = bestPath.slice(plannedSplitIdx);
+  plannedCruiseSegmentLayer.setLatLngs(plannedCruiseSeg.map(p=>[p.lat,p.lon]));
+  if(!map.hasLayer(plannedCruiseSegmentLayer)) plannedCruiseSegmentLayer.addTo(map);
+  plannedDescentPathLayer.setLatLngs(plannedDescentSeg.map(p=>[p.lat,p.lon]));
   if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
   plannedDescentInitMarker.setLatLng([initFix.lat, initFix.lon]);
   plannedDescentInitMarker.setOpacity(1);
@@ -2482,13 +2555,20 @@ async function planDescentToTarget(lat, lon){
   plannedLandingCenterMarker = L.marker([cLat,cLon], {icon: smallCrossIcon}).addTo(map);
 
   state.plannedLandingActive = true;
-  document.getElementById('plannedBadge').style.display = 'inline';
   document.getElementById('btnClearPlannedArea').style.display = 'block';
   document.getElementById('btnCenterPlanned').style.display = 'block';
 
   await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
-  drawVertProfile(bestPath);
-  document.getElementById('resultpanel').style.display = 'block';
+
+  // Wind Profile / Hodograph should reflect conditions at the PLANNED
+  // DESCENT POINT itself (its own location and arrival time), not the
+  // balloon's current position - fetch a dedicated profile for that.
+  const descentPointHourIdx = Math.round(initSec/3600);
+  try{
+    state.plannedWindProfile = await fetchWindProfileAtLocation(initFix.lat, initFix.lon, descentPointHourIdx);
+    drawWindProfileChart('windProfileChart', state.plannedWindProfile);
+    drawHodograph(plannedDescentSeg, 'hodographChart', state.plannedWindProfile);
+  }catch(e){ /* keep showing whatever was last drawn if this fails */ }
 
   // Make sure the result is actually visible - the intended point, the
   // extended path, and the resulting area could easily be outside the
@@ -2500,21 +2580,77 @@ function clearPlannedLandingArea(){
   state.plannedLandingActive = false;
   state.plannedLandingPolygon = null;
   plannedLandingPolyLayer.setLatLngs([]);
+  plannedCruiseSegmentLayer.setLatLngs([]);
   plannedDescentPathLayer.setLatLngs([]);
   if(map.hasLayer(plannedLandingPolyLayer)) map.removeLayer(plannedLandingPolyLayer);
+  if(map.hasLayer(plannedCruiseSegmentLayer)) map.removeLayer(plannedCruiseSegmentLayer);
   if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
   if(plannedLandingCenterMarker){ map.removeLayer(plannedLandingCenterMarker); plannedLandingCenterMarker=null; }
   if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
   if(map.hasLayer(plannedDescentInitMarker)) map.removeLayer(plannedDescentInitMarker);
   plannedDescentInitMarker.setOpacity(0);
-  document.getElementById('plannedBadge').style.display = 'none';
   document.getElementById('btnClearPlannedArea').style.display = 'none';
   document.getElementById('btnCenterPlanned').style.display = 'none';
   document.getElementById('estimatedDescentPointCell').style.display = 'none';
-  document.getElementById('resultpanel').style.display = 'none';
+  state.plannedWindProfile = null;
+  drawWindProfileChart(); // back to the live/current-position profile
+  if(lastHodographPath) drawHodograph(lastHodographPath); // back to live wind
   if(state.appMode==='monitor') updateLandingPositionCard();
 }
 document.getElementById('btnClearPlannedArea').addEventListener('click', clearPlannedLandingArea);
+// Dragging the violet descent-initiation marker directly overrides where the
+// descent begins (bypassing the search), and re-derives the resulting
+// landing area/descent path/charts from that manually-chosen point.
+plannedDescentInitMarker.on('dragend', (e)=>{
+  const pos = e.target.getLatLng();
+  recomputeFromManualDescentPoint(pos.lat, pos.lng);
+});
+async function recomputeFromManualDescentPoint(lat, lon){
+  if(!state.plannedLandingActive) return;
+  const rate1 = parseFloat(document.getElementById('sRate').value);
+  const interceptAGL = parseFloat(document.getElementById('sIntH').value);
+  const rate2 = parseFloat(document.getElementById('sRate2').value);
+  const scatter = parseFloat(document.getElementById('sScatter').value)/100;
+  const cruiseSpeedMs = Math.max(0.1, state.speedKn/KN_PER_MS);
+  const initSec = haversine(state.lat,state.lon,lat,lon) / cruiseSpeedMs; // rough elapsed-time estimate for the dragged distance
+  const arrivalHourIdxGuess = Math.round(initSec/3600);
+  const startOverride = {lat, lon, t: initSec};
+
+  const bestPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initSec, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdxGuess, startOverride);
+  const arrivalHourIdx = Math.round(bestPath[bestPath.length-1].t/3600);
+
+  document.getElementById('estimatedDescentPointText').textContent = `${(initSec/60).toFixed(1)} min · ${(haversine(state.lat,state.lon,lat,lon)/1000).toFixed(1)} km from here`;
+
+  const ageH = state.modelRunAgeH || 3;
+  const windDirUncertaintyDeg = Math.min(35, 5 + ageH*2.5);
+  const windSpeedUncertaintyFrac = Math.min(0.35, 0.05 + ageH*0.02);
+  const N = 40;
+  const endpoints = [];
+  for(let i=0;i<N;i++){
+    const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
+    const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initSec, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, arrivalHourIdx, startOverride);
+    const last = path[path.length-1];
+    endpoints.push([last.lon, last.lat]);
+  }
+  const hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
+  state.plannedLandingPolygon = hull;
+  plannedLandingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
+  plannedCruiseSegmentLayer.setLatLngs([[state.lat,state.lon],[lat,lon]]);
+  plannedDescentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
+
+  const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
+  const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
+  if(plannedLandingCenterMarker) map.removeLayer(plannedLandingCenterMarker);
+  plannedLandingCenterMarker = L.marker([cLat,cLon], {icon: smallCrossIcon}).addTo(map);
+
+  await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
+  try{
+    state.plannedWindProfile = await fetchWindProfileAtLocation(lat, lon, Math.round(initSec/3600));
+    drawWindProfileChart('windProfileChart', state.plannedWindProfile);
+    drawHodograph(bestPath, 'hodographChart', state.plannedWindProfile);
+  }catch(e){ /* keep showing whatever was last drawn */ }
+}
 document.getElementById('btnCenterPlanned').addEventListener('click', ()=>{
   if(state.plannedLandingPolygon && state.plannedLandingPolygon.length){
     map.fitBounds(state.plannedLandingPolygon.map(p=>[p[1],p[0]]), {padding:[30,30]});
@@ -2547,39 +2683,27 @@ async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
 }
 // ---------- charts ----------
 let vertChart=null, hodoChart=null, hodoChartExpanded=null, windProfileChartExpanded=null;
-function drawVertProfile(path){
-  const canvas = document.getElementById('vertProfileChart');
-  const ctx = canvas.getContext('2d');
-  // cumulative horizontal distance (km) along the path -> true side-view profile
-  let cumKm = 0;
-  const labels = [];
-  const data = [];
-  for(let i=0;i<path.length;i++){
-    if(i>0) cumKm += haversine(path[i-1].lat,path[i-1].lon,path[i].lat,path[i].lon)/1000;
-    labels.push(cumKm.toFixed(1));
-    data.push(Math.round(path[i].alt));
-  }
-  if(vertChart){ vertChart.destroy(); vertChart=null; }
-  vertChart = new Chart(ctx,{
-    type:'line',
-    data:{labels,datasets:[{data,borderColor:'#ffb454',backgroundColor:'rgba(255,180,84,0.15)',fill:true,pointRadius:0,tension:0.1,borderWidth:2}]},
-    options:{
-      responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{legend:{display:false},title:{display:true,text:'Descent profile (km horiz. / m AMSL)',color:'#8b98a5',font:{size:10}}},
-      scales:{
-        x:{ticks:{color:'#8b98a5',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(139,152,165,0.15)'}},
-        y:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.15)'}}
-      }
-    }
-  });
-}
 let lastHodographPath = null;
-function drawHodograph(path, canvasId){
+function windFromProfileAt(profile, altM){
+  const p = profile;
+  if(!p || p.length===0) return {u:0,v:0};
+  if(altM<=p[0].alt_m) return toUV(p[0]);
+  if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1]);
+  for(let i=0;i<p.length-1;i++){
+    if(altM>=p[i].alt_m && altM<=p[i+1].alt_m){
+      const f=(altM-p[i].alt_m)/(p[i+1].alt_m-p[i].alt_m);
+      const a=toUV(p[i]), b=toUV(p[i+1]);
+      return {u:a.u+(b.u-a.u)*f, v:a.v+(b.v-a.v)*f};
+    }
+  }
+  return toUV(p[p.length-1]);
+}
+function drawHodograph(path, canvasId, profileOverride){
   canvasId = canvasId || 'hodographChart';
   lastHodographPath = path;
   const pts = [];
   for(let a=state.groundElev; a<=state.altAMSL; a+=200){
-    const w = windAt(a);
+    const w = profileOverride ? windFromProfileAt(profileOverride, a) : windAt(a);
     pts.push({x:w.u, y:w.v, alt:Math.round(a)});
   }
   const ctx = document.getElementById(canvasId).getContext('2d');
@@ -2642,9 +2766,9 @@ function drawHodograph(path, canvasId){
 }
 
 let windProfileChart = null;
-function drawWindProfileChart(canvasId){
+function drawWindProfileChart(canvasId, profileOverride){
   canvasId = canvasId || 'windProfileChart';
-  const p = getActiveWindProfile();
+  const p = profileOverride || getActiveWindProfile();
   if(!p || !p.length) return;
   const ctx = document.getElementById(canvasId).getContext('2d');
   const labels = p.map(pt=>Math.round(pt.alt_m));

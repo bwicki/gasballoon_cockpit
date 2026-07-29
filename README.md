@@ -171,6 +171,24 @@ This requires your own free Dropbox app (Anthropic/Claude cannot provision one o
 - **Removed the explanatory paragraph** at the bottom of "Projected Landing Area" to save space.
 - **Hodograph now shows concentric speed-reference rings** (e.g. every few m/s), labeled, as in a standard hodograph plot.
 
+## New in this round (v47)
+
+- **Dropbox folder picker**: browse and pick a real folder from your connected Dropbox account instead of typing a path; the App Key/Redirect URI fields are now tucked behind a collapsed "Advanced setup" (still there for the one-time initial setup).
+- **Particle trail bug fixed**: the comet trail stored screen-pixel positions, which went stale and smeared across the screen when panning the map - it now stores lat/lon and re-projects every point fresh each frame.
+- **Legend bars stack from the bottom dynamically**: whichever you open first docks at the very bottom; the next one stacks above it.
+- **Likely root cause of the "sliders in every box" found**: native number-input spin buttons (`input[type=number]`) were never suppressed - fixed. Also moved the landing-site town name next to its coordinates to save vertical space.
+- **Particle height slider**: now follows the sidebar's open/closed state (was previously fixed in place), and sits above the center-map buttons.
+- **Nature reserves layer**: real diagonal red hatch pattern (SVG, since Leaflet has no built-in hatching), broader OpenStreetMap tag coverage, lower zoom threshold.
+- **Flight Charts**: Y-axis flipped so ground is at the bottom (like a real sounding), in-chart titles now only shown when enlarged, stronger gridlines, small expand icons next to real HTML titles, and the header's Hodograph toggle button removed (both charts are always shown as thumbnails now).
+- **Plan Descent completely reworked** (the app's second main function):
+  - Switching to Plan Descent hides the live "Landing Area" while you're planning.
+  - You can now click **anywhere** (not just inside the existing landing area) as an "Intended Landing Point" (red crosshair) - the app searches for the descent-initiation time that best approximates reaching it, using the **wind forecast for that future arrival hour**, and computes an approximate best landing area (not just a single line) around it via Monte Carlo.
+  - "Projected Landing Area" updates with this planned data and gets a red "- PLANNED" badge in its title; a new "Estimated Descent Point" box (time + distance) appears alongside Ground Wind.
+  - Clicking a different point re-runs the whole routine.
+  - Going back to "Landing Area" mode leaves the last planned area visible on the map (with a "Clear planned landing area" button) until you delete it or plan a new one.
+  - A dedicated "center on planned landing area" zoom button appears only while a planned area exists.
+  - All landing areas (live and planned) now show a small crosshair marking their center.
+
 ## Known limitations & approximations
 
 

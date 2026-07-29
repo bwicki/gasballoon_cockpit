@@ -106,7 +106,8 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 .center-map-btn{position:absolute;bottom:86px;right:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
 .center-map-btn:active{transform:scale(0.93);}
 #btnCenterLanding{bottom:130px;}
-#particleHeightSliderWrap{position:absolute;bottom:176px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#btnCenterPlanned{bottom:174px;}
+#particleHeightSliderWrap{position:absolute;bottom:220px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #particleHeightSliderWrap.show{display:flex;}
 #particleHeightSlider{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
 #particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;text-align:center;line-height:1.2;}
@@ -158,6 +159,8 @@ body.day #map{background:#dfe6ea;}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:-10px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
 .togglerow{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;font-size:12.5px;border-bottom:1px solid var(--border);}
 .togglerow:last-child{border-bottom:none;}
@@ -205,11 +208,21 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .leaflet-control-attribution{font-size:9px !important;}
 canvas.mini{width:100% !important;height:115px !important;}
 canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
+.chart-thumb-title{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
+.chart-expand-btn{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:5px;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;}
 #hodographChart{aspect-ratio:1/1;height:auto !important;}
 #chartExpandOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5000;display:none;align-items:center;justify-content:center;}
 #chartExpandOverlay.show{display:flex;}
 #chartExpandBox{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;width:min(92vw,640px);height:min(80vh,520px);position:relative;box-sizing:border-box;}
 #chartExpandClose{position:absolute;top:-14px;right:-14px;background:var(--bad);color:#fff;border:2px solid var(--panel2);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;z-index:1;}
+#dropboxFolderPickerOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6000;align-items:center;justify-content:center;}
+#dropboxFolderPickerOverlay.show{display:flex;}
+#dropboxFolderPickerBox{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px;width:260px;max-height:70vh;display:flex;flex-direction:column;}
+#dropboxFolderPickerBreadcrumb{font-size:11px;color:var(--muted);margin-bottom:6px;word-break:break-all;}
+#dropboxFolderPickerList{overflow-y:auto;flex:1;border:1px solid var(--border);border-radius:8px;background:var(--panel);}
+.dbx-folder-row{padding:8px 10px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--border);}
+.dbx-folder-row:last-child{border-bottom:none;}
+.dbx-folder-row:active{background:var(--panel2);}
 
 #testmode-panel input[type=text], #testmode-panel input[type=number]{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;font-family:var(--mono);}
 
@@ -258,7 +271,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
       <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 12 L14 13 L13 20 L16 22 L12 21 L8 22 L11 20 L10 13 L3 12 L10 9 Z" fill="currentColor"/></svg></button>
       <button class="ltbtn active" id="tgLanding" title="Landing area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
-      <button class="ltbtn active" id="tgHodograph" title="Show/hide hodograph"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20 C 8 8, 16 16, 20 4" stroke-linecap="round"/></svg></button>
       <button class="ltbtn active" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
       <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas (OpenStreetMap)"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
     </div>
@@ -412,12 +424,29 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
         <hr>
         <div class="subhead">Dropbox Auto-Backup (Flight Log)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the exact URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled. The target folder does not need to exist beforehand - Dropbox creates it automatically.</p>
-        <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
-        <input type="text" id="dropboxAppKey" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="text" id="dropboxFolder" placeholder="/GBLP_Logs" value="/GBLP_Logs" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <div id="dropboxFolderPickerRow" style="display:none;margin-bottom:6px;">
+          <div class="copyline"><div class="txt" id="dropboxFolderDisplay">/GBLP_Logs</div><button onclick="openDropboxFolderPicker()">Choose folder</button></div>
+        </div>
         <button class="ghost" id="btnDropboxConnect">Connect Dropbox</button>
         <div id="dropboxStatus" style="font-size:10px;color:var(--muted);margin-top:6px;">Not connected.</div>
+        <details style="margin-top:8px;">
+          <summary style="font-size:10.5px;color:var(--muted);cursor:pointer;">Advanced setup (one-time, needed before first connect)</summary>
+          <p style="font-size:10px;color:var(--muted);margin:6px 0;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled.</p>
+          <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
+          <input type="text" id="dropboxAppKey" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+        </details>
+        <input type="hidden" id="dropboxFolder" value="/GBLP_Logs">
+
+        <div id="dropboxFolderPickerOverlay">
+          <div id="dropboxFolderPickerBox">
+            <div id="dropboxFolderPickerBreadcrumb">/ (root)</div>
+            <div id="dropboxFolderPickerList"></div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="ghost" style="flex:1;" onclick="selectCurrentDropboxFolder()">Use this folder</button>
+              <button class="ghost" style="flex:1;" onclick="closeDropboxFolderPicker()">Cancel</button>
+            </div>
+          </div>
+        </div>
 
         <hr>
         <button class="ghost" id="btnResetDefaults">Reset all settings to defaults</button>
@@ -459,6 +488,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       </div>
       <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
       <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
+      <button id="btnCenterPlanned" class="center-map-btn" title="Center on planned landing area" style="display:none;color:#ff8a00;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
       <div id="particleHeightSliderWrap">
         <input type="range" id="particleHeightSlider" min="0" max="1200" step="10" value="100">
         <div id="particleHeightLabel">+100m<br>AGL</div>
@@ -468,7 +498,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
       <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
       <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
-      <div id="powerLegendBar" class="legend-bar" style="bottom:46px;">
+      <div id="powerLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
         <span class="gwl-title">Power:</span>
         <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥220kV</span>
@@ -484,7 +514,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <span class="gwl-item" data-legend-cat="switch"><span class="legend-swatch" style="background:#ffffff;border-radius:50%;border:1px solid #888;"></span>Switch</span>
       </div>
       <button id="powerLegendIcon" class="reopen-icon bottom-left-2" style="display:none;" onclick="reopenBanner('powerLegendBar','powerLegendIcon')" title="Show power line legend">⚡</button>
-      <div id="groundWindLegendBar" class="legend-bar" style="bottom:8px;">
+      <div id="groundWindLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('groundWindLegendBar','groundWindLegendIcon')">✕</button>
         <span class="gwl-title">Ground wind (0-200m AGL):</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#3b82f6;"></span>&lt;5kn</span>
@@ -551,13 +581,15 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Projected Landing Area <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)">Projected Landing Area<span id="plannedBadge" style="color:var(--bad);display:none;"> - PLANNED</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell">
               <label>Approx. Landing Position</label>
-              <div class="val small" id="landingPosCoords">—</div>
-              <div class="val small" id="landingPosTown" style="margin-top:2px;color:var(--muted);">—</div>
+              <div style="display:flex;justify-content:space-between;gap:6px;">
+                <div class="val small" id="landingPosCoords">—</div>
+                <div class="val small" id="landingPosTown" style="color:var(--muted);text-align:right;">—</div>
+              </div>
             </div>
             <div class="datacell"><label>Landing Area Approx Height</label><div class="val small" id="landingPosAlt">—</div></div>
             <div class="datacell">
@@ -568,11 +600,16 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 <span id="landingWindTrend" style="font-size:12px;" title="Trend vs. 1h earlier"></span>
               </div>
             </div>
+            <div class="datacell" id="estimatedDescentPointCell" style="display:none;">
+              <label>Estimated Descent Point</label>
+              <div class="val small" id="estimatedDescentPointText">—</div>
+            </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
               <label>Inversion / Isothermal Layer</label>
               <div class="val small" id="inversionNoteText" style="color:var(--accent2);">—</div>
             </div>
           </div>
+          <button class="ghost" id="btnClearPlannedArea" style="display:none;margin-top:6px;color:var(--bad);">Clear planned landing area</button>
         </div>
       </div>
 
@@ -613,10 +650,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <h3 onclick="toggleCard(this)">Flight Charts <span class="chev">▾</span></h3>
         <div class="cardbody" style="display:flex;gap:8px;">
           <div style="flex:1;min-width:0;">
-            <canvas class="mini-half" id="windProfileChart" onclick="expandChart('wind')"></canvas>
+            <div class="chart-thumb-title">Wind Profile <button class="chart-expand-btn" onclick="expandChart('wind')" title="Enlarge">⤢</button></div>
+            <canvas class="mini-half" id="windProfileChart"></canvas>
           </div>
           <div style="flex:1;min-width:0;" id="hodographThumbWrap">
-            <canvas class="mini-half" id="hodographChart" onclick="expandChart('hodo')"></canvas>
+            <div class="chart-thumb-title">Hodograph <button class="chart-expand-btn" onclick="expandChart('hodo')" title="Enlarge">⤢</button></div>
+            <canvas class="mini-half" id="hodographChart"></canvas>
           </div>
         </div>
       </div>
@@ -627,16 +666,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
       </div>
 
-      <!-- CLICK RESULT -->
-      <div class="card" id="resultpanel">
-        <h3 onclick="toggleCard(this)">Landing Point Plan <span class="chev">▾</span></h3>
+      <!-- PLANNED DESCENT PROFILE (only shown while a planned landing area exists) -->
+      <div class="card" id="resultpanel" style="display:none;">
+        <h3 onclick="toggleCard(this)">Planned Descent Profile <span class="chev">▾</span></h3>
         <div class="cardbody">
-          <div class="datagrid" style="margin-bottom:8px;">
-            <div class="datacell"><label>Initiate at</label><div class="val small" id="resInitTime">—</div></div>
-            <div class="datacell"><label>Distance to init.</label><div class="val small" id="resInitDist">—</div></div>
-          </div>
-          <div class="copyline"><div class="txt" id="resNearestTown">nearest town —</div><button onclick="copyResultAll()">Copy</button></div>
-          <div id="resAccuracyNote" style="display:none;color:var(--warn);font-size:10.5px;font-weight:600;margin-bottom:6px;"></div>
           <canvas class="mini" id="vertProfileChart"></canvas>
         </div>
       </div>
@@ -700,7 +733,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v46';
+const APP_VERSION = 'v47';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -904,6 +937,8 @@ function recomputeAll(){
   clearTimeout(recomputeTimer);
   recomputeTimer=setTimeout(doRecompute, 120);
 }
+const BOTTOM_LEGEND_IDS = ['groundWindLegendBar','powerLegendBar'];
+let legendStackOrder = []; // order in which currently-visible bottom legends were opened; first = docks at the very bottom
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
   let on = initiallyOn;
@@ -918,7 +953,7 @@ function bindLayerToggle(btnId, initiallyOn, onToggle){
 bindLayerToggle('tgPower', true, on=>{
   if(on) powerLayer.addTo(map); else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
   if(on){ reopenBanner('powerLegendBar','powerLegendIcon'); }
-  else { document.getElementById('powerLegendBar').classList.remove('show'); document.getElementById('powerLegendIcon').style.display='none'; }
+  else { dismissBanner('powerLegendBar','powerLegendIcon'); document.getElementById('powerLegendIcon').style.display='none'; }
 });
 // Real, class-filtered airspace boundaries (openAIP Core API, actual GeoJSON
 // polygons) drawn as an overlay on top of the general raster airspace image.
@@ -1021,22 +1056,49 @@ function scheduleNatureReservesFetch(){
   clearTimeout(natureReservesFetchTimer);
   natureReservesFetchTimer = setTimeout(fetchNatureReserves, 700);
 }
+// A real diagonal hatch pattern (SVG), since Leaflet has no built-in hatch
+// fill - injected once into the map's SVG <defs>, then referenced by fillColor.
+function ensureNatureHatchPattern(){
+  const svg = document.querySelector('#map svg');
+  if(!svg || svg.querySelector('#natureHatchPattern')) return;
+  let defs = svg.querySelector('defs');
+  if(!defs){ defs = document.createElementNS('http://www.w3.org/2000/svg','defs'); svg.insertBefore(defs, svg.firstChild); }
+  const pattern = document.createElementNS('http://www.w3.org/2000/svg','pattern');
+  pattern.setAttribute('id','natureHatchPattern');
+  pattern.setAttribute('width','8'); pattern.setAttribute('height','8');
+  pattern.setAttribute('patternTransform','rotate(45)');
+  pattern.setAttribute('patternUnits','userSpaceOnUse');
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1','0'); line.setAttribute('y1','0'); line.setAttribute('x2','0'); line.setAttribute('y2','8');
+  line.setAttribute('stroke','#ff3b3b'); line.setAttribute('stroke-width','3');
+  pattern.appendChild(line);
+  defs.appendChild(pattern);
+}
 async function fetchNatureReserves(){
-  if(!natureReservesActive || map.getZoom()<9){ return; }
+  if(!natureReservesActive || map.getZoom()<8){ return; }
   const b = map.getBounds();
   const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
-  const query = `[out:json][timeout:20];
+  // boundary=protected_area covers essentially all formally designated
+  // reserve TYPES via its protect_class/designation sub-tags - this includes
+  // IUCN categories Ia-VI, Natura 2000 bird directive sites (SPA,
+  // designation=special_protection_area) and habitat directive sites (SAC),
+  // Ramsar wetlands, and similar - so one broad query catches nature
+  // reserves, bird sanctuaries, and protected moors/bogs together, rather
+  // than needing a separate query per designation type.
+  const query = `[out:json][timeout:25];
 (
   way["boundary"="protected_area"](${bbox});
-  way["boundary"="national_park"](${bbox});
-  way["leisure"="nature_reserve"](${bbox});
   relation["boundary"="protected_area"](${bbox});
+  way["boundary"="national_park"](${bbox});
   relation["boundary"="national_park"](${bbox});
+  way["leisure"="nature_reserve"](${bbox});
+  relation["leisure"="nature_reserve"](${bbox});
 );
 out geom;`;
   try{
     const r = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(query) });
     const j = await r.json();
+    ensureNatureHatchPattern();
     natureReservesLayer.clearLayers();
     for(const el of (j.elements||[])){
       let rings = [];
@@ -1047,8 +1109,8 @@ out geom;`;
       }
       for(const ring of rings){
         if(ring.length<3) continue;
-        L.polygon(ring, {color:'#2ecc71', weight:1.5, fillColor:'#2ecc71', fillOpacity:0.12, pane:'overlayTilesPane'})
-          .bindTooltip((el.tags&&el.tags.name)||'Protected area', {sticky:true})
+        L.polygon(ring, {color:'#ff3b3b', weight:2, fillColor:'url(#natureHatchPattern)', fillOpacity:0.6, pane:'overlayTilesPane'})
+          .bindTooltip((el.tags&&(el.tags.name||el.tags.designation))||'Protected area', {sticky:true})
           .addTo(natureReservesLayer);
       }
     }
@@ -1222,7 +1284,6 @@ function updateAircraftRotation(){
 setInterval(updateAircraftRotation, 2000);
 const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:4, opacity:0.85, lineCap:'butt', dashArray:'16,10'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25}).addTo(map);
-let descentPathLayer = L.polyline([], {color:'#b026ff', weight:4.5, opacity:1, dashArray:'10,6', lineCap:'round', className:'descent-path-glow'}).addTo(map);
 let predictedCruiseLayer = L.polyline([], {color:'#00e5c8', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
 let predictedDescentSegmentLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round', className:'descent-path-glow'}).addTo(map);
 const blueDotIcon = L.divIcon({
@@ -1231,11 +1292,20 @@ const blueDotIcon = L.divIcon({
 });
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
-let targetMarker = null;
 const crossIcon = L.divIcon({
   html:'<svg width="28" height="28" viewBox="0 0 28 28"><line x1="14" y1="2" x2="14" y2="26" stroke="#ff5a3c" stroke-width="3"/><line x1="2" y1="14" x2="26" y2="14" stroke="#ff5a3c" stroke-width="3"/><circle cx="14" cy="14" r="5" fill="none" stroke="#ff5a3c" stroke-width="2.5"/></svg>',
   className:'', iconSize:[28,28], iconAnchor:[14,14]
 });
+// Small crosshair used to mark the CENTER of any landing area (live or planned).
+const smallCrossIcon = L.divIcon({
+  html:'<svg width="18" height="18" viewBox="0 0 18 18"><line x1="9" y1="1" x2="9" y2="17" stroke="#222" stroke-width="2"/><line x1="1" y1="9" x2="17" y2="9" stroke="#222" stroke-width="2"/><circle cx="9" cy="9" r="3" fill="none" stroke="#222" stroke-width="1.6"/></svg>',
+  className:'', iconSize:[18,18], iconAnchor:[9,9]
+});
+let liveLandingCenterMarker = null;
+let intendedLandingMarker = null;
+let plannedLandingCenterMarker = null;
+const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:2, dashArray:'6,4', fillColor:'#ff8a00', fillOpacity:0.15});
+const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:2.5});
 
 // ---------- GPS ----------
 let gpsWatchId = null;
@@ -1639,7 +1709,7 @@ function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1M
 }
 
 // ---------- Monte-Carlo landing footprint ----------
-function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale){
+function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride){
   // Phase 0: continue current flight (course/speed) until initDelayS elapsed (still at cruise alt)
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
@@ -1674,14 +1744,14 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
     const decelFactor = Math.max(0, Math.min(1, altAboveIntercept/decelWindowM)); // 1=full nominal rate, 0=already at post-intercept rate
     const targetRate = effRate2 + (effRate1-effRate2)*decelFactor;
     const instantRate = targetRate*accelFactor;
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxOverride);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-instantRate*step); t+=step;
     path.push({lat,lon,alt,t});
   }
   while(alt>state.groundElev){
     const step=dt;
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxOverride);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(state.groundElev, alt-effRate2*step); t+=step;
     path.push({lat,lon,alt,t});
@@ -1735,6 +1805,14 @@ function doRecompute(){
     let hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
     landingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
     state.landingPolygon = hull;
+    const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
+    const hcLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, hcLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
+    if(!liveLandingCenterMarker){
+      liveLandingCenterMarker = L.marker([hcLat,hcLon], {icon: smallCrossIcon});
+      if(state.appMode!=='plan') liveLandingCenterMarker.addTo(map);
+    } else {
+      liveLandingCenterMarker.setLatLng([hcLat,hcLon]);
+    }
   } else {
     landingPolyLayer.setLatLngs([]);
   }
@@ -1774,8 +1852,6 @@ function doRecompute(){
   descentInitMarker.setOpacity(1);
 
   updateLandingPositionCard();
-
-  if(state.clickedTarget){ recomputeClickTarget(); }
 }
 
 // ---- "Landing Position" card: approx. center of the landing footprint,
@@ -1785,6 +1861,7 @@ function doRecompute(){
 let lastLandingPosFetchCenter = null;
 let landingPosFetchTimer = null;
 function updateLandingPositionCard(){
+  if(state.appMode==='plan' && state.plannedLandingActive) return; // don't overwrite the PLANNED display while planning
   if(!state.landingPolygon || !state.landingPolygon.length) return;
   const lats = state.landingPolygon.map(p=>p[1]), lons = state.landingPolygon.map(p=>p[0]);
   const cLat = lats.reduce((a,b)=>a+b,0)/lats.length, cLon = lons.reduce((a,b)=>a+b,0)/lons.length;
@@ -1877,14 +1954,31 @@ async function runObstacleCheck(path){
 }
 // ---- generic dismiss-to-icon banner system, shared by the red obstacle
 // warning and the yellow descent-time wind notice ----
+function restackBottomLegends(){
+  let bottom = 8;
+  legendStackOrder.forEach(id=>{
+    const el = document.getElementById(id);
+    el.style.bottom = bottom + 'px';
+    bottom += el.offsetHeight + 8;
+  });
+}
 function dismissBanner(bannerId, iconId){
   document.getElementById(bannerId).classList.remove('show');
   document.getElementById(iconId).style.display = 'block';
+  if(BOTTOM_LEGEND_IDS.includes(bannerId)){
+    legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
+    restackBottomLegends();
+  }
   repositionModeToggle();
 }
 function reopenBanner(bannerId, iconId){
   document.getElementById(bannerId).classList.add('show');
   document.getElementById(iconId).style.display = 'none';
+  if(BOTTOM_LEGEND_IDS.includes(bannerId)){
+    legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
+    legendStackOrder.push(bannerId); // newly (re)opened - goes on top of whatever else is currently showing
+    restackBottomLegends();
+  }
   repositionModeToggle();
 }
 function setWarnbarContent(text){
@@ -2039,8 +2133,7 @@ function startGroundWindLayer(){
   groundWindLayer.canvas.style.display = 'block';
   groundWindLayer.particles = Array.from({length:420}, spawnGroundWindParticle);
   groundWindLayer.active = true;
-  document.getElementById('groundWindLegendBar').classList.add('show');
-  document.getElementById('groundWindLegendIcon').style.display = 'none';
+  reopenBanner('groundWindLegendBar','groundWindLegendIcon');
   const slider = document.getElementById('particleHeightSlider');
   const maxAGL = Math.max(1000, Math.round(state.altAMSL - state.groundElev) + 1000);
   slider.max = maxAGL;
@@ -2061,7 +2154,7 @@ function stopGroundWindLayer(){
   groundWindLayer.active = false;
   if(groundWindLayer.animId) cancelAnimationFrame(groundWindLayer.animId);
   if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
-  document.getElementById('groundWindLegendBar').classList.remove('show');
+  dismissBanner('groundWindLegendBar','groundWindLegendIcon');
   document.getElementById('groundWindLegendIcon').style.display = 'none';
   document.getElementById('particleHeightSliderWrap').classList.remove('show');
   hideYellowWarning();
@@ -2094,15 +2187,18 @@ function animateGroundWind(){
       Object.assign(p, spawnGroundWindParticle());
       return;
     }
-    const pt = map.latLngToContainerPoint([p.lat,p.lon]);
-    p.trail.push({x:pt.x, y:pt.y});
+    p.trail.push({lat:p.lat, lon:p.lon});
     if(p.trail.length>TRAIL_LENGTH) p.trail.shift();
-    // Comet tail: draw the trail with increasing opacity/width toward the head.
-    for(let i=1;i<p.trail.length;i++){
-      const t = i/p.trail.length;
+    // Comet tail: re-project EVERY point fresh each frame (not just the
+    // newest one) from its stored lat/lon - if we cached screen pixel
+    // positions instead, panning the map would leave old, now-stale pixel
+    // coordinates behind, smearing a streak across the screen.
+    const screenTrail = p.trail.map(tp=>map.latLngToContainerPoint([tp.lat, tp.lon]));
+    for(let i=1;i<screenTrail.length;i++){
+      const t = i/screenTrail.length;
       ctx.beginPath();
-      ctx.moveTo(p.trail[i-1].x, p.trail[i-1].y);
-      ctx.lineTo(p.trail[i].x, p.trail[i].y);
+      ctx.moveTo(screenTrail[i-1].x, screenTrail[i-1].y);
+      ctx.lineTo(screenTrail[i].x, screenTrail[i].y);
       ctx.strokeStyle = color;
       ctx.globalAlpha = 0.12 + t*0.55;
       ctx.lineWidth = 1 + t*2.2;
@@ -2110,7 +2206,7 @@ function animateGroundWind(){
       ctx.stroke();
     }
     // Bright head dot.
-    const head = p.trail[p.trail.length-1];
+    const head = screenTrail[screenTrail.length-1];
     ctx.beginPath();
     ctx.arc(head.x, head.y, 2.4, 0, 2*Math.PI);
     ctx.fillStyle = color;
@@ -2167,6 +2263,10 @@ function positionSidebarHandle(){
   if(centerBtn) centerBtn.style.right = (offset + 10) + 'px';
   const centerLandingBtn = document.getElementById('btnCenterLanding');
   if(centerLandingBtn) centerLandingBtn.style.right = (offset + 10) + 'px';
+  const centerPlannedBtn = document.getElementById('btnCenterPlanned');
+  if(centerPlannedBtn) centerPlannedBtn.style.right = (offset + 10) + 'px';
+  const particleSliderWrap = document.getElementById('particleHeightSliderWrap');
+  if(particleSliderWrap) particleSliderWrap.style.right = (offset + 10) + 'px';
 }
 document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');
@@ -2180,11 +2280,19 @@ function setAppMode(mode){
   state.appMode = mode;
   document.getElementById('modeMonitor').classList.toggle('active', mode==='monitor');
   document.getElementById('modePlan').classList.toggle('active', mode==='plan');
-  if(mode==='monitor'){
-    state.clickedTarget = null;
-    if(targetMarker){ map.removeLayer(targetMarker); targetMarker=null; }
-    descentPathLayer.setLatLngs([]);
-    document.getElementById('resultpanel').classList.remove('show');
+  if(mode==='plan'){
+    // Hide the live (monitor-mode) landing area while planning - the planned
+    // area (if any) is a separate layer and stays exactly as it was.
+    if(map.hasLayer(landingPolyLayer)) map.removeLayer(landingPolyLayer);
+    if(liveLandingCenterMarker && map.hasLayer(liveLandingCenterMarker)) map.removeLayer(liveLandingCenterMarker);
+  } else {
+    // Back to monitor mode: restore the live landing area display and go
+    // back to showing LIVE data in the "Projected Landing Area" card - the
+    // planned area (if any) simply stays visible on the map untouched.
+    if(landingLayerOn) landingPolyLayer.addTo(map);
+    if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
+    document.getElementById('plannedBadge').style.display = 'none';
+    updateLandingPositionCard();
   }
 }
 
@@ -2205,14 +2313,11 @@ map.on('click', async (e)=>{
     return;
   }
   if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
-  if(!state.landingPolygon) return;
-  // point-in-polygon test
-  if(!pointInPolygon([e.latlng.lng,e.latlng.lat], state.landingPolygon)) return;
-  state.clickedTarget = {lat:e.latlng.lat, lon:e.latlng.lng};
-  if(targetMarker) map.removeLayer(targetMarker);
-  targetMarker = L.marker([e.latlng.lat,e.latlng.lng], {icon: crossIcon}).addTo(map);
-  document.getElementById('resultpanel').classList.add('show');
-  await recomputeClickTarget();
+  // Any point can be an "Intended Landing Point" now - the app extends the
+  // flight path (by searching for a descent-initiation time) to find the
+  // best approximate match, rather than requiring the click to already be
+  // within the live landing area.
+  await planDescentToTarget(e.latlng.lat, e.latlng.lng);
 });
 function pointInPolygon(pt, poly){
   let inside=false;
@@ -2224,64 +2329,128 @@ function pointInPolygon(pt, poly){
   return inside;
 }
 
-async function recomputeClickTarget(){
-  if(!state.clickedTarget) return;
-  const initDelayMin = parseFloat(document.getElementById('sInit').value);
+async function planDescentToTarget(lat, lon){
+  state.intendedLandingPoint = {lat, lon};
+  if(intendedLandingMarker) map.removeLayer(intendedLandingMarker);
+  intendedLandingMarker = L.marker([lat,lon], {icon: crossIcon}).addTo(map);
+
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const rate2 = parseFloat(document.getElementById('sRate2').value);
+  const scatter = parseFloat(document.getElementById('sScatter').value)/100;
 
-  // binary search over initDelay (0..240 min, matching the slider's range) to match target within tolerance
+  // Pass 1: search over the descent-initiation TIME (0..240 min, matching
+  // the slider's range) for the deterministic path that lands closest to
+  // the clicked point - this is a heuristic local search (not a guaranteed
+  // global optimum), since the achievable landing point isn't necessarily a
+  // monotonic function of that one parameter.
   let lo=0, hi=240, best=null, bestDist=Infinity, bestPath=null;
   for(let iter=0; iter<20; iter++){
     const mid=(lo+hi)/2;
     const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0);
     const last=path[path.length-1];
-    const d = haversine(last.lat,last.lon,state.clickedTarget.lat,state.clickedTarget.lon);
+    const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
-    // heuristic: if landed short of target relative to drift direction, adjust window
-    // (simplified: just narrow around current best each iteration)
     const span=(hi-lo)/3;
     lo=Math.max(0,best-span); hi=Math.min(240,best+span);
   }
+  // Pass 2: re-run using the wind forecast for the hour this flight would
+  // actually ARRIVE at, rather than "now" - a multi-hour-out descent should
+  // be planned against the forecast for that future time, not the present.
+  const arrivalHourIdx = Math.round(bestPath[bestPath.length-1].t/3600);
+  bestPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
+
   const initSec = best*60;
-  const initFixLat = bestPath[bestPath.findIndex(p=>p.t>=initSec)] || bestPath[0];
-  const distToInit = haversine(state.lat,state.lon, initFixLat.lat, initFixLat.lon);
+  const initFix = bestPath[bestPath.findIndex(p=>p.t>=initSec)] || bestPath[0];
+  const distToInit = haversine(state.lat,state.lon, initFix.lat, initFix.lon);
+  state.plannedInitDelayMin = best;
 
-  document.getElementById('resInitTime').textContent = best.toFixed(1)+' min';
-  document.getElementById('resInitDist').textContent = (distToInit/1000).toFixed(1)+' km';
-  // Only the descent-initiation TIME is varied to hit the clicked point, so
-  // not every point in the (Monte-Carlo-widened) landing area is exactly
-  // reachable this way - flag it plainly if the match is not close.
-  const accuracyNote = document.getElementById('resAccuracyNote');
-  if(bestDist > 1500){
-    accuracyNote.textContent = `⚠ Best achievable point is ~${(bestDist/1000).toFixed(1)} km from where you tapped (only descent timing is varied to match it).`;
-    accuracyNote.style.display = 'block';
-  } else {
-    accuracyNote.style.display = 'none';
+  document.getElementById('estimatedDescentPointText').textContent = `${best.toFixed(1)} min · ${(distToInit/1000).toFixed(1)} km from here`;
+  document.getElementById('estimatedDescentPointCell').style.display = 'block';
+
+  // Monte-Carlo scatter AT this same initiation time and wind hour, to get
+  // an approximate BEST LANDING AREA close to the clicked point, not just
+  // the single deterministic line.
+  const ageH = state.modelRunAgeH || 3;
+  const windDirUncertaintyDeg = Math.min(35, 5 + ageH*2.5);
+  const windSpeedUncertaintyFrac = Math.min(0.35, 0.05 + ageH*0.02);
+  const N = 40;
+  const endpoints = [];
+  for(let i=0;i<N;i++){
+    const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
+    const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, arrivalHourIdx);
+    const last = path[path.length-1];
+    endpoints.push([last.lon, last.lat]);
   }
+  const hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
+  state.plannedLandingPolygon = hull;
+  plannedLandingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
+  if(!map.hasLayer(plannedLandingPolyLayer)) plannedLandingPolyLayer.addTo(map);
+  plannedDescentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
+  if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
 
-  // nearest town via Nominatim reverse geocoding
-  let townTxt = 'looking up…';
-  document.getElementById('resNearestTown').textContent = townTxt;
-  try{
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${state.clickedTarget.lat}&lon=${state.clickedTarget.lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}});
-    const j = await r.json();
-    const name = (j.address && (j.address.village||j.address.town||j.address.city||j.address.hamlet||j.address.municipality)) || j.display_name || 'unknown';
-    townTxt = `${name} · ${toCompact(state.clickedTarget.lat, state.clickedTarget.lon)}`;
-  }catch(e){ townTxt = toCompact(state.clickedTarget.lat, state.clickedTarget.lon)+' (offline)'; }
-  document.getElementById('resNearestTown').textContent = townTxt;
-  state.lastTownTxt = townTxt;
+  const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
+  const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
+  if(plannedLandingCenterMarker) map.removeLayer(plannedLandingCenterMarker);
+  plannedLandingCenterMarker = L.marker([cLat,cLon], {icon: smallCrossIcon}).addTo(map);
 
-  // vertical profile projection + descent path draw
-  descentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
+  state.plannedLandingActive = true;
+  document.getElementById('plannedBadge').style.display = 'inline';
+  document.getElementById('btnClearPlannedArea').style.display = 'block';
+  document.getElementById('btnCenterPlanned').style.display = 'block';
+
+  await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
   drawVertProfile(bestPath);
+  document.getElementById('resultpanel').style.display = 'block';
 }
-function copyResultAll(){
-  const txt = `Landing target: ${state.lastTownTxt||''}\nInitiate descent in ${document.getElementById('resInitTime').textContent} (${document.getElementById('resInitDist').textContent} from here)`;
-  navigator.clipboard && navigator.clipboard.writeText(txt);
+function clearPlannedLandingArea(){
+  state.plannedLandingActive = false;
+  state.plannedLandingPolygon = null;
+  plannedLandingPolyLayer.setLatLngs([]);
+  plannedDescentPathLayer.setLatLngs([]);
+  if(map.hasLayer(plannedLandingPolyLayer)) map.removeLayer(plannedLandingPolyLayer);
+  if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
+  if(plannedLandingCenterMarker){ map.removeLayer(plannedLandingCenterMarker); plannedLandingCenterMarker=null; }
+  if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
+  document.getElementById('plannedBadge').style.display = 'none';
+  document.getElementById('btnClearPlannedArea').style.display = 'none';
+  document.getElementById('btnCenterPlanned').style.display = 'none';
+  document.getElementById('estimatedDescentPointCell').style.display = 'none';
+  document.getElementById('resultpanel').style.display = 'none';
+  if(state.appMode==='monitor') updateLandingPositionCard();
 }
-
+document.getElementById('btnClearPlannedArea').addEventListener('click', clearPlannedLandingArea);
+document.getElementById('btnCenterPlanned').addEventListener('click', ()=>{
+  if(state.plannedLandingPolygon && state.plannedLandingPolygon.length){
+    map.fitBounds(state.plannedLandingPolygon.map(p=>[p[1],p[0]]), {padding:[30,30]});
+  }
+});
+// ---- populate "Projected Landing Area" with PLANNED data (used while a plan
+// exists) - mirrors updateLandingPositionCard() but for the planned target
+// instead of the live/current descent projection ----
+async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
+  document.getElementById('landingPosCoords').textContent = toCompact(cLat, cLon);
+  const w = windAt(state.groundElev+50, 0, 1, hourIdx);
+  const speedKmh = Math.hypot(w.u,w.v)*3.6;
+  const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
+  document.getElementById('landingWindText').textContent = `${Math.round(dirFrom)}° · ${speedKmh.toFixed(1)} km/h`;
+  document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
+  document.getElementById('landingWindTrend').textContent = '';
+  try{
+    const [geoR, elevR] = await Promise.all([
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${cLat}&lon=${cLon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
+      fetch(`https://api.open-meteo.com/v1/elevation?latitude=${cLat}&longitude=${cLon}`)
+    ]);
+    const geoJ = await geoR.json();
+    const name = (geoJ.address && (geoJ.address.village||geoJ.address.town||geoJ.address.city||geoJ.address.hamlet||geoJ.address.municipality)) || null;
+    document.getElementById('landingPosTown').textContent = name ? `near ${name}` : '—';
+    const elevJ = await elevR.json();
+    if(elevJ.elevation && elevJ.elevation.length){
+      document.getElementById('landingPosAlt').textContent = Math.round(elevJ.elevation[0])+' m AMSL';
+    }
+  }catch(e){ /* keep previous values on failure */ }
+}
 // ---------- charts ----------
 let vertChart=null, hodoChart=null, hodoChartExpanded=null, windProfileChartExpanded=null;
 function drawVertProfile(path){
@@ -2366,12 +2535,12 @@ function drawHodograph(path, canvasId){
       responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{
         legend:{display:false},
-        title:{display:true,text:'Descent Hodograph (u/v, m/s) - height increases along the curve',color:'#8b98a5',font:{size:10}},
+        title:{display:!isThumb,text:'Descent Hodograph (u/v, m/s) - height increases along the curve',color:'#8b98a5',font:{size:10}},
         tooltip:{filter:(item)=>item.datasetIndex===ringDatasets.length, callbacks:{label:(ctx)=>`${ctx.raw.alt} m: ${Math.hypot(ctx.raw.x,ctx.raw.y).toFixed(1)} m/s`}}
       },
       scales:{
-        x:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.15)'}, title:{display:true,text:'u (m/s, east+)',color:'#8b98a5',font:{size:9}}},
-        y:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.15)'}, title:{display:true,text:'v (m/s, north+)',color:'#8b98a5',font:{size:9}}}
+        x:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.4)'}, title:{display:!isThumb,text:'u (m/s, east+)',color:'#8b98a5',font:{size:9}}},
+        y:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.4)'}, title:{display:!isThumb,text:'v (m/s, north+)',color:'#8b98a5',font:{size:9}}}
       }
     },
     plugins:[ringLabelPlugin]});
@@ -2397,15 +2566,15 @@ function drawWindProfileChart(canvasId){
       responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{
         legend:{display:false},
-        title:{display:true,text:'Wind speed (kn) by altitude (m AMSL)',color:'#8b98a5',font:{size:10}},
+        title:{display:!isThumb,text:'Wind speed (kn) by altitude (m AMSL)',color:'#8b98a5',font:{size:10}},
         tooltip:{callbacks:{afterLabel:(ctx)=>{
           const dir = p[ctx.dataIndex].dir_deg;
           return `from ${Math.round(dir)}°`;
         }}}
       },
       scales:{
-        x:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.15)'}},
-        y:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.15)'}}
+        x:{ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.35)'}},
+        y:{reverse:true, ticks:{color:'#8b98a5',font:{size:9}},grid:{color:'rgba(139,152,165,0.35)'}} // ground at the bottom, like a real sounding
       }
     }
   });
@@ -2430,11 +2599,6 @@ function closeExpandedChart(){
   if(windProfileChartExpanded){ windProfileChartExpanded.destroy(); windProfileChartExpanded=null; }
   if(hodoChartExpanded){ hodoChartExpanded.destroy(); hodoChartExpanded=null; }
 }
-document.getElementById('tgHodograph').addEventListener('click', function(){
-  const active = this.classList.toggle('active');
-  document.getElementById('hodographThumbWrap').style.display = active ? 'block' : 'none';
-});
-
 // ---------- sliders ----------
 function bindSlider(id,lblId,fmt){
   const el=document.getElementById(id);
@@ -3007,6 +3171,63 @@ async function completeDropboxOAuthIfReturning(){
 function updateDropboxStatus(){
   const token = localStorage.getItem('gblp_dropbox_token');
   document.getElementById('dropboxStatus').textContent = token ? '✅ Connected. Log backs up automatically.' : 'Not connected.';
+  document.getElementById('dropboxFolderPickerRow').style.display = token ? 'block' : 'none';
+  document.getElementById('dropboxFolderDisplay').textContent = document.getElementById('dropboxFolder').value || '/GBLP_Logs';
+}
+// ---- Dropbox folder picker (browses real folders via the API, instead of
+// typing a raw path by hand) ----
+let dropboxPickerPath = '';
+async function openDropboxFolderPicker(){
+  dropboxPickerPath = document.getElementById('dropboxFolder').value || '';
+  document.getElementById('dropboxFolderPickerOverlay').classList.add('show');
+  await loadDropboxFolderList(dropboxPickerPath);
+}
+function closeDropboxFolderPicker(){
+  document.getElementById('dropboxFolderPickerOverlay').classList.remove('show');
+}
+async function loadDropboxFolderList(path){
+  const token = localStorage.getItem('gblp_dropbox_token');
+  const listEl = document.getElementById('dropboxFolderPickerList');
+  document.getElementById('dropboxFolderPickerBreadcrumb').textContent = path || '/ (root)';
+  listEl.innerHTML = '<div class="dbx-folder-row" style="color:var(--muted);">Loading…</div>';
+  try{
+    const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
+      body: JSON.stringify({path: path, limit:200})
+    });
+    const j = await r.json();
+    const folders = (j.entries||[]).filter(e=>e['.tag']==='folder').sort((a,b)=>a.name.localeCompare(b.name));
+    listEl.innerHTML = '';
+    if(path){
+      const up = document.createElement('div');
+      up.className = 'dbx-folder-row';
+      up.textContent = '⬆ ..';
+      up.onclick = ()=>{ dropboxPickerPath = path.split('/').slice(0,-1).join('/'); loadDropboxFolderList(dropboxPickerPath); };
+      listEl.appendChild(up);
+    }
+    if(!folders.length){
+      const empty = document.createElement('div');
+      empty.className = 'dbx-folder-row'; empty.style.color = 'var(--muted)';
+      empty.textContent = '(no subfolders here)';
+      listEl.appendChild(empty);
+    }
+    folders.forEach(f=>{
+      const row = document.createElement('div');
+      row.className = 'dbx-folder-row';
+      row.textContent = '📁 '+f.name;
+      row.onclick = ()=>{ dropboxPickerPath = f.path_display; loadDropboxFolderList(dropboxPickerPath); };
+      listEl.appendChild(row);
+    });
+  }catch(e){
+    listEl.innerHTML = '<div class="dbx-folder-row" style="color:var(--bad);">Could not load folders - check your connection.</div>';
+  }
+}
+function selectCurrentDropboxFolder(){
+  document.getElementById('dropboxFolder').value = dropboxPickerPath || '/GBLP_Logs';
+  try{ localStorage.setItem('gblp_dropbox_folder', document.getElementById('dropboxFolder').value); }catch(e){}
+  document.getElementById('dropboxFolderDisplay').textContent = document.getElementById('dropboxFolder').value;
+  closeDropboxFolderPicker();
 }
 async function uploadLogToDropbox(){
   const token = localStorage.getItem('gblp_dropbox_token');
@@ -3202,7 +3423,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph','tgGroundWind','tgNatureReserves'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgGroundWind','tgNatureReserves'];
 function saveConfig(){
   try{
     const cfg = {};

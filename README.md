@@ -230,6 +230,16 @@ The console log didn't show a crash in Plan Descent itself, but pointed to real 
 - **Cleanup on returning to function 1**: only the planned landing area + its center marker remain on the map; the intended-target crosshair, descent marker, and course/descent lines are removed.
 - Minor code cleanup: removed a dead function (`pointInGeoJsonPolygon`) left over from the removed CORS-blocked feature.
 
+## New in this round (v52)
+
+- **Nature reserves / place labels / fine roads now self-recover**: previously, if a fetch failed (e.g. hit the shared cooldown or timed out), nothing tried again until the next pan/zoom or manual toggle - which is why re-enabling nature reserves could take minutes, and why coverage seemed stuck to wherever the app first loaded. All three now automatically retry on their own once the cooldown/delay has passed.
+- **Map controls (zoom/center buttons + particle-height slider) redesigned**: wider shared container (56px) so the AMSL reading actually fits instead of overflowing, slimmer slider track/thumb, and more vertical clearance above Leaflet's own +/- zoom buttons.
+- **Plan Descent track visibility improved**: the extended-course segment (current position → planned descent point) is now bolder and more visible - it was technically still being drawn, just with dashes too sparse/thin to notice easily.
+
+## New in this round (v53)
+
+- **Nature reserves / place labels query scope reduced**: your v51 console showed 429 (rate limit) on the primary Overpass mirror AND 504 Gateway Timeout on the fallback mirrors too - the fact that even independent servers timed out points to the query itself being too expensive (a wide-open viewport at low zoom can span 150+ km, and protected-area polygons can have thousands of nodes), not just one overloaded server. Both queries are now capped to a fixed ~35-40km radius around the map center regardless of zoom, and the nature reserves query was simplified from 6 clauses to 3 (regex tag matching) - both meaningfully cheaper for Overpass to execute.
+
 ## Known limitations & approximations
 
 

@@ -103,15 +103,17 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- center-on-position button ---- */
-.map-controls-stack{position:absolute;right:10px;bottom:86px;z-index:1100;display:flex;flex-direction:column;align-items:stretch;width:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:hidden;}
-.map-controls-stack .center-map-btn{position:static;width:38px;height:38px;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;box-shadow:none;font-size:17px;cursor:pointer;color:var(--text);}
+.map-controls-stack{position:absolute;right:10px;bottom:104px;z-index:1100;display:flex;flex-direction:column;align-items:stretch;width:56px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:hidden;}
+.map-controls-stack .center-map-btn{position:static;width:56px;height:40px;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;box-shadow:none;font-size:18px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;}
 .map-controls-stack .center-map-btn:last-of-type{border-bottom:none;}
 .center-map-btn:active{transform:scale(0.93);}
-#particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:38px;box-sizing:border-box;padding:8px 0 8px;border-bottom:1px solid var(--border);}
+#particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:56px;box-sizing:border-box;padding:10px 0 9px;border-bottom:1px solid var(--border);}
 #particleHeightSliderWrap.show{display:flex;}
-#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:24px;height:110px;}
-#particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;text-align:center;line-height:1.2;}
-#particleHeightLabelAmsl{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap;}
+#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:14px;height:100px;}
+#particleHeightSlider::-webkit-slider-runnable-track{width:4px;}
+#particleHeightSlider::-webkit-slider-thumb{width:18px;height:18px;margin-top:-6px;}
+#particleHeightLabel{font-size:8.5px;color:var(--muted);white-space:nowrap;text-align:center;line-height:1.15;margin-top:5px;}
+#particleHeightLabelAmsl{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap;text-align:center;margin-bottom:5px;}
 
 /* ---- layer toggle group (header, top-left) ---- */
 .layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
@@ -731,7 +733,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v51';
+const APP_VERSION = 'v53';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1088,23 +1090,33 @@ function fetchOverpassThrottled(query, signal){
 }
 async function fetchNatureReserves(){
   if(!natureReservesActive || map.getZoom()<8){ return; }
+  // Cap the query area to a fixed radius around the map CENTER, regardless
+  // of how far zoomed out the actual viewport is - a wide-open viewport at
+  // zoom 8 can span 150+ km, and boundary=protected_area polygons (some
+  // national parks have thousands of nodes) made that expensive enough to
+  // trip a 504 Gateway Timeout on every mirror, not just rate-limit (429) on
+  // the busiest one. A bounded query area keeps this fast and reliable.
+  const center = map.getCenter();
+  const maxDeg = 0.35; // roughly 35-40km depending on latitude
   const b = map.getBounds();
-  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const south = Math.max(b.getSouth(), center.lat-maxDeg);
+  const north = Math.min(b.getNorth(), center.lat+maxDeg);
+  const west = Math.max(b.getWest(), center.lng-maxDeg);
+  const east = Math.min(b.getEast(), center.lng+maxDeg);
+  const bbox = `${south},${west},${north},${east}`;
   // boundary=protected_area covers essentially all formally designated
   // reserve TYPES via its protect_class/designation sub-tags - this includes
   // IUCN categories Ia-VI, Natura 2000 bird directive sites (SPA,
   // designation=special_protection_area) and habitat directive sites (SAC),
   // Ramsar wetlands, and similar - so one broad query catches nature
-  // reserves, bird sanctuaries, and protected moors/bogs together, rather
-  // than needing a separate query per designation type.
-  const query = `[out:json][timeout:25];
+  // reserves, bird sanctuaries, and protected moors/bogs together. Combined
+  // into fewer clauses (regex tag match) than before, which is noticeably
+  // cheaper for Overpass to execute than many separate way/relation clauses.
+  const query = `[out:json][timeout:20];
 (
-  way["boundary"="protected_area"](${bbox});
-  relation["boundary"="protected_area"](${bbox});
-  way["boundary"="national_park"](${bbox});
-  relation["boundary"="national_park"](${bbox});
+  way["boundary"~"^(protected_area|national_park)$"](${bbox});
+  relation["boundary"~"^(protected_area|national_park)$"](${bbox});
   way["leisure"="nature_reserve"](${bbox});
-  relation["leisure"="nature_reserve"](${bbox});
 );
 out geom;`;
   try{
@@ -1126,7 +1138,16 @@ out geom;`;
           .addTo(natureReservesLayer);
       }
     }
-  }catch(e){ /* Overpass unavailable - keep showing whatever was last rendered */ }
+  }catch(e){
+    // Don't just give up until the next pan/zoom/toggle - retry on our own
+    // once the shared cooldown (or a short delay) has passed, so a toggle
+    // off/on or a timed-out attempt recovers by itself.
+    if(natureReservesActive){
+      const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
+      clearTimeout(natureReservesFetchTimer);
+      natureReservesFetchTimer = setTimeout(fetchNatureReserves, retryDelay);
+    }
+  }
 }
 map.on('moveend zoomend', ()=>{ if(natureReservesActive) scheduleNatureReservesFetch(); });
 
@@ -1156,8 +1177,10 @@ function placeLabelStyle(placeTag, zoom){
 async function fetchPlaceLabels(){
   if(!(roadsShown)) return;
   if(map.getZoom() < PLACE_LABELS_MIN_ZOOM){ placeLabelsLayer.clearLayers(); return; }
+  const center = map.getCenter();
+  const maxDeg = 0.35;
   const b = map.getBounds();
-  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const bbox = `${Math.max(b.getSouth(),center.lat-maxDeg)},${Math.max(b.getWest(),center.lng-maxDeg)},${Math.min(b.getNorth(),center.lat+maxDeg)},${Math.min(b.getEast(),center.lng+maxDeg)}`;
   const query = `[out:json][timeout:20];node["place"~"^(city|town|suburb|village|hamlet)$"](${bbox});out;`;
   if(placeLabelsAbortController) placeLabelsAbortController.abort();
   placeLabelsAbortController = new AbortController();
@@ -1178,6 +1201,10 @@ async function fetchPlaceLabels(){
         const cached = await cache.match(cacheKey);
         if(cached){ renderPlaceLabels(await cached.json()); }
       }catch(e2){ /* no cached fallback available */ }
+    }
+    if(roadsShown){
+      const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
+      setTimeout(fetchPlaceLabels, retryDelay);
     }
   }
 }
@@ -1263,6 +1290,10 @@ async function fetchFineRoads(){
         if(cached){ renderFineRoads(await cached.json()); }
       }catch(e2){ /* no cached fallback available either - generic roads overlay still shows */ }
     }
+    if(roadsShown && activeBaseLayerName==='Satellite'){
+      const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
+      setTimeout(fetchFineRoads, retryDelay);
+    }
   }
 }
 function renderFineRoads(j){
@@ -1322,7 +1353,7 @@ const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:3, dashAr
 // Extended course (cruise continuation to the descent point) vs. the actual
 // descent - kept visually distinct, same idea as the live projection in
 // function 1 (teal cruise / yellow descent), just in the planning colors.
-const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e5c8', weight:3, dashArray:'2,8', lineCap:'round'});
+const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e5c8', weight:4, dashArray:'5,6', lineCap:'round', opacity:1});
 const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:3, dashArray:'8,6', lineCap:'round'});
 
 // ---------- GPS ----------

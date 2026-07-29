@@ -39,6 +39,8 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 .wx-chip span{color:var(--muted);font-size:10px;}
 #topbar .spacer{flex:1;}
 .iconbtn{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:16px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+@keyframes recPulse{0%,100%{background:var(--panel2);color:var(--text);}50%{background:var(--bad);color:#fff;}}
+.iconbtn.recording{animation:recPulse 1.4s ease-in-out infinite;border-color:var(--bad);}
 .iconbtn:active{transform:scale(0.95);}
 .iconbtn.active{border-color:var(--accent);color:var(--accent);}
 .gps-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);}
@@ -294,7 +296,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <svg id="iconMoon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
     </button>
     <div style="position:relative;">
-      <button class="iconbtn" id="btnCapture" title="Screenshot / Recording"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 6.5 L9.3 4 h5.4 L16 6.5"/><rect x="2.5" y="6.5" width="19" height="13.5" rx="2"/><circle cx="12" cy="13" r="3.6"/></svg></button>
+      <button class="iconbtn" id="btnCapture" title="Screenshot / Recording">
+        <svg id="btnCaptureIconNormal" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 6.5 L9.3 4 h5.4 L16 6.5"/><rect x="2.5" y="6.5" width="19" height="13.5" rx="2"/><circle cx="12" cy="13" r="3.6"/></svg>
+        <svg id="btnCaptureIconRecording" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+      </button>
       <div id="capturePanel" class="settings-popover" style="width:220px;">
         <button class="ghost" id="capShotBtn">📷 Take screenshot</button>
         <button class="ghost" id="capRecBtn" style="margin-top:8px;">⏺ Start recording</button>
@@ -779,7 +784,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v59';
+const APP_VERSION = 'v60';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1059,7 +1064,32 @@ let cacheRadiusKm = 75;
 document.getElementById('sCacheRadius').addEventListener('input', e=>{
   cacheRadiusKm = parseInt(e.target.value);
   document.getElementById('lblCacheRadius').textContent = cacheRadiusKm + ' km';
+  updateCacheBoundaryCircle();
 });
+// A ring showing the boundary of the pre-cached tile area (for offline use)
+// - only useful once zoomed out far enough that it would actually fit
+// within the visible map, so it stays hidden at normal working zoom levels.
+const cacheBoundaryCircle = L.circle([state.lat, state.lon], {
+  radius: cacheRadiusKm*1000, color:'#8b98a5', weight:1.5, dashArray:'6,6',
+  fill:false, opacity:0.7, interactive:false
+});
+function updateCacheBoundaryCircle(){
+  if(!lastCachedCenter) return;
+  cacheBoundaryCircle.setLatLng([lastCachedCenter.lat, lastCachedCenter.lon]);
+  cacheBoundaryCircle.setRadius(cacheRadiusKm*1000);
+}
+function updateCacheBoundaryCircleVisibility(){
+  // Only show once the map is zoomed out enough that the ring would be a
+  // meaningful reference (roughly: the visible half-width is at least half
+  // the cache radius) - otherwise it would just be an oversized circle
+  // running off both edges of the screen, adding nothing useful.
+  const halfWidthKm = map.getBounds().getEast()===map.getBounds().getWest() ? 0 :
+    haversine(map.getCenter().lat, map.getBounds().getWest(), map.getCenter().lat, map.getBounds().getEast())/2000;
+  const shouldShow = halfWidthKm > cacheRadiusKm*0.5;
+  if(shouldShow && !map.hasLayer(cacheBoundaryCircle)) cacheBoundaryCircle.addTo(map);
+  else if(!shouldShow && map.hasLayer(cacheBoundaryCircle)) map.removeLayer(cacheBoundaryCircle);
+}
+map.on('zoomend moveend', updateCacheBoundaryCircleVisibility);
 // ---- fine, class-styled roads (Satellite view only) ----
 // Satellite imagery has no road lines at all, and even the generic Esri
 // roads overlay doesn't distinguish farm/field tracks from proper roads -
@@ -3399,6 +3429,16 @@ capRecBtn.addEventListener('click', async ()=>{
     mediaRecorder.stop();
     return;
   }
+  // iOS/iPadOS Safari does not implement the Screen Capture API at all (a
+  // WebKit/Apple platform limitation, not something fixable from a web
+  // page) - there is no way for ANY website to start iOS's own screen
+  // recording on the user's behalf. Detect this up front and point to the
+  // real solution (Control Center) instead of attempting the call and
+  // showing a generic permission-denied error.
+  if(!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function'){
+    alert('This browser doesn\'t support in-page screen recording (this is normal on iPhone/iPad - Safari on iOS has no web API for it).\n\nUse iOS\'s own Screen Recording instead: swipe down from the top-right corner to open Control Center, then tap the record button. Add it to Control Center first via Settings > Control Center if you don\'t see it.');
+    return;
+  }
   try{
     const stream = await navigator.mediaDevices.getDisplayMedia({video:true});
     recChunks=[];
@@ -3410,18 +3450,40 @@ capRecBtn.addEventListener('click', async ()=>{
       a.download='gblp_recording_'+Date.now()+'.webm';
       a.href=URL.createObjectURL(blob);
       a.click();
-      btnCapture.classList.remove('active');
+      btnCapture.classList.remove('active','recording');
+      document.getElementById('btnCaptureIconNormal').style.display = '';
+      document.getElementById('btnCaptureIconRecording').style.display = 'none';
       capRecBtn.textContent = '⏺ Start recording';
       capPauseBtn.style.display = 'none';
       capPauseBtn.textContent = '⏸ Pause recording';
     };
     mediaRecorder.start();
-    btnCapture.classList.add('active');
+    btnCapture.classList.add('active','recording');
+    document.getElementById('btnCaptureIconNormal').style.display = 'none';
+    document.getElementById('btnCaptureIconRecording').style.display = '';
     capRecBtn.textContent = '⏹ Stop recording';
     capPauseBtn.style.display = 'block';
     document.getElementById('capturePanel').classList.remove('open');
-  }catch(e){ alert('Screen recording permission denied or unsupported.'); }
+  }catch(e){
+    // A genuine permission denial from the user looks different from "this
+    // just isn't supported here" - give whichever message actually applies.
+    if(e && e.name==='NotAllowedError'){
+      alert('Screen recording permission was denied. To record, allow screen sharing when your browser asks.');
+    } else {
+      alert('Screen recording isn\'t available: ' + (e && e.message ? e.message : 'unknown error'));
+    }
+  }
 });
+// Recording can also be stopped by tapping the (now pulsing red) button
+// itself, not just from inside the panel - registered on the CAPTURE phase
+// and stopping propagation so it takes priority over the popover's own
+// open/close click handler while actively recording.
+btnCapture.addEventListener('click', (e)=>{
+  if(mediaRecorder && mediaRecorder.state!=='inactive'){
+    e.stopImmediatePropagation();
+    mediaRecorder.stop();
+  }
+}, true);
 capPauseBtn.addEventListener('click', ()=>{
   if(!mediaRecorder) return;
   if(mediaRecorder.state==='recording'){
@@ -3458,6 +3520,8 @@ async function precacheAreaTiles(lat, lon, radiusKm){
   if(!('caches' in window)) return;
   precacheInFlight = true;
   lastCachedCenter = {lat, lon};
+  updateCacheBoundaryCircle();
+  updateCacheBoundaryCircleVisibility();
   try{
     const cache = await caches.open('gblp-tiles-v1');
     const dLat = radiusKm/111;

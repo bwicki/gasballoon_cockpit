@@ -199,6 +199,15 @@ The console log didn't show a crash in Plan Descent itself, but pointed to real 
 - **Result visibility**: after planning, the map now automatically zooms to show the current position, the extended path, and the resulting planned area together - previously, a distant or long-delay target's result could end up entirely outside the current view with nothing visibly changing.
 - Planned landing area styling made more prominent (thicker outline, higher fill opacity).
 
+## New in this round (v49)
+
+- **Real convergence bug fixed in Plan Descent**: the search for the best descent-initiation time was a fragile "shrink a window around whatever looked best so far" heuristic, which could permanently exclude the true best region if early guesses were misleading (very likely, since landing point vs. delay isn't a smooth/monotonic function - wind shifts with time and altitude). Replaced with a full coarse scan across the entire 0-240 min range first, then a safe local refinement around the best coarse result - this is what "no real relationship to the clicked target" was pointing at.
+- **Live yellow markers now swap for planned violet ones**: switching to Plan Descent hides the live projection's yellow triangle and path; a new violet triangle marks the planned descent-initiation point, connected by a dashed violet line.
+- **Map clicks were possibly being swallowed twice over**: found that leftover `#gpsWarnBar{display:none}` CSS (ID-specificity beats the `.show` class) would have silently blocked that banner from ever appearing, the same bug pattern as a few rounds back - removed.
+- **GPS-unavailable warning** is now a proper floating, dismissible banner like the others (left-aligned, not bold), stacking correctly with the rest. The Manual Mode on/off switch itself now lives in the always-visible "CAUTION: Manual Mode" strip - so it stays reachable to turn back off even if the warning banner was dismissed, independent of that.
+- **Redundant "Landing Area" layer toggle removed** from the header - the first main function now always computes and shows it.
+- **Console cleanup**: removed the deprecated `-webkit-appearance:slider-vertical` (silences the Chrome warning; the `writing-mode` fallback alone is sufficient here). Overpass calls now back off for 45s after a 429/timeout instead of letting every layer immediately retry and pile on more load.
+
 ## Known limitations & approximations
 
 

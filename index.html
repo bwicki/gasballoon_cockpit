@@ -109,7 +109,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #btnCenterPlanned{bottom:174px;}
 #particleHeightSliderWrap{position:absolute;bottom:220px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #particleHeightSliderWrap.show{display:flex;}
-#particleHeightSlider{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
+#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
 #particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;text-align:center;line-height:1.2;}
 #particleHeightLabelAmsl{font-size:8px;color:var(--muted);white-space:nowrap;}
 
@@ -122,9 +122,6 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 /* ---- test mode caution bar ---- */
 #testCautionBar{display:none;background:var(--bad);color:#fff;text-align:center;font-weight:800;font-size:13px;letter-spacing:1px;padding:6px;flex-shrink:0;}
 #testCautionBar.show{display:block;}
-#gpsWarnBar{display:none;background:var(--bad);color:#fff;text-align:left;font-weight:400;font-size:13px;letter-spacing:normal;padding:6px 10px;flex-shrink:0;align-items:center;justify-content:flex-start;gap:12px;}
-#gpsWarnBar.show{display:flex;}
-#gpsWarnBar button{background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 12px;font-weight:800;font-size:12px;letter-spacing:normal;cursor:pointer;}
 
 /* ---- main layout ---- */
 #main{flex:1;position:relative;min-height:0;height:100%;overflow:hidden;}
@@ -181,6 +178,9 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 #warnbar{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
 #warnbar.show{display:flex;}
 .yellow-warn{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,178,0,.95);color:#241a00;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:599;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+.gps-warn{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:400;display:none;z-index:598;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+.gps-warn.show{display:flex;}
+.gps-warn button.ghost-inline{flex-shrink:0;background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 10px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;}
 .yellow-warn.show{display:flex;}
 #warnbar.show ~ .yellow-warn.show{top:52px;}
 .banner-close{flex-shrink:0;background:rgba(0,0,0,0.15);border:none;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;}
@@ -270,7 +270,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn active" id="tgPower" title="Power lines"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
       <button class="ltbtn active" id="tgAirspace" title="Airspace (below balloon)"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 12 L14 13 L13 20 L16 22 L12 21 L8 22 L11 20 L10 13 L3 12 L10 9 Z" fill="currentColor"/></svg></button>
-      <button class="ltbtn active" id="tgLanding" title="Landing area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
       <button class="ltbtn active" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
       <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas (OpenStreetMap)"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
     </div>
@@ -472,11 +471,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
     <input type="checkbox" id="testEnable" style="display:none;">
   </div>
-  <div id="testCautionBar">⚠ CAUTION: TEST MODE ⚠</div>
-  <div id="gpsWarnBar">
-    <span>⚠ CAUTION: GPS DATA not available! ⚠</span>
-    <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
-    <span style="font-size:11px;font-weight:600;letter-spacing:normal;">Enable Manual Mode</span>
+  <div id="testCautionBar">
+    <span id="testCautionText">⚠ CAUTION: TEST MODE ⚠</span>
+    <span id="manualModeOffSwitch" style="display:none;align-items:center;gap:6px;margin-left:10px;">
+      <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
+      <span style="font-size:11px;font-weight:600;letter-spacing:normal;">Manual Mode</span>
+    </span>
   </div>
 
   <div id="main">
@@ -498,6 +498,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
       <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
       <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
+      <div id="gpsWarnBar" class="gps-warn">
+        <span>GPS data not available</span>
+        <button class="ghost-inline" id="btnEnableManualModeFromWarn">Enable Manual Mode</button>
+        <button class="banner-close" style="margin-left:0;" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
+      </div>
+      <button id="gpsWarnIcon" class="reopen-icon red" style="display:none;left:92px;" onclick="reopenBanner('gpsWarnBar','gpsWarnIcon')" title="Show GPS warning">📡</button>
       <div id="powerLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
         <span class="gwl-title">Power:</span>
@@ -733,7 +739,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v48';
+const APP_VERSION = 'v49';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1083,12 +1089,28 @@ function ensureNatureHatchPattern(){
 let lastOverpassCallTime = 0;
 const OVERPASS_MIN_INTERVAL_MS = 2500;
 let overpassQueue = Promise.resolve();
+let overpassCooldownUntil = 0;
 function fetchOverpassThrottled(query, signal){
   const run = async ()=>{
+    if(Date.now() < overpassCooldownUntil){
+      throw new Error('Overpass on cooldown after a recent failure - skipping this request.');
+    }
     const wait = Math.max(0, lastOverpassCallTime + OVERPASS_MIN_INTERVAL_MS - Date.now());
     if(wait>0) await new Promise(res=>setTimeout(res, wait));
     lastOverpassCallTime = Date.now();
-    return fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:'data='+encodeURIComponent(query), signal});
+    try{
+      const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:'data='+encodeURIComponent(query), signal});
+      if(r.status===429 || r.status>=500){
+        // The free public instance is overloaded / rate-limiting us - back off
+        // for a while instead of letting every layer immediately retry and
+        // pile on more load, which is what turns one 429 into a whole cascade.
+        overpassCooldownUntil = Date.now() + 45000;
+      }
+      return r;
+    }catch(networkErr){
+      overpassCooldownUntil = Date.now() + 45000; // e.g. connection timeout - also back off
+      throw networkErr;
+    }
   };
   const result = overpassQueue.then(run, run);
   overpassQueue = result.catch(()=>{});
@@ -1283,7 +1305,6 @@ function renderFineRoads(j){
   }
 }
 map.on('moveend zoomend', scheduleFineRoadsFetch);
-bindLayerToggle('tgLanding', true, on=>{ landingLayerOn = on; recomputeAll(); });
 
 // balloon marker + breadcrumb
 const aircraftIconHtml = `<div style="width:36px;height:36px;transform:rotate(0deg);transition:transform .15s linear;" id="aircraftRotor">
@@ -1306,6 +1327,13 @@ const blueDotIcon = L.divIcon({
   html:'<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 L2 2 L24 2 Z" fill="#ffee00" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>',
   className:'', iconSize:[26,24], iconAnchor:[13,20]
 });
+// Same shape, violet - marks the descent-initiation point for the PLANNED
+// route, so it's visually distinct from the live projection's yellow one.
+const violetDotIcon = L.divIcon({
+  html:'<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>',
+  className:'', iconSize:[26,24], iconAnchor:[13,20]
+});
+let plannedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon, opacity:0});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 const crossIcon = L.divIcon({
@@ -1321,7 +1349,7 @@ let liveLandingCenterMarker = null;
 let intendedLandingMarker = null;
 let plannedLandingCenterMarker = null;
 const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:3, dashArray:'8,5', fillColor:'#ff8a00', fillOpacity:0.28, interactive:false});
-const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:2.5});
+const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:3, dashArray:'8,6', lineCap:'round'});
 
 // ---------- GPS ----------
 let gpsWatchId = null;
@@ -1344,6 +1372,8 @@ function setGpsStatus(ok, txt){
   document.getElementById('gpsAcc').textContent = txt;
   if(ok){
     document.getElementById('gpsWarnBar').classList.remove('show');
+    document.getElementById('gpsWarnIcon').style.display = 'none';
+    repositionModeToggle();
     // GPS is back: if we're in Manual Mode purely because GPS had dropped,
     // exit it automatically. A manually-opened Test Mode (for ground testing
     // with GPS still working) is left alone.
@@ -1353,7 +1383,7 @@ function setGpsStatus(ok, txt){
   } else {
     // Only prompt if we're not already in Test/Manual mode.
     if(!state.testMode){
-      document.getElementById('gpsWarnBar').classList.add('show');
+      reopenBanner('gpsWarnBar','gpsWarnIcon');
     }
   }
 }
@@ -1391,13 +1421,20 @@ document.getElementById('btnTestMode').addEventListener('click', ()=>{
 });
 document.getElementById('manualModeToggle').addEventListener('change', (e)=>{
   setTestMode(e.target.checked, 'manual');
-  if(e.target.checked) document.getElementById('gpsWarnBar').classList.remove('show');
+});
+document.getElementById('btnEnableManualModeFromWarn').addEventListener('click', ()=>{
+  setTestMode(true, 'manual');
 });
 function updateCautionBar(){
   const bar = document.getElementById('testCautionBar');
+  const offSwitch = document.getElementById('manualModeOffSwitch');
   if(state.testMode){
     const isManual = activationReason==='manual';
-    bar.textContent = isManual ? '⚠ CAUTION: Manual Mode ⚠' : '⚠ CAUTION: TEST MODE ⚠';
+    document.getElementById('testCautionText').textContent = isManual ? '⚠ CAUTION: Manual Mode ⚠' : '⚠ CAUTION: TEST MODE ⚠';
+    // The manual-mode off-switch stays visible here (not tied to the
+    // dismissible GPS warning banner) precisely so it can always be reached
+    // to turn Manual Mode back off again.
+    offSwitch.style.display = isManual ? 'inline-flex' : 'none';
     bar.classList.add('show');
   } else {
     bar.classList.remove('show');
@@ -2023,8 +2060,10 @@ function repositionModeToggle(){
   let top = 8;
   const warnbar = document.getElementById('warnbar');
   const yellowBar = document.getElementById('descentWindWarnBar');
+  const gpsBar = document.getElementById('gpsWarnBar');
   if(warnbar.classList.contains('show')) top += warnbar.offsetHeight + 8;
   if(yellowBar.classList.contains('show')) top += yellowBar.offsetHeight + 8;
+  if(gpsBar.classList.contains('show')) top += gpsBar.offsetHeight + 8;
   document.getElementById('modeToggle').style.top = top + 'px';
 }
 // ---- terrain clearance along the descent path ----
@@ -2297,16 +2336,24 @@ function setAppMode(mode){
   document.getElementById('modeMonitor').classList.toggle('active', mode==='monitor');
   document.getElementById('modePlan').classList.toggle('active', mode==='plan');
   if(mode==='plan'){
-    // Hide the live (monitor-mode) landing area while planning - the planned
-    // area (if any) is a separate layer and stays exactly as it was.
+    // Hide the live (monitor-mode) landing area AND the live yellow
+    // projection (cruise/descent segments + init-point triangle) while
+    // planning - a separate violet marker/dashed path represents the plan.
     if(map.hasLayer(landingPolyLayer)) map.removeLayer(landingPolyLayer);
     if(liveLandingCenterMarker && map.hasLayer(liveLandingCenterMarker)) map.removeLayer(liveLandingCenterMarker);
+    if(map.hasLayer(predictedCruiseLayer)) map.removeLayer(predictedCruiseLayer);
+    if(map.hasLayer(predictedDescentSegmentLayer)) map.removeLayer(predictedDescentSegmentLayer);
+    if(map.hasLayer(descentInitMarker)) map.removeLayer(descentInitMarker);
   } else {
-    // Back to monitor mode: restore the live landing area display and go
-    // back to showing LIVE data in the "Projected Landing Area" card - the
-    // planned area (if any) simply stays visible on the map untouched.
+    // Back to monitor mode: restore the live landing area + live yellow
+    // projection, and go back to showing LIVE data in the "Projected
+    // Landing Area" card - the planned area (if any) simply stays visible
+    // on the map untouched.
     if(landingLayerOn) landingPolyLayer.addTo(map);
     if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
+    predictedCruiseLayer.addTo(map);
+    predictedDescentSegmentLayer.addTo(map);
+    descentInitMarker.addTo(map);
     document.getElementById('plannedBadge').style.display = 'none';
     updateLandingPositionCard();
   }
@@ -2366,14 +2413,32 @@ async function planDescentToTarget(lat, lon){
   // future hour afterward, which could then land somewhere else entirely.
   const roughPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, 60*60, rate1, interceptAGL, rate2, 0);
   let arrivalHourIdx = Math.round(roughPath[roughPath.length-1].t/3600);
-  let lo=0, hi=240, best=null, bestDist=Infinity, bestPath=null;
-  for(let iter=0; iter<20; iter++){
+  // Coarse scan across the ENTIRE 0-240 min range first. The previous
+  // approach (narrowing a window around the best value seen so far, starting
+  // from the middle) could permanently exclude the true best region if the
+  // first couple of evaluations were misleading - which happens easily here,
+  // since landing position vs. initiation delay is NOT a smooth, monotonic
+  // function (wind direction/speed changes with both altitude and time can
+  // make it loop or reverse). A full scan first avoids that trap.
+  const COARSE_STEPS = 24;
+  let best=null, bestDist=Infinity, bestPath=null;
+  for(let i=0;i<=COARSE_STEPS;i++){
+    const mid = (i/COARSE_STEPS)*240;
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
+    const last=path[path.length-1];
+    const d = haversine(last.lat,last.lon,lat,lon);
+    if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
+  }
+  // Fine local refinement, now safely centered on the coarse winner.
+  const coarseStepMin = 240/COARSE_STEPS;
+  let lo=Math.max(0,best-coarseStepMin), hi=Math.min(240,best+coarseStepMin);
+  for(let iter=0; iter<14; iter++){
     const mid=(lo+hi)/2;
     const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
     const last=path[path.length-1];
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
-    const span=(hi-lo)/3;
+    const span=(hi-lo)/2.2;
     lo=Math.max(0,best-span); hi=Math.min(240,best+span);
     arrivalHourIdx = Math.round(last.t/3600); // refine the wind-hour estimate as the search converges
   }
@@ -2407,6 +2472,9 @@ async function planDescentToTarget(lat, lon){
   if(!map.hasLayer(plannedLandingPolyLayer)) plannedLandingPolyLayer.addTo(map);
   plannedDescentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
   if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
+  plannedDescentInitMarker.setLatLng([initFix.lat, initFix.lon]);
+  plannedDescentInitMarker.setOpacity(1);
+  if(!map.hasLayer(plannedDescentInitMarker)) plannedDescentInitMarker.addTo(map);
 
   const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
   const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
@@ -2437,6 +2505,8 @@ function clearPlannedLandingArea(){
   if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
   if(plannedLandingCenterMarker){ map.removeLayer(plannedLandingCenterMarker); plannedLandingCenterMarker=null; }
   if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
+  if(map.hasLayer(plannedDescentInitMarker)) map.removeLayer(plannedDescentInitMarker);
+  plannedDescentInitMarker.setOpacity(0);
   document.getElementById('plannedBadge').style.display = 'none';
   document.getElementById('btnClearPlannedArea').style.display = 'none';
   document.getElementById('btnCenterPlanned').style.display = 'none';
@@ -3447,7 +3517,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgGroundWind','tgNatureReserves'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves'];
 function saveConfig(){
   try{
     const cfg = {};

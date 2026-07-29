@@ -108,7 +108,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #btnCenterLanding{bottom:130px;}
 #particleHeightSliderWrap{position:absolute;bottom:176px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #particleHeightSliderWrap.show{display:flex;}
-#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
+#particleHeightSlider{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
 #particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;}
 
 /* ---- layer toggle group (header, top-left) ---- */
@@ -143,10 +143,10 @@ body.day #map{background:#dfe6ea;}
 .card.collapsed .cardbody{display:none;}
 
 .datagrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
-.datacell{background:var(--panel);border-radius:8px;padding:6px 8px;}
+.datacell{background:var(--panel);border-radius:8px;padding:6px 8px;overflow:hidden;}
 .datacell label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
-.datacell .val{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);}
-.datacell .val.small{font-size:12px;}
+.datacell .val{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.datacell .val.small{font-size:11.5px;}
 .datacell.wide{grid-column:1/3;}
 
 .slider-row{margin-bottom:6px;}
@@ -203,6 +203,12 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 
 .leaflet-control-attribution{font-size:9px !important;}
 canvas.mini{width:100% !important;height:130px !important;}
+canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
+#hodographChart{aspect-ratio:1/1;height:auto !important;}
+#chartExpandOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5000;display:none;align-items:center;justify-content:center;}
+#chartExpandOverlay.show{display:flex;}
+#chartExpandBox{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;width:min(92vw,640px);height:min(80vh,520px);position:relative;box-sizing:border-box;}
+#chartExpandClose{position:absolute;top:-14px;right:-14px;background:var(--bad);color:#fff;border:2px solid var(--panel2);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;z-index:1;}
 
 #testmode-panel input[type=text], #testmode-panel input[type=number]{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;font-family:var(--mono);}
 
@@ -253,6 +259,7 @@ canvas.mini{width:100% !important;height:130px !important;}
       <button class="ltbtn active" id="tgLanding" title="Landing area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
       <button class="ltbtn active" id="tgHodograph" title="Show/hide hodograph"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20 C 8 8, 16 16, 20 4" stroke-linecap="round"/></svg></button>
       <button class="ltbtn active" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
+      <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas (OpenStreetMap)"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -281,7 +288,8 @@ canvas.mini{width:100% !important;height:130px !important;}
             <button class="ghost" id="btnEmergencySms" style="flex:1;">SMS</button>
             <button class="ghost" id="btnEmergencyEmailSend" style="flex:1;">Email</button>
           </div>
-          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">These open WhatsApp/SMS/Email with the message pre-filled - you still need to tap "send" yourself in that app. No message is sent silently in the background.</p>
+          <button class="ghost" id="btnEmergencyAllChannels" style="margin-top:6px;background:var(--bad);color:#fff;">Send on all channels</button>
+          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">These open WhatsApp/SMS/Email with the message pre-filled - you still need to tap "send" yourself in that app. No message is sent silently in the background. "Send on all channels" opens all three in sequence (your browser may ask permission for pop-ups).</p>
         </div>
       </div>
     </div>
@@ -314,18 +322,19 @@ canvas.mini{width:100% !important;height:130px !important;}
           <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
         </select>
         <div id="wxModelSettingsStatus" style="font-size:10px;color:var(--muted);margin-top:4px;">—</div>
-        <button class="ghost" style="margin-top:8px;" onclick="fetchWind(true)">Refresh model now</button>
-        <div class="subhead" style="margin-top:10px;">Auto-refresh interval</div>
-        <select id="wxRefreshInterval">
-          <option value="5">5 min</option>
-          <option value="10">10 min</option>
-          <option value="15" selected>15 min</option>
-          <option value="30">30 min</option>
-          <option value="45">45 min</option>
-          <option value="60">60 min</option>
-          <option value="90">90 min</option>
-          <option value="120">120 min</option>
-        </select>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
+          <button class="ghost" style="flex:1;" onclick="fetchWind(true)">Refresh now</button>
+          <select id="wxRefreshInterval" style="flex:1;">
+            <option value="5">5 min</option>
+            <option value="10">10 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">60 min</option>
+            <option value="90">90 min</option>
+            <option value="120">120 min</option>
+          </select>
+        </div>
         <div class="subhead" style="margin-top:10px;">Radiosonde Data</div>
         <label class="ghost" style="display:block;text-align:center;cursor:pointer;">
           Upload CSV with sonde data
@@ -389,9 +398,10 @@ canvas.mini{width:100% !important;height:130px !important;}
         <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
 
         <div class="subhead">Adiabatic Braking Model</div>
-        <div class="slider-row">
-          <div class="lbl"><span>Balloon gas volume</span><b id="lblBalloonVolume" style="color:var(--accent2);">1050 m³</b></div>
-          <input type="range" id="sBalloonVolume" min="200" max="3000" step="10" value="1050">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:12.5px;flex:1;">Balloon gas volume</span>
+          <input type="number" id="sBalloonVolume" min="200" max="5000" step="10" value="1050" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
+          <span style="font-size:12px;color:var(--muted);">m³</span>
         </div>
         <div class="slider-row">
           <div class="lbl"><span>Empirical variance factor</span><b id="lblAdiaVariance" style="color:var(--accent2);">100 %</b></div>
@@ -401,7 +411,8 @@ canvas.mini{width:100% !important;height:130px !important;}
 
         <hr>
         <div class="subhead">Dropbox Auto-Backup (Flight Log)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own Dropbox app key (free, from dropbox.com/developers/apps) with this page's exact URL registered as a redirect URI.</p>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the exact URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled. The target folder does not need to exist beforehand - Dropbox creates it automatically.</p>
+        <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
         <input type="text" id="dropboxAppKey" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
         <input type="text" id="dropboxFolder" placeholder="/GBLP_Logs" value="/GBLP_Logs" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
         <button class="ghost" id="btnDropboxConnect">Connect Dropbox</button>
@@ -456,22 +467,29 @@ canvas.mini{width:100% !important;height:130px !important;}
       <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
       <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
       <div id="powerLegendBar" class="legend-bar" style="bottom:46px;">
-        <span class="gwl-title">Power lines (kV):</span>
-        <span class="gwl-item"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥220</span>
-        <span class="gwl-item"><span class="legend-swatch" style="background:#ff9d3b;"></span>100-219</span>
-        <span class="gwl-item"><span class="legend-swatch" style="background:#ffe83b;"></span>50-99</span>
-        <span class="gwl-item"><span class="legend-swatch" style="background:#5bb8ff;"></span>&lt;50/unknown</span>
-        <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
+        <button class="banner-close" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
+        <span class="gwl-title">Power:</span>
+        <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#ff3b3b;"></span>≥220kV</span>
+        <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#ff9d3b;"></span>100-219kV</span>
+        <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#ffe83b;"></span>50-99kV</span>
+        <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#5bb8ff;"></span>&lt;50kV</span>
+        <span class="gwl-item" data-legend-cat="tower"><span class="legend-swatch" style="background:#ffcc66;border-radius:50%;"></span>Tower</span>
+        <span class="gwl-item" data-legend-cat="substation"><span class="legend-swatch" style="background:#ff9d3b;border-radius:50%;"></span>Substation</span>
+        <span class="gwl-item" data-legend-cat="plant"><span class="legend-swatch" style="background:#ff3b3b;border-radius:50%;"></span>Plant</span>
+        <span class="gwl-item" data-legend-cat="generator"><span class="legend-swatch" style="background:#ffe83b;border-radius:50%;"></span>Generator</span>
+        <span class="gwl-item" data-legend-cat="transformer"><span class="legend-swatch" style="background:#8bd3ff;border-radius:50%;"></span>Transformer</span>
+        <span class="gwl-item" data-legend-cat="compensator"><span class="legend-swatch" style="background:#c58bff;border-radius:50%;"></span>Compensator</span>
+        <span class="gwl-item" data-legend-cat="switch"><span class="legend-swatch" style="background:#ffffff;border-radius:50%;border:1px solid #888;"></span>Switch</span>
       </div>
       <button id="powerLegendIcon" class="reopen-icon bottom-left-2" style="display:none;" onclick="reopenBanner('powerLegendBar','powerLegendIcon')" title="Show power line legend">⚡</button>
       <div id="groundWindLegendBar" class="legend-bar" style="bottom:8px;">
+        <button class="banner-close" onclick="dismissBanner('groundWindLegendBar','groundWindLegendIcon')">✕</button>
         <span class="gwl-title">Ground wind (0-200m AGL):</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#3b82f6;"></span>&lt;5kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#22c55e;"></span>5-10kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#eab308;"></span>10-15kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#f97316;"></span>15-20kn</span>
         <span class="gwl-item"><span class="legend-swatch" style="background:#ef4444;"></span>&gt;20kn</span>
-        <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('groundWindLegendBar','groundWindLegendIcon')">✕</button>
       </div>
       <button id="groundWindLegendIcon" class="reopen-icon bottom-left-1" style="display:none;" onclick="reopenBanner('groundWindLegendBar','groundWindLegendIcon')" title="Show ground wind legend">🌬</button>
     </div>
@@ -525,14 +543,13 @@ canvas.mini{width:100% !important;height:130px !important;}
               </div>
             </div>
           </div>
-          <div id="inversionNote" style="display:none;font-size:11px;font-weight:600;margin-top:6px;color:var(--accent2);"></div>
           <div id="positionManualNote" style="display:none;color:var(--bad);font-size:11px;font-weight:600;margin-top:8px;">Tap the map to set position. Altitude, course and speed above are directly editable.</div>
         </div>
       </div>
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Landing Position <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)">Projected Landing Area <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell">
@@ -540,14 +557,18 @@ canvas.mini{width:100% !important;height:130px !important;}
               <div class="val small" id="landingPosCoords">—</div>
               <div class="val small" id="landingPosTown" style="margin-top:2px;color:var(--muted);">—</div>
             </div>
-            <div class="datacell"><label>Center height</label><div class="val small" id="landingPosAlt">—</div></div>
-            <div class="datacell wide">
+            <div class="datacell"><label>Landing Area Approx Height</label><div class="val small" id="landingPosAlt">—</div></div>
+            <div class="datacell">
               <label>Ground Wind at Landing Site</label>
-              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:8px;">
-                <svg id="landingWindArrow" width="18" height="18" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
+              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:6px;">
+                <svg id="landingWindArrow" width="16" height="16" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
                 <span id="landingWindText">—</span>
-                <span id="landingWindTrend" style="font-size:13px;" title="Trend vs. 1h earlier"></span>
+                <span id="landingWindTrend" style="font-size:12px;" title="Trend vs. 1h earlier"></span>
               </div>
+            </div>
+            <div class="datacell wide" id="inversionNote" style="display:none;">
+              <label>Inversion / Isothermal Layer</label>
+              <div class="val small" id="inversionNoteText" style="color:var(--accent2);">—</div>
             </div>
           </div>
           <p style="font-size:9.5px;color:var(--muted);margin:6px 0 0;">Adiabatic braking (H₂, ≈1050 m³ default) reduces the descent rate as configured in Settings - see badges on the sliders below.</p>
@@ -559,19 +580,19 @@ canvas.mini{width:100% !important;height:130px !important;}
         <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="slider-row">
-            <div class="lbl"><span style="flex:1;">Initiate descent in</span><span id="lblInitDist" class="dist-badge">0.00 km</span><b id="lblInit">30 min</b></div>
+            <div class="lbl"><span><span>Initiate descent in</span> <b id="lblInit">30 min</b></span><span id="lblInitDist" class="dist-badge" style="margin-left:auto;">0.00 km</span></div>
             <input type="range" id="sInit" min="0" max="240" step="1" value="30">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span style="flex:1;">Descent rate</span><span id="lblAdiaRateBadge" class="dist-badge">—</span><b id="lblRate">4.0 m/s</b></div>
+            <div class="lbl"><span><span>Descent rate</span> <b id="lblRate">4.0 m/s</b></span><span id="lblAdiaRateBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span style="flex:1;">Intercept height AGL</span><span id="lblInterceptTimeBadge" class="dist-badge">—</span><b id="lblIntH">400 m</b></div>
+            <div class="lbl"><span><span>Intercept height AGL</span> <b id="lblIntH">400 m</b></span><span id="lblInterceptTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sIntH" min="100" max="1000" step="10" value="400">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span style="flex:1;">Descent rate after intercept</span><span id="lblGroundTimeBadge" class="dist-badge">—</span><b id="lblRate2">1.5 m/s</b></div>
+            <div class="lbl"><span><span>Descent rate after intercept</span> <b id="lblRate2">1.5 m/s</b></span><span id="lblGroundTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate2" min="0.5" max="4" step="0.1" value="1.5">
           </div>
           <div class="slider-row">
@@ -584,22 +605,24 @@ canvas.mini{width:100% !important;height:130px !important;}
       <!-- POWER LINE LEGEND (only shown when the power layer is switched on) -->
 
 
-      <!-- WIND PROFILE (classic sounding-style diagram, always shown from the current model) -->
+      <!-- WIND PROFILE + DESCENT HODOGRAPH, side by side as thumbnails - click
+           either to open it larger with a close button, per request. The
+           hodograph thumbnail is shown/hidden via the header toggle button. -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Wind Profile <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <canvas class="mini" id="windProfileChart"></canvas>
+        <h3 onclick="toggleCard(this)">Flight Charts <span class="chev">▾</span></h3>
+        <div class="cardbody" style="display:flex;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <canvas class="mini-half" id="windProfileChart" onclick="expandChart('wind')"></canvas>
+          </div>
+          <div style="flex:1;min-width:0;" id="hodographThumbWrap">
+            <canvas class="mini-half" id="hodographChart" onclick="expandChart('hodo')"></canvas>
+          </div>
         </div>
       </div>
-
-      <!-- DESCENT HODOGRAPH: always computed from the current descent path,
-           toggled via the header button - previously nested inside the
-           click-triggered "Landing Point Plan" card, which is hidden until
-           a landing point is clicked. That's why it never appeared. -->
-      <div class="card" id="hodographCard">
-        <h3 onclick="toggleCard(this)">Descent Hodograph <span class="chev">▾</span></h3>
-        <div class="cardbody">
-          <canvas class="mini" id="hodographChart"></canvas>
+      <div id="chartExpandOverlay">
+        <div id="chartExpandBox">
+          <button id="chartExpandClose" onclick="closeExpandedChart()">✕</button>
+          <canvas id="chartExpandCanvas"></canvas>
         </div>
       </div>
 
@@ -676,7 +699,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v43';
+const APP_VERSION = 'v45';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -858,8 +881,15 @@ document.querySelectorAll('[data-powercat]').forEach(cb=>{
   cb.addEventListener('change', e=>{
     powerCatVisible[e.target.dataset.powercat] = e.target.checked;
     if(map.hasLayer(powerLayer)) powerLayer.redraw();
+    updatePowerLegendVisibility();
   });
 });
+function updatePowerLegendVisibility(){
+  document.querySelectorAll('#powerLegendBar [data-legend-cat]').forEach(el=>{
+    el.style.display = powerCatVisible[el.dataset.legendCat] ? 'flex' : 'none';
+  });
+}
+updatePowerLegendVisibility();
 
 // Fixed in code on purpose (not exposed as an editable settings field) so it
 // can't be accidentally cleared/changed. Change this constant if you need a
@@ -977,6 +1007,54 @@ document.getElementById('sCacheRadius').addEventListener('input', e=>{
 // Satellite base layer is active AND the roads layer is switched on, we
 // fetch actual OSM road geometry (via the public Overpass API) for the
 // current view and draw it styled by road class.
+// ---- nature reserves / protected areas (OpenStreetMap via Overpass) ----
+const natureReservesLayer = L.layerGroup();
+let natureReservesFetchTimer = null;
+let natureReservesActive = false;
+document.getElementById('tgNatureReserves').addEventListener('click', function(){
+  natureReservesActive = this.classList.toggle('active');
+  if(natureReservesActive){ natureReservesLayer.addTo(map); scheduleNatureReservesFetch(); }
+  else { map.removeLayer(natureReservesLayer); natureReservesLayer.clearLayers(); }
+});
+function scheduleNatureReservesFetch(){
+  clearTimeout(natureReservesFetchTimer);
+  natureReservesFetchTimer = setTimeout(fetchNatureReserves, 700);
+}
+async function fetchNatureReserves(){
+  if(!natureReservesActive || map.getZoom()<9){ return; }
+  const b = map.getBounds();
+  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const query = `[out:json][timeout:20];
+(
+  way["boundary"="protected_area"](${bbox});
+  way["boundary"="national_park"](${bbox});
+  way["leisure"="nature_reserve"](${bbox});
+  relation["boundary"="protected_area"](${bbox});
+  relation["boundary"="national_park"](${bbox});
+);
+out geom;`;
+  try{
+    const r = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(query) });
+    const j = await r.json();
+    natureReservesLayer.clearLayers();
+    for(const el of (j.elements||[])){
+      let rings = [];
+      if(el.type==='way' && el.geometry){
+        rings = [el.geometry.map(p=>[p.lat,p.lon])];
+      } else if(el.type==='relation' && el.members){
+        rings = el.members.filter(m=>m.geometry).map(m=>m.geometry.map(p=>[p.lat,p.lon]));
+      }
+      for(const ring of rings){
+        if(ring.length<3) continue;
+        L.polygon(ring, {color:'#2ecc71', weight:1.5, fillColor:'#2ecc71', fillOpacity:0.12, pane:'overlayTilesPane'})
+          .bindTooltip((el.tags&&el.tags.name)||'Protected area', {sticky:true})
+          .addTo(natureReservesLayer);
+      }
+    }
+  }catch(e){ /* Overpass unavailable - keep showing whatever was last rendered */ }
+}
+map.on('moveend zoomend', ()=>{ if(natureReservesActive) scheduleNatureReservesFetch(); });
+
 const fineRoadsLayer = L.layerGroup();
 let fineRoadsFetchTimer = null;
 let fineRoadsAbortController = null;
@@ -1321,8 +1399,8 @@ function updateInversionNote(){
   const found = detectInversionOrIsothermal(getActiveWindProfile(), state.altAMSL);
   if(!found){ el.style.display = 'none'; return; }
   const agl = Math.round(found.altM - state.groundElev);
-  const label = found.type==='inversion' ? 'Inversion below descent position modelled' : 'Isothermal layer below descent position modelled';
-  el.textContent = `⚠ ${label}: ${Math.round(found.altM)} m AMSL / ${agl} m AGL`;
+  const label = found.type==='inversion' ? 'Inversion below descent position' : 'Isothermal layer below descent position';
+  document.getElementById('inversionNoteText').textContent = `⚠ ${label}: ${Math.round(found.altM)} m AMSL / ${agl} m AGL`;
   el.style.display = 'block';
 }
 
@@ -1533,8 +1611,8 @@ function simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, des
 let balloonVolumeM3 = 1050; // configurable in Settings
 let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
 document.getElementById('sBalloonVolume').addEventListener('input', e=>{
-  balloonVolumeM3 = parseInt(e.target.value);
-  document.getElementById('lblBalloonVolume').textContent = balloonVolumeM3 + ' m³';
+  const v = parseInt(e.target.value);
+  if(!isNaN(v) && v>0) balloonVolumeM3 = v;
   recomputeAll();
 });
 document.getElementById('sAdiaVariance').addEventListener('input', e=>{
@@ -1717,7 +1795,7 @@ function updateLandingPositionCard(){
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360; // meteorological "from" direction
   document.getElementById('landingWindText').textContent = `${Math.round(dirFrom)}° · ${speedKmh.toFixed(1)} km/h`;
-  document.getElementById('landingWindArrow').style.transform = `rotate(${dirFrom}deg)`;
+  document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
 
   // Trend arrow: compare the speed at the landing hour against 1h earlier,
   // so you can see at a glance whether the ground wind is building or easing.
@@ -1767,7 +1845,7 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
   const { liftBonusKg } = adiabaticVolumeAndLift(balloonVolumeM3, startAlt, interceptAlt, rate1);
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  document.getElementById('lblAdiaRateBadge').textContent = `Adiabatic: ${actualRate.toFixed(1)} m/s (approx.), ${liftBonusKg.toFixed(1)}kg lift`;
+  document.getElementById('lblAdiaRateBadge').textContent = `Adiab. ca ${actualRate.toFixed(1)} m/s, ${liftBonusKg.toFixed(1)}kg lift`;
 }
 
 function checkObstacleWarnings(path){
@@ -2202,7 +2280,7 @@ function copyResultAll(){
 }
 
 // ---------- charts ----------
-let vertChart=null, hodoChart=null;
+let vertChart=null, hodoChart=null, hodoChartExpanded=null, windProfileChartExpanded=null;
 function drawVertProfile(path){
   const canvas = document.getElementById('vertProfileChart');
   const ctx = canvas.getContext('2d');
@@ -2229,34 +2307,54 @@ function drawVertProfile(path){
     }
   });
 }
-function drawHodograph(path){
+let lastHodographPath = null;
+function drawHodograph(path, canvasId){
+  canvasId = canvasId || 'hodographChart';
+  lastHodographPath = path;
   const pts = [];
   for(let a=state.groundElev; a<=state.altAMSL; a+=200){
     const w = windAt(a);
-    pts.push({x:w.u, y:w.v});
+    pts.push({x:w.u, y:w.v, alt:Math.round(a)});
   }
-  const ctx = document.getElementById('hodographChart').getContext('2d');
-  if(hodoChart){ hodoChart.destroy(); hodoChart=null; }
-  hodoChart = new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:2}]},
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  // A proper hodograph needs EQUAL, SYMMETRIC scales on both axes (so a
+  // constant-speed circle actually looks like a circle, and the curve's
+  // shape/rotation with height is not visually distorted) - Chart.js does
+  // not do this automatically, so we compute a shared +/-max range from the
+  // data ourselves and apply it to both x and y.
+  const maxComponent = Math.max(2, ...pts.map(p=>Math.max(Math.abs(p.x), Math.abs(p.y))));
+  const range = Math.ceil(maxComponent/2)*2 * 1.15; // a little headroom
+  const isThumb = canvasId==='hodographChart';
+  if(isThumb){ if(hodoChart){ hodoChart.destroy(); hodoChart=null; } }
+  else { if(hodoChartExpanded){ hodoChartExpanded.destroy(); hodoChartExpanded=null; } }
+  const newChart = new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,showLine:true,borderColor:'#3fd0c9',backgroundColor:'#3fd0c9',pointRadius:3,pointBackgroundColor:'#3fd0c9'}]},
     options:{
       responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{legend:{display:false},title:{display:true,text:'Descent Hodograph (u/v, m/s)',color:'#8b98a5',font:{size:10}}},
-      scales:{x:{ticks:{color:'#8b98a5',font:{size:9}}},y:{ticks:{color:'#8b98a5',font:{size:9}}}}
+      plugins:{
+        legend:{display:false},
+        title:{display:true,text:'Descent Hodograph (u/v, m/s) - height increases along the curve',color:'#8b98a5',font:{size:10}},
+        tooltip:{callbacks:{label:(ctx)=>`${ctx.raw.alt} m: ${Math.hypot(ctx.raw.x,ctx.raw.y).toFixed(1)} m/s`}}
+      },
+      scales:{
+        x:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.15)'}, title:{display:true,text:'u (m/s, east+)',color:'#8b98a5',font:{size:9}}},
+        y:{min:-range, max:range, ticks:{color:'#8b98a5',font:{size:9}}, grid:{color:'rgba(139,152,165,0.15)'}, title:{display:true,text:'v (m/s, north+)',color:'#8b98a5',font:{size:9}}}
+      }
     }});
+  if(isThumb) hodoChart = newChart; else hodoChartExpanded = newChart;
 }
 
-// Classic sounding-style wind profile: speed vs altitude, with direction
-// shown via the tooltip (and as a compass letter annotation) at each level -
-// often more intuitive for flight planning than the hodograph alone.
 let windProfileChart = null;
-function drawWindProfileChart(){
+function drawWindProfileChart(canvasId){
+  canvasId = canvasId || 'windProfileChart';
   const p = getActiveWindProfile();
   if(!p || !p.length) return;
-  const ctx = document.getElementById('windProfileChart').getContext('2d');
+  const ctx = document.getElementById(canvasId).getContext('2d');
   const labels = p.map(pt=>Math.round(pt.alt_m));
   const speedsKn = p.map(pt=>(pt.speed_ms*KN_PER_MS).toFixed(1));
-  if(windProfileChart){ windProfileChart.destroy(); windProfileChart=null; }
-  windProfileChart = new Chart(ctx,{
+  const isThumb = canvasId==='windProfileChart';
+  if(isThumb){ if(windProfileChart){ windProfileChart.destroy(); windProfileChart=null; } }
+  else { if(windProfileChartExpanded){ windProfileChartExpanded.destroy(); windProfileChartExpanded=null; } }
+  const newChart = new Chart(ctx,{
     type:'line',
     data:{labels, datasets:[{data:speedsKn, borderColor:'#ffb454', backgroundColor:'rgba(255,180,84,.15)', fill:true, pointRadius:2, tension:0.15}]},
     options:{
@@ -2276,10 +2374,30 @@ function drawWindProfileChart(){
       }
     }
   });
+  if(isThumb) windProfileChart = newChart; else windProfileChartExpanded = newChart;
+}
+// ---- expandable chart thumbnails: click either mini chart to open it
+// larger in an overlay, with a close button to return to the compact view ----
+function expandChart(which){
+  const overlay = document.getElementById('chartExpandOverlay');
+  const canvas = document.getElementById('chartExpandCanvas');
+  overlay.classList.add('show');
+  if(which==='wind'){
+    canvas.style.aspectRatio = '';
+    drawWindProfileChart('chartExpandCanvas');
+  } else {
+    canvas.style.aspectRatio = '1/1';
+    drawHodograph(lastHodographPath || [], 'chartExpandCanvas');
+  }
+}
+function closeExpandedChart(){
+  document.getElementById('chartExpandOverlay').classList.remove('show');
+  if(windProfileChartExpanded){ windProfileChartExpanded.destroy(); windProfileChartExpanded=null; }
+  if(hodoChartExpanded){ hodoChartExpanded.destroy(); hodoChartExpanded=null; }
 }
 document.getElementById('tgHodograph').addEventListener('click', function(){
   const active = this.classList.toggle('active');
-  document.getElementById('hodographCard').style.display = active ? 'block' : 'none';
+  document.getElementById('hodographThumbWrap').style.display = active ? 'block' : 'none';
 });
 
 // ---------- sliders ----------
@@ -2454,10 +2572,10 @@ try{
   });
 }catch(e){}
 Object.entries(EMERGENCY_FIELD_IDS).forEach(([id,key])=>{
-  document.getElementById(id).addEventListener('change', e=>{
-    try{ localStorage.setItem(key, e.target.value); }catch(err){}
-    updateEmergencyContactStatus();
-  });
+  const el = document.getElementById(id);
+  const save = e=>{ try{ localStorage.setItem(key, e.target.value); }catch(err){} updateEmergencyContactStatus(); };
+  el.addEventListener('change', save);
+  el.addEventListener('input', save); // also save as-you-type, not just on blur
 });
 function updateEmergencyContactStatus(){
   const name = document.getElementById('cfgPilotName').value.trim();
@@ -2517,21 +2635,32 @@ document.getElementById('btnEmergencyCopy').addEventListener('click', ()=>{
 // app. WhatsApp specifically requires the recipient's number to already be
 // reachable via WhatsApp (i.e. have the app), and wa.me only prefills text,
 // it can't attach files/location beyond what's in the text itself.
-document.getElementById('btnEmergencyWhatsapp').addEventListener('click', ()=>{
+function sendEmergencyWhatsapp(){
   const phone = document.getElementById('cfgEmergencyPhone').value.replace(/[^0-9]/g,'');
   const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
   window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-});
-document.getElementById('btnEmergencySms').addEventListener('click', ()=>{
+}
+function sendEmergencySms(){
   const phone = document.getElementById('cfgEmergencyPhone').value;
   const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
   window.open(`sms:${phone}?body=${text}`, '_blank');
-});
-document.getElementById('btnEmergencyEmailSend').addEventListener('click', ()=>{
+}
+function sendEmergencyEmail(){
   const email = document.getElementById('cfgEmergencyEmail').value;
   const subject = encodeURIComponent('GBLP Emergency Position Report');
   const body = encodeURIComponent(document.getElementById('emergencyMsgText').value);
   window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+}
+document.getElementById('btnEmergencyWhatsapp').addEventListener('click', sendEmergencyWhatsapp);
+document.getElementById('btnEmergencySms').addEventListener('click', sendEmergencySms);
+document.getElementById('btnEmergencyEmailSend').addEventListener('click', sendEmergencyEmail);
+document.getElementById('btnEmergencyAllChannels').addEventListener('click', ()=>{
+  // Fired synchronously within one user gesture so browsers don't block the
+  // pop-ups as unsolicited - still, some browsers may limit how many
+  // simultaneous windows/apps can open at once.
+  sendEmergencyWhatsapp();
+  sendEmergencySms();
+  sendEmergencyEmail();
 });
 // One-time-per-load reminder if nothing has been configured yet.
 setTimeout(()=>{
@@ -2771,6 +2900,10 @@ restartLogbookTimer();
 // page; on return, the authorization code in the URL is exchanged for an
 // access token client-side.
 const DROPBOX_REDIRECT_URI = location.origin + location.pathname;
+document.getElementById('dropboxRedirectUriText').textContent = DROPBOX_REDIRECT_URI;
+function copyDropboxRedirectUri(){
+  navigator.clipboard && navigator.clipboard.writeText(DROPBOX_REDIRECT_URI);
+}
 function base64UrlEncode(bytes){
   let str = btoa(String.fromCharCode(...bytes));
   return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -2802,11 +2935,18 @@ document.getElementById('btnDropboxConnect').addEventListener('click', async ()=
 });
 async function completeDropboxOAuthIfReturning(){
   const params = new URLSearchParams(location.search);
+  const oauthError = params.get('error');
+  if(oauthError){
+    document.getElementById('dropboxStatus').textContent = '⚠ Dropbox returned an error: '+(params.get('error_description')||oauthError)+'. Check that the Redirect URI above is registered EXACTLY in your Dropbox app settings.';
+    history.replaceState(null, '', location.pathname);
+    return;
+  }
   const code = params.get('code');
   if(!code) return;
   const appKey = localStorage.getItem('gblp_dropbox_appkey');
   const verifier = sessionStorage.getItem('gblp_dropbox_pkce_verifier');
-  if(!appKey || !verifier) return;
+  if(!appKey){ document.getElementById('dropboxStatus').textContent = '⚠ No App Key was saved before redirecting - enter it and try again.'; return; }
+  if(!verifier){ document.getElementById('dropboxStatus').textContent = '⚠ Lost the PKCE verifier (e.g. browser cleared session data mid-flow) - try connecting again.'; return; }
   try{
     const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
       method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -3027,7 +3167,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph','tgGroundWind'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgLanding','tgHodograph','tgGroundWind','tgNatureReserves'];
 function saveConfig(){
   try{
     const cfg = {};

@@ -138,6 +138,30 @@ This requires your own free Dropbox app (Anthropic/Claude cannot provision one o
 - **Ground wind trend arrow**: the "Ground Wind at Landing Site" reading now shows ↗/↘/→ comparing the forecast speed at landing time against 1h earlier in the model, so you can see at a glance whether it's building or easing.
 - **Adiabatic model rebuilt on real gas physics**: instead of a single two-point volume-ratio estimate with a guessed thermal time constant, the model now steps through the actual descent and integrates the enclosed H₂ gas *temperature* over time using: Poisson's adiabatic law per altitude step, H₂'s real specific heat capacity and gas constant, an envelope surface area derived geometrically from the configured volume (assumed spherical), and a convective heat-transfer coefficient that scales with descent rate. The resulting "virtual lift bonus" and actual braked descent rate are more physically grounded, though the convective coefficient itself is still an estimated parameter (no wind-tunnel data for the envelope) - this is exactly what the "Empirical variance factor" in Settings is for: tune it against your own logged flights.
 
+## New in this round (v44)
+
+- **No more scroll-sliders inside small sidebar boxes**: data cells now use `overflow:hidden` with ellipsis truncation and slightly smaller fonts, so nothing can trigger an internal scrollbar.
+- **Slider layout**: the configured (brown) value now sits directly next to its slider's title; the computed (badge) value is right-aligned.
+- **"Center height" renamed to "Landing Area Approx Height"**.
+- **Adiabatic badge shortened** to "Adiab. ca X.X m/s, X.Xkg lift".
+- **Hodograph fixed**: it lacked equal, symmetric axis scaling (the actual reason it didn't look like a normal hodograph) - now uses a shared ±range on both axes and a true 1:1 aspect ratio.
+- **Wind Profile + Descent Hodograph combined** into one "Flight Charts" card, shown side by side as thumbnails; tapping either opens it larger in an overlay with a close button.
+- **Map-bottom legend close buttons moved to the left edge** of each bar (Power Lines, Ground Wind).
+- **"Landing Position" card renamed to "Projected Landing Area"**.
+- **Vertical particle-height slider fixed for iPad/Safari**: it only had the Firefox/Chrome-desktop `writing-mode` trick, missing WebKit's own `-webkit-appearance: slider-vertical`, which is why it wasn't rendering on iPad.
+
+## New in this round (v45)
+
+- **Inversion/isothermal layer note** moved into "Projected Landing Area", as its own small box next to Ground Wind.
+- **Ground wind direction arrow** rotation fixed (was 180° off).
+- **Pilot/aircraft/contact fields** now also save on every keystroke, not just on blur - more robust against the app being backgrounded on iPad.
+- **"Refresh now" + "Auto-refresh interval"** placed side by side to save space.
+- **Balloon gas volume** is now a plain numeric input instead of a slider.
+- **Dropbox troubleshooting**: Dropbox auto-creates the target folder on upload - you don't need to create it yourself. The exact Redirect URI to register in your Dropbox app is now shown with a Copy button in Settings, and OAuth errors (e.g. a redirect URI mismatch) are now shown in the status line instead of silently failing.
+- **"Send on all channels"** button added to the emergency message panel (opens WhatsApp, SMS, and Email in one tap).
+- **Power line legend** now includes all point symbols (tower, substation, plant, generator, transformer, compensator, switch), and only shows the categories currently enabled in Settings.
+- **Nature reserves / protected areas layer** (new toggle button): drawn from OpenStreetMap data via Overpass (free, no API key, ODbL-licensed) - the official WDPA database was considered too but requires registration and restricts commercial use, so OSM's own protected-area tagging is used instead.
+
 ## Known limitations & approximations
 
 

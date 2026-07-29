@@ -240,6 +240,15 @@ The console log didn't show a crash in Plan Descent itself, but pointed to real 
 
 - **Nature reserves / place labels query scope reduced**: your v51 console showed 429 (rate limit) on the primary Overpass mirror AND 504 Gateway Timeout on the fallback mirrors too - the fact that even independent servers timed out points to the query itself being too expensive (a wide-open viewport at low zoom can span 150+ km, and protected-area polygons can have thousands of nodes), not just one overloaded server. Both queries are now capped to a fixed ~35-40km radius around the map center regardless of zoom, and the nature reserves query was simplified from 6 clauses to 3 (regex tag matching) - both meaningfully cheaper for Overpass to execute.
 
+## New in this round (v54)
+
+- **Mode toggle positioning fixed properly**: replaced the JS height-measurement approach (which kept being slightly off) with a real CSS flex column (`#topAlertStack`) containing the warning banners and the mode toggle in DOM order - it now always sits directly below whichever warnings are visible, with no manual math involved at all.
+- **Particle-height slider's AMSL reading**: no longer bold, wraps to two lines.
+- **Course drift question answered**: yes, this is intentional - after the first ~15 min (bridging into a 10-40 min blend), the projected cruise path follows the *forecast* wind direction for the hour actually being flown through, rather than assuming the currently-observed heading holds for hours. A slight curve is expected whenever the model's predicted wind direction differs from what's currently observed.
+- **Plan Descent search improved**: coarser step size doubled (finer resolution) and the fine-refinement window widened substantially - the previous window was likely too narrow, letting the true best fit slip through if it fell just outside it. The search now also automatically extends beyond 240 min if the boundary was hit and still improving.
+- **Real race condition fixed**: the async reverse-geocoding/elevation lookups for the live and planned "Projected/Planned Landing Area" displays could resolve *after* switching modes and overwrite the other mode's now-current display with stale data - both now check they're still relevant before applying their result.
+- **Sidebar "vertical sliders" - likely explanation found**: these are almost certainly iOS's native overlay scroll indicators, which appear during any touch-scroll and can't be hidden via `::-webkit-scrollbar` CSS (that only affects desktop WebKit/Chrome, not iOS's own overlay bars) - the only real fix is eliminating the need to scroll in the first place. "Flight Charts" now collapses by default, and all four sidebar cards are further compressed (smaller padding/gaps/font sizes) to fit more without scrolling.
+
 ## Known limitations & approximations
 
 

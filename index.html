@@ -98,7 +98,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 .descent-path-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 3px #000000);}
 
 /* ---- floating mode toggle (now docked in header) ---- */
-#modeToggle{position:absolute;top:8px;left:8px;z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#modeToggle{z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);align-self:flex-start;}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
@@ -113,7 +113,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #particleHeightSlider::-webkit-slider-runnable-track{width:4px;}
 #particleHeightSlider::-webkit-slider-thumb{width:18px;height:18px;margin-top:-6px;}
 #particleHeightLabel{font-size:8.5px;color:var(--muted);white-space:nowrap;text-align:center;line-height:1.15;margin-top:5px;}
-#particleHeightLabelAmsl{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap;text-align:center;margin-bottom:5px;}
+#particleHeightLabelAmsl{font-size:10px;font-weight:400;color:var(--text);white-space:normal;text-align:center;line-height:1.2;margin-bottom:5px;}
 
 /* ---- layer toggle group (header, top-left) ---- */
 .layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
@@ -132,26 +132,26 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
 
-#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;scrollbar-width:none;-ms-overflow-style:none;}
+#sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px;display:flex;flex-direction:column;gap:4px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;scrollbar-width:none;-ms-overflow-style:none;}
 #sidebar::-webkit-scrollbar{width:0;height:0;background:transparent;display:none;}
 #sidebar.collapsed{transform:translateX(100%);}
 #sidebarHandle{position:absolute;top:50%;transform:translateY(-50%);z-index:900;width:20px;height:56px;background:var(--panel2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;box-shadow:-2px 0 6px rgba(0,0,0,.25);}
 #sidebarHandle:active{background:var(--accent);color:#00201d;}
 
-.card{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:7px;overflow-x:hidden;}
-.card h3{margin:0 0 6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:6px;overflow-x:hidden;}
+.card h3{margin:0 0 4px 0;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
 .card h3 .chev{transition:transform .15s;color:var(--muted);}
 .card.collapsed .chev{transform:rotate(-90deg);}
 .card.collapsed .cardbody{display:none;}
 
-.datagrid{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px;}
-.datacell{background:var(--panel);border-radius:7px;padding:5px 7px;overflow:hidden;}
+.datagrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 7px;}
+.datacell{background:var(--panel);border-radius:6px;padding:4px 6px;overflow:hidden;}
 .datacell label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
 .datacell .val{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .datacell .val.small{font-size:11.5px;}
 .datacell.wide{grid-column:1/3;}
 
-.slider-row{margin-bottom:4px;}
+.slider-row{margin-bottom:3px;}
 .slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
@@ -178,14 +178,15 @@ select, .textbtn{width:100%;background:var(--panel);color:var(--text);border:1px
 button.primary{background:var(--accent);color:#00201d;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:13px;width:100%;cursor:pointer;}
 button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;width:100%;cursor:pointer;}
 
-#warnbar{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+#warnbar{background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
 #warnbar.show{display:flex;}
-.yellow-warn{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,178,0,.95);color:#241a00;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;z-index:599;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
-.gps-warn{position:absolute;top:8px;left:8px;right:8px;background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:400;display:none;z-index:598;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+.yellow-warn{background:rgba(224,178,0,.95);color:#241a00;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+.gps-warn{background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:400;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
+#topAlertStack{position:absolute;top:8px;left:8px;right:8px;z-index:600;display:flex;flex-direction:column;gap:8px;align-items:stretch;pointer-events:none;}
+#topAlertStack > *{pointer-events:auto;}
 .gps-warn.show{display:flex;}
 .gps-warn button.ghost-inline{flex-shrink:0;background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 10px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;}
 .yellow-warn.show{display:flex;}
-#warnbar.show ~ .yellow-warn.show{top:52px;}
 .banner-close{flex-shrink:0;background:rgba(0,0,0,0.15);border:none;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;}
 .reopen-icon{position:absolute;top:8px;left:8px;z-index:600;width:34px;height:34px;border-radius:50%;border:2px solid #fff;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 .reopen-icon.red{background:var(--bad);color:#fff;}
@@ -477,10 +478,26 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="main">
     <div id="mapwrap">
       <div id="map"></div>
-      <div id="modeToggle">
-        <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> Landing Area</button>
-        <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
+      <div id="topAlertStack">
+        <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
+        <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
+        <div id="gpsWarnBar" class="gps-warn">
+          <span id="gpsWarnText">GPS data not available</span>
+          <span id="manualModeSwitchInWarn" style="display:none;align-items:center;gap:6px;">
+            <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
+            <span style="font-size:11px;font-weight:600;white-space:nowrap;">Manual Mode</span>
+          </span>
+          <button class="ghost-inline" id="btnEnableManualModeFromWarn">Enable Manual Mode</button>
+          <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
+        </div>
+        <div id="modeToggle">
+          <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> Landing Area</button>
+          <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
+        </div>
       </div>
+      <button id="gpsWarnIcon" class="reopen-icon red" style="display:none;left:92px;" onclick="reopenBanner('gpsWarnBar','gpsWarnIcon')" title="Show GPS warning">📡</button>
+      <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
+      <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
       <div id="mapControlsStack" class="map-controls-stack">
         <div id="particleHeightSliderWrap">
           <div id="particleHeightLabelAmsl">—m AMSL</div>
@@ -491,20 +508,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
       </div>
-      <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
-      <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
-      <div id="descentWindWarnBar" class="yellow-warn"><span id="descentWindWarnText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button></div>
-      <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
-      <div id="gpsWarnBar" class="gps-warn">
-        <span id="gpsWarnText">GPS data not available</span>
-        <span id="manualModeSwitchInWarn" style="display:none;align-items:center;gap:6px;">
-          <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
-          <span style="font-size:11px;font-weight:600;white-space:nowrap;">Manual Mode</span>
-        </span>
-        <button class="ghost-inline" id="btnEnableManualModeFromWarn">Enable Manual Mode</button>
-        <button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
-      </div>
-      <button id="gpsWarnIcon" class="reopen-icon red" style="display:none;left:92px;" onclick="reopenBanner('gpsWarnBar','gpsWarnIcon')" title="Show GPS warning">📡</button>
       <div id="powerLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
         <span class="gwl-title">Power:</span>
@@ -653,7 +656,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <!-- WIND PROFILE + DESCENT HODOGRAPH, side by side as thumbnails - click
            either to open it larger with a close button, per request. The
            hodograph thumbnail is shown/hidden via the header toggle button. -->
-      <div class="card">
+      <div class="card collapsed">
         <h3 onclick="toggleCard(this)">Flight Charts <span class="chev">▾</span></h3>
         <div class="cardbody" style="display:flex;gap:8px;">
           <div style="flex:1;min-width:0;">
@@ -733,7 +736,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v53';
+const APP_VERSION = 'v54';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2047,6 +2050,10 @@ async function fetchLandingPositionDetails(lat, lon){
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
       fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`)
     ]);
+    // This is a LIVE (monitor-mode) lookup - if the app switched to Plan
+    // Descent while this was in flight, its result is now stale and must
+    // not overwrite the planned display that's showing instead.
+    if(state.appMode==='plan' && state.plannedLandingActive) return;
     const geoJ = await geoR.json();
     const name = (geoJ.address && (geoJ.address.village||geoJ.address.town||geoJ.address.city||geoJ.address.hamlet||geoJ.address.municipality)) || null;
     document.getElementById('landingPosTown').textContent = name ? `near ${name}` : '—';
@@ -2143,14 +2150,10 @@ function setWarnbarContent(text){
 // exactly where the warning banners also appear - push it down below
 // whichever banners are currently visible so it's never covered.
 function repositionModeToggle(){
-  let top = 8;
-  const warnbar = document.getElementById('warnbar');
-  const yellowBar = document.getElementById('descentWindWarnBar');
-  const gpsBar = document.getElementById('gpsWarnBar');
-  if(warnbar.classList.contains('show')) top += warnbar.offsetHeight + 8;
-  if(yellowBar.classList.contains('show')) top += yellowBar.offsetHeight + 8;
-  if(gpsBar.classList.contains('show')) top += gpsBar.offsetHeight + 8;
-  document.getElementById('modeToggle').style.top = top + 'px';
+  // No-op: the mode toggle now lives inside #topAlertStack, a real CSS flex
+  // column alongside the warning banners - it naturally follows directly
+  // below whichever ones are visible without any JS height math, which is
+  // exactly what kept being slightly off before.
 }
 // ---- terrain clearance along the descent path ----
 async function checkTerrainClearance(path, signal){
@@ -2242,7 +2245,7 @@ function startGroundWindLayer(){
   if(particleHeightAGL > maxAGL) particleHeightAGL = 100;
   slider.value = particleHeightAGL;
   document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
-  document.getElementById('particleHeightLabelAmsl').textContent = Math.round(state.groundElev+particleHeightAGL)+'m AMSL';
+  document.getElementById('particleHeightLabelAmsl').innerHTML = Math.round(state.groundElev+particleHeightAGL)+'m<br>AMSL';
   document.getElementById('particleHeightSliderWrap').classList.add('show');
   animateGroundWind();
   checkDescentTimeWindWarning();
@@ -2250,7 +2253,7 @@ function startGroundWindLayer(){
 document.getElementById('particleHeightSlider').addEventListener('input', e=>{
   particleHeightAGL = parseInt(e.target.value);
   document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
-  document.getElementById('particleHeightLabelAmsl').textContent = Math.round(state.groundElev+particleHeightAGL)+'m AMSL';
+  document.getElementById('particleHeightLabelAmsl').innerHTML = Math.round(state.groundElev+particleHeightAGL)+'m<br>AMSL';
 });
 function stopGroundWindLayer(){
   groundWindLayer.active = false;
@@ -2467,26 +2470,44 @@ async function planDescentToTarget(lat, lon){
   // since landing position vs. initiation delay is NOT a smooth, monotonic
   // function (wind direction/speed changes with both altitude and time can
   // make it loop or reverse). A full scan first avoids that trap.
-  const COARSE_STEPS = 24;
+  const MAX_DELAY_MIN = 240;
+  const COARSE_STEPS = 48; // finer resolution (5 min steps) so a sharp local optimum isn't skipped over
   let best=null, bestDist=Infinity, bestPath=null;
   for(let i=0;i<=COARSE_STEPS;i++){
-    const mid = (i/COARSE_STEPS)*240;
+    const mid = (i/COARSE_STEPS)*MAX_DELAY_MIN;
     const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
     const last=path[path.length-1];
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
   }
-  // Fine local refinement, now safely centered on the coarse winner.
-  const coarseStepMin = 240/COARSE_STEPS;
-  let lo=Math.max(0,best-coarseStepMin), hi=Math.min(240,best+coarseStepMin);
-  for(let iter=0; iter<14; iter++){
+  // If the coarse scan's best result sits right at the edge of the range
+  // and is still a poor match, the true answer may require MORE delay than
+  // our normal range allows - extend further out rather than silently
+  // settling for a mediocre fit at the boundary.
+  if(best >= MAX_DELAY_MIN-1 && bestDist > 3000){
+    for(let extraMin=270; extraMin<=600; extraMin+=30){
+      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, extraMin*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
+      const last=path[path.length-1];
+      const d = haversine(last.lat,last.lon,lat,lon);
+      if(d<bestDist){ bestDist=d; best=extraMin; bestPath=path; } else if(d>bestDist*1.5){ break; } // clearly moving away now, stop extending
+    }
+  }
+  // Fine local refinement, centered on the coarse winner. Deliberately WIDE
+  // (several coarse-steps in each direction, not just one) - a too-narrow
+  // starting window was the likely cause of "obviously reachable" points
+  // still being missed: if the true optimum fell just outside a tight
+  // window, the refinement could converge on a mediocre local answer well
+  // short of the actual best fit.
+  const coarseStepMin = MAX_DELAY_MIN/COARSE_STEPS;
+  let lo=Math.max(0,best-coarseStepMin*4), hi=Math.min(Math.max(MAX_DELAY_MIN,best+30),best+coarseStepMin*4);
+  for(let iter=0; iter<18; iter++){
     const mid=(lo+hi)/2;
     const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
     const last=path[path.length-1];
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
-    const span=(hi-lo)/2.2;
-    lo=Math.max(0,best-span); hi=Math.min(240,best+span);
+    const span=(hi-lo)/2.1;
+    lo=Math.max(0,best-span); hi=best+span;
     arrivalHourIdx = Math.round(last.t/3600); // refine the wind-hour estimate as the search converges
   }
 
@@ -2651,6 +2672,7 @@ document.getElementById('btnCenterPlanned').addEventListener('click', ()=>{
 // exists) - mirrors updateLandingPositionCard() but for the planned target
 // instead of the live/current descent projection ----
 async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
+  if(!(state.appMode==='plan' && state.plannedLandingActive)) return; // mode changed while this was computing
   document.getElementById('landingPosCoords').textContent = toCompact(cLat, cLon);
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
@@ -2663,6 +2685,7 @@ async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${cLat}&lon=${cLon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
       fetch(`https://api.open-meteo.com/v1/elevation?latitude=${cLat}&longitude=${cLon}`)
     ]);
+    if(!(state.appMode==='plan' && state.plannedLandingActive)) return; // mode changed while these were in flight
     const geoJ = await geoR.json();
     const name = (geoJ.address && (geoJ.address.village||geoJ.address.town||geoJ.address.city||geoJ.address.hamlet||geoJ.address.municipality)) || null;
     document.getElementById('landingPosTown').textContent = name ? `near ${name}` : '—';
@@ -2876,7 +2899,15 @@ document.getElementById('iconSun').style.display = 'block';
 document.getElementById('iconMoon').style.display = 'none';
 
 // ---------- collapsible cards ----------
-function toggleCard(h3){ h3.parentElement.classList.toggle('collapsed'); }
+function toggleCard(h3){
+  h3.parentElement.classList.toggle('collapsed');
+  // A chart rendered while its card was collapsed (display:none) can end up
+  // sized incorrectly, since Chart.js can't measure a hidden container -
+  // nudge it to recompute now that it's actually visible again.
+  if(!h3.parentElement.classList.contains('collapsed')){
+    setTimeout(()=>window.dispatchEvent(new Event('resize')), 50);
+  }
+}
 
 // ---------- header popovers (settings + test mode) ----------
 function setupPopover(btnId, panelId){

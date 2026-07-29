@@ -740,7 +740,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v56';
+const APP_VERSION = 'v57';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1790,7 +1790,20 @@ function simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, des
     liftBonusKg = volumeM3*(rhoGasIso-rhoGasActual); // positive = extra buoyancy retained vs. isothermal
     alt = altNext;
   }
-  return { liftBonusKg: Math.max(0, liftBonusKg)*adiaVarianceFactor, finalGasTempC: Tgas-273.15 };
+  // Reference bounds for how ADIABATIC this descent actually was: fully
+  // isothermal (Tgas relaxes to ambient throughout -> 0) vs. fully adiabatic
+  // (single-step compression from start to intercept with NO heat exchange
+  // at all -> 1). Used below to scale the braking effect directly by how
+  // adiabatic the descent was - a faster descent is MORE adiabatic and
+  // should brake MORE, not less. (An earlier version compared the lift
+  // bonus against the quadratically-growing drag force instead, which made
+  // a genuinely growing lift bonus translate into a SHRINKING relative
+  // effect at high descent rates - backwards from how adiabatic braking is
+  // actually understood to behave.)
+  const TambAtIntercept = Tamb(interceptAltM);
+  const TfullyAdiabatic = Tamb(startAltM) * Math.pow(P(interceptAltM)/P(startAltM), (GAMMA-1)/GAMMA);
+  const adiabaticness = Math.max(0, Math.min(1, (Tgas-TambAtIntercept)/Math.max(0.01, TfullyAdiabatic-TambAtIntercept)));
+  return { liftBonusKg: Math.max(0, liftBonusKg)*adiaVarianceFactor, adiabaticness, finalGasTempC: Tgas-273.15 };
 }
 let balloonVolumeM3 = 1050; // configurable in Settings
 let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
@@ -1815,25 +1828,17 @@ function adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, descRateMs){
 // simplification (no true force-balance transient simulation of the whole
 // flight), but the underlying thermal physics feeding it is now real.
 function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1Ms){
-  const { liftBonusKg } = simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, rate1Ms);
-  // The braking effect must be weighed against the actual NET FORCE driving
-  // the descent (drag at the nominal rate), not the balloon's entire
-  // buoyant mass - comparing against total buoyant mass (which is huge,
-  // hundreds of kg) made the effect round down to "no difference at all"
-  // regardless of input, which is what was being reported. A simple
-  // quadratic-drag estimate (sphere, Cd~0.47) gives the force actually
-  // being overcome, so the same lift bonus now shows up as a real, if
-  // still modest, percentage - larger at slower descent rates (where drag
-  // is small to begin with), smaller at fast ones (drag dominates), which
-  // matches how adiabatic braking is understood to behave in practice.
-  const r = Math.pow((3*volumeM3)/(4*Math.PI), 1/3);
-  const crossSectionArea = Math.PI*r*r;
-  const Cd = 0.47; // rough drag coefficient for a sphere
-  const rhoAir = isoDensity(interceptAltM);
-  const dragForceAtNominalRate = 0.5*Cd*crossSectionArea*rhoAir*rate1Ms*rate1Ms;
-  const liftForceN = liftBonusKg*9.80665;
-  const brakingFraction = Math.min(0.9, liftForceN/Math.max(dragForceAtNominalRate, 0.0001));
-  return Math.max(0.1, rate1Ms*Math.sqrt(Math.max(0.02, 1-brakingFraction)));
+  const { adiabaticness } = simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, rate1Ms);
+  // Braking scales directly with how ADIABATIC the descent actually was
+  // (0 = fully relaxed to ambient/isothermal, 1 = fully adiabatic) - a
+  // faster descent is more adiabatic and brakes MORE, not less. MAX_BRAKING_
+  // FRAC is a deliberately modest ceiling for the fully-adiabatic limit;
+  // this remains an approximation (no wind-tunnel data for the actual
+  // envelope), which is exactly what the "Empirical variance factor" in
+  // Settings is for - calibrate it against your own logged flights.
+  const MAX_BRAKING_FRAC = 0.20;
+  const brakingFraction = Math.min(0.9, MAX_BRAKING_FRAC*adiabaticness*adiaVarianceFactor);
+  return Math.max(0.1, rate1Ms*(1-brakingFraction));
 }
 
 // ---------- Monte-Carlo landing footprint ----------

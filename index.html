@@ -676,7 +676,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v42';
+const APP_VERSION = 'v43';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1921,6 +1921,7 @@ async function checkAirspaceIntrusion(path, signal){
 }
 
 // ---------- ground wind particle flow layer (0-200m AGL) ----------
+let lastWindWarnInitMin = null;
 const groundWindLayer = {canvas:null, ctx:null, particles:[], animId:null, active:false};
 function initGroundWindCanvas(){
   const canvas = document.createElement('canvas');
@@ -2291,7 +2292,6 @@ document.getElementById('sInit').addEventListener('input', checkDescentTimeWindW
 
 // ---- yellow notice: ground wind is shown for the PLANNED descent time,
 // not right now, whenever that time isn't "immediate" ----
-let lastWindWarnInitMin = null;
 function checkDescentTimeWindWarning(){
   const initMin = parseFloat(document.getElementById('sInit').value);
   const shouldShow = groundWindLayer.active && initMin > 30;

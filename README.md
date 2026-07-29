@@ -249,6 +249,13 @@ The console log didn't show a crash in Plan Descent itself, but pointed to real 
 - **Real race condition fixed**: the async reverse-geocoding/elevation lookups for the live and planned "Projected/Planned Landing Area" displays could resolve *after* switching modes and overwrite the other mode's now-current display with stale data - both now check they're still relevant before applying their result.
 - **Sidebar "vertical sliders" - likely explanation found**: these are almost certainly iOS's native overlay scroll indicators, which appear during any touch-scroll and can't be hidden via `::-webkit-scrollbar` CSS (that only affects desktop WebKit/Chrome, not iOS's own overlay bars) - the only real fix is eliminating the need to scroll in the first place. "Flight Charts" now collapses by default, and all four sidebar cards are further compressed (smaller padding/gaps/font sizes) to fit more without scrolling.
 
+## New in this round (v56)
+
+- **Vertical particle-height slider thumb centering** made more robust (fixed-pixel margin-based centering instead of a combined percentage transform).
+- **Adiabatic braking display precision increased** (2 decimals instead of 1) - the underlying physics already produced a real, if modest, difference from nominal (confirmed numerically), but at typical moderate/high descent rates that difference was small enough to round away at 1-decimal display precision, making it look identical.
+- **Ground Wind box widened** (now spans both columns) - the direction/speed/trend row was being clipped by the parent cell's overflow, cutting off the trend arrow.
+- Verified already in place from earlier in this session: popovers opening flush to the screen edge with a close button, "PLANNED"/"Estimated Descent Point" only showing during Plan Descent, the shortened box titles, and the Test Mode field labels ("Speed (kn)", "Course (° true)", "Alt AMSL (m)").
+
 ## Known limitations & approximations
 
 

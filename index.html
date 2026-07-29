@@ -46,7 +46,8 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 .gps-dot.bad{background:var(--bad);}
 
 /* ---- settings popover ---- */
-#settingsPanel, .settings-popover{position:fixed;width:280px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;z-index:5000;display:none;}
+#settingsPanel, .settings-popover{position:fixed;width:280px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;padding-top:32px;z-index:5000;display:none;}
+.popover-close{position:absolute;top:8px;right:8px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:13px;line-height:1;cursor:pointer;z-index:1;}
 #settingsPanel.open, .settings-popover.open{display:block;}
 #settingsPanel .subhead, .settings-popover .subhead{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:10px 0 6px;}
 #settingsPanel .subhead:first-child, .settings-popover .subhead:first-child{margin-top:2px;}
@@ -109,9 +110,9 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 .center-map-btn:active{transform:scale(0.93);}
 #particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:56px;box-sizing:border-box;padding:10px 0 9px;border-bottom:1px solid var(--border);}
 #particleHeightSliderWrap.show{display:flex;}
-#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:14px;height:100px;}
-#particleHeightSlider::-webkit-slider-runnable-track{width:4px;}
-#particleHeightSlider::-webkit-slider-thumb{width:18px;height:18px;margin-top:-6px;}
+#particleHeightSliderTrack{position:relative;width:4px;height:100px;background:var(--border);border-radius:2px;margin:0 auto;touch-action:none;}
+#particleHeightSliderFill{position:absolute;bottom:0;left:0;width:100%;background:var(--accent);border-radius:2px;}
+#particleHeightSliderThumb{position:absolute;left:50%;margin-left:-9px;width:18px;height:18px;box-sizing:border-box;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);box-shadow:0 1px 3px rgba(0,0,0,.4);transform:translateY(50%);cursor:pointer;touch-action:none;}
 #particleHeightLabel{font-size:8.5px;color:var(--muted);white-space:nowrap;text-align:center;line-height:1.15;margin-top:5px;}
 #particleHeightLabelAmsl{font-size:10px;font-weight:400;color:var(--text);white-space:normal;text-align:center;line-height:1.2;margin-bottom:5px;}
 
@@ -501,7 +502,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="mapControlsStack" class="map-controls-stack">
         <div id="particleHeightSliderWrap">
           <div id="particleHeightLabelAmsl">—m AMSL</div>
-          <input type="range" id="particleHeightSlider" min="0" max="1200" step="10" value="100">
+          <div id="particleHeightSliderTrack" class="custom-vslider-track">
+            <div id="particleHeightSliderFill" class="custom-vslider-fill"></div>
+            <div id="particleHeightSliderThumb" class="custom-vslider-thumb"></div>
+          </div>
           <div id="particleHeightLabel">+100m<br>AGL</div>
         </div>
         <button id="btnCenterPlanned" class="center-map-btn" title="Center on planned landing area" style="display:none;color:#ff8a00;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
@@ -551,7 +555,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               <div class="val small" id="posManualHint" style="display:none;color:var(--warn);">📍 Click on Position</div>
             </div>
             <div class="datacell">
-              <label>Alt AMSL (GPS)</label>
+              <label id="altAMSLLabel">Alt AMSL (GPS)</label>
               <div class="val" id="altAMSL">—</div>
               <div class="stepper-input-row" id="altAMSLInputRow" style="display:none;">
                 <input type="number" class="manual-input" id="altAMSLInput" placeholder="m AMSL">
@@ -563,7 +567,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
             <div class="datacell"><label>Alt AGL</label><div class="val" id="altAGL">—</div></div>
             <div class="datacell">
-              <label>Course (° True GPS)</label>
+              <label id="courseLabel">Course (° True GPS)</label>
               <div class="val" id="courseVal">—</div>
               <div class="stepper-input-row" id="courseInputRow" style="display:none;">
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" class="manual-input" id="courseValInput" placeholder="090">
@@ -574,10 +578,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               </div>
             </div>
             <div class="datacell">
-              <label>Speed (GPS)</label>
+              <label id="speedLabel">Speed (GPS)</label>
               <div class="val" id="speedVal">—</div>
               <div class="stepper-input-row" id="speedValInputRow" style="display:none;">
-                <input type="number" step="0.1" class="manual-input" id="speedValInput" placeholder="kn">
+                <input type="text" inputmode="decimal" class="manual-input" id="speedValInput" placeholder="kn">
                 <div class="input-steppers">
                   <button type="button" id="speedUpBtn">▲</button>
                   <button type="button" id="speedDownBtn">▼</button>
@@ -591,23 +595,23 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)"><span><span style="color:var(--bad);">PLANNED</span> Landing Area</span> <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span><span id="plannedBadgeWord" style="color:var(--bad);display:none;">PLANNED </span>Landing Area</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell">
-              <label>Approx. Landing Position</label>
+              <label>Approx Position</label>
               <div style="display:flex;justify-content:space-between;gap:6px;">
                 <div class="val small" id="landingPosCoords">—</div>
                 <div class="val small" id="landingPosTown" style="color:var(--muted);text-align:right;">—</div>
               </div>
             </div>
-            <div class="datacell"><label>Landing Area Approx Height</label><div class="val small" id="landingPosAlt">—</div></div>
-            <div class="datacell">
-              <label>Ground Wind at Landing Site</label>
-              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:6px;">
+            <div class="datacell"><label>Approx Height</label><div class="val small" id="landingPosAlt">—</div></div>
+            <div class="datacell wide">
+              <label>Ground Wind</label>
+              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:6px;overflow:visible;text-overflow:clip;white-space:normal;">
                 <svg id="landingWindArrow" width="16" height="16" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
-                <span id="landingWindText">—</span>
-                <span id="landingWindTrend" style="font-size:12px;" title="Trend vs. 1h earlier"></span>
+                <span id="landingWindText" style="flex-shrink:0;">—</span>
+                <span id="landingWindTrend" style="font-size:12px;flex-shrink:0;" title="Trend vs. 1h earlier"></span>
               </div>
             </div>
             <div class="datacell" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
@@ -736,7 +740,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v54';
+const APP_VERSION = 'v56';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1812,9 +1816,24 @@ function adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, descRateMs){
 // flight), but the underlying thermal physics feeding it is now real.
 function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1Ms){
   const { liftBonusKg } = simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, rate1Ms);
-  const totalBuoyantMassKg = volumeM3 * isoDensity(interceptAltM);
-  const brakingFraction = Math.min(0.85, liftBonusKg/totalBuoyantMassKg);
-  return Math.max(0.1, rate1Ms*Math.sqrt(Math.max(0, 1-brakingFraction)));
+  // The braking effect must be weighed against the actual NET FORCE driving
+  // the descent (drag at the nominal rate), not the balloon's entire
+  // buoyant mass - comparing against total buoyant mass (which is huge,
+  // hundreds of kg) made the effect round down to "no difference at all"
+  // regardless of input, which is what was being reported. A simple
+  // quadratic-drag estimate (sphere, Cd~0.47) gives the force actually
+  // being overcome, so the same lift bonus now shows up as a real, if
+  // still modest, percentage - larger at slower descent rates (where drag
+  // is small to begin with), smaller at fast ones (drag dominates), which
+  // matches how adiabatic braking is understood to behave in practice.
+  const r = Math.pow((3*volumeM3)/(4*Math.PI), 1/3);
+  const crossSectionArea = Math.PI*r*r;
+  const Cd = 0.47; // rough drag coefficient for a sphere
+  const rhoAir = isoDensity(interceptAltM);
+  const dragForceAtNominalRate = 0.5*Cd*crossSectionArea*rhoAir*rate1Ms*rate1Ms;
+  const liftForceN = liftBonusKg*9.80665;
+  const brakingFraction = Math.min(0.9, liftForceN/Math.max(dragForceAtNominalRate, 0.0001));
+  return Math.max(0.1, rate1Ms*Math.sqrt(Math.max(0.02, 1-brakingFraction)));
 }
 
 // ---------- Monte-Carlo landing footprint ----------
@@ -2069,7 +2088,7 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
   const { liftBonusKg } = adiabaticVolumeAndLift(balloonVolumeM3, startAlt, interceptAlt, rate1);
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  document.getElementById('lblAdiaRateBadge').textContent = `Adiab. ca ${actualRate.toFixed(1)} m/s, ${liftBonusKg.toFixed(1)}kg lift`;
+  document.getElementById('lblAdiaRateBadge').textContent = `Adiab. ca ${actualRate.toFixed(2)} m/s, ${liftBonusKg.toFixed(1)}kg lift`;
 }
 
 function checkObstacleWarnings(path){
@@ -2233,28 +2252,41 @@ function spawnGroundWindParticle(){
   };
 }
 let particleHeightAGL = 100;
+let particleHeightMaxAGL = 1200;
+function updateParticleHeightUI(){
+  const frac = Math.max(0, Math.min(1, particleHeightAGL/particleHeightMaxAGL));
+  document.getElementById('particleHeightSliderFill').style.height = (frac*100)+'%';
+  document.getElementById('particleHeightSliderThumb').style.bottom = (frac*100)+'%';
+  document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
+  document.getElementById('particleHeightLabelAmsl').innerHTML = Math.round(state.groundElev+particleHeightAGL)+'m<br>AMSL';
+}
+(function setupParticleHeightDrag(){
+  const track = document.getElementById('particleHeightSliderTrack');
+  function setFromClientY(clientY){
+    const rect = track.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (rect.bottom-clientY)/rect.height)); // bottom = 0 (ground), top = max
+    particleHeightAGL = Math.round((frac*particleHeightMaxAGL)/10)*10;
+    updateParticleHeightUI();
+  }
+  let dragging = false;
+  track.addEventListener('pointerdown', e=>{ dragging=true; track.setPointerCapture(e.pointerId); setFromClientY(e.clientY); });
+  track.addEventListener('pointermove', e=>{ if(dragging) setFromClientY(e.clientY); });
+  track.addEventListener('pointerup', ()=>{ dragging=false; });
+  track.addEventListener('pointercancel', ()=>{ dragging=false; });
+})();
 function startGroundWindLayer(){
   if(!groundWindLayer.canvas) initGroundWindCanvas();
   groundWindLayer.canvas.style.display = 'block';
   groundWindLayer.particles = Array.from({length:420}, spawnGroundWindParticle);
   groundWindLayer.active = true;
   reopenBanner('groundWindLegendBar','groundWindLegendIcon');
-  const slider = document.getElementById('particleHeightSlider');
-  const maxAGL = Math.max(1000, Math.round(state.altAMSL - state.groundElev) + 1000);
-  slider.max = maxAGL;
-  if(particleHeightAGL > maxAGL) particleHeightAGL = 100;
-  slider.value = particleHeightAGL;
-  document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
-  document.getElementById('particleHeightLabelAmsl').innerHTML = Math.round(state.groundElev+particleHeightAGL)+'m<br>AMSL';
+  particleHeightMaxAGL = Math.max(1000, Math.round(state.altAMSL - state.groundElev) + 1000);
+  if(particleHeightAGL > particleHeightMaxAGL) particleHeightAGL = 100;
+  updateParticleHeightUI();
   document.getElementById('particleHeightSliderWrap').classList.add('show');
   animateGroundWind();
   checkDescentTimeWindWarning();
 }
-document.getElementById('particleHeightSlider').addEventListener('input', e=>{
-  particleHeightAGL = parseInt(e.target.value);
-  document.getElementById('particleHeightLabel').innerHTML = '+'+particleHeightAGL+'m<br>AGL';
-  document.getElementById('particleHeightLabelAmsl').innerHTML = Math.round(state.groundElev+particleHeightAGL)+'m<br>AMSL';
-});
 function stopGroundWindLayer(){
   groundWindLayer.active = false;
   if(groundWindLayer.animId) cancelAnimationFrame(groundWindLayer.animId);
@@ -2404,6 +2436,12 @@ function setAppMode(mode){
     if(map.hasLayer(plannedDescentInitMarker)) map.removeLayer(plannedDescentInitMarker);
     if(map.hasLayer(plannedCruiseSegmentLayer)) map.removeLayer(plannedCruiseSegmentLayer);
     if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
+    // The sidebar card goes back to showing LIVE info - the "PLANNED" word
+    // and the "Estimated Descent Point" box are specific to function 2 and
+    // must not linger here, even though the planned area itself stays on
+    // the map until explicitly cleared.
+    document.getElementById('plannedBadgeWord').style.display = 'none';
+    document.getElementById('estimatedDescentPointCell').style.display = 'none';
     updateLandingPositionCard();
   }
 }
@@ -2561,6 +2599,7 @@ async function planDescentToTarget(lat, lon){
 
   state.plannedLandingActive = true;
   document.getElementById('btnClearPlannedArea').style.display = 'block';
+  document.getElementById('plannedBadgeWord').style.display = 'inline';
   document.getElementById('btnCenterPlanned').style.display = 'block';
 
   // The ground wind particle simulation picks its wind hour from
@@ -2912,18 +2951,36 @@ function toggleCard(h3){
 // ---------- header popovers (settings + test mode) ----------
 function setupPopover(btnId, panelId){
   const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+  // Move the panel to be a direct child of <body> - it was nested inside
+  // the header (#topbar), which creates its own stacking context
+  // (position:sticky + z-index). A high z-index on the panel only wins
+  // stacking battles WITHIN that context, so map-area elements (with their
+  // own, separately-stacked z-indices) could still render on top of it
+  // depending on exactly where things sat. Re-parenting to <body> escapes
+  // that entirely - the panel's z-index is then compared globally.
+  if(panel.parentElement !== document.body) document.body.appendChild(panel);
+  // Generic close (✕) button, top-right of the panel, added once.
+  if(!panel.querySelector('.popover-close')){
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'popover-close';
+    closeBtn.textContent = '✕';
+    closeBtn.title = 'Close';
+    closeBtn.addEventListener('click', e=>{ e.stopPropagation(); panel.classList.remove('open'); });
+    panel.insertBefore(closeBtn, panel.firstChild);
+  }
   btn.addEventListener('click', (e)=>{
     e.stopPropagation();
     const willOpen = !panel.classList.contains('open');
     document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
     if(willOpen){
       const r = btn.getBoundingClientRect();
-      const panelWidth = panel.offsetWidth || 280;
-      let left = r.right - panelWidth;
-      if(left < 8) left = 8;
-      if(left + panelWidth > window.innerWidth - 8) left = window.innerWidth - panelWidth - 8;
-      panel.style.top = (r.bottom + 14) + 'px';
-      panel.style.left = left + 'px';
+      // Always flush to the screen's right edge (not relative to the
+      // button) - on iPad the map's own top-right controls could otherwise
+      // end up overlapping/covering part of the panel depending on exactly
+      // where the triggering button sits.
+      panel.style.right = '8px';
+      panel.style.left = 'auto';
+      panel.style.top = Math.max(8, r.bottom + 8) + 'px';
       panel.classList.add('open');
     }
   });
@@ -2947,6 +3004,9 @@ function setManualModeUI(active){
   document.getElementById('speedVal').style.display = active ? 'none' : 'block';
   document.getElementById('speedValInputRow').style.display = active ? 'flex' : 'none';
   document.getElementById('altAGL').style.opacity = active ? '0.55' : '1';
+  document.getElementById('altAMSLLabel').textContent = active ? 'ALT AMSL (m)' : 'Alt AMSL (GPS)';
+  document.getElementById('courseLabel').textContent = active ? 'Course (° true)' : 'Course (° True GPS)';
+  document.getElementById('speedLabel').textContent = active ? 'Speed (kn)' : 'Speed (GPS)';
   if(active){
     document.getElementById('altAMSLInput').value = Math.round(state.altAMSL);
     document.getElementById('courseValInput').value = String(Math.round(state.course)%360).padStart(3,'0');
@@ -2968,6 +3028,7 @@ document.getElementById('altAMSLInput').addEventListener('input', e=>{
   }
 });
 document.getElementById('speedValInput').addEventListener('input', e=>{
+  e.target.value = e.target.value.replace(',', '.').replace(/[^0-9.]/g,'');
   const v = parseFloat(e.target.value);
   if(!isNaN(v)){ state.speedKn = v; recomputeAll(); }
 });
@@ -3661,18 +3722,51 @@ setInterval(()=>{
 
 // ---------- keep the screen awake while the app is open ----------
 let wakeLockSentinel = null;
+let wakeLockFallbackVideo = null;
+function startWakeLockFallbackVideo(){
+  // The Screen Wake Lock API needs iOS 16.4+ / a recent browser - on older
+  // versions 'wakeLock' simply doesn't exist and the screen can still sleep
+  // with no warning. The well-known workaround is a silent, invisible,
+  // looping video: iOS treats an actively playing video as a reason to keep
+  // the display on, even muted and off-screen.
+  if(wakeLockFallbackVideo) return;
+  const video = document.createElement('video');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('muted', '');
+  video.muted = true;
+  video.loop = true;
+  video.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+  // A tiny valid (blank) mp4, base64-inlined - avoids needing a hosted asset.
+  video.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr1tZGF0AAACpwYF//+r3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE2NCByMzEwOCAzMWUxOWY5IC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAyMyAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTEgb3Blbl9nb3A9MCB3ZWlnaHRwPTIga2V5aW50PTI1MCBrZXlpbnRfbWluPTI1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAAB2WIhAA3//727L4FNf2f0JcRLMXaSnA+KqSAgHc0wAAAwAAAwAAJuKiZ3lOAAAADEGaISgDW+dQ0DAAOCAAAAAeQZ5CQkD/BzoLwZWSDXP7L1JYRqK8Wj0P/AzoAAAADQGeYXRDfwAJhCLwAAAADQGeY2pDfwAJhCLxAAAAFEGaZUmoQWiZTAgh//7WjLAA0oAAAAAWQZqGSahBaJlMCCH//taMsADSgAAAABZBmqhJqEFomUwIIf/+1oywANKA';
+  document.body.appendChild(video);
+  wakeLockFallbackVideo = video;
+  video.play().catch(()=>{ /* iOS may require the first play() call to happen inside a user gesture - retried below */ });
+}
 async function requestWakeLock(){
-  if(!('wakeLock' in navigator)) return;
+  if(!('wakeLock' in navigator)){ startWakeLockFallbackVideo(); return; }
   try{
     wakeLockSentinel = await navigator.wakeLock.request('screen');
     wakeLockSentinel.addEventListener('release', ()=>{ wakeLockSentinel = null; });
-  }catch(e){ /* e.g. denied, or unsupported in this browser - app still works, screen may sleep */ }
+  }catch(e){
+    // e.g. denied - fall back to the video trick rather than letting the
+    // screen sleep silently with no mitigation at all.
+    startWakeLockFallbackVideo();
+  }
 }
 document.addEventListener('visibilitychange', ()=>{
   // The Wake Lock is automatically released when the tab is hidden/backgrounded
   // (e.g. switching apps) - re-acquire it once the app is visible again.
-  if(document.visibilityState === 'visible') requestWakeLock();
+  if(document.visibilityState === 'visible'){
+    requestWakeLock();
+    if(wakeLockFallbackVideo) wakeLockFallbackVideo.play().catch(()=>{});
+  }
 });
+// iOS requires the very first video.play() to happen inside a real user
+// gesture - the initial silent attempt above may be blocked, so also retry
+// on the first tap/click anywhere in the app.
+document.addEventListener('click', function primeWakeLockVideo(){
+  if(wakeLockFallbackVideo) wakeLockFallbackVideo.play().catch(()=>{});
+}, {once:false});
 requestWakeLock();
 
 // ---------- save / restore configuration ----------

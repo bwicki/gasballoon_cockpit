@@ -103,15 +103,15 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 
 /* ---- center-on-position button ---- */
-.center-map-btn{position:absolute;bottom:86px;right:10px;z-index:1100;width:38px;height:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);color:var(--text);}
+.map-controls-stack{position:absolute;right:10px;bottom:86px;z-index:1100;display:flex;flex-direction:column;align-items:stretch;width:38px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:hidden;}
+.map-controls-stack .center-map-btn{position:static;width:38px;height:38px;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;box-shadow:none;font-size:17px;cursor:pointer;color:var(--text);}
+.map-controls-stack .center-map-btn:last-of-type{border-bottom:none;}
 .center-map-btn:active{transform:scale(0.93);}
-#btnCenterLanding{bottom:130px;}
-#btnCenterPlanned{bottom:174px;}
-#particleHeightSliderWrap{position:absolute;bottom:220px;right:10px;z-index:1100;display:none;flex-direction:column;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:38px;box-sizing:border-box;padding:8px 0 8px;border-bottom:1px solid var(--border);}
 #particleHeightSliderWrap.show{display:flex;}
-#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:26px;height:130px;}
+#particleHeightSlider{writing-mode:vertical-lr;direction:rtl;width:24px;height:110px;}
 #particleHeightLabel{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap;text-align:center;line-height:1.2;}
-#particleHeightLabelAmsl{font-size:8px;color:var(--muted);white-space:nowrap;}
+#particleHeightLabelAmsl{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap;}
 
 /* ---- layer toggle group (header, top-left) ---- */
 .layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
@@ -479,13 +479,15 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> Landing Area</button>
         <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
       </div>
-      <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
-      <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
-      <button id="btnCenterPlanned" class="center-map-btn" title="Center on planned landing area" style="display:none;color:#ff8a00;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
-      <div id="particleHeightSliderWrap">
-        <input type="range" id="particleHeightSlider" min="0" max="1200" step="10" value="100">
-        <div id="particleHeightLabel">+100m<br>AGL</div>
-        <div id="particleHeightLabelAmsl">—m AMSL</div>
+      <div id="mapControlsStack" class="map-controls-stack">
+        <div id="particleHeightSliderWrap">
+          <div id="particleHeightLabelAmsl">—m AMSL</div>
+          <input type="range" id="particleHeightSlider" min="0" max="1200" step="10" value="100">
+          <div id="particleHeightLabel">+100m<br>AGL</div>
+        </div>
+        <button id="btnCenterPlanned" class="center-map-btn" title="Center on planned landing area" style="display:none;color:#ff8a00;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
+        <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
+        <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
       </div>
       <div id="warnbar"><span id="warnbarText"></span><button class="banner-close" style="margin-left:auto;" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button></div>
       <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
@@ -584,7 +586,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)"><span style="color:var(--bad);">PLANNED</span> Landing Area <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span><span style="color:var(--bad);">PLANNED</span> Landing Area</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell">
@@ -729,7 +731,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v50';
+const APP_VERSION = 'v51';
 const APP_DATE = '29.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -952,50 +954,13 @@ bindLayerToggle('tgPower', true, on=>{
   else { dismissBanner('powerLegendBar','powerLegendIcon'); document.getElementById('powerLegendIcon').style.display='none'; }
 });
 // Real, class-filtered airspace boundaries (openAIP Core API, actual GeoJSON
-// polygons) drawn as an overlay on top of the general raster airspace image.
-// This is what finally makes the Airspace Class checkboxes functional -
-// the raster tile layer alone can't be filtered by class.
-const filteredAirspaceLayer = L.layerGroup();
-const AIRSPACE_CLASS_MAP = {A:0,B:1,C:2,D:3,E:4,G:6};
-const AIRSPACE_TYPE_MAP = {R:1,P:3,TMZ:5,RMZ:6};
-let airspaceFetchTimer = null;
-function scheduleFilteredAirspaceFetch(){
-  clearTimeout(airspaceFetchTimer);
-  airspaceFetchTimer = setTimeout(fetchFilteredAirspaces, 700);
-}
-function geoJsonRingToLatLngs(ring){ return ring.map(c=>[c[1],c[0]]); }
-async function fetchFilteredAirspaces(){
-  if(!document.getElementById('tgAirspace').classList.contains('active')){ filteredAirspaceLayer.clearLayers(); return; }
-  if(map.getZoom() < 7){ filteredAirspaceLayer.clearLayers(); return; }
-  const checked = [...document.querySelectorAll('[data-as]')].filter(cb=>cb.checked).map(cb=>cb.dataset.as);
-  if(!checked.length){ filteredAirspaceLayer.clearLayers(); return; }
-  const b = map.getBounds();
-  const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
-  try{
-    const r = await fetch(`https://api.core.openaip.net/api/airspaces?bbox=${bbox}&apiKey=${OPENAIP_API_KEY}&limit=500`);
-    if(!r.ok) return; // e.g. 429 rate limit or 400 bbox too large - just skip this round
-    const j = await r.json();
-    const items = j.items || j.data || [];
-    filteredAirspaceLayer.clearLayers();
-    for(const as of items){
-      const classLetter = Object.keys(AIRSPACE_CLASS_MAP).find(k=>AIRSPACE_CLASS_MAP[k]===as.icaoClass);
-      const typeLetter = Object.keys(AIRSPACE_TYPE_MAP).find(k=>AIRSPACE_TYPE_MAP[k]===as.type);
-      const matches = (classLetter && checked.includes(classLetter)) || (typeLetter && checked.includes(typeLetter));
-      if(!matches || !as.geometry) continue;
-      const color = typeLetter==='P' ? '#ff2b2b' : typeLetter==='R' ? '#ff8a00' : typeLetter==='TMZ' ? '#c58bff' : typeLetter==='RMZ' ? '#3fa9ff' : '#3fd0c9';
-      const geom = as.geometry;
-      const polys = geom.type==='Polygon' ? [geom.coordinates] : geom.type==='MultiPolygon' ? geom.coordinates : [];
-      for(const poly of polys){
-        L.polygon(geoJsonRingToLatLngs(poly[0]), {color, weight:1.6, fillOpacity:0.07, pane:'overlayTilesPane'})
-          .bindTooltip(as.name||'Airspace', {sticky:true})
-          .addTo(filteredAirspaceLayer);
-      }
-    }
-  }catch(e){ /* network hiccup - keep showing whatever was last rendered */ }
-}
-map.on('moveend zoomend', scheduleFilteredAirspaceFetch);
-document.querySelectorAll('[data-as]').forEach(cb=>cb.addEventListener('change', scheduleFilteredAirspaceFetch));
-
+// NOTE: openAIP's Core API (api.core.openaip.net) does NOT send an
+// Access-Control-Allow-Origin header, so browsers block it outright under
+// CORS - there is no client-side fix for that (it would need a server-side
+// proxy we don't have). The real per-class filtered airspace overlay that
+// used to be attempted here therefore could never actually work from this
+// page and has been removed; the Airspace Class checkboxes below are back
+// to being a placeholder for a possible future vector-tile-based approach.
 bindLayerToggle('tgAirspace', true, on=>{
   if(on){
     // NOTE: openAIP retired the separate per-category tile endpoints
@@ -1009,12 +974,8 @@ bindLayerToggle('tgAirspace', true, on=>{
     airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
       {maxZoom:14, opacity:0.95, className:'airspace-tiles', pane:'overlayTilesPane', attribution:'© openAIP'});
     airspaceLayer.addTo(map);
-    filteredAirspaceLayer.addTo(map);
-    scheduleFilteredAirspaceFetch();
   } else {
     if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
-    if(map.hasLayer(filteredAirspaceLayer)) map.removeLayer(filteredAirspaceLayer);
-    filteredAirspaceLayer.clearLayers();
   }
 });
 let roadsShown = true;
@@ -1080,6 +1041,16 @@ let lastOverpassCallTime = 0;
 const OVERPASS_MIN_INTERVAL_MS = 2500;
 let overpassQueue = Promise.resolve();
 let overpassCooldownUntil = 0;
+// Several free public Overpass mirrors, tried in turn - the primary
+// (overpass-api.de) can be unreachable or overloaded for some networks even
+// when others work fine, so falling through to alternates gives a real
+// chance of success instead of just failing outright every time.
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
+let overpassMirrorIdx = 0;
 function fetchOverpassThrottled(query, signal){
   const run = async ()=>{
     if(Date.now() < overpassCooldownUntil){
@@ -1088,19 +1059,28 @@ function fetchOverpassThrottled(query, signal){
     const wait = Math.max(0, lastOverpassCallTime + OVERPASS_MIN_INTERVAL_MS - Date.now());
     if(wait>0) await new Promise(res=>setTimeout(res, wait));
     lastOverpassCallTime = Date.now();
-    try{
-      const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:'data='+encodeURIComponent(query), signal});
-      if(r.status===429 || r.status>=500){
-        // The free public instance is overloaded / rate-limiting us - back off
-        // for a while instead of letting every layer immediately retry and
-        // pile on more load, which is what turns one 429 into a whole cascade.
-        overpassCooldownUntil = Date.now() + 45000;
+    let lastErr = null;
+    for(let attempt=0; attempt<OVERPASS_MIRRORS.length; attempt++){
+      const url = OVERPASS_MIRRORS[(overpassMirrorIdx+attempt) % OVERPASS_MIRRORS.length];
+      try{
+        const r = await fetch(url, {method:'POST', body:'data='+encodeURIComponent(query), signal});
+        if(r.ok) return r;
+        if(r.status===429 || r.status>=500){
+          overpassMirrorIdx = (overpassMirrorIdx+attempt+1) % OVERPASS_MIRRORS.length; // try a different one next time
+          lastErr = new Error('HTTP '+r.status);
+          continue; // try the next mirror instead of giving up immediately
+        }
+        return r; // some other (client-side) error - no point retrying other mirrors
+      }catch(networkErr){
+        lastErr = networkErr;
+        overpassMirrorIdx = (overpassMirrorIdx+attempt+1) % OVERPASS_MIRRORS.length;
+        continue;
       }
-      return r;
-    }catch(networkErr){
-      overpassCooldownUntil = Date.now() + 45000; // e.g. connection timeout - also back off
-      throw networkErr;
     }
+    // Every mirror failed - back off for a while instead of letting every
+    // layer immediately retry and pile on more load.
+    overpassCooldownUntil = Date.now() + 45000;
+    throw lastErr;
   };
   const result = overpassQueue.then(run, run);
   overpassQueue = result.catch(()=>{});
@@ -1816,12 +1796,20 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   // This matters directly for reachability: a point that requires the
   // cruise-phase drift to curve along with a forecast wind shift wouldn't
   // otherwise be found by varying the delay alone.
-  const OBSERVED_COURSE_PHASE_S = 900; // first 15 min: trust the GPS-derived course/speed as-is
+  // Blend smoothly from the OBSERVED GPS course/speed (most reliable for
+  // "right now") toward the FORECAST wind at cruise altitude over a window
+  // (10-40 min), rather than an abrupt switch at a fixed cutoff - a hard
+  // switch created a sudden, unrealistic course change in the projected
+  // path exactly at the cutoff time. Blending the underlying u/v vectors
+  // (not the angles) avoids any wrap-around artifacts at the compass rose.
+  const BLEND_START_S = 600, BLEND_END_S = 2400;
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
   let t=0;
   const path=[{lat,lon,alt,t}];
   const cruiseSpeedMs = state.speedKn/KN_PER_MS;
+  const observedU = cruiseSpeedMs*Math.sin(state.course*Math.PI/180);
+  const observedV = cruiseSpeedMs*Math.cos(state.course*Math.PI/180);
   if(startOverride){
     // Skip the cruise simulation entirely and start the descent phase
     // exactly from a manually-specified point (e.g. the draggable descent
@@ -1831,15 +1819,13 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   } else {
   while(t<initDelayS){
     const step=Math.min(dt, initDelayS-t);
-    let nlat, nlon;
-    if(t<OBSERVED_COURSE_PHASE_S){
-      [nlat,nlon]=destPoint(lat,lon,state.course,cruiseSpeedMs*step);
-    } else {
-      const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
-      const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
-      const bearingTo = (Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
-      [nlat,nlon]=destPoint(lat,lon, bearingTo, Math.hypot(w.u,w.v)*step);
-    }
+    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
+    const blendFrac = Math.max(0, Math.min(1, (t-BLEND_START_S)/(BLEND_END_S-BLEND_START_S)));
+    const u = observedU + (w.u-observedU)*blendFrac;
+    const v = observedV + (w.v-observedV)*blendFrac;
+    const bearingTo = (Math.atan2(u,v)*180/Math.PI+360)%360;
+    const [nlat,nlon]=destPoint(lat,lon, bearingTo, Math.hypot(u,v)*step);
     lat=nlat; lon=nlon; t+=step;
     path.push({lat,lon,alt,t});
   }
@@ -2170,50 +2156,11 @@ async function checkTerrainClearance(path, signal){
 // ---- airspace intrusion along the descent path (real polygon geometry via
 // openAIP's Core API, not the raster tile layer - this needs its own,
 // separate endpoint/host from the map display) ----
-function pointInGeoJsonPolygon(lon, lat, geometry){
-  function ringContains(ring){
-    let inside=false;
-    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
-      const xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1];
-      const intersect = ((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi);
-      if(intersect) inside=!inside;
-    }
-    return inside;
-  }
-  if(!geometry) return false;
-  if(geometry.type==='Polygon'){
-    return ringContains(geometry.coordinates[0]); // outer ring only, ignoring holes
-  }
-  if(geometry.type==='MultiPolygon'){
-    return geometry.coordinates.some(poly=>ringContains(poly[0]));
-  }
-  return false;
-}
+// NOTE: this used to query openAIP's Core API for real airspace polygons to
+// check for a crossing - that endpoint doesn't send CORS headers, so it was
+// always blocked by the browser and never actually worked. Disabled rather
+// than firing a doomed request on every recompute.
 async function checkAirspaceIntrusion(path, signal){
-  if(!document.getElementById('tgAirspace').classList.contains('active')) return null;
-  const lats = path.map(p=>p.lat), lons = path.map(p=>p.lon);
-  const pad = 0.02;
-  const bbox = [Math.min(...lons)-pad, Math.min(...lats)-pad, Math.max(...lons)+pad, Math.max(...lats)+pad].join(',');
-  try{
-    const r = await fetch(`https://api.core.openaip.net/api/airspaces?bbox=${bbox}&apiKey=${OPENAIP_API_KEY}`, {signal});
-    if(!r.ok) return null; // e.g. rate limited (429) - just skip silently this round
-    const j = await r.json();
-    const items = j.items || j.data || [];
-    // Check only a thinned-out sample of path points against each airspace,
-    // to keep this cheap - horizontal intersection only (vertical/altitude
-    // limits use varying units in the API and aren't evaluated here yet).
-    const N = Math.min(15, path.length);
-    const step = Math.max(1, Math.floor(path.length/N));
-    for(const as of items){
-      const geom = as.geometry;
-      if(!geom) continue;
-      for(let i=0;i<path.length;i+=step){
-        if(pointInGeoJsonPolygon(path[i].lon, path[i].lat, geom)){
-          return `Descent path crosses airspace "${as.name||'unnamed'}" (~${Math.round(path[i].t/60)} min in) - horizontal check only, verify vertical limits yourself`;
-        }
-      }
-    }
-  }catch(e){ /* network hiccup or aborted - skip this round */ }
   return null;
 }
 
@@ -2383,14 +2330,8 @@ function positionSidebarHandle(){
   const bottomRight = document.querySelector('#map .leaflet-bottom.leaflet-right');
   if(topRight) topRight.style.right = offset + 'px';
   if(bottomRight) bottomRight.style.right = offset + 'px';
-  const centerBtn = document.getElementById('btnCenterMap');
-  if(centerBtn) centerBtn.style.right = (offset + 10) + 'px';
-  const centerLandingBtn = document.getElementById('btnCenterLanding');
-  if(centerLandingBtn) centerLandingBtn.style.right = (offset + 10) + 'px';
-  const centerPlannedBtn = document.getElementById('btnCenterPlanned');
-  if(centerPlannedBtn) centerPlannedBtn.style.right = (offset + 10) + 'px';
-  const particleSliderWrap = document.getElementById('particleHeightSliderWrap');
-  if(particleSliderWrap) particleSliderWrap.style.right = (offset + 10) + 'px';
+  const controlsStack = document.getElementById('mapControlsStack');
+  if(controlsStack) controlsStack.style.right = (offset + 10) + 'px';
 }
 document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');
@@ -2416,13 +2357,19 @@ function setAppMode(mode){
   } else {
     // Back to monitor mode: restore the live landing area + live yellow
     // projection, and go back to showing LIVE data in the "Projected
-    // Landing Area" card - the planned area (if any) simply stays visible
-    // on the map untouched.
+    // Landing Area" card. Only the planned AREA (polygon + its center
+    // marker) stays visible on the map - the intended-target crosshair, the
+    // descent-initiation marker, and the course/descent lines leading to it
+    // are all planning-in-progress artifacts and should disappear here.
     if(landingLayerOn) landingPolyLayer.addTo(map);
     if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
     predictedCruiseLayer.addTo(map);
     predictedDescentSegmentLayer.addTo(map);
     descentInitMarker.addTo(map);
+    if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
+    if(map.hasLayer(plannedDescentInitMarker)) map.removeLayer(plannedDescentInitMarker);
+    if(map.hasLayer(plannedCruiseSegmentLayer)) map.removeLayer(plannedCruiseSegmentLayer);
+    if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
     updateLandingPositionCard();
   }
 }
@@ -2462,6 +2409,7 @@ function pointInPolygon(pt, poly){
 
 async function planDescentToTarget(lat, lon){
   state.intendedLandingPoint = {lat, lon};
+  state.lastPlanTarget = {lat, lon};
   if(intendedLandingMarker) map.removeLayer(intendedLandingMarker);
   intendedLandingMarker = L.marker([lat,lon], {icon: crossIcon}).addTo(map);
 
@@ -2543,8 +2491,6 @@ async function planDescentToTarget(lat, lon){
   const plannedDescentSeg = bestPath.slice(plannedSplitIdx);
   plannedCruiseSegmentLayer.setLatLngs(plannedCruiseSeg.map(p=>[p.lat,p.lon]));
   if(!map.hasLayer(plannedCruiseSegmentLayer)) plannedCruiseSegmentLayer.addTo(map);
-  plannedDescentPathLayer.setLatLngs(plannedDescentSeg.map(p=>[p.lat,p.lon]));
-  if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
   plannedDescentInitMarker.setLatLng([initFix.lat, initFix.lon]);
   plannedDescentInitMarker.setOpacity(1);
   if(!map.hasLayer(plannedDescentInitMarker)) plannedDescentInitMarker.addTo(map);
@@ -2553,10 +2499,24 @@ async function planDescentToTarget(lat, lon){
   const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
   if(plannedLandingCenterMarker) map.removeLayer(plannedLandingCenterMarker);
   plannedLandingCenterMarker = L.marker([cLat,cLon], {icon: smallCrossIcon}).addTo(map);
+  // The descent path should end exactly AT the landing-area center marker,
+  // not wherever the single deterministic (zero-scatter) path happened to
+  // land - which can differ slightly from the Monte-Carlo hull's center.
+  const descentLatLngs = plannedDescentSeg.map(p=>[p.lat,p.lon]);
+  if(descentLatLngs.length) descentLatLngs[descentLatLngs.length-1] = [cLat, cLon];
+  plannedDescentPathLayer.setLatLngs(descentLatLngs);
+  if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
 
   state.plannedLandingActive = true;
   document.getElementById('btnClearPlannedArea').style.display = 'block';
   document.getElementById('btnCenterPlanned').style.display = 'block';
+
+  // The ground wind particle simulation picks its wind hour from
+  // state.secondsToLanding - while planning, that must reflect the PLANNED
+  // arrival time, not whatever the (irrelevant here) "Initiate descent in"
+  // slider implies.
+  state.secondsToLanding = bestPath.length ? bestPath[bestPath.length-1].t : 0;
+  hideYellowWarning(); // the descent-time slider has no effect in Plan Descent, so that warning doesn't apply here
 
   await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
 
@@ -2829,7 +2789,7 @@ document.getElementById('sInit').addEventListener('input', checkDescentTimeWindW
 // not right now, whenever that time isn't "immediate" ----
 function checkDescentTimeWindWarning(){
   const initMin = parseFloat(document.getElementById('sInit').value);
-  const shouldShow = groundWindLayer.active && initMin > 30;
+  const shouldShow = groundWindLayer.active && initMin > 30 && state.appMode!=='plan';
   if(!shouldShow){
     hideYellowWarning();
     lastWindWarnInitMin = null;
@@ -2855,6 +2815,21 @@ bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
 bindSlider('sIntH','lblIntH', v=> v+' m');
 bindSlider('sRate2','lblRate2', v=> parseFloat(v).toFixed(1)+' m/s');
 bindSlider('sScatter','lblScatter', v=> v+' %');
+// Re-run the active plan whenever a descent parameter that actually affects
+// it changes (rate, intercept height, post-intercept rate, or scatter) -
+// "Initiate descent in" deliberately excluded, since Plan Descent finds its
+// own timing and that slider has no effect there.
+let replanDebounceTimer = null;
+['sRate','sIntH','sRate2','sScatter'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    if(state.appMode==='plan' && state.plannedLandingActive && state.lastPlanTarget){
+      clearTimeout(replanDebounceTimer);
+      replanDebounceTimer = setTimeout(()=>{
+        planDescentToTarget(state.lastPlanTarget.lat, state.lastPlanTarget.lon);
+      }, 500);
+    }
+  });
+});
 
 
 // ---------- day/night ----------

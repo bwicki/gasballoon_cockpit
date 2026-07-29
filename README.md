@@ -219,6 +219,17 @@ The console log didn't show a crash in Plan Descent itself, but pointed to real 
 - **Draggable descent point**: the violet descent-initiation marker can now be dragged directly, recalculating the landing area/charts from that manually-chosen point (bypassing the search).
 - **Console**: the two Overpass network errors are the browser's own network-level logging for a request that genuinely failed/timed out against a free public server under load - our request throttling and 45s cooldown (added last round) reduce how often this happens, but can't suppress the browser's console message for an attempt that *is* actually made. The tile 404 is a normal, harmless occasional miss from OpenStreetMap's tile servers, already handled gracefully.
 
+## New in this round (v51)
+
+- **Sudden course-change bug fixed (function 1)**: a hard switch at exactly 15 minutes between "observed course" and "model wind direction" (introduced last round) caused a jarring ~20-25° jump in the projected path - replaced with a smooth vector blend over a 10-40 min window.
+- **openAIP Core API removed entirely**: the console revealed it's blocked by CORS (the server sends no `Access-Control-Allow-Origin` header) - a server-side policy with no client-side fix. Both the filtered-airspace overlay and the airspace-crossing warning relied on it and have been removed/disabled instead of repeatedly failing against a wall on every pan.
+- **Overpass fallback mirrors** added (3 free public instances, rotated on failure) since the primary was consistently unreachable for this network.
+- **Map controls regrouped**: the zoom/center buttons and the particle-height slider now share one narrow container (consistent width, no more crowding); AMSL is now shown larger/first, AGL smaller/second.
+- **"PLANNED Landing Area" title bug fixed**: `justify-content:space-between` was treating "PLANNED" and "Landing Area" as separate flex items and pulling them apart - now grouped together.
+- **Plan Descent fixes**: the descent path now ends exactly at the landing-area center marker (not beyond it); changing Rate/Intercept/Rate2/Scatter now re-runs the active plan (debounced) - "Initiate descent in" deliberately still has no effect there, and its yellow wind-timing warning is now suppressed while planning (the ground wind simulation itself still uses the planned arrival time).
+- **Cleanup on returning to function 1**: only the planned landing area + its center marker remain on the map; the intended-target crosshair, descent marker, and course/descent lines are removed.
+- Minor code cleanup: removed a dead function (`pointInGeoJsonPolygon`) left over from the removed CORS-blocked feature.
+
 ## Known limitations & approximations
 
 

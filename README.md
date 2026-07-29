@@ -266,6 +266,19 @@ The bug was in how that lift bonus got **converted into an actual descent rate**
 
 Fixed by scaling the braking percentage directly from a genuine **"how adiabatic was this descent" fraction** (0 = fully relaxed to ambient/isothermal, 1 = fully adiabatic with no heat loss at all) - which increases monotonically with descent rate as intended. Verified numerically: 0.5 m/s → ~1.2% braking, 9 m/s → ~8.4% braking.
 
+## New in this round (v58)
+
+- **Confirmed**: function 1's projected path already follows the forecast wind's changing direction over time (not a straight line) - see the code comment near `BLEND_START_S`/`BLEND_END_S`.
+- **Descent-rate badge**: shortened to "real ~ X.X m/s lift ~ X.X kg" - the lift value was never actually broken, just displayed differently before.
+- **Real zoom-speed bug fixed**: ground wind particles were moving a fixed real-world distance per frame, which covers more screen pixels at a closer zoom for the same wind - now computed directly in screen pixels so on-screen speed stays consistent across zoom levels. Particle density and comet-tail length now also scale with actual wind strength.
+- **"Landing Area" card redesigned**: position + town now span the full width (like Current Position), height and ground wind share a row below, ground wind reading is more compact (no extra space between direction and speed), "Estimated Descent Point" only appears as an extra row while planning.
+- **Chart gridlines strengthened**; **hodograph now reliably square when expanded** (the enlarge canvas had no explicit sizing rule, so `aspect-ratio` wasn't reliably enforced).
+- **Loading traffic-light dots** added to the Power/Roads/Airspace/Nature-reserves/Ground-wind toggle buttons: invisible when off, yellow while loading, green once ready.
+- **GPS restore + Manual Mode**: instead of silently exiting Manual Mode when GPS comes back, the same banner now asks "GPS signal re-established - leave Manual Mode?" with a confirm button - only triggered on the actual bad→good transition, so a dismissed prompt doesn't keep reopening itself.
+- **First-launch quick-start tutorial** added (dismissible with the same red close button as other popups, remembered via localStorage).
+- Verified already correct: probability-cone default (15%), Flight Charts default-collapsed.
+- **Dropbox as a CSV upload source**: not something the app can control - which cloud providers appear in the file picker is decided by iOS itself (only providers whose app is installed register as a Files source); installing the Dropbox app makes it available there automatically.
+
 ## Known limitations & approximations
 
 

@@ -133,6 +133,11 @@ This requires your own free Dropbox app (Anthropic/Claude cannot provision one o
 3. Under "Permissions", enable `files.content.write`.
 4. Copy the "App key" into the app's Settings → Dropbox App Key field, set your folder path, and tap "Connect Dropbox".
 
+## New in this round (v42)
+
+- **Ground wind trend arrow**: the "Ground Wind at Landing Site" reading now shows ↗/↘/→ comparing the forecast speed at landing time against 1h earlier in the model, so you can see at a glance whether it's building or easing.
+- **Adiabatic model rebuilt on real gas physics**: instead of a single two-point volume-ratio estimate with a guessed thermal time constant, the model now steps through the actual descent and integrates the enclosed H₂ gas *temperature* over time using: Poisson's adiabatic law per altitude step, H₂'s real specific heat capacity and gas constant, an envelope surface area derived geometrically from the configured volume (assumed spherical), and a convective heat-transfer coefficient that scales with descent rate. The resulting "virtual lift bonus" and actual braked descent rate are more physically grounded, though the convective coefficient itself is still an estimated parameter (no wind-tunnel data for the envelope) - this is exactly what the "Empirical variance factor" in Settings is for: tune it against your own logged flights.
+
 ## Known limitations & approximations
 
 

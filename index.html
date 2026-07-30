@@ -111,7 +111,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 .map-controls-stack .center-map-btn:last-of-type{border-bottom:none;}
 .center-map-btn:active{transform:scale(0.93);}
 #particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:56px;box-sizing:border-box;padding:10px 0 9px;border-bottom:1px solid var(--border);position:relative;}
-#particleWindPreview{position:absolute;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:var(--text);pointer-events:none;z-index:1150;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#particleWindPreview{position:absolute;background:rgba(38,42,48,0.55);border:1px solid var(--border);border-radius:6px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:var(--text);pointer-events:none;z-index:1150;box-shadow:0 2px 8px rgba(0,0,0,.25);backdrop-filter:blur(2px);}
 #particleWindPreview.show{display:flex;}
 #particleHeightSliderWrap.show{display:flex;}
 #particleHeightSliderTrack{position:relative;width:4px;height:100px;background:var(--border);border-radius:2px;margin:0 auto;touch-action:none;}
@@ -220,10 +220,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 .chart-thumb-title{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
 .chart-expand-btn{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:5px;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;}
 #hodographChart{aspect-ratio:1/1;height:auto !important;}
-.map-scale-bar{position:absolute;right:56px;bottom:112px;background:rgba(255,255,255,0.82);border-radius:6px;padding:3px 8px 5px;pointer-events:none;font-size:10.5px;color:#1a1a1a;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
-.map-scale-ruler{position:relative;height:6px;border-left:1.5px solid #1a1a1a;border-right:1.5px solid #1a1a1a;border-bottom:1.5px solid #1a1a1a;box-sizing:border-box;}
-.map-scale-text{font-weight:700;white-space:nowrap;}
-.map-scale-ratio{font-size:9px;color:#444;white-space:nowrap;}
+.map-scale-bar{position:absolute;right:76px;bottom:12px;background:rgba(255,255,255,0.85);border-radius:4px;padding:3px 6px 4px;pointer-events:none;font-size:10px;color:#1a1a1a;display:flex;flex-direction:column;align-items:stretch;gap:2px;box-shadow:0 1px 4px rgba(0,0,0,.25);z-index:900;}
+.map-scale-ruler{position:relative;height:7px;display:flex;border:1px solid #1a1a1a;box-sizing:border-box;}
+.map-scale-ruler > div{flex:1;border-right:1px solid #1a1a1a;}
+.map-scale-ruler > div:last-child{border-right:none;}
+.map-scale-ruler > div:nth-child(odd){background:#1a1a1a;}
+.map-scale-ruler > div:nth-child(even){background:#fff;}
+.map-scale-text{font-weight:700;white-space:nowrap;text-align:center;}
+.map-scale-ratio{font-weight:400;}
 #chartExpandOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5000;display:none;align-items:center;justify-content:center;}
 #tutorialOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5500;display:none;align-items:center;justify-content:center;}
 #tutorialOverlay.show{display:flex;}
@@ -265,7 +269,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
   <div id="topbar">
     <div style="display:flex;flex-direction:column;line-height:1.15;">
-      <div class="title">GBLP</div>
+      <svg width="30" height="28" viewBox="0 0 26 26" title="Gas Balloon Landing Predictor">
+        <ellipse cx="13" cy="9" rx="7" ry="8" fill="#ffb400" stroke="#000" stroke-width="1.2"/>
+        <rect x="11" y="16.5" width="4" height="3" fill="#555"/>
+        <line x1="13" y1="19.5" x2="13" y2="23" stroke="#8b98a5" stroke-width="1.3" stroke-dasharray="1.6,1.6"/>
+        <circle cx="13" cy="23.5" r="2" fill="none" stroke="#ff5a3c" stroke-width="1.3"/>
+      </svg>
       <div class="wx-chip" id="versionChip" style="font-size:8px;color:var(--muted);"></div>
     </div>
     <div class="sep"></div>
@@ -284,6 +293,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
+    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;border:none;color:#3fa9ff;font-size:22px;cursor:pointer;padding:0 6px;line-height:1;">ℹ</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
       <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
@@ -519,7 +529,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div id="mapwrap">
       <div id="map"></div>
       <div id="topAlertStack">
-        <div id="testCautionBar" class="gps-warn" style="font-weight:800;letter-spacing:1px;justify-content:center;"><span>⚠ CAUTION: TEST MODE ⚠</span></div>
+        <div id="testCautionBar" class="gps-warn">
+          <button class="banner-close" onclick="dismissBanner('testCautionBar','testCautionIcon')">✕</button>
+          <span>⚠ CAUTION: TEST MODE ⚠</span>
+        </div>
         <div id="warnbar"><button class="banner-close" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button><span id="warnbarText"></span></div>
         <div id="descentWindWarnBar" class="yellow-warn"><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button><span id="descentWindWarnText"></span></div>
         <div id="gpsWarnBar" class="gps-warn">
@@ -569,7 +582,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <span class="gwl-item" data-legend-cat="compensator"><span class="legend-swatch" style="background:#c58bff;border-radius:50%;"></span>Compensator</span>
         <span class="gwl-item" data-legend-cat="switch"><span class="legend-swatch" style="background:#ffffff;border-radius:50%;border:1px solid #888;"></span>Switch</span>
       </div>
-      <button id="powerLegendIcon" class="reopen-icon bottom-left-2" style="display:none;" onclick="reopenBanner('powerLegendBar','powerLegendIcon')" title="Show power line legend">⚡</button>
       <div id="groundWindLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('groundWindLegendBar','groundWindLegendIcon')">✕</button>
         <span class="gwl-title">Ground wind (0-200m AGL):</span>
@@ -579,7 +591,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <span class="gwl-item" data-speed-bucket="3"><span class="legend-swatch" style="background:#f97316;"></span>15-20kn</span>
         <span class="gwl-item" data-speed-bucket="4"><span class="legend-swatch" style="background:#ef4444;"></span>&gt;20kn</span>
       </div>
-      <button id="groundWindLegendIcon" class="reopen-icon bottom-left-1" style="display:none;" onclick="reopenBanner('groundWindLegendBar','groundWindLegendIcon')" title="Show ground wind legend">🌬</button>
     </div>
 
     <button id="sidebarHandle" title="Collapse/expand sidebar">▶</button>
@@ -592,9 +603,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div class="datagrid">
             <div class="datacell wide" id="posDisplayWrap">
               <div style="display:flex;justify-content:space-between;gap:8px;">
-                <div>
-                  <div class="val small" id="posDMS" style="font-weight:400;">—</div>
-                  <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div>
+                    <div class="val small" id="posDMS" style="font-weight:400;">—</div>
+                    <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
+                  </div>
+                  <svg id="posCourseIcon" width="16" height="16" viewBox="0 0 36 36" style="flex-shrink:0;transform:rotate(0deg);"><path d="M18 1 L25.5 32 L18 25.5 L10.5 32 Z" fill="#ffb400" stroke="#000000" stroke-width="1.6"/></svg>
                 </div>
                 <div class="val small" id="posNearestTown" style="color:var(--muted);font-size:11px;text-align:right;">—</div>
               </div>
@@ -711,7 +725,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <!-- WIND PROFILE + DESCENT HODOGRAPH, side by side as thumbnails - click
            either to open it larger with a close button, per request. The
            hodograph thumbnail is shown/hidden via the header toggle button. -->
-      <div class="card collapsed" id="flightChartsCard" style="display:none;">
+      <div class="card collapsed" id="flightChartsCard" style="display:none;position:relative;">
+        <button onclick="document.getElementById('tgFlightCharts').click();" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <h3 onclick="toggleCard(this)"><span data-i18n="cardFlightCharts">Flight Charts</span> <span class="chev">▾</span></h3>
         <div class="cardbody" style="display:flex;gap:8px;">
           <div style="flex:1;min-width:0;">
@@ -810,7 +825,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v63';
+const APP_VERSION = 'v64';
 const APP_DATE = '30.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -889,13 +904,13 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 // Custom scale bar (km AND nautical miles - Leaflet's built-in control only
 // offers metric/imperial, not nm) - positioned via CSS to sit to the LEFT
 // of the zoom buttons, which share the same corner.
+let legendStackOrder = []; // order in which currently-visible bottom legends were opened; first = docks at the very bottom
 const ScaleBarControl = L.Control.extend({
   options: {position:'bottomright'},
   onAdd: function(){
     const div = L.DomUtil.create('div', 'map-scale-bar');
-    div.innerHTML = '<div class="map-scale-ruler" id="scaleBarRuler"></div>'+
-                     '<div class="map-scale-text" id="scaleBarText">—</div>'+
-                     '<div class="map-scale-ratio" id="scaleBarRatio">1:—</div>';
+    div.innerHTML = '<div class="map-scale-text" id="scaleBarText">—</div>'+
+                     '<div class="map-scale-ruler" id="scaleBarRuler"><div></div><div></div><div></div><div></div></div>';
     return div;
   }
 });
@@ -905,6 +920,17 @@ function niceScaleNumber(raw){
   const frac = raw/pow10;
   const nice = frac>=5 ? 5 : frac>=2 ? 2 : 1;
   return nice*pow10;
+}
+function repositionScaleBar(){
+  // Sit right above whatever legend bars are currently open (the same
+  // bottom-stacking idea as the legends themselves), instead of a fixed
+  // offset that could collide with them or leave an awkward gap.
+  let bottom = 12;
+  legendStackOrder.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && el.classList.contains('show')) bottom += el.offsetHeight + 8;
+  });
+  document.querySelector('.map-scale-bar').style.bottom = bottom + 'px';
 }
 function updateScaleBar(){
   const y = map.getSize().y/2;
@@ -921,14 +947,14 @@ function updateScaleBar(){
   document.getElementById('scaleBarRuler').style.width = Math.round(niceMeters*pxPerMeter)+'px';
   const km = niceMeters/1000, nm = niceMeters/1852;
   const distText = niceMeters<1000 ? `${Math.round(niceMeters)}m` : `${km.toFixed(km<10?2:0)}km`;
-  document.getElementById('scaleBarText').textContent = `${distText} / ${nm.toFixed(nm<10?2:0)}nm`;
   // Conventional web-map "representative fraction" (1:N): ground meters per
   // CSS pixel, referenced against the standard 96dpi assumption (1 CSS px
   // = 1/96 inch = 0.0002646 m) - the same convention GIS/web tools use, even
   // though actual device pixel density varies.
   const metersPerPixel = targetMeters/targetWidthPx;
-  const ratioN = Math.round(metersPerPixel/0.0002646);
-  document.getElementById('scaleBarRatio').textContent = `1:${ratioN.toLocaleString('en-US').replace(/,/g,"'")}`;
+  const ratioN = Math.round(metersPerPixel/0.0002646/1000)*1000; // rounded to the nearest thousand
+  document.getElementById('scaleBarText').textContent = `${distText} / ${nm.toFixed(nm<10?2:0)}nm  ·  scale ~1:${ratioN.toLocaleString('en-US').replace(/,/g,"'")}`;
+  repositionScaleBar();
 }
 map.on('zoomend moveend', updateScaleBar);
 updateScaleBar();
@@ -1064,10 +1090,23 @@ const BOTTOM_LEGEND_IDS = ['groundWindLegendBar','powerLegendBar'];
 const TOP_WARNING_BANNERS = [
   {bannerId:'warnbar', iconId:'warnbarIcon'},
   {bannerId:'descentWindWarnBar', iconId:'descentWindWarnIcon'},
-  {bannerId:'gpsWarnBar', iconId:'gpsWarnIcon'}
+  {bannerId:'gpsWarnBar', iconId:'gpsWarnIcon'},
+  {bannerId:'testCautionBar', iconId:'testCautionIcon'}
 ];
-let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarnBar:false};
-let legendStackOrder = []; // order in which currently-visible bottom legends were opened; first = docks at the very bottom
+let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarnBar:false, testCautionBar:false};
+let legendActiveButDismissed = {groundWindLegendBar:false, powerLegendBar:false};
+function updateAllLegendsReopenBtn(){
+  const any = Object.values(legendActiveButDismissed).some(Boolean);
+  document.getElementById('allLegendsReopenBtn').style.display = any ? 'inline-block' : 'none';
+}
+document.getElementById('allLegendsReopenBtn').addEventListener('click', ()=>{
+  BOTTOM_LEGEND_IDS.forEach(bannerId=>{
+    if(legendActiveButDismissed[bannerId]){
+      const iconId = bannerId==='powerLegendBar' ? 'powerLegendIcon' : 'groundWindLegendIcon';
+      reopenBanner(bannerId, iconId);
+    }
+  });
+});
 // Small traffic-light dot on a layer's toggle button: hidden when off,
 // yellow while its data is loading, green once it's fully loaded (and, for
 // the tile-cache-based layers, actually cached per the current settings).
@@ -1096,7 +1135,7 @@ bindLayerToggle('tgPower', false, on=>{
   } else if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
   if(!on) setLayerLoadDot('tgPower', null);
   if(on){ reopenBanner('powerLegendBar','powerLegendIcon'); }
-  else { dismissBanner('powerLegendBar','powerLegendIcon'); document.getElementById('powerLegendIcon').style.display='none'; }
+  else { dismissBanner('powerLegendBar','powerLegendIcon'); legendActiveButDismissed.powerLegendBar = false; updateAllLegendsReopenBtn(); }
 });
 powerLayer.on('load', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','ready'); });
 powerLayer.on('loading', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','loading'); });
@@ -1518,6 +1557,8 @@ const balloonMarker = L.marker([state.lat,state.lon], {icon: balloonIcon}).addTo
 function updateAircraftRotation(){
   const rotor = document.getElementById('aircraftRotor');
   if(rotor) rotor.style.transform = `rotate(${state.course}deg)`;
+  const posIcon = document.getElementById('posCourseIcon');
+  if(posIcon) posIcon.style.transform = `rotate(${state.course}deg)`;
 }
 setInterval(updateAircraftRotation, 2000);
 const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:4, opacity:0.85, lineCap:'butt', dashArray:'16,10'}).addTo(map);
@@ -1703,9 +1744,12 @@ function updateCautionBar(){
   // entirely in the GPS warning banner instead, so it never pops up here.
   if(state.testMode && !isManual){
     bar.classList.add('show');
+    bannerActiveButDismissed.testCautionBar = false; // fresh each time, don't respect a stale dismiss from a previous session
   } else {
     bar.classList.remove('show');
+    bannerActiveButDismissed.testCautionBar = false;
   }
+  updateAllWarningsReopenBtn();
 }
 startGPS();
 
@@ -1984,19 +2028,34 @@ function envelopeSurfaceAreaM2(volumeM3){
   const r = Math.pow((3*volumeM3)/(4*Math.PI), 1/3);
   return 4*Math.PI*r*r;
 }
-function convectiveHeatTransferCoeff(relativeAirspeedMs){
-  // Order-of-magnitude estimate: natural-convection baseline plus a term
-  // growing with the relative airflow over the envelope (approximated by
-  // the descent rate itself, since the balloon otherwise moves with the
-  // surrounding wind field, so there's little OTHER relative airflow).
-  return 6 + 3.5*Math.sqrt(Math.max(0.1, relativeAirspeedMs)); // W/(m^2*K)
+function envelopeDiameterM(volumeM3){
+  const r = Math.pow((3*volumeM3)/(4*Math.PI), 1/3);
+  return 2*r;
+}
+function convectiveHeatTransferCoeff(relativeAirspeedMs, diameterM){
+  // A properly SIZE-SCALED convective correlation (Ranz-Marshall-style
+  // forced convection over a sphere: Nu = 2 + 0.6*Re^0.5*Pr^(1/3), with
+  // h = Nu*k_air/D) - the previous estimate used a fixed h independent of
+  // the envelope's actual diameter, which is a real error for a body this
+  // large: h decreases substantially as the characteristic length grows
+  // (a ~12-13m envelope has a much lower area-normalized heat transfer
+  // rate than the small-object intuition a fixed h~6-15 W/m²K implies),
+  // meaning heat was previously escaping the gas far faster than it
+  // actually would - understating the adiabatic effect at all rates.
+  const KINEMATIC_VISCOSITY_AIR = 1.5e-5; // m^2/s
+  const THERMAL_COND_AIR = 0.025; // W/(m*K)
+  const PR_AIR = 0.71;
+  const Re = Math.max(0.1, relativeAirspeedMs)*diameterM/KINEMATIC_VISCOSITY_AIR;
+  const Nu = 2 + 0.6*Math.sqrt(Re)*Math.cbrt(PR_AIR);
+  return Nu*THERMAL_COND_AIR/diameterM; // W/(m^2*K)
 }
 function simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, descRateMs){
   const GAMMA = 1.41;
   function P(alt){ const T0=288.15,L=0.0065,R=287.05; return 101325*Math.pow((T0-L*Math.min(alt,11000))/T0, G/(L*R)); }
   function Tamb(alt){ return 288.15-0.0065*Math.min(alt,11000); }
   const A = envelopeSurfaceAreaM2(volumeM3);
-  const h = convectiveHeatTransferCoeff(descRateMs);
+  const D = envelopeDiameterM(volumeM3);
+  const h = convectiveHeatTransferCoeff(descRateMs, D);
   let alt = startAltM;
   let Tgas = Tamb(alt); // assumed in thermal equilibrium with ambient at the start
   const dtStep = 10; // s
@@ -2333,7 +2392,7 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
   const { liftBonusKg } = adiabaticVolumeAndLift(balloonVolumeM3, startAlt, interceptAlt, rate1);
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  document.getElementById('lblAdiaRateBadge').textContent = `real: ~${actualRate.toFixed(3)}m/s  ${liftBonusKg.toFixed(1)}kg lift`;
+  document.getElementById('lblAdiaRateBadge').textContent = `real: ~${actualRate.toFixed(2)}m/s  ${liftBonusKg.toFixed(1)}kg lift`;
 }
 
 function checkObstacleWarnings(path){
@@ -2371,6 +2430,7 @@ function restackBottomLegends(){
     el.style.bottom = bottom + 'px';
     bottom += el.offsetHeight + 8;
   });
+  if(typeof repositionScaleBar==='function') repositionScaleBar();
 }
 function updateAllWarningsReopenBtn(){
   const anyDismissedButActive = Object.values(bannerActiveButDismissed).some(Boolean);
@@ -2390,6 +2450,8 @@ function dismissBanner(bannerId, iconId){
   if(BOTTOM_LEGEND_IDS.includes(bannerId)){
     legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
     restackBottomLegends();
+    legendActiveButDismissed[bannerId] = true;
+    updateAllLegendsReopenBtn();
   }
   repositionModeToggle();
   updateAllWarningsReopenBtn();
@@ -2403,6 +2465,8 @@ function reopenBanner(bannerId, iconId){
     legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
     legendStackOrder.push(bannerId); // newly (re)opened - goes on top of whatever else is currently showing
     restackBottomLegends();
+    legendActiveButDismissed[bannerId] = false;
+    updateAllLegendsReopenBtn();
   }
   repositionModeToggle();
   updateAllWarningsReopenBtn();
@@ -2526,7 +2590,7 @@ function spawnGroundWindParticle(){
 let particleHeightAGL = 100;
 let particleHeightMaxAGL = 1200;
 let particleWindPreviewTimer = null;
-function showParticleWindPreview(){
+function showParticleWindPreview(trackRect, frac, stackRect){
   const particleAltM = state.groundElev + particleHeightAGL;
   const hourIdx = Math.round((state.secondsToLanding||0)/3600);
   const w = windAt(particleAltM, 0, 1, hourIdx);
@@ -2535,10 +2599,10 @@ function showParticleWindPreview(){
   document.getElementById('particleWindPreviewText').textContent = `${Math.round(dirFrom)}° ${speedKmh.toFixed(1)}km/h`;
   document.getElementById('particleWindPreviewArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
   const preview = document.getElementById('particleWindPreview');
-  const thumb = document.getElementById('particleHeightSliderThumb');
-  const thumbRect = thumb.getBoundingClientRect();
-  const stackRect = document.getElementById('mapControlsStack').getBoundingClientRect();
-  preview.style.top = (thumbRect.top + thumbRect.height/2) + 'px';
+  // Matches the thumb's own positioning formula (bottom-anchored at frac*100%
+  // of the track) exactly, without a separate DOM read of the thumb itself.
+  const thumbY = trackRect.bottom - frac*trackRect.height;
+  preview.style.top = thumbY + 'px';
   preview.style.transform = 'translateY(-50%)';
   preview.style.right = (window.innerWidth - stackRect.left + 8) + 'px';
   preview.classList.add('show');
@@ -2554,15 +2618,22 @@ function updateParticleHeightUI(){
 }
 (function setupParticleHeightDrag(){
   const track = document.getElementById('particleHeightSliderTrack');
+  let cachedStackRect = null;
   function setFromClientY(clientY){
     const rect = track.getBoundingClientRect();
     const frac = Math.max(0, Math.min(1, (rect.bottom-clientY)/rect.height)); // bottom = 0 (ground), top = max
     particleHeightAGL = Math.round((frac*particleHeightMaxAGL)/10)*10;
     updateParticleHeightUI();
-    showParticleWindPreview();
+    // Reuse the track's rect (already read above) and a stack rect cached
+    // once per drag, rather than re-measuring the thumb/stack on every
+    // single pointermove - repeated forced-layout reads during a drag
+    // gesture are a known cause of dropped/sluggish touch input on iOS
+    // Safari, which is very likely what made the thumb feel "stuck".
+    if(!cachedStackRect) cachedStackRect = document.getElementById('mapControlsStack').getBoundingClientRect();
+    showParticleWindPreview(rect, frac, cachedStackRect);
   }
   let dragging = false;
-  track.addEventListener('pointerdown', e=>{ dragging=true; track.setPointerCapture(e.pointerId); setFromClientY(e.clientY); });
+  track.addEventListener('pointerdown', e=>{ dragging=true; cachedStackRect=null; track.setPointerCapture(e.pointerId); setFromClientY(e.clientY); });
   track.addEventListener('pointermove', e=>{ if(dragging) setFromClientY(e.clientY); });
   track.addEventListener('pointerup', ()=>{ dragging=false; });
   track.addEventListener('pointercancel', ()=>{ dragging=false; });
@@ -2588,7 +2659,8 @@ function stopGroundWindLayer(){
   if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
   setLayerLoadDot('tgGroundWind', null);
   dismissBanner('groundWindLegendBar','groundWindLegendIcon');
-  document.getElementById('groundWindLegendIcon').style.display = 'none';
+  legendActiveButDismissed.groundWindLegendBar = false;
+  updateAllLegendsReopenBtn();
   document.getElementById('particleHeightSliderWrap').classList.remove('show');
   hideYellowWarning();
 }

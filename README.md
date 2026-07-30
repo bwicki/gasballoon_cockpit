@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v63** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v64** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -71,6 +71,11 @@ Gas compressed adiabatically during a fast descent stays warmer (and less dense)
 - **A dashed ring shows the pre-cached tile area's boundary** once zoomed out far enough for it to be a useful reference; the area outside it greys out. Re-caching is checked at load and every 10 minutes, but only actually re-downloads once the balloon has moved at least 20% of the cache radius (min. 5km) from where it was last cached - not on every tiny movement.
 - **A single, consolidated warning-triangle indicator** (header, right of GPS status) reopens every currently-dismissed-but-still-active warning at once - each individual banner's own reopen icon was removed to avoid clutter/collisions.
 - **Language setting** (Settings, below Altitude Unit): English/Deutsch. Translates the main card titles and field labels; not yet a full translation of every message and tooltip in the app.
+- **Real physics bug fixed in the adiabatic braking model**: the convective heat-transfer coefficient didn't scale with the envelope's actual size - for a real gas balloon (~12-13m diameter), the physically correct value is 5-10x smaller than what was used, meaning heat was escaping far faster than it really would. Fixed with a proper size-scaled correlation; the retained lift bonus is now 3-5x larger. The remaining percentage (relative to total system mass) is inherent to the model - entering your actual, typically lighter, system mass in Settings will show a proportionally larger effect.
+- **Particle-slider drag reliability improved**: repeated `getBoundingClientRect()` reads on every pointermove (a known cause of dropped touch input on iOS Safari) were reduced to one cached read per drag gesture. The wind preview box now appears exactly at the thumb's height and is noticeably more transparent.
+- **Legend reopen icons removed** from the map (were colliding with the mode toggle) - replaced with a single blue info-icon in the header (next to the warning triangle) that reopens all dismissed legends at once.
+- **Map scale bar restyled** as a classic black/white segmented ruler, combined with the distance and the rounded 1:N ratio on one line, and now docks directly above whatever legend bars are currently open instead of a fixed position.
+- **Small app logo** (balloon + dashed descent path + landing target) replaces the "GBLP" text in the header; the version number stays in the same place underneath it.
 - **Flight Charts is hidden by default** entirely (not just collapsed) - a header toggle (left of Day/Night) shows/hides it.
 - **Plan Descent shows a 360-minute reference trajectory** at the current cruise altitude (light grey dashed) - purely informational, to help judge which areas are reachable before committing to a target point.
 - **A custom scale bar** (km and nautical miles) sits left of the zoom buttons.

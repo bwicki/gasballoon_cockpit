@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v60** (29.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v62** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -68,6 +68,11 @@ Gas compressed adiabatically during a fast descent stays warmer (and less dense)
 - **openAIP's Core API is CORS-blocked** for browser requests — real per-class airspace filtering and automated airspace-crossing warnings aren't possible from this page; only the combined raster tile overlay is shown.
 - **Satellite count isn't available.** The standard browser Geolocation API only exposes latitude/longitude/altitude/accuracy/heading/speed — not satellite count, which requires native GPS-chip access no web page has.
 - **In-page screen recording doesn't work on iPhone/iPad.** iOS Safari has no Screen Capture API at all (an Apple/WebKit platform limitation) — the recording button detects this and points to iOS's own Control Center recording instead. On desktop browsers that do support it, the button pulses red with a stop icon while recording.
-- **A dashed ring shows the pre-cached tile area's boundary** once zoomed out far enough for it to be a useful reference.
+- **A dashed ring shows the pre-cached tile area's boundary** once zoomed out far enough for it to be a useful reference; the area outside it greys out.
+- **Flight Charts is hidden by default** entirely (not just collapsed) - a header toggle (left of Day/Night) shows/hides it.
+- **Plan Descent shows a 360-minute reference trajectory** at the current cruise altitude (light grey dashed) - purely informational, to help judge which areas are reachable before committing to a target point.
+- **A custom scale bar** (km and nautical miles) sits left of the zoom buttons.
+- **Warning banners' close (✕) buttons now sit on the left.** Dismissing one while its underlying condition is still active shows a red warning-triangle indicator next to the GPS status in the header - tap it to bring back every currently-dismissed-but-still-active warning at once.
+- **If a newly-generated version doesn't seem to show up**: this is a static file with no server of its own - after downloading it, it must actually be re-uploaded/committed to wherever it's hosted (e.g. the GitHub Pages repository) before the live site reflects it, and the browser/PWA may also be showing a cached copy of the page itself (try a hard reload, or fully close and reopen the app if it's installed to the home screen).
 - **Adiabatic braking and Monte-Carlo scatter are approximations**, not calibrated against real flight data — treat as a planning aid, not a certified instrument.
 - **Cloud file pickers** (Dropbox, Google Drive, etc.) shown when uploading a file are controlled entirely by iOS/the browser, based on which provider apps are installed — not something this page can add to or configure.

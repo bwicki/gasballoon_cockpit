@@ -111,8 +111,10 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 .map-controls-stack .center-map-btn:last-of-type{border-bottom:none;}
 .center-map-btn:active{transform:scale(0.93);}
 #particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:56px;box-sizing:border-box;padding:10px 0 9px;border-bottom:1px solid var(--border);position:relative;}
-#particleWindPreview{position:absolute;background:rgba(38,42,48,0.55);border:1px solid var(--border);border-radius:6px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:var(--text);pointer-events:none;z-index:1150;box-shadow:0 2px 8px rgba(0,0,0,.25);backdrop-filter:blur(2px);}
+#particleWindPreview{position:absolute;background:color-mix(in srgb, var(--panel2) 65%, transparent);border:1px solid var(--border);border-radius:6px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:var(--text);pointer-events:none;z-index:1150;box-shadow:0 2px 8px rgba(0,0,0,.2);backdrop-filter:blur(2px);}
 #particleWindPreview.show{display:flex;}
+#particleWindPreview::after{content:'';position:absolute;top:50%;right:-7px;transform:translateY(-50%);border-style:solid;border-width:6px 0 6px 7px;border-color:transparent transparent transparent var(--border);}
+#particleWindPreview::before{content:'';position:absolute;top:50%;right:-5.5px;transform:translateY(-50%);border-style:solid;border-width:5px 0 5px 6px;border-color:transparent transparent transparent color-mix(in srgb, var(--panel2) 90%, transparent);z-index:1;}
 #particleHeightSliderWrap.show{display:flex;}
 #particleHeightSliderTrack{position:relative;width:4px;height:100px;background:var(--border);border-radius:2px;margin:0 auto;touch-action:none;}
 #particleHeightSliderFill{position:absolute;bottom:0;left:0;width:100%;background:var(--accent);border-radius:2px;}
@@ -221,7 +223,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 .chart-expand-btn{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:5px;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;}
 #hodographChart{aspect-ratio:1/1;height:auto !important;}
 .map-scale-bar{position:absolute;right:76px;bottom:12px;background:rgba(255,255,255,0.85);border-radius:4px;padding:3px 6px 4px;pointer-events:none;font-size:10px;color:#1a1a1a;display:flex;flex-direction:column;align-items:stretch;gap:2px;box-shadow:0 1px 4px rgba(0,0,0,.25);z-index:900;}
+.map-scale-ruler-wrap{position:relative;padding-bottom:11px;}
 .map-scale-ruler{position:relative;height:7px;display:flex;border:1px solid #1a1a1a;box-sizing:border-box;}
+.map-scale-tick-label{position:absolute;top:9px;font-size:8.5px;color:#1a1a1a;line-height:1;}
 .map-scale-ruler > div{flex:1;border-right:1px solid #1a1a1a;}
 .map-scale-ruler > div:last-child{border-right:none;}
 .map-scale-ruler > div:nth-child(odd){background:#1a1a1a;}
@@ -270,10 +274,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="topbar">
     <div style="display:flex;flex-direction:column;line-height:1.15;">
       <svg width="30" height="28" viewBox="0 0 26 26" title="Gas Balloon Landing Predictor">
-        <ellipse cx="13" cy="9" rx="7" ry="8" fill="#ffb400" stroke="#000" stroke-width="1.2"/>
-        <rect x="11" y="16.5" width="4" height="3" fill="#555"/>
-        <line x1="13" y1="19.5" x2="13" y2="23" stroke="#8b98a5" stroke-width="1.3" stroke-dasharray="1.6,1.6"/>
-        <circle cx="13" cy="23.5" r="2" fill="none" stroke="#ff5a3c" stroke-width="1.3"/>
+        <circle cx="13" cy="12" r="8" fill="none" stroke="#00e5c8" stroke-width="1.6"/>
+        <circle cx="13" cy="12" r="8" fill="none" stroke="#00e5c8" stroke-width="1.6" stroke-dasharray="2,3" transform="rotate(45 13 12)" opacity="0.5"/>
+        <circle cx="13" cy="12" r="2" fill="#ff8a00"/>
+        <path d="M13 20 L11.5 25 L14.5 25 Z" fill="#ffb400" stroke="#000" stroke-width="0.8"/>
       </svg>
       <div class="wx-chip" id="versionChip" style="font-size:8px;color:var(--muted);"></div>
     </div>
@@ -293,7 +297,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
-    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;border:none;color:#3fa9ff;font-size:22px;cursor:pointer;padding:0 6px;line-height:1;">ℹ</button>
+    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:#3fa9ff;color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:15px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;">ℹ</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
       <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
@@ -825,7 +829,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v64';
+const APP_VERSION = 'v66';
 const APP_DATE = '30.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -910,7 +914,9 @@ const ScaleBarControl = L.Control.extend({
   onAdd: function(){
     const div = L.DomUtil.create('div', 'map-scale-bar');
     div.innerHTML = '<div class="map-scale-text" id="scaleBarText">—</div>'+
-                     '<div class="map-scale-ruler" id="scaleBarRuler"><div></div><div></div><div></div><div></div></div>';
+                     '<div class="map-scale-ruler-wrap"><div class="map-scale-ruler" id="scaleBarRuler"><div></div><div></div><div></div><div></div></div>'+
+                     '<span class="map-scale-tick-label" style="left:0;">0</span>'+
+                     '<span class="map-scale-tick-label" id="scaleBarEndLabel" style="right:0;">—</span></div>';
     return div;
   }
 });
@@ -947,6 +953,7 @@ function updateScaleBar(){
   document.getElementById('scaleBarRuler').style.width = Math.round(niceMeters*pxPerMeter)+'px';
   const km = niceMeters/1000, nm = niceMeters/1852;
   const distText = niceMeters<1000 ? `${Math.round(niceMeters)}m` : `${km.toFixed(km<10?2:0)}km`;
+  document.getElementById('scaleBarEndLabel').textContent = distText;
   // Conventional web-map "representative fraction" (1:N): ground meters per
   // CSS pixel, referenced against the standard 96dpi assumption (1 CSS px
   // = 1/96 inch = 0.0002646 m) - the same convention GIS/web tools use, even
@@ -1097,7 +1104,7 @@ let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarn
 let legendActiveButDismissed = {groundWindLegendBar:false, powerLegendBar:false};
 function updateAllLegendsReopenBtn(){
   const any = Object.values(legendActiveButDismissed).some(Boolean);
-  document.getElementById('allLegendsReopenBtn').style.display = any ? 'inline-block' : 'none';
+  document.getElementById('allLegendsReopenBtn').style.display = any ? 'inline-flex' : 'none';
 }
 document.getElementById('allLegendsReopenBtn').addEventListener('click', ()=>{
   BOTTOM_LEGEND_IDS.forEach(bannerId=>{
@@ -2599,12 +2606,16 @@ function showParticleWindPreview(trackRect, frac, stackRect){
   document.getElementById('particleWindPreviewText').textContent = `${Math.round(dirFrom)}° ${speedKmh.toFixed(1)}km/h`;
   document.getElementById('particleWindPreviewArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
   const preview = document.getElementById('particleWindPreview');
-  // Matches the thumb's own positioning formula (bottom-anchored at frac*100%
-  // of the track) exactly, without a separate DOM read of the thumb itself.
-  const thumbY = trackRect.bottom - frac*trackRect.height;
-  preview.style.top = thumbY + 'px';
+  // #particleWindPreview's positioned ancestor is #mapwrap, not the
+  // viewport - top/right must be expressed relative to ITS box, not
+  // window.innerWidth/viewport Y, which is what was actually causing the
+  // wrong vertical position (mapwrap doesn't start at viewport Y=0, there's
+  // a header above it).
+  const mapwrapRect = document.getElementById('mapwrap').getBoundingClientRect();
+  const thumbY = trackRect.bottom - frac*trackRect.height; // matches the thumb's own positioning formula exactly
+  preview.style.top = (thumbY - mapwrapRect.top) + 'px';
   preview.style.transform = 'translateY(-50%)';
-  preview.style.right = (window.innerWidth - stackRect.left + 8) + 'px';
+  preview.style.right = (mapwrapRect.right - stackRect.left + 8) + 'px';
   preview.classList.add('show');
   clearTimeout(particleWindPreviewTimer);
   particleWindPreviewTimer = setTimeout(()=>preview.classList.remove('show'), 10000);
@@ -2650,6 +2661,7 @@ function startGroundWindLayer(){
   if(particleHeightAGL > particleHeightMaxAGL) particleHeightAGL = 100;
   updateParticleHeightUI();
   document.getElementById('particleHeightSliderWrap').classList.add('show');
+  fetchWindGridForViewport();
   animateGroundWind();
   checkDescentTimeWindWarning();
 }
@@ -2665,6 +2677,89 @@ function stopGroundWindLayer(){
   hideYellowWarning();
 }
 const TRAIL_LENGTH = 12;
+// ---- regional wind grid for the particle animation ----
+// Sampling ONE wind value for the whole visible map was unrealistic - real
+// wind fields vary across a region. A 3x3 grid across the current viewport
+// (fetched in a single combined Open-Meteo call) gives each particle its
+// OWN, bilinearly-interpolated wind vector based on where it actually is.
+const WIND_GRID_N = 3;
+let windGrid = null; // {points:[{lat,lon,profile}...], bounds:{south,north,west,east}}
+let windGridFetchInFlight = false;
+let windGridFetchedForBounds = null;
+async function fetchWindGridForViewport(){
+  if(windGridFetchInFlight) return;
+  const b = map.getBounds();
+  windGridFetchInFlight = true;
+  try{
+    const points = [];
+    for(let j=0;j<WIND_GRID_N;j++){
+      for(let i=0;i<WIND_GRID_N;i++){
+        points.push({
+          lat: b.getSouth() + (b.getNorth()-b.getSouth())*j/(WIND_GRID_N-1),
+          lon: b.getWest() + (b.getEast()-b.getWest())*i/(WIND_GRID_N-1)
+        });
+      }
+    }
+    const modelSel = document.getElementById('wxModelSelect').value;
+    const resolvedModel = modelSel==='auto' ? pickAutoModel(map.getCenter().lat, map.getCenter().lng) : modelSel;
+    const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
+    const latStr = points.map(p=>p.lat.toFixed(3)).join(',');
+    const lonStr = points.map(p=>p.lon.toFixed(3)).join(',');
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=6&timezone=UTC`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const results = Array.isArray(j) ? j : [j]; // Open-Meteo returns a plain object (not array) for a single point
+    const gridPoints = points.map((pt,idx)=>{
+      const h = results[idx] && results[idx].hourly;
+      if(!h) return null;
+      const profile = PRESSURE_LEVELS.map(p=>{
+        const spdArr = h[`wind_speed_${p}hPa`], dirArr = h[`wind_direction_${p}hPa`];
+        const spd = spdArr ? spdArr[0] : null, dir = dirArr ? dirArr[0] : null;
+        return {alt_m: pressureToAltM(p), speed_ms: spd!=null?spd/3.6:null, dir_deg:dir};
+      }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
+      return {lat:pt.lat, lon:pt.lon, profile};
+    });
+    windGrid = {points: gridPoints, bounds:{south:b.getSouth(),north:b.getNorth(),west:b.getWest(),east:b.getEast()}};
+    windGridFetchedForBounds = b;
+  }catch(e){ /* keep using whatever grid (or single-point fallback) we had */ }
+  windGridFetchInFlight = false;
+}
+function windUVFromProfile(profile, altM){
+  if(!profile || !profile.length) return {u:0,v:0};
+  let lo=profile[0], hi=profile[profile.length-1];
+  for(let k=0;k<profile.length-1;k++){
+    if(altM>=profile[k].alt_m && altM<=profile[k+1].alt_m){ lo=profile[k]; hi=profile[k+1]; break; }
+  }
+  const f = hi.alt_m>lo.alt_m ? Math.max(0,Math.min(1,(altM-lo.alt_m)/(hi.alt_m-lo.alt_m))) : 0;
+  const spd = lo.speed_ms + (hi.speed_ms-lo.speed_ms)*f;
+  const dir = lo.dir_deg + (hi.dir_deg-lo.dir_deg)*f;
+  const rad = dir*Math.PI/180;
+  return {u:-spd*Math.sin(rad), v:-spd*Math.cos(rad)};
+}
+function windAtGrid(lat, lon, altM){
+  if(!windGrid) return null;
+  const {bounds, points} = windGrid;
+  const fx = Math.max(0,Math.min(1,(lon-bounds.west)/Math.max(1e-9,bounds.east-bounds.west)));
+  const fy = Math.max(0,Math.min(1,(lat-bounds.south)/Math.max(1e-9,bounds.north-bounds.south)));
+  const gx = fx*(WIND_GRID_N-1), gy = fy*(WIND_GRID_N-1);
+  const x0=Math.floor(gx), x1=Math.min(WIND_GRID_N-1,x0+1);
+  const y0=Math.floor(gy), y1=Math.min(WIND_GRID_N-1,y0+1);
+  const tx=gx-x0, ty=gy-y0;
+  const idx = (xi,yi)=> points[yi*WIND_GRID_N+xi];
+  const p00=windUVFromProfile(idx(x0,y0) && idx(x0,y0).profile, altM);
+  const p10=windUVFromProfile(idx(x1,y0) && idx(x1,y0).profile, altM);
+  const p01=windUVFromProfile(idx(x0,y1) && idx(x0,y1).profile, altM);
+  const p11=windUVFromProfile(idx(x1,y1) && idx(x1,y1).profile, altM);
+  const uTop=p00.u+(p10.u-p00.u)*tx, uBot=p01.u+(p11.u-p01.u)*tx;
+  const vTop=p00.v+(p10.v-p00.v)*tx, vBot=p01.v+(p11.v-p01.v)*tx;
+  return {u:uTop+(uBot-uTop)*ty, v:vTop+(vBot-vTop)*ty};
+}
+function scheduleWindGridRefresh(){
+  if(!groundWindLayer.active) return;
+  clearTimeout(scheduleWindGridRefresh.timer);
+  scheduleWindGridRefresh.timer = setTimeout(fetchWindGridForViewport, 600);
+}
+map.on('moveend zoomend', scheduleWindGridRefresh);
 function animateGroundWind(){
   if(!groundWindLayer.active) return;
   const ctx = groundWindLayer.ctx;
@@ -2703,8 +2798,14 @@ function animateGroundWind(){
     groundWindLayer.particles.length = targetCount;
   }
   groundWindLayer.particles.forEach(p=>{
+    // Each particle samples the wind AT ITS OWN location from the regional
+    // grid (falling back to the single "representative" value only until
+    // the grid has loaded) - different parts of the visible map can
+    // genuinely have different wind, which a single shared value never
+    // showed.
+    const localWind = windAtGrid(p.lat, p.lon, particleAltM) || w;
     const pt = map.latLngToContainerPoint([p.lat, p.lon]);
-    const nextPt = L.point(pt.x + w.u*PIXELS_PER_MS, pt.y - w.v*PIXELS_PER_MS); // screen y is inverted vs. north
+    const nextPt = L.point(pt.x + localWind.u*PIXELS_PER_MS, pt.y - localWind.v*PIXELS_PER_MS); // screen y is inverted vs. north
     const nextLatLng = map.containerPointToLatLng(nextPt);
     p.lat = nextLatLng.lat; p.lon = nextLatLng.lng;
     p.age += 1;
@@ -2712,6 +2813,7 @@ function animateGroundWind(){
       Object.assign(p, spawnGroundWindParticle());
       return;
     }
+    const localColor = groundWindSpeedColor(Math.hypot(localWind.u, localWind.v));
     p.trail.push({lat:p.lat, lon:p.lon});
     if(p.trail.length>dynamicTrailLength) p.trail.shift();
     // Comet tail: re-project EVERY point fresh each frame (not just the
@@ -2724,7 +2826,7 @@ function animateGroundWind(){
       ctx.beginPath();
       ctx.moveTo(screenTrail[i-1].x, screenTrail[i-1].y);
       ctx.lineTo(screenTrail[i].x, screenTrail[i].y);
-      ctx.strokeStyle = color;
+      ctx.strokeStyle = localColor;
       ctx.globalAlpha = 0.12 + t*0.55;
       ctx.lineWidth = 1 + t*2.2;
       ctx.lineCap = 'round';
@@ -2734,7 +2836,7 @@ function animateGroundWind(){
     const head = screenTrail[screenTrail.length-1];
     ctx.beginPath();
     ctx.arc(head.x, head.y, 2.4, 0, 2*Math.PI);
-    ctx.fillStyle = color;
+    ctx.fillStyle = localColor;
     ctx.globalAlpha = 0.9;
     ctx.fill();
   });

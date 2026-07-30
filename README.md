@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v64** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v66** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -75,7 +75,11 @@ Gas compressed adiabatically during a fast descent stays warmer (and less dense)
 - **Particle-slider drag reliability improved**: repeated `getBoundingClientRect()` reads on every pointermove (a known cause of dropped touch input on iOS Safari) were reduced to one cached read per drag gesture. The wind preview box now appears exactly at the thumb's height and is noticeably more transparent.
 - **Legend reopen icons removed** from the map (were colliding with the mode toggle) - replaced with a single blue info-icon in the header (next to the warning triangle) that reopens all dismissed legends at once.
 - **Map scale bar restyled** as a classic black/white segmented ruler, combined with the distance and the rounded 1:N ratio on one line, and now docks directly above whatever legend bars are currently open instead of a fixed position.
-- **Small app logo** (balloon + dashed descent path + landing target) replaces the "GBLP" text in the header; the version number stays in the same place underneath it.
+- **Small app logo** (balloon + dashed descent path + landing target) replaces the "GBLP" text in the header; the version number stays in the same place underneath it. See `logo_options.html` for alternative designs if you'd prefer a different one.
+- **Ground wind particles now show REGIONAL variation**: a 3x3 wind grid is fetched across the visible map area (one combined request) and each particle interpolates its own local wind vector (both speed/color and movement) instead of every particle everywhere sharing one single value.
+- **Legend "reopen" icon fixed to a blue circle** matching the warning triangle's size; scale bar redesigned as a labelled ruler (0 and the full distance marked at each end, so it's unambiguous the WHOLE bar represents that distance, not each striped segment) and repositions to sit directly above whatever legends are open.
+- **Wind-preview popup on the particle slider**: fixed a real positioning bug (`top`/`right` were computed relative to the viewport, but the element's actual positioned ancestor is `#mapwrap`, which doesn't start at the viewport's top-left) - it now aligns exactly with the thumb, with a small pointer tail toward it, and a properly transparent background matching the slider container.
+- **Adiabatic braking**: verified the barometric formula, Poisson's adiabatic law, and the (already size-corrected) convective heat-transfer correlation are each individually correct. The remaining modest percentage is structural (dividing the ballast-equivalent by total system mass) rather than a further identified bug - see the chat for the full reasoning and a request for real flight data to calibrate against.
 - **Flight Charts is hidden by default** entirely (not just collapsed) - a header toggle (left of Day/Night) shows/hides it.
 - **Plan Descent shows a 360-minute reference trajectory** at the current cruise altitude (light grey dashed) - purely informational, to help judge which areas are reachable before committing to a target point.
 - **A custom scale bar** (km and nautical miles) sits left of the zoom buttons.

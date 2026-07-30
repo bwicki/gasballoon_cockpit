@@ -196,7 +196,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .gps-warn.show{display:flex;}
 .gps-warn button.ghost-inline{flex-shrink:0;background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 10px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;}
 .yellow-warn.show{display:flex;}
-.banner-close{flex-shrink:0;background:rgba(0,0,0,0.15);border:none;color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;}
+.banner-close{flex-shrink:0;background:rgba(0,0,0,0.25);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;}
 .reopen-icon{position:absolute;top:8px;left:8px;z-index:600;width:34px;height:34px;border-radius:50%;border:2px solid #fff;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 .reopen-icon.red{background:var(--bad);color:#fff;}
 .reopen-icon.yellow{background:var(--warn);color:#241a00;left:50px;}
@@ -306,6 +306,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="layerToggleGroup" id="layerToggleGroup">
       <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
+      <button class="ltbtn" id="tgLandCover" title="Non-landable terrain (forest/water/wetland/vineyard/urban)"><span class="layer-load-dot" id="dotTgLandCover"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 L4 14 h5 l-3 8 h12 l-3-8 h5 Z"/></svg></button>
       <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
       <button class="ltbtn active" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
       <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas (OpenStreetMap)"><span class="layer-load-dot" id="dotTgNatureReserves"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
@@ -411,6 +412,17 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <label><input type="checkbox" data-as="RMZ">RMZ</label>
         </div>
         <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
+
+        <hr>
+        <div class="subhead">Non-landable Terrain (OpenStreetMap)</div>
+        <div class="checkgrid">
+          <label><input type="checkbox" checked data-landcover="forest">Forest</label>
+          <label><input type="checkbox" checked data-landcover="water">Water</label>
+          <label><input type="checkbox" checked data-landcover="wetland">Wetland/Moor</label>
+          <label><input type="checkbox" data-landcover="vineyard">Vineyard/Orchard</label>
+          <label><input type="checkbox" checked data-landcover="urban">Dense Urban</label>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">Shown (violet-red hatched) via the terrain icon in the header, next to Roads. Note: steep mountain terrain isn't included - OpenStreetMap has no slope/gradient data, that would need a separate elevation-based layer.</p>
 
         <hr>
         <div class="subhead">Offline Tile Cache Radius</div>
@@ -829,7 +841,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v68';
+const APP_VERSION = 'v70';
 const APP_DATE = '30.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -979,7 +991,7 @@ const ScaleBarControl = L.Control.extend({
     div.innerHTML = '<div class="map-scale-text" id="scaleBarText">—</div>'+
                      '<div class="map-scale-ruler-wrap"><div class="map-scale-ruler" id="scaleBarRuler"><div></div><div></div><div></div><div></div></div>'+
                      '<span class="map-scale-tick-label" style="left:0;">0</span>'+
-                     '<span class="map-scale-tick-label" id="scaleBarSeg1Label" style="left:25%;transform:translateX(-50%);">—</span>'+
+                     '<span class="map-scale-tick-label" id="scaleBarSeg1Label" style="left:12.5%;transform:translateX(-50%);">—</span>'+
                      '<span class="map-scale-tick-label" id="scaleBarEndLabel" style="right:0;">—</span></div>';
     return div;
   }
@@ -1463,6 +1475,82 @@ out geom;`;
   }
 }
 map.on('moveend zoomend', ()=>{ if(natureReservesActive) scheduleNatureReservesFetch(); });
+
+// ---- non-landable terrain (land cover) layer ----
+const LANDCOVER_TAG_QUERIES = {
+  forest: ['way["natural"="wood"]', 'way["landuse"="forest"]'],
+  water: ['way["natural"="water"]'],
+  wetland: ['way["natural"="wetland"]'],
+  vineyard: ['way["landuse"="vineyard"]', 'way["landuse"="orchard"]'],
+  urban: ['way["landuse"~"^(residential|commercial|retail|industrial)$"]']
+};
+const landCoverLayer = L.layerGroup();
+let landCoverFetchTimer = null;
+let landCoverActive = false;
+document.getElementById('tgLandCover').addEventListener('click', function(){
+  landCoverActive = this.classList.toggle('active');
+  if(landCoverActive){ setLayerLoadDot('tgLandCover','loading'); landCoverLayer.addTo(map); scheduleLandCoverFetch(); }
+  else { map.removeLayer(landCoverLayer); landCoverLayer.clearLayers(); setLayerLoadDot('tgLandCover', null); }
+});
+document.querySelectorAll('[data-landcover]').forEach(cb=>cb.addEventListener('change', ()=>{ if(landCoverActive) scheduleLandCoverFetch(); }));
+function scheduleLandCoverFetch(){
+  clearTimeout(landCoverFetchTimer);
+  landCoverFetchTimer = setTimeout(fetchLandCover, 700);
+}
+function ensureLandCoverHatchPattern(){
+  const svg = document.querySelector('#map svg');
+  if(!svg || svg.querySelector('#landCoverHatchPattern')) return;
+  let defs = svg.querySelector('defs');
+  if(!defs){ defs = document.createElementNS('http://www.w3.org/2000/svg','defs'); svg.insertBefore(defs, svg.firstChild); }
+  const pattern = document.createElementNS('http://www.w3.org/2000/svg','pattern');
+  pattern.setAttribute('id','landCoverHatchPattern');
+  pattern.setAttribute('width','8'); pattern.setAttribute('height','8');
+  pattern.setAttribute('patternTransform','rotate(-45)');
+  pattern.setAttribute('patternUnits','userSpaceOnUse');
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1','0'); line.setAttribute('y1','0'); line.setAttribute('x2','0'); line.setAttribute('y2','8');
+  line.setAttribute('stroke','#b0296e'); line.setAttribute('stroke-width','3');
+  pattern.appendChild(line);
+  defs.appendChild(pattern);
+}
+async function fetchLandCover(){
+  if(!landCoverActive || map.getZoom()<10){ return; } // finer-grained features than nature reserves - needs a closer zoom to stay fast
+  const checked = [...document.querySelectorAll('[data-landcover]')].filter(cb=>cb.checked).map(cb=>cb.dataset.landcover);
+  if(!checked.length){ landCoverLayer.clearLayers(); return; }
+  const center = map.getCenter();
+  const maxDeg = 0.2; // ~20km - these categories are far more numerous/detailed than protected areas, so a tighter cap keeps it fast
+  const b = map.getBounds();
+  const south = Math.max(b.getSouth(), center.lat-maxDeg);
+  const north = Math.min(b.getNorth(), center.lat+maxDeg);
+  const west = Math.max(b.getWest(), center.lng-maxDeg);
+  const east = Math.min(b.getEast(), center.lng+maxDeg);
+  const bbox = `${south},${west},${north},${east}`;
+  const clauses = checked.flatMap(cat=>(LANDCOVER_TAG_QUERIES[cat]||[]).map(q=>`${q}(${bbox});`));
+  const query = `[out:json][timeout:20];\n(\n${clauses.join('\n')}\n);\nout geom;`;
+  try{
+    const r = await fetchOverpassThrottled(query);
+    const j = await r.json();
+    ensureLandCoverHatchPattern();
+    landCoverLayer.clearLayers();
+    for(const el of (j.elements||[])){
+      if(el.type!=='way' || !el.geometry) continue;
+      const ring = el.geometry.map(p=>[p.lat,p.lon]);
+      if(ring.length<3) continue;
+      L.polygon(ring, {color:'#b0296e', weight:1.5, fillColor:'url(#landCoverHatchPattern)', fillOpacity:0.55, pane:'overlayTilesPane'})
+        .bindTooltip((el.tags&&el.tags.name) || (el.tags&&(el.tags.natural||el.tags.landuse)) || 'Non-landable terrain', {sticky:true})
+        .addTo(landCoverLayer);
+    }
+    if(landCoverActive) setLayerLoadDot('tgLandCover','ready');
+  }catch(e){
+    if(landCoverActive){
+      setLayerLoadDot('tgLandCover','loading');
+      const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
+      clearTimeout(landCoverFetchTimer);
+      landCoverFetchTimer = setTimeout(fetchLandCover, retryDelay);
+    }
+  }
+}
+map.on('moveend zoomend', ()=>{ if(landCoverActive) scheduleLandCoverFetch(); });
 
 const fineRoadsLayer = L.layerGroup();
 let fineRoadsFetchTimer = null;
@@ -2864,14 +2952,6 @@ function animateGroundWind(){
   const hourIdx = Math.round((state.secondsToLanding||0)/3600);
   const w = windAt(particleAltM, 0, 1, hourIdx);
   const speedMs = Math.hypot(w.u, w.v);
-  const color = groundWindSpeedColor(speedMs);
-  const currentBucket = groundWindSpeedBucket(speedMs);
-  if(currentBucket !== groundWindLayer.lastShownBucket){
-    groundWindLayer.lastShownBucket = currentBucket;
-    document.querySelectorAll('#groundWindLegendBar .gwl-item').forEach(el=>{
-      el.style.display = (parseInt(el.dataset.speedBucket)===currentBucket) ? 'flex' : 'none';
-    });
-  }
   const b = map.getBounds();
   // Movement is computed directly in SCREEN PIXELS (not real-world meters),
   // so the on-screen speed only reflects actual wind strength and stays
@@ -2890,6 +2970,7 @@ function animateGroundWind(){
   } else if(groundWindLayer.particles.length > targetCount+5){
     groundWindLayer.particles.length = targetCount;
   }
+  const usedBuckets = new Set();
   groundWindLayer.particles.forEach(p=>{
     // Each particle samples the wind AT ITS OWN location from the regional
     // grid (falling back to the single "representative" value only until
@@ -2906,7 +2987,9 @@ function animateGroundWind(){
       Object.assign(p, spawnGroundWindParticle());
       return;
     }
-    const localColor = groundWindSpeedColor(Math.hypot(localWind.u, localWind.v));
+    const localSpeedMs = Math.hypot(localWind.u, localWind.v);
+    const localColor = groundWindSpeedColor(localSpeedMs);
+    usedBuckets.add(groundWindSpeedBucket(localSpeedMs));
     p.trail.push({lat:p.lat, lon:p.lon});
     if(p.trail.length>dynamicTrailLength) p.trail.shift();
     // Comet tail: re-project EVERY point fresh each frame (not just the
@@ -2934,6 +3017,16 @@ function animateGroundWind(){
     ctx.fill();
   });
   ctx.globalAlpha = 1;
+  // Show every legend swatch whose speed bucket is actually present among
+  // the current particles (there can easily be several at once now that
+  // wind varies regionally), not just a single "representative" value.
+  const bucketsKey = [...usedBuckets].sort().join(',');
+  if(bucketsKey !== groundWindLayer.lastShownBucketsKey){
+    groundWindLayer.lastShownBucketsKey = bucketsKey;
+    document.querySelectorAll('#groundWindLegendBar .gwl-item').forEach(el=>{
+      el.style.display = usedBuckets.has(parseInt(el.dataset.speedBucket)) ? 'flex' : 'none';
+    });
+  }
   // (ground-wind speed reading now lives in the "Landing Position" card, updated separately)
   groundWindLayer.animId = requestAnimationFrame(animateGroundWind);
 }
@@ -4508,7 +4601,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover'];
 function saveConfig(){
   try{
     const cfg = {};

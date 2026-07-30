@@ -111,7 +111,7 @@ body.day .place-chip{background:rgba(255,255,255,0.9);color:#16202a;border-color
 .map-controls-stack .center-map-btn:last-of-type{border-bottom:none;}
 .center-map-btn:active{transform:scale(0.93);}
 #particleHeightSliderWrap{display:none;flex-direction:column;align-items:center;width:56px;box-sizing:border-box;padding:10px 0 9px;border-bottom:1px solid var(--border);position:relative;}
-#particleWindPreview{position:absolute;right:100%;top:50%;transform:translateY(-50%);margin-right:8px;background:rgba(30,34,40,0.92);border:1px solid var(--border);border-radius:6px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:#fff;pointer-events:none;}
+#particleWindPreview{position:absolute;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:var(--text);pointer-events:none;z-index:1150;box-shadow:0 2px 8px rgba(0,0,0,.3);}
 #particleWindPreview.show{display:flex;}
 #particleHeightSliderWrap.show{display:flex;}
 #particleHeightSliderTrack{position:relative;width:4px;height:100px;background:var(--border);border-radius:2px;margin:0 auto;touch-action:none;}
@@ -220,8 +220,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 .chart-thumb-title{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
 .chart-expand-btn{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:5px;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;}
 #hodographChart{aspect-ratio:1/1;height:auto !important;}
-.map-scale-bar{position:absolute;right:56px;bottom:12px;background:rgba(30,34,40,0.82);border-radius:6px;padding:4px 8px;pointer-events:none;font-size:10px;color:#fff;display:flex;flex-direction:column;gap:1px;}
-.map-scale-line{height:3px;background:#fff;border:1px solid #222;border-top:none;margin-top:1px;}
+.map-scale-bar{position:absolute;right:56px;bottom:112px;background:rgba(255,255,255,0.82);border-radius:6px;padding:3px 8px 5px;pointer-events:none;font-size:10.5px;color:#1a1a1a;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.map-scale-ruler{position:relative;height:6px;border-left:1.5px solid #1a1a1a;border-right:1.5px solid #1a1a1a;border-bottom:1.5px solid #1a1a1a;box-sizing:border-box;}
+.map-scale-text{font-weight:700;white-space:nowrap;}
+.map-scale-ratio{font-size:9px;color:#444;white-space:nowrap;}
 #chartExpandOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5000;display:none;align-items:center;justify-content:center;}
 #tutorialOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5500;display:none;align-items:center;justify-content:center;}
 #tutorialOverlay.show{display:flex;}
@@ -280,7 +282,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="sep"></div>
     <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
-    <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:18px;cursor:pointer;padding:0 4px;">⚠</button>
+    <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
+    <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
       <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
@@ -320,6 +323,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <label><input type="radio" name="altUnitRadio" value="ft">ft AMSL</label>
           <label><input type="radio" name="altUnitRadio" value="FL">FL</label>
         </div>
+
+        <div class="subhead">Language / Sprache</div>
+        <div class="checkgrid" style="grid-template-columns:1fr 1fr;">
+          <label><input type="radio" name="langRadio" value="en" checked>English</label>
+          <label><input type="radio" name="langRadio" value="de">Deutsch</label>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Translates the main card titles and field labels. Not every message/tooltip in the app is translated yet.</p>
 
         <hr>
         <div class="subhead">Weather Model</div>
@@ -478,7 +488,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button class="ghost" id="btnClearLog" style="margin-top:8px;color:var(--bad);">Clear log</button>
       </div>
     </div>
-    <div style="position:relative;margin-left:16px;">
+    <div style="position:relative;margin-right:16px;">
       <button class="iconbtn" id="btnEmergency" title="Emergency contact" style="background:var(--bad);color:#fff;border-color:var(--bad);">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
       </button>
@@ -523,29 +533,26 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <button class="ghost-inline" id="btnLeaveManualModeFromWarn" style="display:none;">Yes, leave Manual Mode</button>
         </div>
         <div id="modeToggle">
-          <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> Landing Area</button>
-          <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> Plan Descent</button>
+          <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> <span data-i18n="modeLandingArea">Landing Area</span></button>
+          <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> <span data-i18n="modePlanDescent">Plan Descent</span></button>
         </div>
       </div>
-      <button id="gpsWarnIcon" class="reopen-icon red" style="display:none;left:92px;" onclick="reopenBanner('gpsWarnBar','gpsWarnIcon')" title="Show GPS warning">📡</button>
-      <button id="warnbarIcon" class="reopen-icon red" style="display:none;" onclick="reopenBanner('warnbar','warnbarIcon')" title="Show warning">⚠</button>
-      <button id="descentWindWarnIcon" class="reopen-icon yellow" style="display:none;" onclick="reopenBanner('descentWindWarnBar','descentWindWarnIcon')" title="Show notice">⚠</button>
       <div id="mapControlsStack" class="map-controls-stack">
         <div id="particleHeightSliderWrap">
           <div id="particleHeightLabelAmsl">—m AMSL</div>
           <div id="particleHeightSliderTrack" class="custom-vslider-track">
             <div id="particleHeightSliderFill" class="custom-vslider-fill"></div>
             <div id="particleHeightSliderThumb" class="custom-vslider-thumb"></div>
-            <div id="particleWindPreview">
-              <svg id="particleWindPreviewArrow" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
-              <span id="particleWindPreviewText">—</span>
-            </div>
           </div>
           <div id="particleHeightLabel">+100m<br>AGL</div>
         </div>
         <button id="btnCenterPlanned" class="center-map-btn" title="Center on planned landing area" style="display:none;color:#ff8a00;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+      </div>
+      <div id="particleWindPreview">
+        <svg id="particleWindPreviewArrow" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
+        <span id="particleWindPreviewText">—</span>
       </div>
       <div id="powerLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('powerLegendBar','powerLegendIcon')">✕</button>
@@ -580,7 +587,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- POSITION -->
       <div class="card" id="positionCard">
-        <h3 onclick="toggleCard(this)">Current Position <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span data-i18n="cardCurrentPosition">Current Position</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell wide" id="posDisplayWrap">
@@ -595,7 +602,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
             <div class="datacell">
               <label id="altAMSLLabel">Alt AMSL (GPS)</label>
-              <div class="val small" id="altAMSL">—</div>
+              <div class="val small" id="altAMSL" style="font-weight:400;">—</div>
               <div class="stepper-input-row" id="altAMSLInputRow" style="display:none;">
                 <input type="number" class="manual-input" id="altAMSLInput" placeholder="m AMSL">
                 <div class="input-steppers">
@@ -604,10 +611,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 </div>
               </div>
             </div>
-            <div class="datacell"><label>Alt AGL</label><div class="val small" id="altAGL">—</div></div>
+            <div class="datacell"><label data-i18n="fieldAltAGL">Alt AGL</label><div class="val small" id="altAGL" style="font-weight:400;">—</div></div>
             <div class="datacell">
               <label id="courseLabel">Course (° True GPS)</label>
-              <div class="val small" id="courseVal">—</div>
+              <div class="val small" id="courseVal" style="font-weight:400;">—</div>
               <div class="stepper-input-row" id="courseInputRow" style="display:none;">
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" class="manual-input" id="courseValInput" placeholder="090">
                 <div class="input-steppers">
@@ -618,7 +625,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
             <div class="datacell">
               <label id="speedLabel">Speed (GPS)</label>
-              <div class="val small" id="speedVal">—</div>
+              <div class="val small" id="speedVal" style="font-weight:400;">—</div>
               <div class="stepper-input-row" id="speedValInputRow" style="display:none;">
                 <input type="text" inputmode="decimal" class="manual-input" id="speedValInput" placeholder="kn">
                 <div class="input-steppers">
@@ -634,35 +641,37 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)"><span><span id="plannedBadgeWord" style="color:var(--bad);display:none;">PLANNED </span>Landing Area</span> <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span><span id="plannedBadgeWord" style="color:var(--bad);display:none;" data-i18n="plannedWord">PLANNED </span><span data-i18n="cardLandingArea">Landing Area</span></span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell wide" id="landingPosDisplayWrap">
-              <label>Approx Position</label>
               <div style="display:flex;justify-content:space-between;gap:8px;">
-                <div>
-                  <div class="val small" id="landingPosDMS" style="font-weight:400;">—</div>
-                  <div class="val small" id="landingPosCoords" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div>
+                    <div class="val small" id="landingPosDMS" style="font-weight:400;">—</div>
+                    <div class="val small" id="landingPosCoords" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 18 18" style="flex-shrink:0;"><line x1="9" y1="1" x2="9" y2="17" stroke="currentColor" stroke-width="2"/><line x1="1" y1="9" x2="17" y2="9" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
                 </div>
                 <div class="val small" id="landingPosTown" style="color:var(--muted);text-align:right;">—</div>
               </div>
             </div>
-            <div class="datacell"><label>Approx Height</label><div class="val small" id="landingPosAlt">—</div></div>
+            <div class="datacell"><label data-i18n="fieldApproxAltitude">Approx Altitude</label><div class="val small" id="landingPosAlt" style="font-weight:400;">—</div></div>
             <div class="datacell">
-              <label>Ground Wind</label>
-              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:3px;overflow:visible;">
+              <label data-i18n="fieldGroundWind">Ground Wind</label>
+              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:3px;overflow:visible;font-weight:400;">
                 <svg id="landingWindArrow" width="15" height="15" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
                 <span id="landingWindText" style="flex-shrink:0;font-size:12px;">—</span>
                 <span id="landingWindTrend" style="font-size:12px;flex-shrink:0;" title="Trend vs. 1h earlier"></span>
               </div>
             </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
-              <label>Estimated Descent Point</label>
+              <label data-i18n="fieldEstimatedDescentPoint">Estimated Descent Point</label>
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
-              <label>Inversion/Isothermal Layer below Descent Position</label>
-              <div class="val small" id="inversionNoteText">(none)</div>
+              <label data-i18n="fieldInversion">Inversion/Isothermal Layer below Descent Position</label>
+              <div class="val small" id="inversionNoteText" style="font-weight:400;">(none)</div>
             </div>
           </div>
           <button class="ghost" id="btnClearPlannedArea" style="display:none;margin-top:6px;color:var(--bad);">Clear planned landing area</button>
@@ -671,26 +680,26 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- DESCENT PARAMETERS -->
       <div class="card">
-        <h3 onclick="toggleCard(this)">Descent Parameters <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span data-i18n="cardDescentParams">Descent Parameters</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="slider-row">
-            <div class="lbl"><span><span>Initiate descent in</span> <b id="lblInit">30 min</b></span><span id="lblInitDist" class="dist-badge" style="margin-left:auto;">0.00 km</span></div>
+            <div class="lbl"><span><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit">30 min</b></span><span id="lblInitDist" class="dist-badge" style="margin-left:auto;">0.00 km</span></div>
             <input type="range" id="sInit" min="0" max="240" step="1" value="30">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span><span>Descent rate</span> <b id="lblRate">4.0 m/s</b></span><span id="lblAdiaRateBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
+            <div class="lbl"><span><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate">4.0 m/s</b></span><span id="lblAdiaRateBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span><span>Intercept height AGL</span> <b id="lblIntH">400 m</b></span><span id="lblInterceptTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
+            <div class="lbl"><span><span data-i18n="sliderInterceptHeight">Intercept height AGL</span> <b id="lblIntH">400 m</b></span><span id="lblInterceptTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sIntH" min="100" max="1000" step="10" value="400">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span><span>Descent rate after intercept</span> <b id="lblRate2">1.5 m/s</b></span><span id="lblGroundTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
+            <div class="lbl"><span><span data-i18n="sliderRate2">Descent rate after intercept</span> <b id="lblRate2">1.5 m/s</b></span><span id="lblGroundTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate2" min="0.5" max="4" step="0.1" value="1.5">
           </div>
           <div class="slider-row">
-            <div class="lbl"><span>Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
+            <div class="lbl"><span data-i18n="sliderScatter">Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
             <input type="range" id="sScatter" min="0" max="40" step="1" value="15">
           </div>
         </div>
@@ -703,7 +712,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
            either to open it larger with a close button, per request. The
            hodograph thumbnail is shown/hidden via the header toggle button. -->
       <div class="card collapsed" id="flightChartsCard" style="display:none;">
-        <h3 onclick="toggleCard(this)">Flight Charts <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span data-i18n="cardFlightCharts">Flight Charts</span> <span class="chev">▾</span></h3>
         <div class="cardbody" style="display:flex;gap:8px;">
           <div style="flex:1;min-width:0;">
             <div class="chart-thumb-title">Wind Profile <button class="chart-expand-btn" onclick="expandChart('wind')" title="Enlarge">⤢</button></div>
@@ -801,7 +810,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v62';
+const APP_VERSION = 'v63';
 const APP_DATE = '30.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -884,8 +893,9 @@ const ScaleBarControl = L.Control.extend({
   options: {position:'bottomright'},
   onAdd: function(){
     const div = L.DomUtil.create('div', 'map-scale-bar');
-    div.innerHTML = '<div class="map-scale-line" id="scaleBarLineKm"></div><div class="map-scale-label" id="scaleBarLabelKm">—</div>'+
-                     '<div class="map-scale-line" id="scaleBarLineNm"></div><div class="map-scale-label" id="scaleBarLabelNm">—</div>';
+    div.innerHTML = '<div class="map-scale-ruler" id="scaleBarRuler"></div>'+
+                     '<div class="map-scale-text" id="scaleBarText">—</div>'+
+                     '<div class="map-scale-ratio" id="scaleBarRatio">1:—</div>';
     return div;
   }
 });
@@ -898,18 +908,27 @@ function niceScaleNumber(raw){
 }
 function updateScaleBar(){
   const y = map.getSize().y/2;
-  const maxWidthPx = 90;
+  // Target roughly a quarter of the map's on-screen width, then snap to
+  // the nearest "nice" round distance so the bar can actually be read off
+  // against real-world distances, rather than an arbitrary fixed length.
+  const targetWidthPx = map.getSize().x*0.25;
   const p1 = map.containerPointToLatLng([0,y]);
-  const p2 = map.containerPointToLatLng([maxWidthPx,y]);
-  const maxMeters = haversine(p1.lat,p1.lng,p2.lat,p2.lng);
-  const niceKm = niceScaleNumber(maxMeters/1000);
-  const pxPerKm = maxWidthPx/(maxMeters/1000);
-  document.getElementById('scaleBarLineKm').style.width = Math.round(niceKm*pxPerKm)+'px';
-  document.getElementById('scaleBarLabelKm').textContent = (niceKm<1? (niceKm*1000).toFixed(0)+' m' : niceKm+' km');
-  const niceNm = niceScaleNumber(maxMeters/1852);
-  const pxPerNm = maxWidthPx/(maxMeters/1852);
-  document.getElementById('scaleBarLineNm').style.width = Math.round(niceNm*pxPerNm)+'px';
-  document.getElementById('scaleBarLabelNm').textContent = niceNm+' nm';
+  const p2 = map.containerPointToLatLng([targetWidthPx,y]);
+  const targetMeters = haversine(p1.lat,p1.lng,p2.lat,p2.lng);
+  const niceKm = niceScaleNumber(targetMeters/1000);
+  const niceMeters = niceKm*1000;
+  const pxPerMeter = targetWidthPx/targetMeters;
+  document.getElementById('scaleBarRuler').style.width = Math.round(niceMeters*pxPerMeter)+'px';
+  const km = niceMeters/1000, nm = niceMeters/1852;
+  const distText = niceMeters<1000 ? `${Math.round(niceMeters)}m` : `${km.toFixed(km<10?2:0)}km`;
+  document.getElementById('scaleBarText').textContent = `${distText} / ${nm.toFixed(nm<10?2:0)}nm`;
+  // Conventional web-map "representative fraction" (1:N): ground meters per
+  // CSS pixel, referenced against the standard 96dpi assumption (1 CSS px
+  // = 1/96 inch = 0.0002646 m) - the same convention GIS/web tools use, even
+  // though actual device pixel density varies.
+  const metersPerPixel = targetMeters/targetWidthPx;
+  const ratioN = Math.round(metersPerPixel/0.0002646);
+  document.getElementById('scaleBarRatio').textContent = `1:${ratioN.toLocaleString('en-US').replace(/,/g,"'")}`;
 }
 map.on('zoomend moveend', updateScaleBar);
 updateScaleBar();
@@ -1047,6 +1066,7 @@ const TOP_WARNING_BANNERS = [
   {bannerId:'descentWindWarnBar', iconId:'descentWindWarnIcon'},
   {bannerId:'gpsWarnBar', iconId:'gpsWarnIcon'}
 ];
+let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarnBar:false};
 let legendStackOrder = []; // order in which currently-visible bottom legends were opened; first = docks at the very bottom
 // Small traffic-light dot on a layer's toggle button: hidden when off,
 // yellow while its data is loading, green once it's fully loaded (and, for
@@ -1586,7 +1606,8 @@ function setGpsStatus(ok, txt){
       reopenBanner('gpsWarnBar','gpsWarnIcon');
     } else if(!state.testMode){
       document.getElementById('gpsWarnBar').classList.remove('show');
-      document.getElementById('gpsWarnIcon').style.display = 'none';
+      bannerActiveButDismissed.gpsWarnBar = false;
+      updateAllWarningsReopenBtn();
       repositionModeToggle();
     }
   } else {
@@ -1658,7 +1679,8 @@ function setTestMode(enable, reason){
     // unless GPS is still down, which setGpsStatus will handle on its own.
     if(document.getElementById('gpsDot').classList.contains('ok')){
       document.getElementById('gpsWarnBar').classList.remove('show');
-      document.getElementById('gpsWarnIcon').style.display = 'none';
+      bannerActiveButDismissed.gpsWarnBar = false;
+      updateAllWarningsReopenBtn();
       repositionModeToggle();
     }
   }
@@ -2351,21 +2373,20 @@ function restackBottomLegends(){
   });
 }
 function updateAllWarningsReopenBtn(){
-  const anyDismissedButActive = TOP_WARNING_BANNERS.some(({iconId})=>{
-    const icon = document.getElementById(iconId);
-    return icon && icon.style.display === 'block';
-  });
+  const anyDismissedButActive = Object.values(bannerActiveButDismissed).some(Boolean);
   document.getElementById('allWarningsReopenBtn').style.display = anyDismissedButActive ? 'inline-block' : 'none';
+  document.getElementById('allWarningsDivider').style.display = anyDismissedButActive ? 'block' : 'none';
 }
 document.getElementById('allWarningsReopenBtn').addEventListener('click', ()=>{
   TOP_WARNING_BANNERS.forEach(({bannerId, iconId})=>{
-    const icon = document.getElementById(iconId);
-    if(icon && icon.style.display === 'block') reopenBanner(bannerId, iconId);
+    if(bannerActiveButDismissed[bannerId]) reopenBanner(bannerId, iconId);
   });
 });
 function dismissBanner(bannerId, iconId){
   document.getElementById(bannerId).classList.remove('show');
-  document.getElementById(iconId).style.display = 'block';
+  const icon = document.getElementById(iconId);
+  if(icon) icon.style.display = 'block';
+  if(bannerId in bannerActiveButDismissed) bannerActiveButDismissed[bannerId] = true;
   if(BOTTOM_LEGEND_IDS.includes(bannerId)){
     legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
     restackBottomLegends();
@@ -2375,7 +2396,9 @@ function dismissBanner(bannerId, iconId){
 }
 function reopenBanner(bannerId, iconId){
   document.getElementById(bannerId).classList.add('show');
-  document.getElementById(iconId).style.display = 'none';
+  const icon = document.getElementById(iconId);
+  if(icon) icon.style.display = 'none';
+  if(bannerId in bannerActiveButDismissed) bannerActiveButDismissed[bannerId] = false;
   if(BOTTOM_LEGEND_IDS.includes(bannerId)){
     legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
     legendStackOrder.push(bannerId); // newly (re)opened - goes on top of whatever else is currently showing
@@ -2386,10 +2409,10 @@ function reopenBanner(bannerId, iconId){
 }
 function setWarnbarContent(text){
   const bar = document.getElementById('warnbar');
-  const icon = document.getElementById('warnbarIcon');
   if(!text){
     bar.classList.remove('show');
-    icon.style.display = 'none';
+    bannerActiveButDismissed.warnbar = false;
+    updateAllWarningsReopenBtn();
     repositionModeToggle();
     return;
   }
@@ -2397,10 +2420,13 @@ function setWarnbarContent(text){
   document.getElementById('warnbarText').textContent = text;
   // Only pop the full banner back open if this is a genuinely new warning -
   // if the user already dismissed this exact same warning, respect that.
-  if(changed || icon.style.display!=='block'){
+  if(changed || !bannerActiveButDismissed.warnbar){
     bar.classList.add('show');
-    icon.style.display = 'none';
+    bannerActiveButDismissed.warnbar = false;
+  } else {
+    bannerActiveButDismissed.warnbar = true;
   }
+  updateAllWarningsReopenBtn();
   repositionModeToggle();
 }
 // The mode toggle (Landing Area / Plan Descent) sits top-left of the map,
@@ -2509,6 +2535,12 @@ function showParticleWindPreview(){
   document.getElementById('particleWindPreviewText').textContent = `${Math.round(dirFrom)}° ${speedKmh.toFixed(1)}km/h`;
   document.getElementById('particleWindPreviewArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
   const preview = document.getElementById('particleWindPreview');
+  const thumb = document.getElementById('particleHeightSliderThumb');
+  const thumbRect = thumb.getBoundingClientRect();
+  const stackRect = document.getElementById('mapControlsStack').getBoundingClientRect();
+  preview.style.top = (thumbRect.top + thumbRect.height/2) + 'px';
+  preview.style.transform = 'translateY(-50%)';
+  preview.style.right = (window.innerWidth - stackRect.left + 8) + 'px';
   preview.classList.add('show');
   clearTimeout(particleWindPreviewTimer);
   particleWindPreviewTimer = setTimeout(()=>preview.classList.remove('show'), 10000);
@@ -3192,18 +3224,19 @@ function checkDescentTimeWindWarning(){
   }
   const text = `⚠ Ground wind particles are modeled for the PLANNED descent time (in ~${initMin} min), not right now.`;
   document.getElementById('descentWindWarnText').textContent = text;
-  const icon = document.getElementById('descentWindWarnIcon');
   const increased = lastWindWarnInitMin==null || initMin > lastWindWarnInitMin;
-  if(increased || icon.style.display!=='block'){
+  if(increased || !bannerActiveButDismissed.descentWindWarnBar){
     document.getElementById('descentWindWarnBar').classList.add('show');
-    icon.style.display = 'none';
+    bannerActiveButDismissed.descentWindWarnBar = false;
   }
+  updateAllWarningsReopenBtn();
   lastWindWarnInitMin = initMin;
   repositionModeToggle();
 }
 function hideYellowWarning(){
   document.getElementById('descentWindWarnBar').classList.remove('show');
-  document.getElementById('descentWindWarnIcon').style.display = 'none';
+  bannerActiveButDismissed.descentWindWarnBar = false;
+  updateAllWarningsReopenBtn();
   repositionModeToggle();
 }
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
@@ -4215,6 +4248,53 @@ document.getElementById('btnResetDefaults').addEventListener('click', ()=>{
 });
 
 // ---------- first-launch quick tutorial ----------
+// ---------- language (partial - main card titles and field labels only) ----------
+const I18N = {
+  en: {
+    cardCurrentPosition:'Current Position', cardLandingArea:'Landing Area', plannedWord:'PLANNED ',
+    cardDescentParams:'Descent Parameters', cardFlightCharts:'Flight Charts',
+    fieldAltAGL:'Alt AGL', fieldApproxAltitude:'Approx Altitude', fieldGroundWind:'Ground Wind',
+    fieldEstimatedDescentPoint:'Estimated Descent Point',
+    fieldInversion:'Inversion/Isothermal Layer below Descent Position',
+    modeLandingArea:'Landing Area', modePlanDescent:'Plan Descent',
+    sliderInitiate:'Initiate descent in', sliderDescentRate:'Descent rate',
+    sliderInterceptHeight:'Intercept height AGL', sliderRate2:'Descent rate after intercept',
+    sliderScatter:'Rate scatter (σ, probability cone)'
+  },
+  de: {
+    cardCurrentPosition:'Aktuelle Position', cardLandingArea:'Landegebiet', plannedWord:'GEPLANT ',
+    cardDescentParams:'Abstiegsparameter', cardFlightCharts:'Flugdiagramme',
+    fieldAltAGL:'Höhe AGL', fieldApproxAltitude:'Ca. Höhe', fieldGroundWind:'Bodenwind',
+    fieldEstimatedDescentPoint:'Geschätzter Abstiegspunkt',
+    fieldInversion:'Inversion/Isotherme Schicht unterhalb Abstiegsposition',
+    modeLandingArea:'Landegebiet', modePlanDescent:'Abstieg planen',
+    sliderInitiate:'Abstieg einleiten in', sliderDescentRate:'Sinkrate',
+    sliderInterceptHeight:'Abfanghöhe AGL', sliderRate2:'Sinkrate nach Abfanghöhe',
+    sliderScatter:'Streuung (σ, Wahrscheinlichkeitskegel)'
+  }
+};
+let currentLanguage = 'en';
+function applyLanguage(lang){
+  currentLanguage = lang;
+  const dict = I18N[lang] || I18N.en;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.dataset.i18n;
+    if(dict[key]) el.textContent = dict[key];
+  });
+  try{ localStorage.setItem('gblp_language', lang); }catch(e){}
+}
+document.querySelectorAll('input[name="langRadio"]').forEach(r=>{
+  r.addEventListener('change', e=>{ if(e.target.checked) applyLanguage(e.target.value); });
+});
+try{
+  const savedLang = localStorage.getItem('gblp_language');
+  if(savedLang && I18N[savedLang]){
+    applyLanguage(savedLang);
+    const radio = document.querySelector(`input[name="langRadio"][value="${savedLang}"]`);
+    if(radio) radio.checked = true;
+  }
+}catch(e){}
+
 function dismissTutorial(){
   document.getElementById('tutorialOverlay').classList.remove('show');
   try{ localStorage.setItem('gblp_tutorial_seen_v1', '1'); }catch(e){}

@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v66** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v68** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -83,6 +83,11 @@ Gas compressed adiabatically during a fast descent stays warmer (and less dense)
 - **Flight Charts is hidden by default** entirely (not just collapsed) - a header toggle (left of Day/Night) shows/hides it.
 - **Plan Descent shows a 360-minute reference trajectory** at the current cruise altitude (light grey dashed) - purely informational, to help judge which areas are reachable before committing to a target point.
 - **A custom scale bar** (km and nautical miles) sits left of the zoom buttons.
+- **Wind shear detection** added to the Inversions box (now titled "Inversions, Isothermal Layers, Wind Shear") - flags large speed (≥5m/s) or direction (≥30°) changes between adjacent levels below the current altitude, shown in red.
+- **Twilight/sunrise-sunset box** next to the GPS status (NOAA solar-position approximation): shows the next two upcoming events at the current position - SS/ECT during the day, BCT/SR at night, all in UTC.
+- **Track playback** added to the Flight Log menu: draws the logged track and animates a marker along it over a fixed 20-second playback.
+- **Info icon** is now an outline (not filled).
+- **All warning banner texts start with ⚠**.
 - **Warning banners' close (✕) buttons now sit on the left.** Dismissing one while its underlying condition is still active shows a red warning-triangle indicator next to the GPS status in the header - tap it to bring back every currently-dismissed-but-still-active warning at once.
 - **If a newly-generated version doesn't seem to show up**: this is a static file with no server of its own - after downloading it, it must actually be re-uploaded/committed to wherever it's hosted (e.g. the GitHub Pages repository) before the live site reflects it, and the browser/PWA may also be showing a cached copy of the page itself (try a hard reload, or fully close and reopen the app if it's installed to the home screen).
 - **Adiabatic braking and Monte-Carlo scatter are approximations**, not calibrated against real flight data — treat as a planning aid, not a certified instrument.

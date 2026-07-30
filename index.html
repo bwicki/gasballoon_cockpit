@@ -295,9 +295,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="sep"></div>
     <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
+    <div class="wx-chip" id="twilightChip" style="align-items:flex-start;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
+      <span id="twilightLabel1" style="font-size:9px;color:var(--muted);">—</span>
+      <span id="twilightLabel2" style="font-size:9px;color:var(--muted);">—</span>
+    </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
-    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:#3fa9ff;color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:15px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;">ℹ</button>
+    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;color:#3fa9ff;border:2px solid #3fa9ff;border-radius:50%;width:24px;height:24px;font-size:14px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;box-sizing:border-box;">ℹ</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
       <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
@@ -499,6 +503,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <button class="ghost" id="btnExportGpx" style="margin-top:8px;">Export as GPX</button>
         <button class="ghost" id="btnExportKml" style="margin-top:8px;">Export as KML</button>
+        <button class="ghost" id="btnPlaybackTrack" style="margin-top:8px;">▶ Play back track</button>
+        <button class="ghost" id="btnStopPlayback" style="margin-top:8px;display:none;color:var(--bad);">■ Stop playback</button>
         <button class="ghost" id="btnClearLog" style="margin-top:8px;color:var(--bad);">Clear log</button>
       </div>
     </div>
@@ -541,7 +547,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div id="descentWindWarnBar" class="yellow-warn"><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button><span id="descentWindWarnText"></span></div>
         <div id="gpsWarnBar" class="gps-warn">
           <button class="banner-close" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
-          <span id="gpsWarnText">GPS data not available</span>
+          <span id="gpsWarnText">⚠ GPS data not available</span>
           <span id="manualModeSwitchInWarn" style="display:none;align-items:center;gap:6px;">
             <label class="switch" style="flex-shrink:0;"><input type="checkbox" id="manualModeToggle"><span class="slider-tog"></span></label>
             <span style="font-size:11px;font-weight:600;white-space:nowrap;">Manual Mode</span>
@@ -602,17 +608,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- POSITION -->
       <div class="card" id="positionCard">
-        <h3 onclick="toggleCard(this)"><span data-i18n="cardCurrentPosition">Current Position</span> <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span style="display:flex;align-items:center;gap:5px;"><svg id="posCourseIcon" width="14" height="14" viewBox="0 0 36 36" style="flex-shrink:0;transform:rotate(0deg);"><path d="M18 1 L25.5 32 L18 25.5 L10.5 32 Z" fill="#ffb400" stroke="#000000" stroke-width="1.6"/></svg><span data-i18n="cardCurrentPosition">Current Position</span></span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell wide" id="posDisplayWrap">
               <div style="display:flex;justify-content:space-between;gap:8px;">
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <div>
-                    <div class="val small" id="posDMS" style="font-weight:400;">—</div>
-                    <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
-                  </div>
-                  <svg id="posCourseIcon" width="16" height="16" viewBox="0 0 36 36" style="flex-shrink:0;transform:rotate(0deg);"><path d="M18 1 L25.5 32 L18 25.5 L10.5 32 Z" fill="#ffb400" stroke="#000000" stroke-width="1.6"/></svg>
+                <div>
+                  <div class="val small" id="posDMS" style="font-weight:400;">—</div>
+                  <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
                 </div>
                 <div class="val small" id="posNearestTown" style="color:var(--muted);font-size:11px;text-align:right;">—</div>
               </div>
@@ -659,17 +662,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
       <!-- LANDING POSITION -->
       <div class="card">
-        <h3 onclick="toggleCard(this)"><span><span id="plannedBadgeWord" style="color:var(--bad);display:none;" data-i18n="plannedWord">PLANNED </span><span data-i18n="cardLandingArea">Landing Area</span></span> <span class="chev">▾</span></h3>
+        <h3 onclick="toggleCard(this)"><span style="display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 18 18" style="flex-shrink:0;"><line x1="9" y1="1" x2="9" y2="17" stroke="currentColor" stroke-width="2"/><line x1="1" y1="9" x2="17" y2="9" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span><span id="plannedBadgeWord" style="color:var(--bad);display:none;" data-i18n="plannedWord">PLANNED </span><span data-i18n="cardLandingArea">Landing Area</span></span></span> <span class="chev">▾</span></h3>
         <div class="cardbody">
           <div class="datagrid">
             <div class="datacell wide" id="landingPosDisplayWrap">
               <div style="display:flex;justify-content:space-between;gap:8px;">
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <div>
-                    <div class="val small" id="landingPosDMS" style="font-weight:400;">—</div>
-                    <div class="val small" id="landingPosCoords" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 18 18" style="flex-shrink:0;"><line x1="9" y1="1" x2="9" y2="17" stroke="currentColor" stroke-width="2"/><line x1="1" y1="9" x2="17" y2="9" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+                <div>
+                  <div class="val small" id="landingPosDMS" style="font-weight:400;">—</div>
+                  <div class="val small" id="landingPosCoords" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
                 </div>
                 <div class="val small" id="landingPosTown" style="color:var(--muted);text-align:right;">—</div>
               </div>
@@ -688,7 +688,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
-              <label data-i18n="fieldInversion">Inversion/Isothermal Layer below Descent Position</label>
+              <label data-i18n="fieldInversion">Inversions, Isothermal Layers, Wind Shear</label>
               <div class="val small" id="inversionNoteText" style="font-weight:400;">(none)</div>
             </div>
           </div>
@@ -829,7 +829,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v66';
+const APP_VERSION = 'v68';
 const APP_DATE = '30.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -888,6 +888,69 @@ function destPoint(lat,lon,bearingDeg,distM){
   const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(δ)*Math.cos(φ1),Math.cos(δ)-Math.sin(φ1)*Math.sin(φ2));
   return [φ2*180/Math.PI, ((λ2*180/Math.PI)+540)%360-180];
 }
+// ---------- sunrise/sunset/civil twilight (NOAA solar position approximation) ----------
+function computeSunEventsUTC(lat, lon, dateUTC){
+  // Returns {civilDawn, sunrise, sunset, civilDusk} as minutes-past-UTC-midnight
+  // (on the given date), or null for an event that doesn't occur that day
+  // (polar day/night). Standard NOAA solar calculator equations.
+  const rad = Math.PI/180;
+  const start = Date.UTC(dateUTC.getUTCFullYear(),0,0);
+  const dayOfYear = Math.floor((dateUTC.getTime()-start)/86400000);
+  const gamma = 2*Math.PI/365*(dayOfYear-1+0.5);
+  const eqTime = 229.18*(0.000075+0.001868*Math.cos(gamma)-0.032077*Math.sin(gamma)-0.014615*Math.cos(2*gamma)-0.040849*Math.sin(2*gamma));
+  const decl = 0.006918-0.399912*Math.cos(gamma)+0.070257*Math.sin(gamma)-0.006758*Math.cos(2*gamma)+0.000907*Math.sin(2*gamma)-0.002697*Math.cos(3*gamma)+0.00148*Math.sin(3*gamma);
+  function eventMinutes(zenithDeg, isSunrise){
+    const zenith = zenithDeg*rad;
+    const cosH = Math.cos(zenith)/(Math.cos(lat*rad)*Math.cos(decl)) - Math.tan(lat*rad)*Math.tan(decl);
+    if(cosH>1 || cosH<-1) return null; // sun never reaches this zenith today (polar day/night)
+    const ha = Math.acos(cosH)/rad;
+    return 720 - 4*(lon + (isSunrise?ha:-ha)) - eqTime;
+  }
+  return {
+    civilDawn: eventMinutes(96, true),
+    sunrise: eventMinutes(90.833, true),
+    sunset: eventMinutes(90.833, false),
+    civilDusk: eventMinutes(96, false)
+  };
+}
+function formatUTCFromMinutes(dateUTC, minutesPastMidnight){
+  if(minutesPastMidnight==null) return null;
+  const d = new Date(Date.UTC(dateUTC.getUTCFullYear(),dateUTC.getUTCMonth(),dateUTC.getUTCDate()));
+  d.setUTCMinutes(Math.round(minutesPastMidnight));
+  return d;
+}
+function fmtHHMM(d){ return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`; }
+function updateTwilightChip(){
+  if(!isFinite(state.lat) || !isFinite(state.lon)) return;
+  const now = new Date();
+  const today = computeSunEventsUTC(state.lat, state.lon, now);
+  const events = [
+    {label:'BCT', min:today.civilDawn},
+    {label:'SR', min:today.sunrise},
+    {label:'SS', min:today.sunset},
+    {label:'ECT', min:today.civilDusk}
+  ].filter(e=>e.min!=null).map(e=>({label:e.label, date:formatUTCFromMinutes(now, e.min)}));
+  // Find the next TWO events strictly after "now" - if fewer than 2 remain
+  // today (e.g. it's already night), pull the rest from tomorrow.
+  let upcoming = events.filter(e=>e.date > now);
+  if(upcoming.length < 2){
+    const tomorrow = new Date(now.getTime()+86400000);
+    const t2 = computeSunEventsUTC(state.lat, state.lon, tomorrow);
+    const events2 = [
+      {label:'BCT', min:t2.civilDawn},
+      {label:'SR', min:t2.sunrise},
+      {label:'SS', min:t2.sunset},
+      {label:'ECT', min:t2.civilDusk}
+    ].filter(e=>e.min!=null).map(e=>({label:e.label, date:formatUTCFromMinutes(tomorrow, e.min)}));
+    upcoming = upcoming.concat(events2);
+  }
+  upcoming.sort((a,b)=>a.date-b.date);
+  const l1 = document.getElementById('twilightLabel1'), l2 = document.getElementById('twilightLabel2');
+  if(upcoming[0]) l1.textContent = `${upcoming[0].label} ${fmtHHMM(upcoming[0].date)}z`; else l1.textContent = '—';
+  if(upcoming[1]) l2.textContent = `${upcoming[1].label} ${fmtHHMM(upcoming[1].date)}z`; else l2.textContent = '—';
+}
+setInterval(updateTwilightChip, 60000);
+
 function haversine(lat1,lon1,lat2,lon2){
   const R=6371000, φ1=lat1*Math.PI/180, φ2=lat2*Math.PI/180;
   const dφ=(lat2-lat1)*Math.PI/180, dλ=(lon2-lon1)*Math.PI/180;
@@ -916,6 +979,7 @@ const ScaleBarControl = L.Control.extend({
     div.innerHTML = '<div class="map-scale-text" id="scaleBarText">—</div>'+
                      '<div class="map-scale-ruler-wrap"><div class="map-scale-ruler" id="scaleBarRuler"><div></div><div></div><div></div><div></div></div>'+
                      '<span class="map-scale-tick-label" style="left:0;">0</span>'+
+                     '<span class="map-scale-tick-label" id="scaleBarSeg1Label" style="left:25%;transform:translateX(-50%);">—</span>'+
                      '<span class="map-scale-tick-label" id="scaleBarEndLabel" style="right:0;">—</span></div>';
     return div;
   }
@@ -952,15 +1016,19 @@ function updateScaleBar(){
   const pxPerMeter = targetWidthPx/targetMeters;
   document.getElementById('scaleBarRuler').style.width = Math.round(niceMeters*pxPerMeter)+'px';
   const km = niceMeters/1000, nm = niceMeters/1852;
-  const distText = niceMeters<1000 ? `${Math.round(niceMeters)}m` : `${km.toFixed(km<10?2:0)}km`;
+  const distText = niceMeters<1000 ? `${Math.round(niceMeters)}m` : `${km.toFixed(1)}km`;
   document.getElementById('scaleBarEndLabel').textContent = distText;
+  // Length of just the first (black) segment - a quarter of the full bar.
+  const seg1Meters = niceMeters/4;
+  const seg1Text = seg1Meters<1000 ? `${Math.round(seg1Meters)}m` : `${(seg1Meters/1000).toFixed(1)}km`;
+  document.getElementById('scaleBarSeg1Label').textContent = seg1Text;
   // Conventional web-map "representative fraction" (1:N): ground meters per
   // CSS pixel, referenced against the standard 96dpi assumption (1 CSS px
   // = 1/96 inch = 0.0002646 m) - the same convention GIS/web tools use, even
   // though actual device pixel density varies.
   const metersPerPixel = targetMeters/targetWidthPx;
   const ratioN = Math.round(metersPerPixel/0.0002646/1000)*1000; // rounded to the nearest thousand
-  document.getElementById('scaleBarText').textContent = `${distText} / ${nm.toFixed(nm<10?2:0)}nm  ·  scale ~1:${ratioN.toLocaleString('en-US').replace(/,/g,"'")}`;
+  document.getElementById('scaleBarText').innerHTML = `${distText} / ${nm.toFixed(1)}nm  ·  <span style="font-weight:400;">scale ~1:${ratioN.toLocaleString('en-US').replace(/,/g,"'")}</span>`;
   repositionScaleBar();
 }
 map.on('zoomend moveend', updateScaleBar);
@@ -1008,7 +1076,7 @@ baseLayers['Streets'].on('tileerror', (err)=>{
 setTimeout(()=>{
   if(!tilesLoadedOK){
     const w = document.getElementById('warnbar');
-    w.textContent = 'Map tiles have not loaded. Check your internet connection, or open the browser console (F12) for the exact network error.';
+    w.textContent = '⚠ Map tiles have not loaded. Check your internet connection, or open the browser console (F12) for the exact network error.';
     w.classList.add('show');
   }
 }, 6000);
@@ -1676,9 +1744,9 @@ function updateGpsWarnBar(){
   const isManual = state.testMode && activationReason==='manual';
   const askingToLeave = !!state.gpsRestoredAskingToLeaveManual;
   if(askingToLeave){
-    document.getElementById('gpsWarnText').textContent = 'GPS signal re-established - leave Manual Mode?';
+    document.getElementById('gpsWarnText').textContent = '⚠ GPS signal re-established - leave Manual Mode?';
   } else {
-    document.getElementById('gpsWarnText').textContent = isManual ? '⚠ CAUTION: Manual Mode' : 'GPS data not available';
+    document.getElementById('gpsWarnText').textContent = isManual ? '⚠ CAUTION: Manual Mode' : '⚠ GPS data not available';
   }
   document.getElementById('manualModeSwitchInWarn').style.display = (isManual && !askingToLeave) ? 'inline-flex' : 'none';
   document.getElementById('btnEnableManualModeFromWarn').style.display = (!isManual && !askingToLeave) ? 'inline-block' : 'none';
@@ -1815,6 +1883,7 @@ document.querySelectorAll('input[name="altUnitRadio"]').forEach(r=>{
 
 function renderSidebarPosition(){
   document.getElementById('posDMS').textContent = toDMS(state.lat,true)+' '+toDMS(state.lon,false);
+  updateTwilightChip();
   document.getElementById('posCompact').textContent = toCompact(state.lat, state.lon);
   document.getElementById('altAMSL').textContent = formatAltAMSL(state.altAMSL);
   document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
@@ -1836,16 +1905,40 @@ function detectInversionOrIsothermal(profile, belowAltM){
   }
   return found;
 }
+// Wind shear: a large speed and/or direction change between two adjacent
+// levels in the descent path below the current position - relevant because
+// it can mean rough, oscillating handling right before landing.
+const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
+const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
+function detectWindShear(profile, belowAltM){
+  if(!profile) return [];
+  const levels = profile.filter(p=>p.speed_ms!=null && p.alt_m<=belowAltM).sort((a,b)=>b.alt_m-a.alt_m);
+  const found = [];
+  for(let i=0;i<levels.length-1;i++){
+    const upper = levels[i], lower = levels[i+1];
+    const speedDiff = Math.abs(upper.speed_ms - lower.speed_ms);
+    let dirDiff = Math.abs(upper.dir_deg - lower.dir_deg);
+    if(dirDiff > 180) dirDiff = 360 - dirDiff; // shortest angular distance
+    if(speedDiff >= WIND_SHEAR_SPEED_THRESHOLD_MS || dirDiff >= WIND_SHEAR_DIR_THRESHOLD_DEG){
+      found.push(upper.alt_m);
+    }
+  }
+  return found;
+}
 function updateInversionNote(){
   const el = document.getElementById('inversionNote');
-  const foundAlts = detectInversionOrIsothermal(getActiveWindProfile(), state.altAMSL);
-  if(!foundAlts.length){
-    document.getElementById('inversionNoteText').textContent = '(none)';
-  } else {
-    document.getElementById('inversionNoteText').textContent = foundAlts
-      .map(altM=>`${Math.round(altM)} mAMSL (${Math.round(altM-state.groundElev)} mAGL)`)
-      .join('  ');
+  const profile = getActiveWindProfile();
+  const foundAlts = detectInversionOrIsothermal(profile, state.altAMSL);
+  const shearAlts = detectWindShear(profile, state.altAMSL);
+  const parts = [];
+  if(foundAlts.length){
+    parts.push(foundAlts.map(altM=>`${Math.round(altM)} mAMSL (${Math.round(altM-state.groundElev)} mAGL)`).join('  '));
   }
+  if(shearAlts.length){
+    const shearText = shearAlts.map(altM=>`Wind Shear ${Math.round(altM)}mAMSL (${Math.round(altM-state.groundElev)}mAGL)`).join('  ');
+    parts.push(`<span style="color:var(--bad);">${shearText}</span>`);
+  }
+  document.getElementById('inversionNoteText').innerHTML = parts.length ? parts.join('  ') : '(none)';
   el.style.display = 'block';
 }
 
@@ -3955,6 +4048,47 @@ document.getElementById('sLogInterval').addEventListener('input', e=>{
   document.getElementById('lblLogInterval').textContent = logbookIntervalS + ' s';
   restartLogbookTimer();
 });
+// ---------- flight log track playback ----------
+let playbackAnimId = null, playbackMarker = null, playbackLine = null;
+function stopTrackPlayback(){
+  if(playbackAnimId) cancelAnimationFrame(playbackAnimId);
+  playbackAnimId = null;
+  if(playbackLine){ map.removeLayer(playbackLine); playbackLine=null; }
+  if(playbackMarker){ map.removeLayer(playbackMarker); playbackMarker=null; }
+  document.getElementById('btnStopPlayback').style.display = 'none';
+  document.getElementById('btnPlaybackTrack').style.display = 'block';
+}
+function startTrackPlayback(){
+  const pts = (state.flightLog||[]).filter(p=>!p.emergency); // skip emergency-report markers, keep the actual track
+  if(pts.length<2){ alert('Not enough logged track points yet to play back.'); return; }
+  stopTrackPlayback();
+  document.getElementById('logbookPanel').classList.remove('open');
+  document.getElementById('btnPlaybackTrack').style.display = 'none';
+  document.getElementById('btnStopPlayback').style.display = 'block';
+  playbackLine = L.polyline(pts.map(p=>[p.lat,p.lon]), {color:'#b026ff', weight:3, dashArray:'4,4'}).addTo(map);
+  playbackMarker = L.marker([pts[0].lat,pts[0].lon], {icon: L.divIcon({
+    html:'<div style="width:14px;height:14px;border-radius:50%;background:#b026ff;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.5);"></div>',
+    className:'', iconSize:[14,14], iconAnchor:[7,7]
+  })}).addTo(map);
+  map.fitBounds(playbackLine.getBounds(), {padding:[40,40]});
+  const PLAYBACK_DURATION_MS = 20000; // fixed length regardless of the actual flight's real duration
+  const totalRealMs = Math.max(1, pts[pts.length-1].t - pts[0].t);
+  const startTime = performance.now();
+  function step(now){
+    const frac = Math.min(1, (now-startTime)/PLAYBACK_DURATION_MS);
+    const targetT = pts[0].t + frac*totalRealMs;
+    let idx = 0;
+    while(idx<pts.length-2 && pts[idx+1].t<targetT) idx++;
+    const a = pts[idx], b = pts[Math.min(idx+1,pts.length-1)];
+    const segFrac = b.t>a.t ? (targetT-a.t)/(b.t-a.t) : 0;
+    playbackMarker.setLatLng([a.lat+(b.lat-a.lat)*segFrac, a.lon+(b.lon-a.lon)*segFrac]);
+    if(frac<1) playbackAnimId = requestAnimationFrame(step);
+    else stopTrackPlayback();
+  }
+  playbackAnimId = requestAnimationFrame(step);
+}
+document.getElementById('btnPlaybackTrack').addEventListener('click', startTrackPlayback);
+document.getElementById('btnStopPlayback').addEventListener('click', stopTrackPlayback);
 document.getElementById('btnClearLog').addEventListener('click', ()=>{
   if(confirm('Clear the entire flight log? This cannot be undone.')){
     state.flightLog = [];
@@ -4429,7 +4563,7 @@ const I18N = {
     cardDescentParams:'Descent Parameters', cardFlightCharts:'Flight Charts',
     fieldAltAGL:'Alt AGL', fieldApproxAltitude:'Approx Altitude', fieldGroundWind:'Ground Wind',
     fieldEstimatedDescentPoint:'Estimated Descent Point',
-    fieldInversion:'Inversion/Isothermal Layer below Descent Position',
+    fieldInversion:'Inversions, Isothermal Layers, Wind Shear',
     modeLandingArea:'Landing Area', modePlanDescent:'Plan Descent',
     sliderInitiate:'Initiate descent in', sliderDescentRate:'Descent rate',
     sliderInterceptHeight:'Intercept height AGL', sliderRate2:'Descent rate after intercept',
@@ -4440,7 +4574,7 @@ const I18N = {
     cardDescentParams:'Abstiegsparameter', cardFlightCharts:'Flugdiagramme',
     fieldAltAGL:'Höhe AGL', fieldApproxAltitude:'Ca. Höhe', fieldGroundWind:'Bodenwind',
     fieldEstimatedDescentPoint:'Geschätzter Abstiegspunkt',
-    fieldInversion:'Inversion/Isotherme Schicht unterhalb Abstiegsposition',
+    fieldInversion:'Inversionen, Isotherme Schichten, Windscherung',
     modeLandingArea:'Landegebiet', modePlanDescent:'Abstieg planen',
     sliderInitiate:'Abstieg einleiten in', sliderDescentRate:'Sinkrate',
     sliderInterceptHeight:'Abfanghöhe AGL', sliderRate2:'Sinkrate nach Abfanghöhe',

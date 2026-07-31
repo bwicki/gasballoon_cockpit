@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v76** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v78** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -32,6 +32,8 @@ Clicking a point inside the reachable area now also runs a Monte-Carlo pass (for
 **Real wind-timing bug fixed**: the staged descent's simulated path was using a single fixed forecast hour for the ENTIRE path (even portions occurring hours later), rather than the forecast for the hour each specific point actually occurs at. Now uses dynamically-updating wind throughout - the one exception is which altitudes get selected as worthwhile stages in the first place, which still (correctly, per the original request) uses a single snapshot of the forecast for when the draggable marker's position is reached.
 
 **Real overlap risk fixed**: the staged-descent panel/reopen-button had a fixed pixel position that could collide with the warning/mode-toggle stack above them if several warnings were shown at once - now positioned dynamically based on what's actually rendered there. Removed a chunk of now-dead CSS (unused reopen-icon styling from an earlier round).
+
+**Staged Descent Plan graphic redesigned**: proportional staircase (vertical drop scaled to altitude lost, horizontal length scaled to dwell time), altitude labelled on the y-axis (AMSL + AGL together, once per distinct level), a minute-scale time axis at the bottom, and a small rotated wind arrow + speed at each stage. The intercept level is colour-distinguished throughout, and the panel is now wide enough (420px) for this to stay legible. The panel-opening button was also moved from a floating map overlay into the header (next to the warning/legend icons), since the floating version could sit on top of the current-position marker.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

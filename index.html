@@ -299,6 +299,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="sep"></div>
     <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
     <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
+    <div style="width:1px;align-self:stretch;background:var(--border);margin:0 8px;"></div>
     <div class="wx-chip" id="twilightChip" style="align-items:flex-start;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
       <span id="twilightLabel1" style="font-size:9px;color:var(--muted);">—</span>
       <span id="twilightLabel2" style="font-size:9px;color:var(--muted);">—</span>
@@ -306,15 +307,16 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
     <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;color:#3fa9ff;border:2px solid #3fa9ff;border-radius:50%;width:24px;height:24px;font-size:14px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;box-sizing:border-box;">ℹ</button>
+    <button id="btnReopenStagedPlan" onclick="if(state.lastStagedPlanResult) showStagedDescentPlan(state.lastStagedPlanResult);" title="Reopen the staged descent plan" style="display:none;background:none;color:#ff6a00;border:2px solid #ff6a00;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;box-sizing:border-box;">⬇⬇</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
+      <button class="ltbtn active" id="tgGroundWind" title="Wind Animation"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
       <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
-      <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
+      <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas"><span class="layer-load-dot" id="dotTgNatureReserves"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
       <button class="ltbtn" id="tgLandCover" title="Non-landable terrain (forest/water/wetland/vineyard/urban)"><span class="layer-load-dot" id="dotTgLandCover"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3" stroke-width="1.8"/><path d="M3 15 L9 3 M3 21 L15 3 M9 21 L21 9 M15 21 L21 15" stroke-width="1.4"/></svg></button>
-      <button class="ltbtn" id="tgRegionNames" title="Regional/cultural place names (experimental, OpenStreetMap)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
       <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
-      <button class="ltbtn active" id="tgGroundWind" title="Ground wind flow (0-200m AGL)"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
-      <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas (OpenStreetMap)"><span class="layer-load-dot" id="dotTgNatureReserves"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
+      <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
+      <button class="ltbtn" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -447,6 +449,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">75 km</b></div>
           <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="75">
         </div>
+        <button class="ghost" id="btnRefreshCacheNow" style="margin-top:6px;">↻ Refresh current cache now</button>
+        <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Re-downloads map tiles AND all currently-enabled data layers (airspace, roads, nature reserves, non-landable terrain, region names) around the current position right away, instead of waiting for the automatic re-check.</p>
 
         <hr>
         <hr>
@@ -583,7 +587,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="topAlertStack">
         <div id="regionNamesWarnBar" class="blue-warn">
           <button class="banner-close" onclick="dismissBanner('regionNamesWarnBar','regionNamesWarnIcon')">✕</button>
-          <span>⚠ Experimental: informal region names (e.g. "Bayerischer Wald") are inconsistently mapped worldwide - coverage varies a lot by area, this is not a complete layer.</span>
+          <span>Experimental: informal region names (e.g. "Bayerischer Wald") are inconsistently mapped worldwide - coverage varies a lot by area, this is not a complete layer.</span>
         </div>
         <div id="testCautionBar" class="gps-warn">
           <button class="banner-close" onclick="dismissBanner('testCautionBar','testCautionIcon')">✕</button>
@@ -605,9 +609,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> <span data-i18n="modeLandingArea">Landing Area</span></button>
           <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> <span data-i18n="modePlanDescent">Plan Descent</span></button>
         </div>
-        <div id="subModeToggle" style="display:none;">
+        <div id="subModeToggle" style="display:none;align-items:center;gap:6px;">
           <button id="subModeQuick" class="active" title="Click a target point for a direct descent">⚡ Quick Descent</button>
           <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options">⬇⬇ Staged Descent</button>
+          <button id="btnClearStagedResults" onclick="clearStagedResults()" title="Clear staged descent results from the map" style="background:var(--panel2);border:1px solid var(--border);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
         </div>
       </div>
       <div id="mapControlsStack" class="map-controls-stack">
@@ -620,6 +625,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div id="particleHeightLabel">+100m<br>AGL</div>
         </div>
         <button id="btnCenterPlanned" class="center-map-btn" title="Center on planned landing area" style="display:none;color:#ff8a00;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
+        <button id="btnCenterStaged" class="center-map-btn" title="Center on staged descent landing area" style="display:none;color:#00ff7f;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnCenterLanding" class="center-map-btn" title="Center on landing area"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
         <button id="btnCenterMap" class="center-map-btn" title="Center on current position"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
       </div>
@@ -738,8 +744,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
-              <label data-i18n="fieldInversion">Inversions, Isothermal Layers, Wind Shear</label>
-              <div class="val small" id="inversionNoteText" style="font-weight:400;">(none)</div>
+              <label><span id="titleInversions">Inversions</span>, <span id="titleIsothermal">Isothermal Layers</span>, <span id="titleWindShear">Wind Shear</span></label>
+              <div class="val small" id="inversionNoteText" style="font-weight:400;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">(none)</div>
             </div>
           </div>
           <button class="ghost" id="btnClearPlannedArea" style="display:none;margin-top:6px;color:var(--bad);">Clear planned landing area</button>
@@ -770,16 +776,22 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div class="lbl"><span data-i18n="sliderScatter">Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
             <input type="range" id="sScatter" min="0" max="40" step="1" value="15">
           </div>
-          <div id="stagedDescentSliders" style="display:none;">
-            <hr style="margin:8px 0;">
-            <div class="slider-row">
-              <div class="lbl"><span>Staged descent: total time budget</span><b id="lblStagedTotalTime">60 min</b></div>
-              <input type="range" id="sStagedTotalTime" min="15" max="180" step="5" value="60">
-            </div>
-            <div class="slider-row">
-              <div class="lbl"><span>Staged descent: inter-stage rate</span><b id="lblStagedRate">1.5 m/s</b></div>
-              <input type="range" id="sStagedRate" min="0.5" max="4" step="0.1" value="1.5">
-            </div>
+        </div>
+      </div>
+
+      <!-- STAGED DESCENT PARAMETERS - only shown while the Staged Descent
+           subfunction of Plan Descent is active; highlighted with a red
+           border while that subfunction is the one currently in use. -->
+      <div class="card" id="stagedDescentSliders" style="display:none;">
+        <h3>Staged Descent Parameters</h3>
+        <div class="cardbody">
+          <div class="slider-row">
+            <div class="lbl"><span>Maximum descent time budget</span><b id="lblStagedTotalTime">60 min</b></div>
+            <input type="range" id="sStagedTotalTime" min="15" max="180" step="5" value="60">
+          </div>
+          <div class="slider-row">
+            <div class="lbl"><span>Inter-stage descent rate</span><b id="lblStagedRate">1.5 m/s</b></div>
+            <input type="range" id="sStagedRate" min="0.5" max="4" step="0.1" value="1.5">
           </div>
         </div>
       </div>
@@ -804,17 +816,15 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
         </div>
       </div>
-      <button id="btnReopenStagedPlan" onclick="if(state.lastStagedPlanResult) showStagedDescentPlan(state.lastStagedPlanResult);" title="Reopen the staged descent plan" style="display:none;position:absolute;top:60px;left:8px;z-index:899;background:#ff6a00;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(0,0,0,.3);">⬇⬇ Staged Plan</button>
-      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:250px;box-shadow:0 2px 8px rgba(0,0,0,.3);">
-        <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;">✕</button>
-        <div style="font-size:12px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
-        <div id="stagedPlanTotalTime" style="font-size:10px;color:var(--muted);margin-bottom:6px;">—</div>
-        <table style="width:100%;font-size:10.5px;border-collapse:collapse;">
+      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:420px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
+        <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
+        <div id="stagedPlanTotalTime" style="font-size:11px;color:var(--muted);margin-bottom:6px;">—</div>
+        <div id="stagedPlanSvgWrap" style="width:100%;"></div>
+        <table style="width:100%;font-size:10.5px;border-collapse:collapse;margin-top:8px;">
           <thead><tr style="color:var(--muted);text-align:left;"><th>Alt AMSL</th><th>Time</th><th>Dir</th><th>Speed</th></tr></thead>
           <tbody id="stagedPlanTableBody"></tbody>
         </table>
-        <canvas id="stagedPlanCanvas" style="width:100%;height:90px;margin-top:8px;"></canvas>
-        <p style="font-size:9px;color:var(--muted);margin:4px 0 0;">Graph: altitude (y) vs. elapsed time (x)</p>
       </div>
       <div id="chartExpandOverlay">
         <div id="chartExpandBox">
@@ -907,8 +917,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v76';
-const APP_DATE = '30.07.2026';
+const APP_VERSION = 'v78';
+const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
 // ---------- state ----------
@@ -1024,8 +1034,9 @@ function updateTwilightChip(){
   }
   upcoming.sort((a,b)=>a.date-b.date);
   const l1 = document.getElementById('twilightLabel1'), l2 = document.getElementById('twilightLabel2');
-  if(upcoming[0]) l1.textContent = `${upcoming[0].label} ${fmtHHMM(upcoming[0].date)}z`; else l1.textContent = '—';
-  if(upcoming[1]) l2.textContent = `${upcoming[1].label} ${fmtHHMM(upcoming[1].date)}z`; else l2.textContent = '—';
+  const TWILIGHT_ICONS = {BCT:'🌄', SR:'🌅', SS:'🌇', ECT:'🌆'};
+  if(upcoming[0]) l1.textContent = `${TWILIGHT_ICONS[upcoming[0].label]} ${upcoming[0].label} ${fmtHHMM(upcoming[0].date)} UTC`; else l1.textContent = '—';
+  if(upcoming[1]) l2.textContent = `${TWILIGHT_ICONS[upcoming[1].label]} ${upcoming[1].label} ${fmtHHMM(upcoming[1].date)} UTC`; else l2.textContent = '—';
 }
 setInterval(updateTwilightChip, 60000);
 
@@ -1118,6 +1129,8 @@ updateScaleBar();
 // bug was really a stacking-order issue, not a visibility toggle issue).
 map.createPane('overlayTilesPane');
 map.getPane('overlayTilesPane').style.zIndex = 350;
+map.createPane('regionNamesPane');
+map.getPane('regionNamesPane').style.zIndex = 360; // above place labels/roads (both in overlayTilesPane), so region names always win when both are shown
 map.getPane('overlayTilesPane').style.pointerEvents = 'none';
 
 const baseLayers = {
@@ -1244,11 +1257,10 @@ const TOP_WARNING_BANNERS = [
   {bannerId:'warnbar', iconId:'warnbarIcon'},
   {bannerId:'descentWindWarnBar', iconId:'descentWindWarnIcon'},
   {bannerId:'gpsWarnBar', iconId:'gpsWarnIcon'},
-  {bannerId:'testCautionBar', iconId:'testCautionIcon'},
-  {bannerId:'regionNamesWarnBar', iconId:'regionNamesWarnIcon'}
+  {bannerId:'testCautionBar', iconId:'testCautionIcon'}
 ];
-let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarnBar:false, testCautionBar:false, regionNamesWarnBar:false};
-let legendActiveButDismissed = {groundWindLegendBar:false, powerLegendBar:false};
+let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarnBar:false, testCautionBar:false};
+let legendActiveButDismissed = {groundWindLegendBar:false, powerLegendBar:false, regionNamesWarnBar:false};
 function updateAllLegendsReopenBtn(){
   const any = Object.values(legendActiveButDismissed).some(Boolean);
   document.getElementById('allLegendsReopenBtn').style.display = any ? 'inline-flex' : 'none';
@@ -1260,6 +1272,7 @@ document.getElementById('allLegendsReopenBtn').addEventListener('click', ()=>{
       reopenBanner(bannerId, iconId);
     }
   });
+  if(legendActiveButDismissed.regionNamesWarnBar) reopenBanner('regionNamesWarnBar','regionNamesWarnIcon');
 });
 // Small traffic-light dot on a layer's toggle button: hidden when off,
 // yellow while its data is loading, green once it's fully loaded (and, for
@@ -1593,11 +1606,11 @@ function ensureLandCoverHatchPattern(){
   defs.appendChild(pattern);
 }
 async function fetchLandCover(){
-  if(!landCoverActive || map.getZoom()<10){ return; } // finer-grained features than nature reserves - needs a closer zoom to stay fast
+  if(!landCoverActive || map.getZoom()<9){ return; }
   const checked = [...document.querySelectorAll('[data-landcover]')].filter(cb=>cb.checked).map(cb=>cb.dataset.landcover);
   if(!checked.length){ landCoverLayer.clearLayers(); return; }
   const center = map.getCenter();
-  const maxDeg = 0.2; // ~20km - these categories are far more numerous/detailed than protected areas, so a tighter cap keeps it fast
+  const maxDeg = 0.35; // matches the other Overpass-based layers (nature reserves, roads, place labels) - the previous smaller radius was cutting off partially-covered polygons (e.g. large forests) at its edge and made the layer look much more limited than the others
   const b = map.getBounds();
   const south = Math.max(b.getSouth(), center.lat-maxDeg);
   const north = Math.min(b.getNorth(), center.lat+maxDeg);
@@ -1672,7 +1685,7 @@ async function fetchRegionNames(){
         html:`<div class="region-name-chip">${el.tags.name}</div>`,
         className:'', iconSize:null, iconAnchor:[0,8]
       });
-      L.marker([el.lat, el.lon], {icon, pane:'overlayTilesPane', interactive:false}).addTo(regionNamesLayer);
+      L.marker([el.lat, el.lon], {icon, pane:'regionNamesPane', interactive:false}).addTo(regionNamesLayer);
     }
     if(regionNamesActive) setLayerLoadDot('tgRegionNames','ready');
   }catch(e){
@@ -1896,7 +1909,7 @@ const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e5c8', weight:4, das
 // shown only in Plan Descent - helps judge which areas are even reachable
 // before committing to a specific target point. Purely informational: it
 // does NOT trigger any auto-zoom, unlike the actual planned-area result.
-const referenceTrajectoryLayer = L.polyline([], {color:'#00e5ff', weight:3.5, dashArray:'8,5', opacity:0.9, interactive:false});
+const referenceTrajectoryLayer = L.polyline([], {color:'#faff00', weight:4, dashArray:'9,5', opacity:0.95, interactive:false});
 function computeReferenceTrajectory(){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
@@ -2127,6 +2140,15 @@ async function computeStagedReachableArea(){
     }
   }
   const endpoints = [];
+  // Quick-Descent-equivalent: a straight, non-staged descent at the normal
+  // (faster) rate from the Descent Parameters slider, starting from this
+  // same marker position/time - included explicitly so the reachable area
+  // is anchored at (and includes) wherever a direct descent would land,
+  // not just slower staged strategies using the inter-stage rate.
+  const quickRate1 = parseFloat(document.getElementById('sRate').value);
+  const quickPath = simulateDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, 0, 0, quickRate1, interceptAGL, rate2, 0, false, 0, 1, null, {lat:markerPos.lat, lon:markerPos.lng, t:startT});
+  const quickLast = quickPath[quickPath.length-1];
+  endpoints.push([quickLast.lon, quickLast.lat]);
   for(const fracs of strategies){
     const lingerDurations = fracs.map(f=>f*discretionaryS);
     // Each strategy is run three times - with the wind exactly as forecast,
@@ -2139,7 +2161,26 @@ async function computeStagedReachableArea(){
       endpoints.push([last.lon, last.lat]);
     }
   }
-  const hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
+  // Real gas balloon flights don't meaningfully exploit sitting in a
+  // reversed-wind shear layer for an extended time just to drift backward -
+  // it isn't how staged descents are actually flown, and it produced an
+  // area extending unrealistically far UPWIND of the trajectory. Discard
+  // endpoints that end up more than ~110 degrees off the dominant
+  // (cruise-altitude) wind direction - the reachable area should extend
+  // asymmetrically DOWNWIND, matching how the maneuver is actually used.
+  const dominantWind = windAt(state.altAMSL, 0, 1, roughHourIdx);
+  const dominantBearing = (Math.atan2(dominantWind.u,dominantWind.v)*180/Math.PI+360)%360;
+  const filteredEndpoints = endpoints.filter(([lon,lat])=>{
+    const bearingToPoint = (Math.atan2(
+      (lon-markerPos.lng)*Math.cos(markerPos.lat*Math.PI/180),
+      (lat-markerPos.lat)
+    )*180/Math.PI+360)%360;
+    let diff = Math.abs(bearingToPoint-dominantBearing);
+    if(diff>180) diff = 360-diff;
+    return diff<=110;
+  });
+  const hullSource = filteredEndpoints.length>=3 ? filteredEndpoints : endpoints;
+  const hull = hullSource.length>=3 ? convexHull(hullSource) : hullSource;
   state.stagedReachableHull = hull;
   stagedReachableLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
   if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
@@ -2199,8 +2240,9 @@ function showStagedDescentPlan(result){
   if(!stagedLandingAreaLayer){
     stagedLandingAreaLayer = L.polygon([], {color:'#00ff7f', weight:2.5, dashArray:'2,7', fillColor:'#00ff7f', fillOpacity:0.2});
   }
+  if(map.hasLayer(stagedLandingAreaLayer)) map.removeLayer(stagedLandingAreaLayer);
   stagedLandingAreaLayer.setLatLngs((result.landingHull||[]).map(p=>[p[1],p[0]]));
-  if(!map.hasLayer(stagedLandingAreaLayer)) stagedLandingAreaLayer.addTo(map);
+  stagedLandingAreaLayer.addTo(map);
   // A clear marker at the descent-initiation point on the trajectory, same
   // visual language as Quick Descent's violet triangle.
   const markerPos = stagedMarker.getLatLng();
@@ -2210,7 +2252,7 @@ function showStagedDescentPlan(result){
   stagedDescentInitMarker.setLatLng(markerPos);
   if(!map.hasLayer(stagedDescentInitMarker)) stagedDescentInitMarker.addTo(map);
   document.getElementById('btnReopenStagedPlan').style.display = 'none';
-  // Build the stage-by-stage table: altitude, duration, direction, speed -
+  document.getElementById('btnCenterStaged').style.display = 'block';
   // each row uses the wind for the hour that stage is ACTUALLY reached at
   // (read off the simulated path itself), not a single fixed snapshot hour
   // for the whole plan.
@@ -2235,24 +2277,108 @@ function showStagedDescentPlan(result){
   document.getElementById('stagedPlanPanel').style.display = 'block';
 }
 function drawStagedPlanChart(result){
-  const canvas = document.getElementById('stagedPlanCanvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = canvas.clientWidth;
-  const h = canvas.height = 90;
-  ctx.clearRect(0,0,w,h);
-  const pts = result.path;
-  const t0 = pts[0].t, t1 = pts[pts.length-1].t;
-  const altMax = Math.max(...pts.map(p=>p.alt)), altMin = Math.min(...pts.map(p=>p.alt));
-  ctx.beginPath();
-  pts.forEach((p,i)=>{
-    const x = (t1>t0) ? ((p.t-t0)/(t1-t0))*w : 0;
-    const y = h - ((p.alt-altMin)/Math.max(1,(altMax-altMin)))*h;
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  const wrap = document.getElementById('stagedPlanSvgWrap');
+  if(!wrap) return;
+  const groundAlt = state.groundElev;
+  const rate2 = parseFloat(document.getElementById('sRate2').value);
+  const n = result.altitudes.length;
+  const stages = result.altitudes.map((alt,i)=>{
+    const stagePoint = result.path.find(p=>p.stage===i) || result.path[0];
+    const hourIdxAtStage = Math.round(stagePoint.t/3600);
+    const w = windAt(alt, 0, 1, hourIdxAtStage);
+    return {
+      altM: alt, lingerS: result.lingerDurations[i]||0,
+      speedKmh: Math.hypot(w.u,w.v)*3.6,
+      dirFrom: (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360,
+      isIntercept: i===n-1
+    };
   });
-  ctx.strokeStyle = '#ff6a00';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  stages.push({altM: groundAlt, lingerS:0, speedKmh:0, dirFrom:0, isGround:true});
+
+  // Build the timeline: flat (linger) segments proportional to dwell time,
+  // diagonal (transition) segments proportional to how long that drop
+  // actually takes at the relevant rate - so both axes are physically
+  // meaningful, not just decorative.
+  let t = 0;
+  const segs = [];
+  for(let i=0;i<stages.length;i++){
+    const s = stages[i];
+    if(s.lingerS>0){ const t0=t; t+=s.lingerS; segs.push({t0,t1:t,alt:s.altM,kind:'flat',stage:s}); }
+    else { segs.push({t0:t,t1:t,alt:s.altM,kind:'point',stage:s}); }
+    if(i<stages.length-1){
+      const rate = (i===stages.length-2) ? rate2 : stagedDescentRateMs; // last drop (intercept->ground) uses the post-intercept rate
+      const dropM = Math.abs(s.altM - stages[i+1].altM);
+      const t0=t; t += dropM/Math.max(0.1,rate);
+      segs.push({t0,t1:t,altFrom:s.altM,altTo:stages[i+1].altM,kind:'drop'});
+    }
+  }
+  const totalT = Math.max(1,t);
+  const altMax = stages[0].altM, altMin = groundAlt;
+  const W=400, H=280, ML=62, MR=14, MT=16, MB=30;
+  const plotW=W-ML-MR, plotH=H-MT-MB;
+  const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
+  const xFor = tt => ML + (tt/totalT)*plotW;
+
+  let pathD = '';
+  segs.forEach(seg=>{
+    if(seg.kind==='flat'){
+      const y = yFor(seg.alt);
+      pathD += (pathD?'L':'M') + xFor(seg.t0)+' '+y+' L'+xFor(seg.t1)+' '+y+' ';
+    } else if(seg.kind==='drop'){
+      pathD += (pathD?'L':'M') + xFor(seg.t0)+' '+yFor(seg.altFrom)+' L'+xFor(seg.t1)+' '+yFor(seg.altTo)+' ';
+    }
+  });
+
+  // Gridlines: one per stage altitude (labelled on the y-axis with AMSL and
+  // AGL together) and a time axis along the bottom in whole minutes.
+  let gridlines = '', yLabels = '', windIcons = '', stageLabels = '';
+  const doneAlts = new Set();
+  stages.forEach(s=>{
+    const key = Math.round(s.altM);
+    if(doneAlts.has(key)) return;
+    doneAlts.add(key);
+    const y = yFor(s.altM);
+    const col = s.isIntercept ? '#BA7517' : 'var(--muted)';
+    gridlines += `<line x1="${ML}" y1="${y}" x2="${W-MR}" y2="${y}" stroke="${col}" stroke-width="0.5" opacity="0.35"/>`;
+    yLabels += `<text x="${ML-6}" y="${y-3}" text-anchor="end" font-size="12" font-weight="600" fill="${col}">${Math.round(s.altM)}</text>`;
+    yLabels += `<text x="${ML-6}" y="${y+10}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(s.altM-groundAlt)} AGL</text>`;
+  });
+  const totalMin = totalT/60;
+  const stepMin = totalMin>50 ? 20 : totalMin>25 ? 10 : 5;
+  for(let m=0; m<=totalMin+0.01; m+=stepMin){
+    const x = xFor(m*60);
+    gridlines += `<line x1="${x}" y1="${MT}" x2="${x}" y2="${H-MB}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="1,4"/>`;
+    yLabels += `<text x="${x}" y="${H-MB+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(m)}${m+stepMin>totalMin?' min':''}</text>`;
+  }
+  // Wind arrow + duration label at each meaningful stage (skip zero-duration
+  // ones except intercept/ground, which still get a plain marker).
+  stages.forEach((s,i)=>{
+    const seg = segs.find(sg=>sg.kind!=='drop' && sg.alt===s.altM);
+    if(!seg) return;
+    const xMid = xFor((seg.t0+seg.t1)/2);
+    const y = yFor(s.altM);
+    const col = s.isIntercept ? '#BA7517' : 'var(--text)';
+    if(s.isGround){
+      stageLabels += `<text x="${xMid}" y="${y-10}" text-anchor="middle" font-size="11" font-weight="600" fill="${col}">Ground</text>`;
+    } else {
+      const durMin = Math.round(s.lingerS/60);
+      const label = s.isIntercept ? 'Intercept' : (durMin+' min');
+      stageLabels += `<text x="${xMid}" y="${y-16}" text-anchor="middle" font-size="11" font-weight="600" fill="${col}">${label}</text>`;
+      const arrowRot = (s.dirFrom+180)%360;
+      windIcons += `<g transform="translate(${xMid},${y-3}) rotate(${arrowRot})"><line x1="0" y1="7" x2="0" y2="-7" stroke="${col}" stroke-width="1.8" stroke-linecap="round" marker-end="url(#stagedArrow)"/></g>`;
+      stageLabels += `<text x="${xMid}" y="${y+16}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(s.speedKmh)} km/h</text>`;
+    }
+  });
+
+  wrap.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
+    <defs><marker id="stagedArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6"/></marker></defs>
+    ${gridlines}
+    <text x="4" y="12" font-size="10" fill="var(--muted)">m AMSL</text>
+    <path d="${pathD}" fill="none" stroke="#ff6a00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${windIcons}
+    ${yLabels}
+    ${stageLabels}
+  </svg>`;
 }
 document.getElementById('subModeQuick').addEventListener('click', ()=>setSubMode('quick'));
 document.getElementById('subModeStaged').addEventListener('click', ()=>setSubMode('staged'));
@@ -2260,7 +2386,9 @@ function setSubMode(mode){
   currentSubMode = mode;
   document.getElementById('subModeQuick').classList.toggle('active', mode==='quick');
   document.getElementById('subModeStaged').classList.toggle('active', mode==='staged');
-  document.getElementById('stagedDescentSliders').style.display = mode==='staged' ? 'block' : 'none';
+  const stagedCard = document.getElementById('stagedDescentSliders');
+  stagedCard.style.display = mode==='staged' ? 'block' : 'none';
+  stagedCard.style.border = mode==='staged' ? '2px solid var(--bad)' : '';
   if(mode==='staged'){
     ensureStagedLayers();
     if(!state.stagedMarkerInitialized){
@@ -2283,6 +2411,26 @@ function setSubMode(mode){
     // regardless of which subfunction or main function is active - only an
     // explicit new drag/click replaces it, never just switching views.
   }
+}
+document.getElementById('btnCenterStaged').addEventListener('click', ()=>{
+  if(state.lastStagedPlanResult && state.lastStagedPlanResult.landingHull && state.lastStagedPlanResult.landingHull.length){
+    map.fitBounds(state.lastStagedPlanResult.landingHull.map(p=>[p[1],p[0]]), {padding:[30,30]});
+  }
+});
+function clearStagedResults(){
+  if(stagedReachableLayer && map.hasLayer(stagedReachableLayer)) map.removeLayer(stagedReachableLayer);
+  if(stagedDescentPathLayer2 && map.hasLayer(stagedDescentPathLayer2)) map.removeLayer(stagedDescentPathLayer2);
+  if(stagedLandingAreaLayer && map.hasLayer(stagedLandingAreaLayer)) map.removeLayer(stagedLandingAreaLayer);
+  if(stagedDescentInitMarker && map.hasLayer(stagedDescentInitMarker)) map.removeLayer(stagedDescentInitMarker);
+  if(stagedTargetMarker){ map.removeLayer(stagedTargetMarker); stagedTargetMarker=null; }
+  state.stagedReachableHull = null;
+  state.lastStagedPlanResult = null;
+  document.getElementById('stagedPlanPanel').style.display = 'none';
+  document.getElementById('btnReopenStagedPlan').style.display = 'none';
+  document.getElementById('btnCenterStaged').style.display = 'none';
+  // Start fresh on the next drag/click instead of leaving a stale hull
+  // around that no longer matches anything shown on the map.
+  if(currentSubMode==='staged' && state.appMode==='plan') computeStagedReachableArea();
 }
 // ==================== END STAGED DESCENT ====================
 
@@ -2501,7 +2649,8 @@ function detectInversionOrIsothermal(profile, belowAltM){
   for(let i=0;i<levels.length-1;i++){
     const upper = levels[i], lower = levels[i+1]; // upper.alt_m > lower.alt_m
     const dT = upper.temp_c - lower.temp_c; // normally negative (colder higher up)
-    if(dT > 0.3 || Math.abs(dT) <= 0.3) found.push(upper.alt_m);
+    if(dT > 0.3) found.push({altM:upper.alt_m, type:'inversion'});
+    else if(Math.abs(dT) <= 0.3) found.push({altM:upper.alt_m, type:'isothermal'});
   }
   return found;
 }
@@ -2528,17 +2677,24 @@ function detectWindShear(profile, belowAltM){
 function updateInversionNote(){
   const el = document.getElementById('inversionNote');
   const profile = getActiveWindProfile();
-  const foundAlts = detectInversionOrIsothermal(profile, state.altAMSL);
+  const found = detectInversionOrIsothermal(profile, state.altAMSL);
   const shearAlts = detectWindShear(profile, state.altAMSL);
+  const inversionAlts = found.filter(f=>f.type==='inversion').map(f=>f.altM);
+  const isothermalAlts = found.filter(f=>f.type==='isothermal').map(f=>f.altM);
+  const fmt = altM => `${Math.round(altM)} m AMSL (${Math.round(altM-state.groundElev)} m AGL)`;
   const parts = [];
-  if(foundAlts.length){
-    parts.push(foundAlts.map(altM=>`${Math.round(altM)} mAMSL (${Math.round(altM-state.groundElev)} mAGL)`).join('  '));
+  if(inversionAlts.length || isothermalAlts.length){
+    parts.push([...inversionAlts, ...isothermalAlts].sort((a,b)=>b-a).map(fmt).join(', '));
   }
   if(shearAlts.length){
-    const shearText = shearAlts.map(altM=>`Wind Shear ${Math.round(altM)}mAMSL (${Math.round(altM-state.groundElev)}mAGL)`).join('  ');
-    parts.push(`<span style="color:var(--bad);">${shearText}</span>`);
+    parts.push(`Wind Shear ${shearAlts.map(fmt).join(', ')}`);
   }
-  document.getElementById('inversionNoteText').innerHTML = parts.length ? parts.join('  ') : '(none)';
+  document.getElementById('inversionNoteText').textContent = parts.length ? parts.join(' — ') : '(none)';
+  // Colour each word in the title only when that category actually has
+  // something to show, rather than always colouring all three.
+  document.getElementById('titleInversions').style.color = inversionAlts.length ? '#3ddc6f' : '';
+  document.getElementById('titleIsothermal').style.color = isothermalAlts.length ? '#3fa9ff' : '';
+  document.getElementById('titleWindShear').style.color = shearAlts.length ? 'var(--bad)' : '';
   el.style.display = 'block';
 }
 
@@ -2911,14 +3067,16 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
     const decelFactor = Math.max(0, Math.min(1, altAboveIntercept/decelWindowM)); // 1=full nominal rate, 0=already at post-intercept rate
     const targetRate = effRate2 + (effRate1-effRate2)*decelFactor;
     const instantRate = targetRate*accelFactor;
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxOverride);
+    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-instantRate*step); t+=step;
     path.push({lat,lon,alt,t});
   }
   while(alt>state.groundElev){
     const step=dt;
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxOverride);
+    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(state.groundElev, alt-effRate2*step); t+=step;
     path.push({lat,lon,alt,t});
@@ -3155,6 +3313,9 @@ function dismissBanner(bannerId, iconId){
     restackBottomLegends();
     legendActiveButDismissed[bannerId] = true;
     updateAllLegendsReopenBtn();
+  } else if(bannerId==='regionNamesWarnBar'){
+    legendActiveButDismissed[bannerId] = true;
+    updateAllLegendsReopenBtn();
   }
   repositionModeToggle();
   updateAllWarningsReopenBtn();
@@ -3168,6 +3329,9 @@ function reopenBanner(bannerId, iconId){
     legendStackOrder = legendStackOrder.filter(id=>id!==bannerId);
     legendStackOrder.push(bannerId); // newly (re)opened - goes on top of whatever else is currently showing
     restackBottomLegends();
+    legendActiveButDismissed[bannerId] = false;
+    updateAllLegendsReopenBtn();
+  } else if(bannerId==='regionNamesWarnBar'){
     legendActiveButDismissed[bannerId] = false;
     updateAllLegendsReopenBtn();
   }
@@ -3201,20 +3365,19 @@ function setWarnbarContent(text){
 // whichever banners are currently visible so it's never covered.
 function repositionModeToggle(){
   // #modeToggle/#subModeToggle themselves sit inside #topAlertStack's own
-  // CSS flex column and need no JS positioning. But #stagedPlanPanel and
-  // #btnReopenStagedPlan are SEPARATE elements with their own top offset -
-  // if that were a fixed pixel value, several stacked warnings plus the
-  // subfunction toggle could easily push the real stack taller than that
-  // fixed value, causing a visible overlap. Position them dynamically,
-  // just below whatever is actually rendered above them right now.
+  // CSS flex column and need no JS positioning. #stagedPlanPanel is a
+  // SEPARATE element with its own top offset - if that were a fixed pixel
+  // value, several stacked warnings plus the subfunction toggle could
+  // easily push the real stack taller than that fixed value, causing a
+  // visible overlap. Position it dynamically, just below whatever is
+  // actually rendered above it right now. (Its reopen button now lives in
+  // the header instead of floating on the map, so it needs no such fix.)
   const stack = document.getElementById('topAlertStack');
   const mapwrap = document.getElementById('mapwrap');
   if(!stack || !mapwrap) return;
   const bottom = stack.getBoundingClientRect().bottom - mapwrap.getBoundingClientRect().top + 8;
   const panel = document.getElementById('stagedPlanPanel');
-  const btn = document.getElementById('btnReopenStagedPlan');
   if(panel) panel.style.top = bottom + 'px';
-  if(btn) btn.style.top = bottom + 'px';
 }
 window.addEventListener('resize', repositionModeToggle);
 
@@ -3637,6 +3800,7 @@ function setAppMode(mode){
     // descent-initiation marker, and the course/descent lines leading to it
     // are all planning-in-progress artifacts and should disappear here.
     document.getElementById('subModeToggle').style.display = 'none';
+    document.getElementById('stagedDescentSliders').style.display = 'none';
     setTimeout(repositionModeToggle, 0);
     if(landingLayerOn) landingPolyLayer.addTo(map);
     if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
@@ -3713,17 +3877,15 @@ async function planDescentToTarget(lat, lon){
   const rate2 = parseFloat(document.getElementById('sRate2').value);
   const scatter = parseFloat(document.getElementById('sScatter').value)/100;
 
-  // Pass 1: search over the descent-initiation TIME (0..240 min, matching
-  // the slider's range) for the deterministic path that lands closest to
-  // the clicked point - this is a heuristic local search (not a guaranteed
+  // Search over the descent-initiation TIME (0..240 min, matching the
+  // slider's range) for the deterministic path that lands closest to the
+  // clicked point - this is a heuristic local search (not a guaranteed
   // global optimum), since the achievable landing point isn't necessarily a
-  // monotonic function of that one parameter. The wind-hour estimate used
-  // for each trial self-corrects as the search converges, so the FINAL
-  // result already reflects the forecast for the actual arrival time -
-  // rather than searching against "now" and only switching to the correct
-  // future hour afterward, which could then land somewhere else entirely.
-  const roughPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, 60*60, rate1, interceptAGL, rate2, 0);
-  let arrivalHourIdx = Math.round(roughPath[roughPath.length-1].t/3600);
+  // monotonic function of that one parameter. No fixed "representative"
+  // wind hour is used anywhere here - simulateDescentPath resolves the wind
+  // hour dynamically at every step from the elapsed time itself, exactly
+  // like the reference trajectory does, so the two are now guaranteed to
+  // agree rather than being governed by two different rules.
   // Coarse scan across the ENTIRE 0-240 min range first. The previous
   // approach (narrowing a window around the best value seen so far, starting
   // from the middle) could permanently exclude the true best region if the
@@ -3736,7 +3898,7 @@ async function planDescentToTarget(lat, lon){
   let best=null, bestDist=Infinity, bestPath=null;
   for(let i=0;i<=COARSE_STEPS;i++){
     const mid = (i/COARSE_STEPS)*MAX_DELAY_MIN;
-    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0);
     const last=path[path.length-1];
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
@@ -3751,7 +3913,7 @@ async function planDescentToTarget(lat, lon){
   const coarseStepMin = MAX_DELAY_MIN/COARSE_STEPS;
   if(best >= MAX_DELAY_MIN-coarseStepMin){
     for(let extraMin=MAX_DELAY_MIN+30; extraMin<=600; extraMin+=30){
-      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, extraMin*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
+      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, extraMin*60, rate1, interceptAGL, rate2, 0);
       const last=path[path.length-1];
       const d = haversine(last.lat,last.lon,lat,lon);
       if(d<bestDist){ bestDist=d; best=extraMin; bestPath=path; } else if(d>bestDist*1.5){ break; } // clearly moving away now, stop extending
@@ -3766,13 +3928,12 @@ async function planDescentToTarget(lat, lon){
   let lo=Math.max(0,best-coarseStepMin*4), hi=Math.min(Math.max(MAX_DELAY_MIN,best+30),best+coarseStepMin*4);
   for(let iter=0; iter<18; iter++){
     const mid=(lo+hi)/2;
-    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdx);
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, mid*60, rate1, interceptAGL, rate2, 0);
     const last=path[path.length-1];
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
     const span=(hi-lo)/2.1;
     lo=Math.max(0,best-span); hi=best+span;
-    arrivalHourIdx = Math.round(last.t/3600); // refine the wind-hour estimate as the search converges
   }
 
   const initSec = best*60;
@@ -3794,7 +3955,7 @@ async function planDescentToTarget(lat, lon){
   for(let i=0;i<N;i++){
     const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
     const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
-    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, arrivalHourIdx);
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale);
     const last = path[path.length-1];
     endpoints.push([last.lon, last.lat]);
   }
@@ -3835,6 +3996,7 @@ async function planDescentToTarget(lat, lon){
   state.secondsToLanding = bestPath.length ? bestPath[bestPath.length-1].t : 0;
   hideYellowWarning(); // the descent-time slider has no effect in Plan Descent, so that warning doesn't apply here
 
+  const arrivalHourIdx = Math.round(bestPath[bestPath.length-1].t/3600); // for display purposes only (wind readout at the landing site)
   await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
 
   // Wind Profile / Hodograph should reflect conditions at the PLANNED
@@ -4591,11 +4753,11 @@ function lonLatToTileXY(lon, lat, z){
 }
 let lastCachedCenter = null;
 let precacheInFlight = false;
-async function precacheAreaTiles(lat, lon, radiusKm){
+async function precacheAreaTiles(lat, lon, radiusKm, force){
   radiusKm = radiusKm || 70;
   if(precacheInFlight) return;
   const moveThresholdM = Math.max(5000, radiusKm*200); // re-cache after moving ~20% of the radius
-  if(lastCachedCenter && haversine(lastCachedCenter.lat, lastCachedCenter.lon, lat, lon) < moveThresholdM) return;
+  if(!force && lastCachedCenter && haversine(lastCachedCenter.lat, lastCachedCenter.lon, lat, lon) < moveThresholdM) return;
   if(!('caches' in window)) return;
   precacheInFlight = true;
   lastCachedCenter = {lat, lon};
@@ -4819,7 +4981,7 @@ document.getElementById('btnDropboxConnect').addEventListener('click', async ()=
   const appKey = document.getElementById('dropboxAppKey').value.trim();
   if(!appKey){ alert('Enter your Dropbox App Key first (see note above).'); return; }
   const verifier = randomString(64);
-  try{ sessionStorage.setItem('gblp_dropbox_pkce_verifier', verifier); }catch(e){}
+  try{ localStorage.setItem('gblp_dropbox_pkce_verifier', verifier); }catch(e){}
   const challenge = base64UrlEncode(await sha256(verifier));
   const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${encodeURIComponent(appKey)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(DROPBOX_REDIRECT_URI)}&token_access_type=offline`;
   location.href = authUrl;
@@ -4835,7 +4997,7 @@ async function completeDropboxOAuthIfReturning(){
   const code = params.get('code');
   if(!code) return;
   const appKey = localStorage.getItem('gblp_dropbox_appkey');
-  const verifier = sessionStorage.getItem('gblp_dropbox_pkce_verifier');
+  const verifier = localStorage.getItem('gblp_dropbox_pkce_verifier');
   if(!appKey){ document.getElementById('dropboxStatus').textContent = '⚠ No App Key was saved before redirecting - enter it and try again.'; return; }
   if(!verifier){ document.getElementById('dropboxStatus').textContent = '⚠ Lost the PKCE verifier (e.g. browser cleared session data mid-flow) - try connecting again.'; return; }
   try{
@@ -4857,6 +5019,7 @@ async function completeDropboxOAuthIfReturning(){
   }catch(e){
     document.getElementById('dropboxStatus').textContent = '⚠ Connection failed: '+e.message;
   }
+  try{ localStorage.removeItem('gblp_dropbox_pkce_verifier'); }catch(e){}
   // Clean the ?code=... out of the visible URL without reloading.
   history.replaceState(null, '', location.pathname);
 }
@@ -5271,6 +5434,44 @@ function restartWxRefreshTimer(){
 document.getElementById('wxRefreshInterval').addEventListener('change', restartWxRefreshTimer);
 restartWxRefreshTimer();
 setInterval(()=>precacheAreaTiles(state.lat, state.lon, cacheRadiusKm), 10*60*1000); // re-check every 10 min, only acts if moved far enough
+// The cache area must follow the balloon, not just get re-centered after
+// already having drifted a fixed distance - project a bit further ahead
+// along the CURRENT course/heading and re-cache as soon as that projected
+// point would be within 50% of the radius from the circle's edge, i.e.
+// there's less than half the radius of safety margin left to leeward.
+function checkCacheFollowsBalloon(){
+  if(!lastCachedCenter || !isFinite(state.lat) || !isFinite(state.course)) return;
+  const lookaheadKm = cacheRadiusKm*0.5;
+  const [projLat, projLon] = destPoint(state.lat, state.lon, state.course, lookaheadKm*1000);
+  const distFromCenterKm = haversine(lastCachedCenter.lat, lastCachedCenter.lon, projLat, projLon)/1000;
+  if(distFromCenterKm > cacheRadiusKm){
+    precacheAreaTiles(state.lat, state.lon, cacheRadiusKm, true);
+    refreshAllActiveDataLayers();
+  }
+}
+setInterval(checkCacheFollowsBalloon, 60*1000);
+// Re-fetches every currently-enabled Overpass-based data layer for the
+// current position - used both by the leeward auto-follow check above and
+// the manual "Refresh current cache now" button.
+function refreshAllActiveDataLayers(){
+  if(document.getElementById('tgRoads').classList.contains('active')){
+    if(typeof fetchFineRoads==='function') fetchFineRoads();
+    if(typeof fetchPlaceLabels==='function') fetchPlaceLabels();
+  }
+  if(natureReservesActive) fetchNatureReserves();
+  if(landCoverActive) fetchLandCover();
+  if(regionNamesActive) fetchRegionNames();
+}
+document.getElementById('btnRefreshCacheNow').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btnRefreshCacheNow');
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = '↻ Refreshing…';
+  await precacheAreaTiles(state.lat, state.lon, cacheRadiusKm, true);
+  refreshAllActiveDataLayers();
+  btn.textContent = '✓ Done';
+  setTimeout(()=>{ btn.textContent = originalText; btn.disabled = false; }, 2000);
+});
 </script>
 </body>
 </html>

@@ -201,7 +201,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 #topAlertStack{position:absolute;top:8px;left:8px;right:8px;z-index:600;display:flex;flex-direction:column;gap:8px;align-items:stretch;pointer-events:none;}
 #topAlertStack > *{pointer-events:auto;}
 .gps-warn.show{display:flex;}
-.gps-warn button.ghost-inline{flex-shrink:0;background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 10px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap;}
+.gps-warn button.ghost-inline{flex-shrink:0;background:#fff;color:var(--bad);border:none;border-radius:6px;padding:5px 10px;font-weight:400;font-size:11px;cursor:pointer;white-space:nowrap;}
 .yellow-warn.show{display:flex;}
 .banner-close{flex-shrink:0;background:rgba(0,0,0,0.25);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;}
 .legend-bar{position:absolute;left:8px;right:8px;background:rgba(20,26,33,0.88);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;display:none;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:14px;white-space:nowrap;overflow-x:auto;}
@@ -319,6 +319,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
       <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
       <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="12" rx="2"/><path d="M8 9 V5 a4 4 0 0 1 8 0 v4"/></svg></button>
+      <button class="ltbtn" id="tgRain" title="Precipitation (Open-Meteo forecast grid)"><span class="layer-load-dot" id="dotTgRain"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1-1 6.9"/><path d="M9 20 L8 22 M13 20 L12 22 M17 20 L16 22"/></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -919,7 +920,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v84';
+const APP_VERSION = 'v86';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1037,15 +1038,24 @@ function updateTwilightChip(){
   upcoming.sort((a,b)=>a.date-b.date);
   const l1 = document.getElementById('twilightLabel1'), l2 = document.getElementById('twilightLabel2');
   function twilightIconSvg(label){
-    // Sun circle relative to a horizon line + arrow: SR/SS show the sun AT
-    // the horizon (the moment itself), BCT/ECT show it BELOW the horizon
-    // (twilight, before sunrise / after sunset) - clearly distinct at a
-    // glance instead of relying on similar-looking emoji.
-    const belowHorizon = (label==='BCT'||label==='ECT');
+    // Classic sunrise/sunset pictogram: sun straddling the horizon line
+    // (rays shown) for the actual SR/SS moment, sun fully hidden below the
+    // horizon (no rays) for civil twilight BCT/ECT - a much more universally
+    // recognizable convention than a small outline circle, and rendered
+    // much larger with bold strokes for real legibility.
+    const isMoment = (label==='SR'||label==='SS'); // sun visible at the horizon
     const rising = (label==='BCT'||label==='SR');
-    const cy = belowHorizon ? 10 : 6;
-    const arrow = rising ? 'M7 2 L7 -2 M4.5 0 L7 -2.5 L9.5 0' : 'M7 2 L7 6 M4.5 3.5 L7 6 L9.5 3.5';
-    return `<svg width="20" height="20" viewBox="-3 -3 20 16" style="vertical-align:-5px;"><line x1="-1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="${cy}" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="${arrow}" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,${belowHorizon?2:0})"/></svg>`;
+    const sunCy = isMoment ? 17 : 20;
+    const rays = isMoment ? `<path d="M12 6 V3 M7.5 8 L5.5 6 M16.5 8 L18.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>` : '';
+    const arrow = rising
+      ? `<path d="M12 2 L12 10 M8 6 L12 2 L16 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      : `<path d="M12 2 L12 10 M8 6 L12 10 L16 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    return `<svg width="30" height="30" viewBox="0 0 24 24" style="vertical-align:-9px;">
+      <line x1="2" y1="17" x2="22" y2="17" stroke="currentColor" stroke-width="1.6"/>
+      ${rays}
+      <circle cx="12" cy="${sunCy}" r="5" fill="${isMoment?'currentColor':'none'}" fill-opacity="0.25" stroke="currentColor" stroke-width="1.8"/>
+      ${arrow}
+    </svg>`;
   }
   if(upcoming[0]) l1.innerHTML = `${twilightIconSvg(upcoming[0].label)} ${upcoming[0].label} ${fmtHHMM(upcoming[0].date)} UTC`; else l1.textContent = '—';
   if(upcoming[1]) l2.innerHTML = `${twilightIconSvg(upcoming[1].label)} ${upcoming[1].label} ${fmtHHMM(upcoming[1].date)} UTC`; else l2.textContent = '—';
@@ -1504,8 +1514,8 @@ function fetchOverpassThrottled(query, signal){
   overpassQueue = result.catch(()=>{});
   return result;
 }
-async function fetchNatureReserves(){
-  if(!natureReservesActive || map.getZoom()<8){ return; }
+async function fetchNatureReserves(force){
+  if((!natureReservesActive && !force) || map.getZoom()<8){ return; }
   // Cap the query area to a fixed radius around the map CENTER, regardless
   // of how far zoomed out the actual viewport is - a wide-open viewport at
   // zoom 8 can span 150+ km, and boundary=protected_area polygons (some
@@ -1618,8 +1628,8 @@ function ensureLandCoverHatchPattern(){
   pattern.appendChild(line);
   defs.appendChild(pattern);
 }
-async function fetchLandCover(){
-  if(!landCoverActive || map.getZoom()<9){ return; }
+async function fetchLandCover(force){
+  if((!landCoverActive && !force) || map.getZoom()<9){ return; }
   const checked = [...document.querySelectorAll('[data-landcover]')].filter(cb=>cb.checked).map(cb=>cb.dataset.landcover);
   if(!checked.length){ landCoverLayer.clearLayers(); return; }
   const center = map.getCenter();
@@ -1679,8 +1689,8 @@ function scheduleRegionNamesFetch(){
   clearTimeout(regionNamesFetchTimer);
   regionNamesFetchTimer = setTimeout(fetchRegionNames, 700);
 }
-async function fetchRegionNames(){
-  if(!regionNamesActive || map.getZoom()<7){ return; }
+async function fetchRegionNames(force){
+  if((!regionNamesActive && !force) || map.getZoom()<7){ return; }
   const b = map.getBounds();
   const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
   // place=region is an old, never-formally-standardized OSM tag for informal
@@ -1851,6 +1861,78 @@ async function fetchMetarStations(){
   }
 }
 
+// ---- precipitation grid (Open-Meteo forecast, "RainViewer-style" overlay
+// built from our already-integrated data source rather than a new API) ----
+const RAIN_COLOR_STEPS = [
+  {min:0.1, color:'#3fa9ff', op:0.25},
+  {min:1,   color:'#3f6fff', op:0.35},
+  {min:4,   color:'#a63fff', op:0.45},
+  {min:10,  color:'#ff3f6f', op:0.55}
+];
+function rainColorFor(mmh){
+  let chosen = null;
+  for(const s of RAIN_COLOR_STEPS){ if(mmh>=s.min) chosen = s; }
+  return chosen;
+}
+const RAIN_GRID_N = 6;
+const rainLayer = L.layerGroup();
+let rainActive = false;
+let rainFetchTimer = null;
+document.getElementById('tgRain').addEventListener('click', function(){
+  rainActive = this.classList.toggle('active');
+  if(rainActive){ setLayerLoadDot('tgRain','loading'); rainLayer.addTo(map); scheduleRainFetch(); }
+  else { map.removeLayer(rainLayer); rainLayer.clearLayers(); setLayerLoadDot('tgRain', null); }
+});
+function scheduleRainFetch(){
+  if(!rainActive) return;
+  clearTimeout(rainFetchTimer);
+  rainFetchTimer = setTimeout(fetchRainGrid, 600);
+}
+map.on('moveend zoomend', ()=>{ if(rainActive) scheduleRainFetch(); });
+async function fetchRainGrid(){
+  if(!rainActive) return;
+  try{
+    const b = map.getBounds();
+    const points = [];
+    for(let j=0;j<RAIN_GRID_N;j++){
+      for(let i=0;i<RAIN_GRID_N;i++){
+        points.push({
+          lat: b.getSouth() + (b.getNorth()-b.getSouth())*j/(RAIN_GRID_N-1),
+          lon: b.getWest() + (b.getEast()-b.getWest())*i/(RAIN_GRID_N-1)
+        });
+      }
+    }
+    const center = map.getCenter();
+    const modelSel = document.getElementById('wxModelSelect').value;
+    const resolvedModel = modelSel==='auto' ? pickAutoModel(center.lat, center.lng) : modelSel;
+    const latStr = points.map(p=>p.lat.toFixed(3)).join(',');
+    const lonStr = points.map(p=>p.lon.toFixed(3)).join(',');
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&minutely_15=precipitation&models=${resolvedModel}&forecast_minutely_15=4&timezone=UTC`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const results = Array.isArray(j) ? j : [j];
+    rainLayer.clearLayers();
+    const cellLatH = (b.getNorth()-b.getSouth())/(RAIN_GRID_N-1)/2;
+    const cellLonH = (b.getEast()-b.getWest())/(RAIN_GRID_N-1)/2;
+    points.forEach((pt,idx)=>{
+      const m15 = results[idx] && results[idx].minutely_15;
+      const mm15 = m15 && m15.precipitation ? m15.precipitation[0] : null;
+      if(mm15==null) return;
+      const mmh = mm15*4; // 15-minute total -> mm/h equivalent rate
+      const step = rainColorFor(mmh);
+      if(!step) return;
+      const rect = L.rectangle([
+        [pt.lat-cellLatH, pt.lon-cellLonH],
+        [pt.lat+cellLatH, pt.lon+cellLonH]
+      ], {stroke:false, fillColor:step.color, fillOpacity:step.op, interactive:false});
+      rect.addTo(rainLayer);
+    });
+    setLayerLoadDot('tgRain','ready');
+  }catch(e){
+    if(rainActive) setLayerLoadDot('tgRain','loading');
+  }
+}
+
 const fineRoadsLayer = L.layerGroup();
 let fineRoadsFetchTimer = null;
 let fineRoadsAbortController = null;
@@ -1875,8 +1957,8 @@ function placeLabelStyle(placeTag, zoom){
   const minZoomForRank = {1:0, 2:9, 3:11, 4:11, 5:13, 6:14}[rank];
   return { visible: zoom>=minZoomForRank, fontWeight: rank<=2 ? 700 : 500, fontSize: rank<=2 ? 12 : 11 };
 }
-async function fetchPlaceLabels(){
-  if(!(roadsShown)) return;
+async function fetchPlaceLabels(force){
+  if(!roadsShown && !force) return;
   if(map.getZoom() < PLACE_LABELS_MIN_ZOOM){ placeLabelsLayer.clearLayers(); return; }
   const center = map.getCenter();
   const maxDeg = 0.35;
@@ -5082,6 +5164,16 @@ async function precacheAreaTiles(lat, lon, radiusKm, force){
     }
     await Promise.all(Array.from({length:CONCURRENCY}, worker));
     console.log('Pre-caching done.');
+    // Also warm up the Overpass/vector-layer data for whatever's currently
+    // in view - so if the user later toggles Nature Reserves, Non-landable
+    // Terrain, Region Names, or Place Labels on, it's already sitting in
+    // memory instead of making them wait for a fresh fetch. Deliberately
+    // NOT touching the layer-load dots or adding anything to the map here -
+    // this is silent prep work, not an actual activation.
+    fetchNatureReserves(true);
+    fetchLandCover(true);
+    fetchRegionNames(true);
+    fetchPlaceLabels(true);
   } finally {
     precacheInFlight = false;
   }
@@ -5572,7 +5664,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 function saveConfig(){
   try{
     const cfg = {};

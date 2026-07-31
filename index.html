@@ -919,7 +919,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v87';
+const APP_VERSION = 'v88';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2649,19 +2649,41 @@ function drawStagedPlanChart(result){
   // shape on the left, not a full-width precise plot - the actual numbers
   // live in the label column to its right, which is where collision with
   // the curve is avoided entirely (nothing is drawn ON TOP of the line).
-  const W=340, H=310, ML=80, plotW=55, MT=14, MB=24;
+  const W=340, H=310, ML=80, plotW=55, MT=14, MB=40;
   const plotH = H-MT-MB;
   const infoX = ML+plotW+12;
   const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
   const xFor = tt => ML + (tt/totalT)*plotW;
 
   let pathD = '';
+  let midSegmentReadouts = '';
   segs.forEach(seg=>{
     if(seg.kind==='flat'){
       const y = yFor(seg.alt);
       pathD += (pathD?'L':'M') + xFor(seg.t0)+' '+y+' L'+xFor(seg.t1)+' '+y+' ';
     } else {
       pathD += (pathD?'L':'M') + xFor(seg.t0)+' '+yFor(seg.altFrom)+' L'+xFor(seg.t1)+' '+yFor(seg.altTo)+' ';
+      // A single transition can span a large altitude range (e.g. a long
+      // drop straight to intercept) - show an intermediate wind readout at
+      // its midpoint whenever the drop exceeds 1000m, so the wind change
+      // over that stretch isn't hidden between two distant labelled levels.
+      const dropM = Math.abs(seg.altFrom-seg.altTo);
+      if(dropM>1000){
+        const midAlt = Math.round(((seg.altFrom+seg.altTo)/2)/50)*50;
+        const midT = (seg.t0+seg.t1)/2;
+        const midHourIdx = Math.round((startT+midT)/3600);
+        const w = midAlt!=null ? windAt(midAlt, 0, 1, midHourIdx) : null;
+        if(w){
+          const midX = xFor(midT), midY = yFor(midAlt);
+          const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
+          const speedKmh = Math.hypot(w.u,w.v)*3.6;
+          midSegmentReadouts += `<line x1="${ML-14}" y1="${midY}" x2="${midX}" y2="${midY}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="1,2"/>`;
+          midSegmentReadouts += `<text x="${ML-16}" y="${midY+3}" text-anchor="end" font-size="8.5" fill="var(--muted)">${midAlt} m AMSL</text>`;
+          const arrowRot = (dirFrom+180)%360;
+          midSegmentReadouts += `<g transform="translate(${infoX+1},${midY-7}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="var(--muted)"/></g>`+
+            `<text x="${infoX+14}" y="${midY-2}" font-size="9.5" fill="var(--muted)">${Math.round(dirFrom)}° ${Math.round(speedKmh)} km/h</text>`;
+        }
+      }
     }
   });
 
@@ -2761,12 +2783,46 @@ function drawStagedPlanChart(result){
 
   document.getElementById('stagedPlanBallastTotal').textContent = `Ballast Σ ${totalBallastKg.toFixed(1)} kg`;
 
+  // Inversions/isothermal layers/wind shear along the descent, shaded as
+  // thin coloured bands (green/blue/red) across the full chart width, each
+  // labelled with its altitude - AMSL always, plus AGL too once below
+  // intercept (since AGL stops being shown on the main axis there).
+  const profile = getActiveWindProfile();
+  const interceptAltForBands = interceptStage ? interceptStage.altM : groundAlt;
+  const foundLayers = detectInversionOrIsothermal(profile, stages[0].altM);
+  const foundShear = detectWindShear(profile, stages[0].altM);
+  let bandsMarkup = '';
+  const usedColors = new Set();
+  function drawBand(altM, color, label){
+    if(altM>stages[0].altM || altM<groundAlt) return;
+    usedColors.add(color);
+    const y = yFor(altM);
+    bandsMarkup += `<rect x="${ML}" y="${y-1.5}" width="${W-6-ML}" height="3" fill="${color}" opacity="0.55"/>`;
+    const aglTxt = altM<interceptAltForBands ? ` (${Math.round(altM-groundAlt)} m AGL)` : '';
+    bandsMarkup += `<text x="${infoX}" y="${y+3}" font-size="8" fill="${color}">${Math.round(altM)} m AMSL${aglTxt}</text>`;
+  }
+  foundLayers.forEach(f=>drawBand(f.altM, f.type==='inversion'?'#3ddc6f':'#3fa9ff', f.type));
+  foundShear.forEach(altM=>drawBand(altM, '#e0483f', 'shear'));
+  let legendMarkup = '';
+  const legendItems = [];
+  if(usedColors.has('#3ddc6f')) legendItems.push({color:'#3ddc6f', label:'Inversion'});
+  if(usedColors.has('#3fa9ff')) legendItems.push({color:'#3fa9ff', label:'Isothermal'});
+  if(usedColors.has('#e0483f')) legendItems.push({color:'#e0483f', label:'Wind Shear'});
+  legendItems.forEach((it,idx)=>{
+    const lx = ML + idx*90;
+    legendMarkup += `<rect x="${lx}" y="${H-16}" width="10" height="3" fill="${it.color}" opacity="0.7"/>`;
+    legendMarkup += `<text x="${lx+14}" y="${H-13}" font-size="9" fill="var(--muted)">${it.label}</text>`;
+  });
+
   wrap.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
     ${shading}
     ${gridlines}
     <path d="${pathD}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+    ${bandsMarkup}
+    ${midSegmentReadouts}
     ${yLabels}
     ${infoRows}
+    ${legendMarkup}
   </svg>`;
 }
 document.getElementById('subModeQuick').addEventListener('click', ()=>setSubMode('quick'));

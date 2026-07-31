@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v83** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v84** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -81,6 +81,7 @@ Each toggle button shows a small traffic-light dot: invisible when off, yellow w
 | ⛰ | Non-landable terrain (17 categories, selectable in Settings) | Overpass (violet-red hatched) |
 | Aa | Region/cultural place names (experimental) | Overpass (`place=region`, blue italic labels) |
 | 🎈 | Live radiosondes (experimental) | SondeHub v2 - click a sonde to load its derived wind profile as the active sounding |
+| 🛰 | Weather stations / METAR | MetarCentral - colour-coded by flight category (VFR/MVFR/IFR/LIFR), CORS confirmed working via a live test from the deployed app |
 
 Base map: Streets / Terrain / Satellite (top-right Leaflet control). Default on first load: Streets + ground wind particles only.
 

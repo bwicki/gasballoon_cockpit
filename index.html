@@ -318,6 +318,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
       <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
       <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
+      <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="12" rx="2"/><path d="M8 9 V5 a4 4 0 0 1 8 0 v4"/></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -918,7 +919,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v83';
+const APP_VERSION = 'v84';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1796,6 +1797,57 @@ async function openSondeHubProfile(serial){
     }
   }catch(e){
     alert('Could not load telemetry for this sonde: '+e.message);
+  }
+}
+
+// ---- weather stations / METAR (MetarCentral - CORS confirmed working) ----
+const METAR_CATEGORY_COLORS = { VFR:'#3ddc6f', MVFR:'#3fa9ff', IFR:'#e0483f', LIFR:'#b026ff' };
+function metarIcon(category){
+  const col = METAR_CATEGORY_COLORS[category] || '#8b98a5';
+  return L.divIcon({
+    html:`<div style="width:14px;height:14px;border-radius:50%;background:${col};border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.5);"></div>`,
+    className:'', iconSize:[14,14], iconAnchor:[7,7]
+  });
+}
+const metarLayer = L.layerGroup();
+let metarActive = false;
+let metarFetchTimer = null;
+document.getElementById('tgMetar').addEventListener('click', function(){
+  metarActive = this.classList.toggle('active');
+  if(metarActive){ setLayerLoadDot('tgMetar','loading'); metarLayer.addTo(map); scheduleMetarFetch(); }
+  else { map.removeLayer(metarLayer); metarLayer.clearLayers(); setLayerLoadDot('tgMetar', null); }
+});
+function scheduleMetarFetch(){
+  if(!metarActive) return;
+  clearTimeout(metarFetchTimer);
+  metarFetchTimer = setTimeout(fetchMetarStations, 600);
+}
+map.on('moveend zoomend', ()=>{ if(metarActive) scheduleMetarFetch(); });
+async function fetchMetarStations(){
+  if(!metarActive) return;
+  try{
+    // MetarCentral's bulk endpoint is filterable by region rather than a
+    // bounding box - "europe" covers this app's typical flying area; we
+    // additionally filter client-side to the current viewport.
+    const r = await fetch('https://metarcentral.com/api/airports/metar-status?region=europe&limit=400');
+    const j = await r.json();
+    const list = Array.isArray(j) ? j : (j.airports || j.data || []);
+    const b = map.getBounds().pad(0.15);
+    metarLayer.clearLayers();
+    list.forEach(a=>{
+      const lat = a.latitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[1]) ?? a.lat;
+      const lon = a.longitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[0]) ?? a.lon;
+      if(lat==null || lon==null || !b.contains([lat,lon])) return;
+      const category = a.flight_rules || a.flight_category || 'UNKN';
+      const raw = (a.metar && a.metar.raw) || a.raw_text || a.raw || '(no recent METAR)';
+      const name = a.name || (a.airport && a.airport.name) || a.icao || '?';
+      L.marker([lat,lon], {icon: metarIcon(category)})
+        .bindTooltip(`<b>${a.icao||''}</b> ${name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
+        .addTo(metarLayer);
+    });
+    setLayerLoadDot('tgMetar','ready');
+  }catch(e){
+    if(metarActive) setLayerLoadDot('tgMetar','loading');
   }
 }
 
@@ -5520,7 +5572,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar'];
 function saveConfig(){
   try{
     const cfg = {};

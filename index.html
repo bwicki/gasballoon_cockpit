@@ -106,9 +106,9 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #modeToggle{z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);align-self:flex-start;}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
-#subModeToggle{z-index:549;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:9px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25);align-self:flex-start;margin-top:6px;}
+#subModeToggle{z-index:549;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:9px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25);align-self:flex-start;}
 #subModeToggle button{background:transparent;border:none;color:var(--muted);padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
-#subModeToggle button.active{background:#b026ff;color:#fff;}
+#subModeToggle button.active{background:#c96a1f;color:#fff;}
 
 /* ---- center-on-position button ---- */
 .map-controls-stack{position:absolute;right:10px;bottom:104px;z-index:1100;display:flex;flex-direction:column;align-items:stretch;width:56px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:hidden;}
@@ -610,7 +610,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> <span data-i18n="modePlanDescent">Plan Descent</span></button>
         </div>
         <button id="btnClearStagedFromMonitor" onclick="clearStagedResults(); document.getElementById('btnClearStagedFromMonitor').style.display='none';" title="Clear staged descent results from the map" style="display:none;margin-left:8px;align-self:flex-start;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear staged descent area</button>
-        <div style="display:flex;align-items:center;gap:14px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-top:6px;">
           <div id="subModeToggle" style="display:none;">
             <button id="subModeQuick" class="active" title="Click a target point for a direct descent">⚡ Quick Descent</button>
             <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options">⬇⬇ Staged Descent</button>
@@ -916,7 +916,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v81';
+const APP_VERSION = 'v82';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2099,7 +2099,7 @@ function ensureStagedLayers(){
     stagedReachableLayer = L.polygon([], {color:'#ff6a00', weight:3, dashArray:'6,4', fillColor:'#ff6a00', fillOpacity:0.22, interactive:false});
   }
   if(!stagedDescentPathLayer2){
-    stagedDescentPathLayer2 = L.polyline([], {color:'#ff6a00', weight:3, dashArray:'6,4', lineCap:'round'});
+    stagedDescentPathLayer2 = L.polyline([], {color:'#ff6a00', weight:3, dashArray:'6,4', lineCap:'round', interactive:false});
   }
   if(!stagedMarker){
     stagedMarker = L.marker([state.lat,state.lon], {icon: L.divIcon({
@@ -2212,6 +2212,7 @@ async function computeStagedReachableArea(){
   const hullSource = filteredEndpoints.length>=3 ? filteredEndpoints : endpoints;
   const hull = hullSource.length>=3 ? convexHull(hullSource) : hullSource;
   state.stagedReachableHull = hull;
+  document.getElementById('btnClearStagedResults').style.display = 'inline-block';
   stagedReachableLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
   if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
 }
@@ -2282,15 +2283,15 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   // converged, rather than depending entirely on search precision.
   mcEndpoints.push([targetLon, targetLat]);
   const landingHull = mcEndpoints.length>=3 ? convexHull(mcEndpoints) : mcEndpoints;
-  // Make the drawn path always visually end AT the clicked point - append a
-  // short final segment if the search's actual best result fell a bit
-  // short, rather than leaving the line stopping near-but-not-at the target
-  // the user asked for.
-  const lastPt = best.path[best.path.length-1];
-  const finalPath = (haversine(lastPt.lat,lastPt.lon,targetLat,targetLon) > 30)
-    ? [...best.path, {lat:targetLat, lon:targetLon, alt:lastPt.alt, t:lastPt.t, stage:lastPt.stage}]
-    : best.path;
-  return {...best, path: finalPath, altitudes, landingHull};
+  // NOT snapping the drawn path to the target with a fake final segment
+  // anymore - that straight-line "fix" from a previous round could point in
+  // a completely different direction than the actual wind, which is
+  // exactly what looked like "illogical" hooks/against-the-wind segments.
+  // The path now always shows the REAL, physically-simulated result of the
+  // best-found strategy, even if it falls a little short of the target -
+  // the landing area is still guaranteed to contain the target regardless,
+  // via the explicit hull point above.
+  return {...best, altitudes, landingHull};
 }
 function showStagedDescentPlan(result){
   ensureStagedLayers();
@@ -2300,7 +2301,7 @@ function showStagedDescentPlan(result){
   // The probable landing area (Monte-Carlo, forecast uncertainty around the
   // chosen plan) - distinct from the orange reachable-area polygon.
   if(!stagedLandingAreaLayer){
-    stagedLandingAreaLayer = L.polygon([], {color:'#00ff7f', weight:2.5, dashArray:'2,7', fillColor:'#00ff7f', fillOpacity:0.2});
+    stagedLandingAreaLayer = L.polygon([], {color:'#00ff7f', weight:2.5, dashArray:'2,7', fillColor:'#00ff7f', fillOpacity:0.2, interactive:false});
   }
   if(map.hasLayer(stagedLandingAreaLayer)) map.removeLayer(stagedLandingAreaLayer);
   stagedLandingAreaLayer.setLatLngs((result.landingHull||[]).map(p=>[p[1],p[0]]));
@@ -2309,7 +2310,7 @@ function showStagedDescentPlan(result){
   // visual language as Quick Descent's violet triangle.
   const markerPos = stagedMarker.getLatLng();
   if(!stagedDescentInitMarker){
-    stagedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon});
+    stagedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon, interactive:false});
   }
   stagedDescentInitMarker.setLatLng(markerPos);
   if(!map.hasLayer(stagedDescentInitMarker)) stagedDescentInitMarker.addTo(map);
@@ -2361,9 +2362,9 @@ function drawStagedPlanChart(result){
   // shape on the left, not a full-width precise plot - the actual numbers
   // live in the label column to its right, which is where collision with
   // the curve is avoided entirely (nothing is drawn ON TOP of the line).
-  const W=330, H=270, ML=58, plotW=80, MT=14, MB=24;
+  const W=340, H=270, ML=80, plotW=55, MT=14, MB=24;
   const plotH = H-MT-MB;
-  const infoX = ML+plotW+14;
+  const infoX = ML+plotW+12;
   const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
   const xFor = tt => ML + (tt/totalT)*plotW;
 
@@ -2403,25 +2404,31 @@ function drawStagedPlanChart(result){
     if(!doneAlts.has(key)){
       doneAlts.add(key);
       gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${s.isIntercept?'#BA7517':'var(--muted)'}" stroke-width="0.5" opacity="0.3"/>`;
-      yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="13" font-weight="700" fill="${col}">${Math.round(s.altM)} m AMSL</text>`;
-      yLabels += `<text x="${ML-6}" y="${y+11}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL${s.isIntercept?'  ·  Intercept':''}</text>`;
+      if(s.isGround){
+        yLabels += `<rect x="${ML+4}" y="${y-11}" width="46" height="16" rx="4" fill="none" stroke="var(--muted)" stroke-width="0.5"/>`;
+        yLabels += `<text x="${ML+27}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="var(--muted)">Ground</text>`;
+      } else {
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="var(--muted)"> m AMSL</tspan></text>`;
+        yLabels += `<text x="${ML-6}" y="${y+11}" text-anchor="end" font-size="9.5" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL${s.isIntercept?'  ·  Intercept':''}</text>`;
+      }
     }
-    if(s.isGround){
-      infoRows += `<text x="${infoX}" y="${y+4}" font-size="11" font-weight="600" fill="var(--text)">Ground</text>`;
-      return;
-    }
+    if(s.isGround) return;
     const durMin = Math.round(s.lingerS/60);
-    const rowY = y + (i===0 ? 4 : -4);
     const arrowRot = (s.dirFrom+180)%360;
-    const ballastKg = (i>0 && !s.isGround) ? 0.5*CW_PRACTICAL*crossSectionM2*airDensityAt(s.altM)*stagedDescentRateMs*stagedDescentRateMs/9.80665 : 0;
-    infoRows += `<g transform="translate(${infoX},${rowY-9})">`+
-      (durMin>0 ? `<text font-size="10.5" fill="var(--muted)">${durMin} min</text>` : (s.isIntercept?'':'')) +
-      `</g>`;
-    const windLineY = rowY + (durMin>0?12:0);
-    infoRows += `<g transform="translate(${infoX},${windLineY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
-      `<text x="${infoX+13}" y="${windLineY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
+    const ballastKg = i>0 ? 0.5*CW_PRACTICAL*crossSectionM2*airDensityAt(s.altM)*stagedDescentRateMs*stagedDescentRateMs/9.80665 : 0;
+    // Duration + wind sit ABOVE the gridline, in the info column to the
+    // right of the small staircase icon - never overlapping the curve
+    // itself, which stays confined to the narrow plot column on the left.
+    const rowY = y - 6;
+    if(durMin>0){
+      infoRows += `<text x="${infoX}" y="${rowY-11}" font-size="11.5" font-weight="400" fill="var(--text)">${durMin} min</text>`;
+    }
+    infoRows += `<g transform="translate(${infoX+1},${rowY-3}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
+      `<text x="${infoX+14}" y="${rowY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
     if(ballastKg>0.05){
-      infoRows += `<text x="${infoX}" y="${windLineY+13}" font-size="9.5" fill="var(--muted)">est. braking ballast ${ballastKg.toFixed(1)}kg</text>`;
+      const bw=56;
+      infoRows += `<rect x="${W-6-bw}" y="${y-19}" width="${bw}" height="14" rx="3" fill="var(--panel)" stroke="var(--border)" stroke-width="0.5"/>`;
+      infoRows += `<text x="${W-6-bw/2}" y="${y-12}" text-anchor="middle" dominant-baseline="central" font-size="9.5" fill="var(--muted)">${ballastKg.toFixed(1)} kg</text>`;
     }
   });
 
@@ -2481,6 +2488,7 @@ function clearStagedResults(){
   document.getElementById('btnReopenStagedPlan').style.display = 'none';
   document.getElementById('btnCenterStaged').style.display = 'none';
   document.getElementById('btnClearStagedFromMonitor').style.display = 'none';
+  document.getElementById('btnClearStagedResults').style.display = 'none';
   // Start fresh on the next drag/click instead of leaving a stale hull
   // around that no longer matches anything shown on the map.
   if(currentSubMode==='staged' && state.appMode==='plan') computeStagedReachableArea();
@@ -3856,7 +3864,6 @@ function setAppMode(mode){
     computeReferenceTrajectory();
     referenceTrajectoryLayer.addTo(map);
     document.getElementById('subModeToggle').style.display = 'flex';
-    document.getElementById('btnClearStagedResults').style.display = 'inline-block';
     setTimeout(repositionModeToggle, 0);
     setSubMode(currentSubMode); // re-apply current subfunction's map layers
   } else {

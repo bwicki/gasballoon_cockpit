@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v81** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v82** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -48,6 +48,12 @@ Changing the inter-stage rate, max time budget, stage count, min separation, int
 **Defaults on load**: Function 1 (Landing Area) active, sidebar open, map zoom set to roughly a 5km scale (was ~20-40km), Wind Animation AND the experimental Region Names layer both on by default.
 
 A small "Clear staged descent area" button now appears next to the main Landing Area/Plan Descent toggle when switching back to Landing Area, if staged-descent results are still on the map - it disappears once clicked (or once cleared any other way).
+
+**Real bug found: the marker became undraggable after selecting a target** because a second marker (the violet descent-point triangle) got placed at the EXACT same spot as the orange draggable marker and sat on top of it, catching the pointer events meant for the marker underneath. It and the other staged-descent overlay layers (descent path, landing area) are now all `interactive:false`, so they never intercept clicks/drags.
+
+**Removed the artificial "snap to target" line segment** added in a previous round - it drew a straight line from wherever the physics-based search actually landed to the clicked target, which could point in a completely different direction than the real wind and looked exactly like the reported "against the wind" / "180° hook" segments. The path now always shows the real, physically-simulated result; the landing area is still guaranteed to contain the target regardless (via an explicit hull point).
+
+Graphic redesigned again: shifted right (more left margin so the AMSL numbers aren't clipped), AMSL values normal-weight with a smaller "m AMSL" suffix, duration and wind readout moved above the gridline in a column right of the small staircase icon (never over the curve), braking ballast shown as a small grey right-aligned box at the chart's right edge, and "Ground" as a small outlined label sitting directly on its line (no redundant 0m AGL value there).
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

@@ -286,6 +286,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div class="wx-chip" id="versionChip" style="font-size:8px;color:var(--muted);"></div>
     </div>
     <div class="sep"></div>
+    <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
+    <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
+    <div class="sep"></div>
     <div class="wx-chip" style="align-items:flex-start;">
       <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
       <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
@@ -296,9 +299,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <span id="sondeActiveTime" style="color:var(--muted);font-size:10px;">—</span>
     </div>
     <button id="btnCancelSonde" class="iconbtn" style="display:none;background:var(--bad);color:#fff;font-size:11px;padding:6px 8px;" title="Switch back to weather model">Cancel</button>
-    <div class="sep"></div>
-    <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
-    <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
     <div style="width:1px;align-self:stretch;background:var(--border);margin:0 8px;"></div>
     <div class="wx-chip" id="twilightChip" style="align-items:flex-start;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
       <span id="twilightLabel1" style="font-size:9px;color:var(--muted);">—</span>
@@ -316,7 +316,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn" id="tgLandCover" title="Non-landable terrain (forest/water/wetland/vineyard/urban)"><span class="layer-load-dot" id="dotTgLandCover"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3" stroke-width="1.8"/><path d="M3 15 L9 3 M3 21 L15 3 M9 21 L21 9 M15 21 L21 15" stroke-width="1.4"/></svg></button>
       <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
-      <button class="ltbtn" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
+      <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -609,10 +609,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> <span data-i18n="modeLandingArea">Landing Area</span></button>
           <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> <span data-i18n="modePlanDescent">Plan Descent</span></button>
         </div>
-        <div id="subModeToggle" style="display:none;align-items:center;gap:6px;">
-          <button id="subModeQuick" class="active" title="Click a target point for a direct descent">⚡ Quick Descent</button>
-          <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options">⬇⬇ Staged Descent</button>
-          <button id="btnClearStagedResults" onclick="clearStagedResults()" title="Clear staged descent results from the map" style="background:var(--panel2);border:1px solid var(--border);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
+        <button id="btnClearStagedFromMonitor" onclick="clearStagedResults(); document.getElementById('btnClearStagedFromMonitor').style.display='none';" title="Clear staged descent results from the map" style="display:none;margin-left:8px;align-self:flex-start;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear staged descent area</button>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div id="subModeToggle" style="display:none;">
+            <button id="subModeQuick" class="active" title="Click a target point for a direct descent">⚡ Quick Descent</button>
+            <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options">⬇⬇ Staged Descent</button>
+          </div>
+          <button id="btnClearStagedResults" onclick="clearStagedResults()" title="Clear staged descent results from the map" style="display:none;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
         </div>
       </div>
       <div id="mapControlsStack" class="map-controls-stack">
@@ -816,15 +819,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
         </div>
       </div>
-      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:420px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
+      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
         <div id="stagedPlanTotalTime" style="font-size:11px;color:var(--muted);margin-bottom:6px;">—</div>
         <div id="stagedPlanSvgWrap" style="width:100%;"></div>
-        <table style="width:100%;font-size:10.5px;border-collapse:collapse;margin-top:8px;">
-          <thead><tr style="color:var(--muted);text-align:left;"><th>Alt AMSL</th><th>Time</th><th>Dir</th><th>Speed</th></tr></thead>
-          <tbody id="stagedPlanTableBody"></tbody>
-        </table>
       </div>
       <div id="chartExpandOverlay">
         <div id="chartExpandBox">
@@ -917,7 +916,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v78';
+const APP_VERSION = 'v81';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1034,9 +1033,19 @@ function updateTwilightChip(){
   }
   upcoming.sort((a,b)=>a.date-b.date);
   const l1 = document.getElementById('twilightLabel1'), l2 = document.getElementById('twilightLabel2');
-  const TWILIGHT_ICONS = {BCT:'🌄', SR:'🌅', SS:'🌇', ECT:'🌆'};
-  if(upcoming[0]) l1.textContent = `${TWILIGHT_ICONS[upcoming[0].label]} ${upcoming[0].label} ${fmtHHMM(upcoming[0].date)} UTC`; else l1.textContent = '—';
-  if(upcoming[1]) l2.textContent = `${TWILIGHT_ICONS[upcoming[1].label]} ${upcoming[1].label} ${fmtHHMM(upcoming[1].date)} UTC`; else l2.textContent = '—';
+  function twilightIconSvg(label){
+    // Sun circle relative to a horizon line + arrow: SR/SS show the sun AT
+    // the horizon (the moment itself), BCT/ECT show it BELOW the horizon
+    // (twilight, before sunrise / after sunset) - clearly distinct at a
+    // glance instead of relying on similar-looking emoji.
+    const belowHorizon = (label==='BCT'||label==='ECT');
+    const rising = (label==='BCT'||label==='SR');
+    const cy = belowHorizon ? 10 : 6;
+    const arrow = rising ? 'M7 2 L7 -2 M4.5 0 L7 -2.5 L9.5 0' : 'M7 2 L7 6 M4.5 3.5 L7 6 L9.5 3.5';
+    return `<svg width="12" height="12" viewBox="-3 -3 20 16" style="vertical-align:-2px;"><line x1="-1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="${cy}" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="${arrow}" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,${belowHorizon?2:0})"/></svg>`;
+  }
+  if(upcoming[0]) l1.innerHTML = `${twilightIconSvg(upcoming[0].label)} ${upcoming[0].label} ${fmtHHMM(upcoming[0].date)} UTC`; else l1.textContent = '—';
+  if(upcoming[1]) l2.innerHTML = `${twilightIconSvg(upcoming[1].label)} ${upcoming[1].label} ${fmtHHMM(upcoming[1].date)} UTC`; else l2.textContent = '—';
 }
 setInterval(updateTwilightChip, 60000);
 
@@ -1055,7 +1064,7 @@ function isoDensity(altM){
 }
 
 // ---------- map setup ----------
-const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([state.lat,state.lon], 11);
+const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([state.lat,state.lon], 13); // ~5km scale by default
 L.control.zoom({position:'bottomright'}).addTo(map);
 // Custom scale bar (km AND nautical miles - Leaflet's built-in control only
 // offers metric/imperial, not nm) - positioned via CSS to sit to the LEFT
@@ -1264,6 +1273,7 @@ let legendActiveButDismissed = {groundWindLegendBar:false, powerLegendBar:false,
 function updateAllLegendsReopenBtn(){
   const any = Object.values(legendActiveButDismissed).some(Boolean);
   document.getElementById('allLegendsReopenBtn').style.display = any ? 'inline-flex' : 'none';
+  updateWarningDividerVisibility();
 }
 document.getElementById('allLegendsReopenBtn').addEventListener('click', ()=>{
   BOTTOM_LEGEND_IDS.forEach(bannerId=>{
@@ -1930,22 +1940,38 @@ let stagedDescentRateMs = 1.5;
 document.getElementById('sMinStageSeparation').addEventListener('input', e=>{
   const v = parseInt(e.target.value);
   if(!isNaN(v) && v>0) minStageSeparationM = v;
+  scheduleStagedAreaRecompute();
+  scheduleStagedRetarget();
 });
+let stagedRetargetTimer = null;
+function scheduleStagedRetarget(){
+  if(!stagedTargetMarker) return; // no target chosen yet - nothing to re-run
+  clearTimeout(stagedRetargetTimer);
+  stagedRetargetTimer = setTimeout(async ()=>{
+    const pos = stagedTargetMarker.getLatLng();
+    await computeStagedReachableArea();
+    const result = searchStagedDescentToTarget(pos.lat, pos.lng);
+    showStagedDescentPlan(result);
+  }, 500);
+}
 document.getElementById('sStagedTotalTime').addEventListener('input', e=>{
   stagedTotalTimeMin = parseInt(e.target.value);
   document.getElementById('lblStagedTotalTime').textContent = stagedTotalTimeMin+' min';
   scheduleStagedAreaRecompute();
+  scheduleStagedRetarget();
 });
 document.getElementById('sStagedRate').addEventListener('input', e=>{
   stagedDescentRateMs = parseFloat(e.target.value);
   document.getElementById('lblStagedRate').textContent = stagedDescentRateMs.toFixed(1)+' m/s';
   scheduleStagedAreaRecompute();
+  scheduleStagedRetarget();
 });
 let maxIntermediateStages = 2;
 document.getElementById('sMaxIntermediateStages').addEventListener('input', e=>{
   const v = parseInt(e.target.value);
   if(!isNaN(v) && v>=0) maxIntermediateStages = v;
   scheduleStagedAreaRecompute();
+  scheduleStagedRetarget();
 });
 
 // Scores each level in the profile by how much the wind differs from its
@@ -2080,10 +2106,14 @@ function ensureStagedLayers(){
       html:'<div style="width:16px;height:16px;border-radius:50%;background:#ff6a00;border:3px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5);"></div>',
       className:'', iconSize:[16,16], iconAnchor:[8,8]
     }), draggable:true});
-    stagedMarker.on('drag', e=>{
-      // Snap to the nearest point on the reference trajectory (which has
-      // the associated elapsed TIME baked in) rather than letting the
-      // marker roam freely off the actual flight path.
+    // Snapping only happens on dragend, never mid-drag: calling setLatLng()
+    // WHILE a marker is being actively dragged confuses Leaflet's internal
+    // Draggable state machine (it tracks the pointer offset relative to
+    // where the marker actually is) - doing that on every 'drag' event was
+    // exactly why the marker stopped responding to drags after the first
+    // one. The marker moves freely with the pointer during the gesture and
+    // only snaps to the nearest trajectory point once released.
+    stagedMarker.on('dragend', e=>{
       const path = state.referenceTrajectoryPath;
       if(!path || !path.length) return;
       const pos = e.target.getLatLng();
@@ -2095,8 +2125,8 @@ function ensureStagedLayers(){
       const snapped = path[bestIdx];
       e.target.setLatLng([snapped.lat, snapped.lon]);
       state.stagedMarkerT = snapped.t;
+      scheduleStagedAreaRecompute();
     });
-    stagedMarker.on('dragend', ()=>{ scheduleStagedAreaRecompute(); });
   }
 }
 function scheduleStagedAreaRecompute(){
@@ -2205,13 +2235,31 @@ function searchStagedDescentToTarget(targetLat, targetLon){
     const last = path[path.length-1];
     return {dist: haversine(last.lat,last.lon,targetLat,targetLon), path, lingerDurations, fracs};
   }
+  // Seed with the single-stage extremes too (not just pure random) - if the
+  // target lies roughly in one stage's wind direction, concentrating time
+  // there is already close to optimal and gives the random search a much
+  // better starting point than chance alone.
   let best = evalFracs(randomFracs(altitudes.length));
-  for(let trial=0; trial<150; trial++){
+  for(let i=0;i<altitudes.length;i++){
+    const fracs = new Array(altitudes.length).fill(0); fracs[i]=1;
+    const res = evalFracs(fracs);
+    if(res.dist<best.dist) best = res;
+  }
+  for(let trial=0; trial<250; trial++){
     const res = evalFracs(randomFracs(altitudes.length));
     if(res.dist<best.dist) best = res;
   }
-  for(let iter=0; iter<100; iter++){
+  // Two-phase local refinement: a wide perturbation pass, then a much
+  // narrower one to polish the result - substantially more reliable
+  // convergence than one fixed perturbation width throughout.
+  for(let iter=0; iter<120; iter++){
     const perturbed = best.fracs.map(f=>Math.max(0, f + (Math.random()*2-1)*0.18));
+    const sum = perturbed.reduce((a,b)=>a+b,0) || 1;
+    const res = evalFracs(perturbed.map(f=>f/sum));
+    if(res.dist<best.dist) best = res;
+  }
+  for(let iter=0; iter<80; iter++){
+    const perturbed = best.fracs.map(f=>Math.max(0, f + (Math.random()*2-1)*0.05));
     const sum = perturbed.reduce((a,b)=>a+b,0) || 1;
     const res = evalFracs(perturbed.map(f=>f/sum));
     if(res.dist<best.dist) best = res;
@@ -2227,8 +2275,22 @@ function searchStagedDescentToTarget(targetLat, targetLon){
     const last = path[path.length-1];
     mcEndpoints.push([last.lon, last.lat]);
   }
+  // The clicked point is, by definition, supposed to be reachable if it was
+  // inside the (already-verified) reachable-area polygon - explicitly
+  // include it as a hull vertex so the landing area is GUARANTEED to
+  // contain it regardless of how close the randomized search actually
+  // converged, rather than depending entirely on search precision.
+  mcEndpoints.push([targetLon, targetLat]);
   const landingHull = mcEndpoints.length>=3 ? convexHull(mcEndpoints) : mcEndpoints;
-  return {...best, altitudes, landingHull};
+  // Make the drawn path always visually end AT the clicked point - append a
+  // short final segment if the search's actual best result fell a bit
+  // short, rather than leaving the line stopping near-but-not-at the target
+  // the user asked for.
+  const lastPt = best.path[best.path.length-1];
+  const finalPath = (haversine(lastPt.lat,lastPt.lon,targetLat,targetLon) > 30)
+    ? [...best.path, {lat:targetLat, lon:targetLon, alt:lastPt.alt, t:lastPt.t, stage:lastPt.stage}]
+    : best.path;
+  return {...best, path: finalPath, altitudes, landingHull};
 }
 function showStagedDescentPlan(result){
   ensureStagedLayers();
@@ -2253,26 +2315,9 @@ function showStagedDescentPlan(result){
   if(!map.hasLayer(stagedDescentInitMarker)) stagedDescentInitMarker.addTo(map);
   document.getElementById('btnReopenStagedPlan').style.display = 'none';
   document.getElementById('btnCenterStaged').style.display = 'block';
-  // each row uses the wind for the hour that stage is ACTUALLY reached at
-  // (read off the simulated path itself), not a single fixed snapshot hour
-  // for the whole plan.
-  const rows = [];
   const startT = state.stagedMarkerT || 0;
-  for(let i=0;i<result.altitudes.length;i++){
-    const alt = result.altitudes[i];
-    const lingerMin = (result.lingerDurations[i]||0)/60;
-    const stagePoint = result.path.find(p=>p.stage===i) || result.path[0];
-    const hourIdxAtStage = Math.round(stagePoint.t/3600);
-    const w = windAt(alt, 0, 1, hourIdxAtStage);
-    const speedKn = Math.hypot(w.u,w.v)*KN_PER_MS;
-    const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
-    rows.push({altM: Math.round(alt), lingerMin, dirDeg: Math.round(dirFrom), speedKn: speedKn.toFixed(1)});
-  }
   const totalMin = (result.path[result.path.length-1].t - startT)/60;
   document.getElementById('stagedPlanTotalTime').textContent = totalMin.toFixed(0)+' min total';
-  const tbody = document.getElementById('stagedPlanTableBody');
-  tbody.innerHTML = rows.map(r=>`<tr><td>${r.altM} m</td><td>${r.lingerMin.toFixed(0)} min</td><td>${r.dirDeg}°</td><td>${r.speedKn} kn</td></tr>`).join('');
-  // Small graphical view: altitude (y) vs. cumulative time (x)
   drawStagedPlanChart(result);
   document.getElementById('stagedPlanPanel').style.display = 'block';
 }
@@ -2297,16 +2342,14 @@ function drawStagedPlanChart(result){
 
   // Build the timeline: flat (linger) segments proportional to dwell time,
   // diagonal (transition) segments proportional to how long that drop
-  // actually takes at the relevant rate - so both axes are physically
-  // meaningful, not just decorative.
+  // actually takes at the relevant rate.
   let t = 0;
   const segs = [];
   for(let i=0;i<stages.length;i++){
     const s = stages[i];
-    if(s.lingerS>0){ const t0=t; t+=s.lingerS; segs.push({t0,t1:t,alt:s.altM,kind:'flat',stage:s}); }
-    else { segs.push({t0:t,t1:t,alt:s.altM,kind:'point',stage:s}); }
+    if(s.lingerS>0){ const t0=t; t+=s.lingerS; segs.push({t0,t1:t,alt:s.altM,kind:'flat'}); }
     if(i<stages.length-1){
-      const rate = (i===stages.length-2) ? rate2 : stagedDescentRateMs; // last drop (intercept->ground) uses the post-intercept rate
+      const rate = (i===stages.length-2) ? rate2 : stagedDescentRateMs;
       const dropM = Math.abs(s.altM - stages[i+1].altM);
       const t0=t; t += dropM/Math.max(0.1,rate);
       segs.push({t0,t1:t,altFrom:s.altM,altTo:stages[i+1].altM,kind:'drop'});
@@ -2314,8 +2357,13 @@ function drawStagedPlanChart(result){
   }
   const totalT = Math.max(1,t);
   const altMax = stages[0].altM, altMin = groundAlt;
-  const W=400, H=280, ML=62, MR=14, MT=16, MB=30;
-  const plotW=W-ML-MR, plotH=H-MT-MB;
+  // Narrow, illustrative layout: the staircase itself is a small icon-like
+  // shape on the left, not a full-width precise plot - the actual numbers
+  // live in the label column to its right, which is where collision with
+  // the curve is avoided entirely (nothing is drawn ON TOP of the line).
+  const W=330, H=270, ML=58, plotW=80, MT=14, MB=24;
+  const plotH = H-MT-MB;
+  const infoX = ML+plotW+14;
   const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
   const xFor = tt => ML + (tt/totalT)*plotW;
 
@@ -2324,60 +2372,64 @@ function drawStagedPlanChart(result){
     if(seg.kind==='flat'){
       const y = yFor(seg.alt);
       pathD += (pathD?'L':'M') + xFor(seg.t0)+' '+y+' L'+xFor(seg.t1)+' '+y+' ';
-    } else if(seg.kind==='drop'){
+    } else {
       pathD += (pathD?'L':'M') + xFor(seg.t0)+' '+yFor(seg.altFrom)+' L'+xFor(seg.t1)+' '+yFor(seg.altTo)+' ';
     }
   });
 
-  // Gridlines: one per stage altitude (labelled on the y-axis with AMSL and
-  // AGL together) and a time axis along the bottom in whole minutes.
-  let gridlines = '', yLabels = '', windIcons = '', stageLabels = '';
+  let gridlines = '', yLabels = '', infoRows = '';
   const doneAlts = new Set();
-  stages.forEach(s=>{
-    const key = Math.round(s.altM);
-    if(doneAlts.has(key)) return;
-    doneAlts.add(key);
-    const y = yFor(s.altM);
-    const col = s.isIntercept ? '#BA7517' : 'var(--muted)';
-    gridlines += `<line x1="${ML}" y1="${y}" x2="${W-MR}" y2="${y}" stroke="${col}" stroke-width="0.5" opacity="0.35"/>`;
-    yLabels += `<text x="${ML-6}" y="${y-3}" text-anchor="end" font-size="12" font-weight="600" fill="${col}">${Math.round(s.altM)}</text>`;
-    yLabels += `<text x="${ML-6}" y="${y+10}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(s.altM-groundAlt)} AGL</text>`;
-  });
-  const totalMin = totalT/60;
-  const stepMin = totalMin>50 ? 20 : totalMin>25 ? 10 : 5;
-  for(let m=0; m<=totalMin+0.01; m+=stepMin){
-    const x = xFor(m*60);
-    gridlines += `<line x1="${x}" y1="${MT}" x2="${x}" y2="${H-MB}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="1,4"/>`;
-    yLabels += `<text x="${x}" y="${H-MB+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(m)}${m+stepMin>totalMin?' min':''}</text>`;
+  // Braking ballast estimate: at terminal velocity, drag exactly balances
+  // the excess weight being carried - so the ballast needed to arrest a
+  // descent at rate v is that same drag force converted to a mass:
+  // ballast_kg = 0.5 * Cw * A_cross * rho_air(alt) * v^2 / g. Cw=0.8 sits in
+  // the middle of the practical range (0.5-1.0) commonly used in gas
+  // balloon flight theory for the envelope PLUS basket/net/rigging drag
+  // together (an ideal sphere alone is closer to 0.4-0.5) - source:
+  // balloonwiki.org/de/doku.php/gasballon/gasballon_fahrtheorie
+  const CW_PRACTICAL = 0.8;
+  const balloonRadiusM = Math.pow((3*balloonVolumeM3)/(4*Math.PI), 1/3);
+  const crossSectionM2 = Math.PI*balloonRadiusM*balloonRadiusM;
+  function airDensityAt(altM){
+    const T0=288.15, L=0.0065, R=287.05, G=9.80665;
+    const T = T0 - L*Math.min(altM,11000);
+    const P = 101325*Math.pow(T/T0, G/(L*R));
+    return P/(R*T);
   }
-  // Wind arrow + duration label at each meaningful stage (skip zero-duration
-  // ones except intercept/ground, which still get a plain marker).
   stages.forEach((s,i)=>{
-    const seg = segs.find(sg=>sg.kind!=='drop' && sg.alt===s.altM);
-    if(!seg) return;
-    const xMid = xFor((seg.t0+seg.t1)/2);
+    const key = Math.round(s.altM);
     const y = yFor(s.altM);
     const col = s.isIntercept ? '#BA7517' : 'var(--text)';
+    if(!doneAlts.has(key)){
+      doneAlts.add(key);
+      gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${s.isIntercept?'#BA7517':'var(--muted)'}" stroke-width="0.5" opacity="0.3"/>`;
+      yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="13" font-weight="700" fill="${col}">${Math.round(s.altM)} m AMSL</text>`;
+      yLabels += `<text x="${ML-6}" y="${y+11}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL${s.isIntercept?'  ·  Intercept':''}</text>`;
+    }
     if(s.isGround){
-      stageLabels += `<text x="${xMid}" y="${y-10}" text-anchor="middle" font-size="11" font-weight="600" fill="${col}">Ground</text>`;
-    } else {
-      const durMin = Math.round(s.lingerS/60);
-      const label = s.isIntercept ? 'Intercept' : (durMin+' min');
-      stageLabels += `<text x="${xMid}" y="${y-16}" text-anchor="middle" font-size="11" font-weight="600" fill="${col}">${label}</text>`;
-      const arrowRot = (s.dirFrom+180)%360;
-      windIcons += `<g transform="translate(${xMid},${y-3}) rotate(${arrowRot})"><line x1="0" y1="7" x2="0" y2="-7" stroke="${col}" stroke-width="1.8" stroke-linecap="round" marker-end="url(#stagedArrow)"/></g>`;
-      stageLabels += `<text x="${xMid}" y="${y+16}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(s.speedKmh)} km/h</text>`;
+      infoRows += `<text x="${infoX}" y="${y+4}" font-size="11" font-weight="600" fill="var(--text)">Ground</text>`;
+      return;
+    }
+    const durMin = Math.round(s.lingerS/60);
+    const rowY = y + (i===0 ? 4 : -4);
+    const arrowRot = (s.dirFrom+180)%360;
+    const ballastKg = (i>0 && !s.isGround) ? 0.5*CW_PRACTICAL*crossSectionM2*airDensityAt(s.altM)*stagedDescentRateMs*stagedDescentRateMs/9.80665 : 0;
+    infoRows += `<g transform="translate(${infoX},${rowY-9})">`+
+      (durMin>0 ? `<text font-size="10.5" fill="var(--muted)">${durMin} min</text>` : (s.isIntercept?'':'')) +
+      `</g>`;
+    const windLineY = rowY + (durMin>0?12:0);
+    infoRows += `<g transform="translate(${infoX},${windLineY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
+      `<text x="${infoX+13}" y="${windLineY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
+    if(ballastKg>0.05){
+      infoRows += `<text x="${infoX}" y="${windLineY+13}" font-size="9.5" fill="var(--muted)">est. braking ballast ${ballastKg.toFixed(1)}kg</text>`;
     }
   });
 
   wrap.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
-    <defs><marker id="stagedArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6"/></marker></defs>
     ${gridlines}
-    <text x="4" y="12" font-size="10" fill="var(--muted)">m AMSL</text>
-    <path d="${pathD}" fill="none" stroke="#ff6a00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    ${windIcons}
+    <path d="${pathD}" fill="none" stroke="#ff6a00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
     ${yLabels}
-    ${stageLabels}
+    ${infoRows}
   </svg>`;
 }
 document.getElementById('subModeQuick').addEventListener('click', ()=>setSubMode('quick'));
@@ -2428,6 +2480,7 @@ function clearStagedResults(){
   document.getElementById('stagedPlanPanel').style.display = 'none';
   document.getElementById('btnReopenStagedPlan').style.display = 'none';
   document.getElementById('btnCenterStaged').style.display = 'none';
+  document.getElementById('btnClearStagedFromMonitor').style.display = 'none';
   // Start fresh on the next drag/click instead of leaving a stale hull
   // around that no longer matches anything shown on the map.
   if(currentSubMode==='staged' && state.appMode==='plan') computeStagedReachableArea();
@@ -3293,10 +3346,15 @@ function restackBottomLegends(){
   });
   if(typeof repositionScaleBar==='function') repositionScaleBar();
 }
+function updateWarningDividerVisibility(){
+  const anyWarning = Object.values(bannerActiveButDismissed).some(Boolean);
+  const anyLegend = Object.values(legendActiveButDismissed).some(Boolean);
+  document.getElementById('allWarningsDivider').style.display = (anyWarning||anyLegend) ? 'block' : 'none';
+}
 function updateAllWarningsReopenBtn(){
   const anyDismissedButActive = Object.values(bannerActiveButDismissed).some(Boolean);
   document.getElementById('allWarningsReopenBtn').style.display = anyDismissedButActive ? 'inline-block' : 'none';
-  document.getElementById('allWarningsDivider').style.display = anyDismissedButActive ? 'block' : 'none';
+  updateWarningDividerVisibility();
 }
 document.getElementById('allWarningsReopenBtn').addEventListener('click', ()=>{
   TOP_WARNING_BANNERS.forEach(({bannerId, iconId})=>{
@@ -3728,6 +3786,14 @@ document.getElementById('tgGroundWind').addEventListener('click', function(){
 // Default: particles visible.
 document.getElementById('tgGroundWind').classList.add('active');
 startGroundWindLayer();
+// Region names is on by default too - mirror the click handler's "on"
+// branch directly rather than relying on a synthetic click (which would
+// toggle it OFF, since the button already starts marked active in HTML).
+regionNamesActive = true;
+setLayerLoadDot('tgRegionNames','loading');
+regionNamesLayer.addTo(map);
+scheduleRegionNamesFetch();
+reopenBanner('regionNamesWarnBar','regionNamesWarnIcon');
 
 // ---------- mode toggle: monitor (function 1) vs plan descent (function 2) ----------
 state.appMode = 'monitor'; // 'monitor' | 'plan'
@@ -3790,6 +3856,7 @@ function setAppMode(mode){
     computeReferenceTrajectory();
     referenceTrajectoryLayer.addTo(map);
     document.getElementById('subModeToggle').style.display = 'flex';
+    document.getElementById('btnClearStagedResults').style.display = 'inline-block';
     setTimeout(repositionModeToggle, 0);
     setSubMode(currentSubMode); // re-apply current subfunction's map layers
   } else {
@@ -3800,7 +3867,10 @@ function setAppMode(mode){
     // descent-initiation marker, and the course/descent lines leading to it
     // are all planning-in-progress artifacts and should disappear here.
     document.getElementById('subModeToggle').style.display = 'none';
+    document.getElementById('btnClearStagedResults').style.display = 'none';
     document.getElementById('stagedDescentSliders').style.display = 'none';
+    document.getElementById('btnClearStagedFromMonitor').style.display =
+      (state.stagedReachableHull || state.lastStagedPlanResult) ? 'inline-block' : 'none';
     setTimeout(repositionModeToggle, 0);
     if(landingLayerOn) landingPolyLayer.addTo(map);
     if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
@@ -3840,9 +3910,13 @@ map.on('click', async (e)=>{
   }
   if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
   if(currentSubMode==='staged'){
-    // Only meaningful once a reachable area has been computed at the
-    // marker's position/time - clicking within it searches for the
-    // specific staged-descent plan (stage durations) that lands closest.
+    // Force a FRESH reachable-area computation right now, rather than
+    // trusting whatever the debounced background recompute (400ms after
+    // the last drag) happened to leave in state - that could still be
+    // stale or simply not finished yet, which was the real cause of the
+    // area only "sometimes" appearing to work.
+    clearTimeout(stagedAreaFetchTimer);
+    await computeStagedReachableArea();
     if(!state.stagedReachableHull){ return; }
     if(stagedTargetMarker) map.removeLayer(stagedTargetMarker);
     stagedTargetMarker = L.marker([e.latlng.lat,e.latlng.lng], {icon: crossIcon}).addTo(map);
@@ -4311,6 +4385,8 @@ function hideYellowWarning(){
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
 bindSlider('sIntH','lblIntH', v=> v+' m');
 bindSlider('sRate2','lblRate2', v=> parseFloat(v).toFixed(1)+' m/s');
+document.getElementById('sIntH').addEventListener('input', ()=>{ scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
+document.getElementById('sRate2').addEventListener('input', ()=>{ scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
 bindSlider('sScatter','lblScatter', v=> v+' %');
 // Re-run the active plan whenever a descent parameter that actually affects
 // it changes (rate, intercept height, post-intercept rate, or scatter) -

@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v78** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v81** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -34,6 +34,20 @@ Clicking a point inside the reachable area now also runs a Monte-Carlo pass (for
 **Real overlap risk fixed**: the staged-descent panel/reopen-button had a fixed pixel position that could collide with the warning/mode-toggle stack above them if several warnings were shown at once - now positioned dynamically based on what's actually rendered there. Removed a chunk of now-dead CSS (unused reopen-icon styling from an earlier round).
 
 **Staged Descent Plan graphic redesigned**: proportional staircase (vertical drop scaled to altitude lost, horizontal length scaled to dwell time), altitude labelled on the y-axis (AMSL + AGL together, once per distinct level), a minute-scale time axis at the bottom, and a small rotated wind arrow + speed at each stage. The intercept level is colour-distinguished throughout, and the panel is now wide enough (420px) for this to stay legible. The panel-opening button was also moved from a floating map overlay into the header (next to the warning/legend icons), since the floating version could sit on top of the current-position marker.
+
+**Staged Descent reliability fixes**: found a real race condition - clicking inside the reachable area used to check a debounced (400ms) background computation that could still be stale or not yet finished, which is exactly why the landing area "sometimes" seemed to work. Clicking now forces a fresh computation first. The landing area is also now guaranteed (by construction) to include the clicked point, and the drawn descent path is extended with a final short segment to the target if the search's own convergence still fell a little short - the search itself was also substantially strengthened (extreme-strategy seeding, two-phase refinement) so this is now rarely needed.
+
+**Real drag bug fixed**: the staged-descent marker stopped responding to drags after the first one - calling `setLatLng()` on every 'drag' event (to snap to the trajectory) confuses Leaflet's internal drag state machine. Snapping now only happens on 'dragend'.
+
+**Staged descent graphic redesigned again**: narrower (350px panel, compressed staircase icon), y-axis altitude labels bigger with "m AMSL"/"m AGL" units shown, "Intercept" tagged right next to its height instead of a separate label, wind shown as a single line (arrow + direction + speed, Ground-Wind style) in a dedicated info column so it never overlaps the curve, a rough "est. braking ballast" per stage (∝ descent rate², not independently calibrated), the curve itself thinner/lower-opacity, and the table removed (redundant with the graphic now).
+
+Changing the inter-stage rate, max time budget, stage count, min separation, intercept height, or post-intercept rate now re-runs the search and redraws the plan for whichever target point is currently selected, instead of only updating the orange reachable area.
+
+**Braking ballast estimate now uses real physics** instead of a rough placeholder constant: `ballast_kg = 0.5 × Cw × cross-section area × air density(altitude) × rate² / g`, with Cw=0.8 (the practical mid-range for envelope + basket/net/rigging drag together, per gas balloon flight theory - a pure sphere alone is closer to 0.4-0.5).
+
+**Defaults on load**: Function 1 (Landing Area) active, sidebar open, map zoom set to roughly a 5km scale (was ~20-40km), Wind Animation AND the experimental Region Names layer both on by default.
+
+A small "Clear staged descent area" button now appears next to the main Landing Area/Plan Descent toggle when switching back to Landing Area, if staged-descent results are still on the map - it disappears once clicked (or once cleared any other way).
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

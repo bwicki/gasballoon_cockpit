@@ -301,8 +301,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <button id="btnCancelSonde" class="iconbtn" style="display:none;background:var(--bad);color:#fff;font-size:11px;padding:6px 8px;" title="Switch back to weather model">Cancel</button>
     <div style="width:1px;align-self:stretch;background:var(--border);margin:0 8px;"></div>
     <div class="wx-chip" id="twilightChip" style="align-items:flex-start;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
-      <span id="twilightLabel1" style="font-size:9px;color:var(--muted);">—</span>
-      <span id="twilightLabel2" style="font-size:9px;color:var(--muted);">—</span>
+      <span id="twilightLabel1" style="font-size:10.5px;color:var(--muted);">—</span>
+      <span id="twilightLabel2" style="font-size:10.5px;color:var(--muted);">—</span>
     </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
@@ -317,6 +317,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
       <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
+      <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -822,7 +823,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
-        <div id="stagedPlanTotalTime" style="font-size:11px;color:var(--muted);margin-bottom:6px;">—</div>
+        <div id="stagedPlanTotalTime" style="font-size:11px;color:var(--muted);">—</div>
+        <div id="stagedPlanBallastTotal" style="font-size:11px;color:var(--muted);margin-bottom:6px;">—</div>
         <div id="stagedPlanSvgWrap" style="width:100%;"></div>
       </div>
       <div id="chartExpandOverlay">
@@ -916,7 +918,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v82';
+const APP_VERSION = 'v83';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1042,7 +1044,7 @@ function updateTwilightChip(){
     const rising = (label==='BCT'||label==='SR');
     const cy = belowHorizon ? 10 : 6;
     const arrow = rising ? 'M7 2 L7 -2 M4.5 0 L7 -2.5 L9.5 0' : 'M7 2 L7 6 M4.5 3.5 L7 6 L9.5 3.5';
-    return `<svg width="12" height="12" viewBox="-3 -3 20 16" style="vertical-align:-2px;"><line x1="-1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="${cy}" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="${arrow}" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,${belowHorizon?2:0})"/></svg>`;
+    return `<svg width="20" height="20" viewBox="-3 -3 20 16" style="vertical-align:-5px;"><line x1="-1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="${cy}" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="${arrow}" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,${belowHorizon?2:0})"/></svg>`;
   }
   if(upcoming[0]) l1.innerHTML = `${twilightIconSvg(upcoming[0].label)} ${upcoming[0].label} ${fmtHHMM(upcoming[0].date)} UTC`; else l1.textContent = '—';
   if(upcoming[1]) l2.innerHTML = `${twilightIconSvg(upcoming[1].label)} ${upcoming[1].label} ${fmtHHMM(upcoming[1].date)} UTC`; else l2.textContent = '—';
@@ -1709,6 +1711,94 @@ async function fetchRegionNames(){
 }
 map.on('moveend zoomend', ()=>{ if(regionNamesActive) scheduleRegionNamesFetch(); });
 
+// ---- SondeHub live radiosondes (experimental) ----
+// api.v2.sondehub.org is CORS-open (confirmed in its own infra config), so
+// it can be fetched directly from the browser without a proxy - unlike
+// most aviation-weather APIs. Free, CC BY-SA 2.0 data.
+const sondeHubIcon = L.divIcon({
+  html:'<svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" fill="#e0483f" stroke="#fff" stroke-width="1.5"/><path d="M12 14 L12 21 M9 21 L15 21" stroke="#e0483f" stroke-width="2" stroke-linecap="round"/></svg>',
+  className:'', iconSize:[20,20], iconAnchor:[10,10]
+});
+const sondeHubLayer = L.layerGroup();
+let sondeHubActive = false;
+let sondeHubFetchTimer = null;
+document.getElementById('tgSondeHub').addEventListener('click', function(){
+  sondeHubActive = this.classList.toggle('active');
+  if(sondeHubActive){ setLayerLoadDot('tgSondeHub','loading'); sondeHubLayer.addTo(map); scheduleSondeHubFetch(); }
+  else { map.removeLayer(sondeHubLayer); sondeHubLayer.clearLayers(); setLayerLoadDot('tgSondeHub', null); }
+});
+function scheduleSondeHubFetch(){
+  if(!sondeHubActive) return;
+  clearTimeout(sondeHubFetchTimer);
+  sondeHubFetchTimer = setTimeout(fetchSondeHubNearby, 600);
+}
+map.on('moveend zoomend', ()=>{ if(sondeHubActive) scheduleSondeHubFetch(); });
+async function fetchSondeHubNearby(){
+  if(!sondeHubActive) return;
+  try{
+    const r = await fetch('https://api.v2.sondehub.org/sondes');
+    const data = await r.json();
+    const b = map.getBounds().pad(0.2);
+    sondeHubLayer.clearLayers();
+    Object.keys(data).forEach(serial=>{
+      const s = data[serial];
+      if(s.lat==null || s.lon==null) return;
+      if(!b.contains([s.lat, s.lon])) return;
+      const marker = L.marker([s.lat, s.lon], {icon: sondeHubIcon})
+        .bindTooltip(`${serial}<br>${Math.round(s.alt||0)} m AMSL`, {sticky:true})
+        .on('click', ()=>openSondeHubProfile(serial));
+      marker.addTo(sondeHubLayer);
+    });
+    setLayerLoadDot('tgSondeHub','ready');
+  }catch(e){
+    if(sondeHubActive) setLayerLoadDot('tgSondeHub','loading');
+  }
+}
+async function openSondeHubProfile(serial){
+  try{
+    const r = await fetch(`https://api.v2.sondehub.org/sondes/${encodeURIComponent(serial)}`);
+    const points = await r.json();
+    if(!Array.isArray(points) || points.length<2){ alert('Not enough telemetry yet for this sonde.'); return; }
+    // SondeHub telemetry gives position+time, not wind directly - derive
+    // the implied wind vector (bearing+speed) from horizontal drift
+    // between consecutive fixes, same idea as our own GPS-observed-course
+    // logic elsewhere in the app, then bucket by altitude like a normal
+    // uploaded sonde CSV.
+    const sorted = points.filter(p=>p.lat!=null&&p.lon!=null&&p.alt!=null&&p.datetime)
+      .sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
+    const seenBuckets = new Set();
+    const profile = [];
+    for(let i=1;i<sorted.length;i++){
+      const a=sorted[i-1], b2=sorted[i];
+      const dtS = (new Date(b2.datetime)-new Date(a.datetime))/1000;
+      if(dtS<=0 || dtS>120) continue;
+      const distM = haversine(a.lat,a.lon,b2.lat,b2.lon);
+      const speedMs = distM/dtS;
+      const bearing = (Math.atan2(
+        (b2.lon-a.lon)*Math.cos(a.lat*Math.PI/180), (b2.lat-a.lat)
+      )*180/Math.PI+360)%360;
+      const dirFrom = (bearing+180)%360; // wind direction convention: FROM
+      const altM = (parseFloat(a.alt)+parseFloat(b2.alt))/2;
+      const bucket = Math.round(altM/50);
+      if(seenBuckets.has(bucket)) continue;
+      seenBuckets.add(bucket);
+      const tempC = a.temp!=null && !isNaN(parseFloat(a.temp)) ? parseFloat(a.temp) : null;
+      profile.push({alt_m: altM, speed_ms: speedMs, dir_deg: dirFrom, temp_c: tempC});
+    }
+    profile.sort((a,b)=>a.alt_m-b.alt_m);
+    if(profile.length<3){ alert('Could not derive enough wind levels from this sonde track yet.'); return; }
+    const launchTime = new Date(sorted[0].datetime);
+    if(confirm(`Use this SondeHub track (${serial}, ${profile.length} levels, launched ${launchTime.toISOString().replace('T',' ').slice(0,16)} UTC) as the active sounding data?`)){
+      state.sondeProfile = profile;
+      state.sondeLaunchTime = launchTime;
+      state.sondeUploadedAt = Date.now();
+      activateSondeData();
+    }
+  }catch(e){
+    alert('Could not load telemetry for this sonde: '+e.message);
+  }
+}
+
 const fineRoadsLayer = L.layerGroup();
 let fineRoadsFetchTimer = null;
 let fineRoadsAbortController = null;
@@ -2103,9 +2193,9 @@ function ensureStagedLayers(){
   }
   if(!stagedMarker){
     stagedMarker = L.marker([state.lat,state.lon], {icon: L.divIcon({
-      html:'<div style="width:16px;height:16px;border-radius:50%;background:#ff6a00;border:3px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5);"></div>',
-      className:'', iconSize:[16,16], iconAnchor:[8,8]
-    }), draggable:true});
+      html:'<div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:grab;"><div style="width:18px;height:18px;border-radius:50%;background:#ff6a00;border:3px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5);"></div></div>',
+      className:'', iconSize:[34,34], iconAnchor:[17,17]
+    }), draggable:true, zIndexOffset:1000});
     // Snapping only happens on dragend, never mid-drag: calling setLatLng()
     // WHILE a marker is being actively dragged confuses Leaflet's internal
     // Draggable state machine (it tracks the pointer offset relative to
@@ -2236,34 +2326,45 @@ function searchStagedDescentToTarget(targetLat, targetLon){
     const last = path[path.length-1];
     return {dist: haversine(last.lat,last.lon,targetLat,targetLon), path, lingerDurations, fracs};
   }
-  // Seed with the single-stage extremes too (not just pure random) - if the
-  // target lies roughly in one stage's wind direction, concentrating time
-  // there is already close to optimal and gives the random search a much
-  // better starting point than chance alone.
-  let best = evalFracs(randomFracs(altitudes.length));
+  // Seed with the single-stage extremes and an even split - these span the
+  // full range of achievable directions (same idea as the reachable-area
+  // hull), giving a much better starting point than pure chance.
+  let best = evalFracs(new Array(altitudes.length).fill(1/altitudes.length));
   for(let i=0;i<altitudes.length;i++){
     const fracs = new Array(altitudes.length).fill(0); fracs[i]=1;
     const res = evalFracs(fracs);
     if(res.dist<best.dist) best = res;
   }
-  for(let trial=0; trial<250; trial++){
+  for(let trial=0; trial<60; trial++){
     const res = evalFracs(randomFracs(altitudes.length));
     if(res.dist<best.dist) best = res;
   }
-  // Two-phase local refinement: a wide perturbation pass, then a much
-  // narrower one to polish the result - substantially more reliable
-  // convergence than one fixed perturbation width throughout.
-  for(let iter=0; iter<120; iter++){
-    const perturbed = best.fracs.map(f=>Math.max(0, f + (Math.random()*2-1)*0.18));
-    const sum = perturbed.reduce((a,b)=>a+b,0) || 1;
-    const res = evalFracs(perturbed.map(f=>f/sum));
-    if(res.dist<best.dist) best = res;
-  }
-  for(let iter=0; iter<80; iter++){
-    const perturbed = best.fracs.map(f=>Math.max(0, f + (Math.random()*2-1)*0.05));
-    const sum = perturbed.reduce((a,b)=>a+b,0) || 1;
-    const res = evalFracs(perturbed.map(f=>f/sum));
-    if(res.dist<best.dist) best = res;
+  // Systematic coordinate descent: for each stage in turn, try nudging its
+  // time share up or down (redistributing the change proportionally among
+  // the other stages so fractions still sum to 1), keeping whichever nudge
+  // improves the distance to target most. This converges far more reliably
+  // than blind random perturbation, which was leaving the result stuck
+  // well short of (or to one side of) the actual target in a several-
+  // dimensional search space - exactly the reported "landing area doesn't
+  // surround the clicked point" and "path doesn't reach it" symptoms.
+  const STEPS = [0.2, -0.2, 0.08, -0.08, 0.03, -0.03, 0.01, -0.01];
+  for(let round=0; round<10; round++){
+    let improved = false;
+    for(let i=0;i<altitudes.length;i++){
+      for(const delta of STEPS){
+        const trial = best.fracs.slice();
+        const newVal = Math.max(0, trial[i]+delta);
+        const diff = newVal - trial[i];
+        trial[i] = newVal;
+        const others = trial.map((v,idx)=>idx).filter(idx=>idx!==i);
+        const otherSum = others.reduce((a,idx)=>a+best.fracs[idx],0) || 1;
+        others.forEach(idx=>{ trial[idx] = Math.max(0, trial[idx] - diff*(best.fracs[idx]/otherSum)); });
+        const sum = trial.reduce((a,b)=>a+b,0) || 1;
+        const res = evalFracs(trial.map(v=>v/sum));
+        if(res.dist<best.dist){ best = res; improved = true; }
+      }
+    }
+    if(!improved) break;
   }
   // Once the specific stage plan is fixed, run a Monte-Carlo pass around it
   // (same idea as Quick Descent's landing area) to get the probable LANDING
@@ -2378,7 +2479,7 @@ function drawStagedPlanChart(result){
     }
   });
 
-  let gridlines = '', yLabels = '', infoRows = '';
+  let gridlines = '', yLabels = '', infoRows = '', shading = '';
   const doneAlts = new Set();
   // Braking ballast estimate: at terminal velocity, drag exactly balances
   // the excess weight being carried - so the ballast needed to arrest a
@@ -2397,44 +2498,72 @@ function drawStagedPlanChart(result){
     const P = 101325*Math.pow(T/T0, G/(L*R));
     return P/(R*T);
   }
+  function ballastFor(altM, rateMs){
+    return 0.5*CW_PRACTICAL*crossSectionM2*airDensityAt(altM)*rateMs*rateMs/9.80665;
+  }
+  let totalBallastKg = 0;
+  // Shade the layer between intercept and ground (the final, fixed-rate
+  // descent segment) so it visually reads as a distinct final phase.
+  const interceptStage = stages.find(s=>s.isIntercept);
+  const groundStage = stages.find(s=>s.isGround);
+  if(interceptStage && groundStage){
+    shading += `<rect x="${ML}" y="${yFor(interceptStage.altM)}" width="${W-6-ML}" height="${yFor(groundStage.altM)-yFor(interceptStage.altM)}" fill="var(--muted)" opacity="0.08"/>`;
+  }
   stages.forEach((s,i)=>{
     const key = Math.round(s.altM);
     const y = yFor(s.altM);
     const col = s.isIntercept ? '#BA7517' : 'var(--text)';
     if(!doneAlts.has(key)){
       doneAlts.add(key);
-      gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${s.isIntercept?'#BA7517':'var(--muted)'}" stroke-width="0.5" opacity="0.3"/>`;
-      if(s.isGround){
-        yLabels += `<rect x="${ML+4}" y="${y-11}" width="46" height="16" rx="4" fill="none" stroke="var(--muted)" stroke-width="0.5"/>`;
-        yLabels += `<text x="${ML+27}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="var(--muted)">Ground</text>`;
+      const isGroundLine = s.isGround;
+      gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${isGroundLine?'#3ddc6f':(s.isIntercept?'#BA7517':'var(--muted)')}" stroke-width="${isGroundLine?1.5:0.5}" opacity="${isGroundLine?0.8:0.3}"/>`;
+      if(isGroundLine){
+        yLabels += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="11.5" font-weight="400" fill="#3ddc6f">Ground</text>`;
       } else {
-        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="var(--muted)"> m AMSL</tspan></text>`;
-        yLabels += `<text x="${ML-6}" y="${y+11}" text-anchor="end" font-size="9.5" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL${s.isIntercept?'  ·  Intercept':''}</text>`;
+        // "Intercept" sits next to the AMSL number (not the AGL line below
+        // it), so it no longer pushes the AGL value far to the left.
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="var(--muted)"> m AMSL</tspan>${s.isIntercept?'<tspan font-size="9" fill="#BA7517">  Intercept</tspan>':''}</text>`;
+        // Only the start (cruise) and intercept levels show AGL too - the
+        // intermediate plateaus are identified by AMSL alone, keeping the
+        // axis less cluttered.
+        if(i===0 || s.isIntercept){
+          yLabels += `<text x="${ML-6}" y="${y+11}" text-anchor="end" font-size="9.5" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL</text>`;
+        }
       }
     }
-    if(s.isGround) return;
-    const durMin = Math.round(s.lingerS/60);
-    const arrowRot = (s.dirFrom+180)%360;
-    const ballastKg = i>0 ? 0.5*CW_PRACTICAL*crossSectionM2*airDensityAt(s.altM)*stagedDescentRateMs*stagedDescentRateMs/9.80665 : 0;
-    // Duration + wind sit ABOVE the gridline, in the info column to the
-    // right of the small staircase icon - never overlapping the curve
-    // itself, which stays confined to the narrow plot column on the left.
+    // Duration (left) and wind (right of it) sit ABOVE the gridline, on
+    // ONE line, in the info column to the right of the small staircase
+    // icon - never overlapping the curve, which stays confined to the
+    // narrow plot column on the left.
     const rowY = y - 6;
-    if(durMin>0){
-      infoRows += `<text x="${infoX}" y="${rowY-11}" font-size="11.5" font-weight="400" fill="var(--text)">${durMin} min</text>`;
+    const durMin = Math.round(s.lingerS/60);
+    if(!s.isGround){
+      infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="var(--muted)">${durMin} min</text>`;
+      const arrowRot = (s.dirFrom+180)%360;
+      const windX = infoX+44;
+      infoRows += `<g transform="translate(${windX+1},${rowY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
+        `<text x="${windX+14}" y="${rowY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
     }
-    infoRows += `<g transform="translate(${infoX+1},${rowY-3}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
-      `<text x="${infoX+14}" y="${rowY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
+    // Braking ballast: for every intermediate/intercept stage (arresting
+    // INTO that plateau), plus the final intercept-to-ground segment
+    // (arresting for landing, using the post-intercept rate).
+    let ballastKg = 0;
+    if(i>0 && !s.isGround) ballastKg = ballastFor(s.altM, stagedDescentRateMs);
+    if(s.isGround) ballastKg = ballastFor(groundAlt, rate2);
     if(ballastKg>0.05){
+      totalBallastKg += ballastKg;
       const bw=56;
       infoRows += `<rect x="${W-6-bw}" y="${y-19}" width="${bw}" height="14" rx="3" fill="var(--panel)" stroke="var(--border)" stroke-width="0.5"/>`;
       infoRows += `<text x="${W-6-bw/2}" y="${y-12}" text-anchor="middle" dominant-baseline="central" font-size="9.5" fill="var(--muted)">${ballastKg.toFixed(1)} kg</text>`;
     }
   });
 
+  document.getElementById('stagedPlanBallastTotal').textContent = `Ballast Σ ${totalBallastKg.toFixed(1)} kg`;
+
   wrap.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
+    ${shading}
     ${gridlines}
-    <path d="${pathD}" fill="none" stroke="#ff6a00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    <path d="${pathD}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
     ${yLabels}
     ${infoRows}
   </svg>`;
@@ -2489,9 +2618,6 @@ function clearStagedResults(){
   document.getElementById('btnCenterStaged').style.display = 'none';
   document.getElementById('btnClearStagedFromMonitor').style.display = 'none';
   document.getElementById('btnClearStagedResults').style.display = 'none';
-  // Start fresh on the next drag/click instead of leaving a stale hull
-  // around that no longer matches anything shown on the map.
-  if(currentSubMode==='staged' && state.appMode==='plan') computeStagedReachableArea();
 }
 // ==================== END STAGED DESCENT ====================
 
@@ -5394,7 +5520,7 @@ requestWakeLock();
 // ---------- save / restore configuration ----------
 const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
-const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames'];
+const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub'];
 function saveConfig(){
   try{
     const cfg = {};

@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v82** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v83** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -55,6 +55,14 @@ A small "Clear staged descent area" button now appears next to the main Landing 
 
 Graphic redesigned again: shifted right (more left margin so the AMSL numbers aren't clipped), AMSL values normal-weight with a smaller "m AMSL" suffix, duration and wind readout moved above the gridline in a column right of the small staircase icon (never over the curve), braking ballast shown as a small grey right-aligned box at the chart's right edge, and "Ground" as a small outlined label sitting directly on its line (no redundant 0m AGL value there).
 
+**"Clear results" now actually clears everything** including the reachable area itself - it was silently recomputing the area right after removing it.
+
+**Search algorithm replaced with systematic coordinate descent** instead of random sampling - the random approach could get stuck well short of (or to one side of) the actual target in the multi-dimensional stage-allocation space, which is exactly why the landing area sometimes didn't surround the clicked point and the path didn't reach it.
+
+**The draggable marker's hit area was enlarged** (16px → 34px) - a likely cause of it becoming hard to grab, especially on touch, was reported after the previous round's fixes.
+
+Graphic redesigned again per detailed feedback: all stages now show duration+wind consistently (not just intercept), "Ground" sits on the y-axis without a box (green, thicker line), the shaded band between intercept and ground marks the final fixed-rate segment, the descent line itself is now grey, ballast is computed for the intercept→ground segment too with a running total shown under the title, and AGL is only shown at the start/intercept levels (intermediate stages show AMSL only).
+
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 
 ---
@@ -72,6 +80,7 @@ Each toggle button shows a small traffic-light dot: invisible when off, yellow w
 | 🌳 | Nature reserves & protected areas | Overpass (red hatched outline) |
 | ⛰ | Non-landable terrain (17 categories, selectable in Settings) | Overpass (violet-red hatched) |
 | Aa | Region/cultural place names (experimental) | Overpass (`place=region`, blue italic labels) |
+| 🎈 | Live radiosondes (experimental) | SondeHub v2 - click a sonde to load its derived wind profile as the active sounding |
 
 Base map: Streets / Terrain / Satellite (top-right Leaflet control). Default on first load: Streets + ground wind particles only.
 

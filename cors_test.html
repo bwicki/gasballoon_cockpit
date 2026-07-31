@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>CORS-Test für METAR-Quellen</title>
+<style>
+  body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
+  h1{font-size:18px;}
+  p.intro{color:#8b98a5;font-size:13px;line-height:1.5;}
+  .test{background:#1b232c;border:1px solid #2a3540;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+  .test h3{margin:0 0 6px;font-size:14px;}
+  .test .url{font-family:monospace;font-size:11px;color:#8b98a5;word-break:break-all;margin-bottom:8px;}
+  .status{font-weight:700;font-size:13px;}
+  .status.pending{color:#ffd400;}
+  .status.ok{color:#3ddc6f;}
+  .status.fail{color:#e0483f;}
+  .detail{font-size:11.5px;color:#8b98a5;margin-top:6px;white-space:pre-wrap;font-family:monospace;max-height:120px;overflow:auto;}
+  button{background:#00e5c8;color:#00201d;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:13px;margin-bottom:16px;}
+  button:disabled{opacity:0.5;cursor:default;}
+</style>
+</head>
+<body>
+<h1>CORS-Test für METAR-/Wetterquellen</h1>
+<p class="intro">
+Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie GBLP sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.<br><br>
+<b>Wichtig:</b> Öffne diese Datei direkt im Browser (Doppelklick oder "Datei öffnen"), nicht über einen lokalen Dev-Server - für einen echten CORS-Test muss die Seite von einer "fremden" Origin aus laufen, genau wie GBLP selbst.
+</p>
+<button id="btnRun">Alle Tests starten</button>
+<div id="results"></div>
+
+<script>
+const TESTS = [
+  { name: 'MetarCentral', url: 'https://metarcentral.com/api/weather/KJFK' },
+  { name: 'CheckWX', url: 'https://api.checkwx.com/metar/KJFK' },
+  { name: 'aviationweather.gov (zum Vergleich - bekannt CORS-blockiert)', url: 'https://aviationweather.gov/api/data/metar?ids=KJFK&format=json' },
+  { name: 'SondeHub (zum Vergleich - bekannt CORS-offen, funktioniert bereits in GBLP)', url: 'https://api.v2.sondehub.org/sites' }
+];
+
+function render(){
+  const el = document.getElementById('results');
+  el.innerHTML = TESTS.map((t,i)=>`
+    <div class="test" id="test${i}">
+      <h3>${t.name}</h3>
+      <div class="url">${t.url}</div>
+      <div class="status pending" id="status${i}">Noch nicht getestet</div>
+      <div class="detail" id="detail${i}" style="display:none;"></div>
+    </div>
+  `).join('');
+}
+render();
+
+async function runTest(i){
+  const t = TESTS[i];
+  const statusEl = document.getElementById('status'+i);
+  const detailEl = document.getElementById('detail'+i);
+  statusEl.textContent = 'Läuft…';
+  statusEl.className = 'status pending';
+  try{
+    const start = performance.now();
+    const r = await fetch(t.url, { method: 'GET' });
+    const ms = Math.round(performance.now()-start);
+    const text = await r.text();
+    statusEl.textContent = `✓ CORS OK - HTTP ${r.status}, ${ms}ms`;
+    statusEl.className = 'status ok';
+    detailEl.style.display = 'block';
+    detailEl.textContent = text.slice(0, 400) + (text.length>400?'…':'');
+  }catch(e){
+    statusEl.textContent = '✗ Fehlgeschlagen (sehr wahrscheinlich CORS-blockiert)';
+    statusEl.className = 'status fail';
+    detailEl.style.display = 'block';
+    detailEl.textContent = 'Fehlermeldung: ' + e.message + '\n\nHinweis: Browser verstecken den genauen CORS-Grund aus Sicherheitsgründen - schau zusätzlich in die Browser-Konsole (F12) für Details. Ein Netzwerkfehler kann auch andere Ursachen haben (Server down, falsche URL, Authentifizierung nötig).';
+  }
+}
+
+document.getElementById('btnRun').addEventListener('click', async ()=>{
+  document.getElementById('btnRun').disabled = true;
+  for(let i=0;i<TESTS.length;i++){
+    await runTest(i);
+  }
+  document.getElementById('btnRun').disabled = false;
+});
+</script>
+</body>
+</html>

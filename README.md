@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v70** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v76** (30.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -19,10 +19,19 @@ Continuously projects where the balloon would land if descent were initiated now
 - Ground wind at the landing site, with a trend arrow
 
 ### 2. Plan Descent
-Tap anywhere on the map to set an "Intended Landing Point" (red crosshair). The app searches for the descent-initiation time that lands closest to that point, using the forecast wind for the actual arrival hour (not "now"), and shows:
-- A violet descent-initiation marker — **drag it** to manually override the plan and see the landing area recalculate live
-- The same landing-area/path visualization, in the planning colors (violet dashed path, orange landing area)
-- "Estimated Descent Point" (time + distance) in the sidebar
+Now has two subfunctions, switchable via a small toggle that appears directly below the main mode toggle:
+
+**Quick Descent** (the existing behavior): tap anywhere on the map to set an "Intended Landing Point" (red crosshair). The app searches for the descent-initiation time that lands closest to that point, using the forecast wind for the actual arrival hour. Two real bugs fixed this round: the cruise-phase blend from observed heading to forecast wind now completes within ~3 minutes (was up to 40) so the whole search is governed by one consistent rule instead of switching behavior partway through - this was the root cause of two nearby target clicks along the same obvious wind line landing on unrelated results. The search's "extend beyond the normal range" fallback was also made to trigger whenever the best result sits at the search boundary, not only when it still looks like a poor match.
+
+**Staged Descent** (new): drag an orange marker along the reference trajectory (the cyan dashed line, now much more prominent) to choose a starting point/time. The app then computes - via randomized search over how the total time budget gets split between altitude "plateaus" spaced at least the configured minimum apart (Settings, default 300m/~1000ft) - the full envelope of landing points reachable through any combination of staged descents (linger at a plateau, drop to the next, repeat), shown as an orange reachable-area polygon. Two new sliders (shown while this subfunction is active) configure the total time budget (15min-3h, default 1h) and the descent rate used between plateaus (0.5-4.0 m/s, default 1.5 m/s). Clicking a point inside the reachable area searches for the specific stage-duration combination that lands closest to it, then draws that path and opens a panel (stage altitudes, durations, directions, speeds - as both a table and a simple altitude-vs-time graph).
+
+**Staged Descent's reachable area** is now computed via deterministic "extreme strategies" (concentrate all available time on one stage at a time, plus pairwise combinations) rather than random sampling - uniform random time-splits statistically cluster toward the middle of the possible outcomes, which is the wrong tool for tracing a boundary. This is also noticeably faster (no repeated random trials needed). Stage altitudes are chosen based on real wind shear (direction/speed changes) rather than even spacing - by default only the 2 most worthwhile intermediate levels are used (configurable in Settings, along with the minimum separation), matching the practical rule that stopping at a plateau only pays for the ballast it costs if the wind there genuinely differs. Wind forecast uncertainty (growing with both the model's age and how far into the future each stage lies) also widens the reachable area, the same underlying idea as the probability cone in Quick Descent.
+
+Clicking a point inside the reachable area now also runs a Monte-Carlo pass (forecast wind uncertainty) around the found stage plan, giving a probable landing area (green) alongside the reachable-area boundary (orange) and a clear violet descent-point marker - the same visual language as Quick Descent. Everything computed here (reachable area, descent path, landing area, descent point) now stays visible on the map when switching back to Landing Area or between subfunctions, and a small orange "Staged Plan" button (top-left of the map) reopens the stage table/graph panel at any time, in either main function.
+
+**Real wind-timing bug fixed**: the staged descent's simulated path was using a single fixed forecast hour for the ENTIRE path (even portions occurring hours later), rather than the forecast for the hour each specific point actually occurs at. Now uses dynamically-updating wind throughout - the one exception is which altitudes get selected as worthwhile stages in the first place, which still (correctly, per the original request) uses a single snapshot of the forecast for when the draggable marker's position is reached.
+
+**Real overlap risk fixed**: the staged-descent panel/reopen-button had a fixed pixel position that could collide with the warning/mode-toggle stack above them if several warnings were shown at once - now positioned dynamically based on what's actually rendered there. Removed a chunk of now-dead CSS (unused reopen-icon styling from an earlier round).
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 
@@ -39,7 +48,8 @@ Each toggle button shows a small traffic-light dot: invisible when off, yellow w
 | ✈️ | Airspace (raster) | openAIP tiles |
 | 🌬 | Ground wind particles | Computed from the loaded weather model |
 | 🌳 | Nature reserves & protected areas | Overpass (red hatched outline) |
-| ⛰ | Non-landable terrain (forest/water/wetland/vineyard/urban) | Overpass (violet-red hatched, categories selectable in Settings) |
+| ⛰ | Non-landable terrain (17 categories, selectable in Settings) | Overpass (violet-red hatched) |
+| Aa | Region/cultural place names (experimental) | Overpass (`place=region`, blue italic labels) |
 
 Base map: Streets / Terrain / Satellite (top-right Leaflet control). Default on first load: Streets + ground wind particles only.
 
@@ -92,6 +102,9 @@ Gas compressed adiabatically during a fast descent stays warmer (and less dense)
 - **Ground wind legend fixed**: it was only ever showing ONE bucket (based on a single "representative" wind value), even though particles now have regionally-varying colors since the wind-grid change - it now shows every swatch actually present among the current particles.
 - **Scale bar's first-segment label** now sits centered under that segment specifically (was at the segment boundary before).
 - **All warning close (✕) buttons** now consistently white, matching the legend bars' close button (previously inherited each banner's own text color, which varied).
+- **Non-landable terrain layer redesigned**: new icon (hatched square, clearly distinct from the nature-reserves tree icon), expanded from 5 to 17 individually selectable OpenStreetMap categories (forest, scrub/heath, water, wetland, vineyard, orchard, farmland, meadow, residential, commercial/retail, industrial, quarry/landfill, cemetery, bare rock/scree, cliff, sand/beach/mud, glacier).
+- **Experimental region/cultural-name layer added** (`place=region` in OpenStreetMap) - shows a dismissible blue banner when enabled, since this tag was never formally standardized and coverage varies drastically by area (good in some regions like the French Alps, sparse or absent elsewhere).
+- **Removed a completely CORS-blocked Overpass mirror** (confirmed via console: it can never work from a browser, full stop) and replaced it with an official alternate subdomain of the main Overpass project.
 - **Warning banners' close (✕) buttons now sit on the left.** Dismissing one while its underlying condition is still active shows a red warning-triangle indicator next to the GPS status in the header - tap it to bring back every currently-dismissed-but-still-active warning at once.
 - **If a newly-generated version doesn't seem to show up**: this is a static file with no server of its own - after downloading it, it must actually be re-uploaded/committed to wherever it's hosted (e.g. the GitHub Pages repository) before the live site reflects it, and the browser/PWA may also be showing a cached copy of the page itself (try a hard reload, or fully close and reopen the app if it's installed to the home screen).
 - **Adiabatic braking and Monte-Carlo scatter are approximations**, not calibrated against real flight data — treat as a planning aid, not a certified instrument.

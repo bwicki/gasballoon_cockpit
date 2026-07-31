@@ -1,8 +1,8 @@
-# Gas Balloon Landing Predictor (GBLP)
+# GB Landing Planner
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v88** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v91** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -78,6 +78,12 @@ Twilight icons redesigned again (bigger, bolder, a classic sun-at-the-horizon pi
 Twilight icons and the METAR layer's header icon redesigned again (smaller, filled, closer to a reference icon provided). Staged Descent graphic: zero-duration intermediate stages are no longer shown, no duration shown on the starting level (that's where the descent begins, not a stop), the configured descent rate is now shown below the start level, "Intercept" no longer pushes the AMSL value off the left edge, ballast total sits on the same line as total time, per-stage ballast is now whole kg, and the ground line/label is a darker, more prominent green.
 
 The last two Staged Descent graphic items are now also in: any transition segment spanning more than 1000m of altitude gets an intermediate wind readout at its midpoint (rounded to the nearest 50m), with a thin dotted line into the axis showing that altitude; and inversions/isothermal layers/wind shear along the descent are now shown as thin coloured bands (green/blue/red) with their altitude (AMSL, plus AGL once below intercept), together with a small legend at the bottom of the chart showing only whichever of those three actually occurred on this particular descent.
+
+**METAR staying stuck yellow - real cause found**: MetarCentral's own documentation caps anonymous (no API key) requests at 10 results, but the request was asking for 50, likely getting rejected outright. Reduced to 10.
+
+**Sonde data not affecting function 2 - real cause found**: the reference trajectory (and the staged-descent reachable area) were only ever computed once, right when Plan Descent was first opened - switching sounding sources afterwards never refreshed them. Both now recompute alongside function 1's own live area on every relevant change.
+
+Rain layer's minimum precipitation threshold raised, since very light/noisy model values below any real significance were what looked like "random tiles."
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

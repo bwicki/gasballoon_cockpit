@@ -424,6 +424,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
 
         <hr>
+        <div class="subhead">Weather Stations / METAR (MetarCentral)</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">API key (optional)</span>
+          <input type="text" id="sMetarApiKey" placeholder="mc_..." value="mc_a454ffc3755e61b9e082b599903b6c00067f013a81295f22" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Raises the result limit per request from 10 to 500 and the daily quota from 100 to 1000. Leave empty to use the API anonymously. Note: as with any client-side app, this key is visible in the page source to anyone who views it.</p>
+
         <div class="subhead">Non-landable Terrain (OpenStreetMap)</div>
         <div class="checkgrid">
           <label><input type="checkbox" checked data-landcover="forest">Forest/Wood</label>
@@ -922,7 +929,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v91';
+const APP_VERSION = 'v92';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1862,16 +1869,15 @@ async function fetchMetarStations(){
   try{
     // MetarCentral's bulk endpoint is filterable by region rather than a
     // bounding box - "europe" covers this app's typical flying area; we
-    // additionally filter client-side to the current viewport. Kept at
-    // their own documented example limit (50) rather than guessing a
-    // higher one, since exceeding an undocumented cap could plausibly
-    // return an error response without CORS headers (which surfaces to us
-    // as a generic failed fetch, indistinguishable from a real CORS block).
-    // Anonymous (no API key) requests are capped at 10 results per request
-    // by MetarCentral's own documented rate limits - asking for more than
-    // that without a key was very likely being rejected outright, which
-    // would explain the layer staying stuck on "loading" indefinitely.
-    const r = await fetch('https://metarcentral.com/api/airports/metar-status?region=europe&limit=10');
+    // additionally filter client-side to the current viewport. The result
+    // limit is capped at 10 for anonymous requests, 500 with an API key
+    // (per MetarCentral's own documented rate limits) - exceeding either
+    // without realizing it was very likely why this used to get stuck on
+    // "loading" indefinitely.
+    const apiKey = (document.getElementById('sMetarApiKey').value||'').trim();
+    const limit = apiKey ? 500 : 10;
+    const headers = apiKey ? {'X-API-Key': apiKey} : {};
+    const r = await fetch(`https://metarcentral.com/api/airports/metar-status?region=europe&limit=${limit}`, {headers});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j = await r.json();
     if(myGeneration !== metarFetchGeneration) return;
@@ -5914,7 +5920,7 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sMetarApiKey'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 function saveConfig(){

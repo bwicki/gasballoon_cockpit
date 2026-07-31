@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v91** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v92** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -84,6 +84,8 @@ The last two Staged Descent graphic items are now also in: any transition segmen
 **Sonde data not affecting function 2 - real cause found**: the reference trajectory (and the staged-descent reachable area) were only ever computed once, right when Plan Descent was first opened - switching sounding sources afterwards never refreshed them. Both now recompute alongside function 1's own live area on every relevant change.
 
 Rain layer's minimum precipitation threshold raised, since very light/noisy model values below any real significance were what looked like "random tiles."
+
+MetarCentral API key support added (Settings, below the layer sections) - raises the result limit from 10 to 500 per request and the daily quota from 100 to 1000. As with any client-side app, a filled-in key is visible in the page source to anyone who views it.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

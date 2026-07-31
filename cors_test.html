@@ -22,15 +22,26 @@
 <body>
 <h1>CORS-Test für METAR-/Wetterquellen</h1>
 <p class="intro">
-Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie GBLP sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.<br><br>
-<b>Wichtig:</b> Öffne diese Datei direkt im Browser (Doppelklick oder "Datei öffnen"), nicht über einen lokalen Dev-Server - für einen echten CORS-Test muss die Seite von einer "fremden" Origin aus laufen, genau wie GBLP selbst.
+Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie GBLP sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
+<div id="fileWarning" style="display:none;background:#3d1f1f;border:1px solid #e0483f;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.5;">
+  ⚠ <b>Diese Seite läuft gerade lokal (file://).</b> Das Testergebnis ist dadurch <b>nicht zuverlässig</b> - lokale Dateien haben eine spezielle "null"-Origin, die manche Server ablehnen, obwohl sie eine echte https-Origin (wie GBLP selbst) erlauben würden.<br><br>
+  <b>Bitte so testen:</b> Lade diese Datei zusammen mit <code>index.html</code> auf denselben GitHub-Pages-Server hoch und öffne sie von dort aus (z.B. <code>https://DEINBENUTZERNAME.github.io/DEINREPO/cors_test.html</code>). Nur dann ist das Ergebnis aussagekräftig.
+</div>
 <button id="btnRun">Alle Tests starten</button>
 <div id="results"></div>
 
 <script>
+if(location.protocol==='file:'){
+  document.getElementById('fileWarning').style.display = 'block';
+}
+</script>
+
+<script>
 const TESTS = [
-  { name: 'MetarCentral', url: 'https://metarcentral.com/api/weather/KJFK' },
+  { name: 'MetarCentral (KJFK)', url: 'https://metarcentral.com/api/weather/KJFK' },
+  { name: 'MetarCentral (EDDF - Frankfurt, näher an deiner Region)', url: 'https://metarcentral.com/api/weather/EDDF' },
+  { name: 'MetarCentral (LSZH - Zürich)', url: 'https://metarcentral.com/api/weather/LSZH' },
   { name: 'CheckWX', url: 'https://api.checkwx.com/metar/KJFK' },
   { name: 'aviationweather.gov (zum Vergleich - bekannt CORS-blockiert)', url: 'https://aviationweather.gov/api/data/metar?ids=KJFK&format=json' },
   { name: 'SondeHub (zum Vergleich - bekannt CORS-offen, funktioniert bereits in GBLP)', url: 'https://api.v2.sondehub.org/sites' }

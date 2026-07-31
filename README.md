@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v86** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v87** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -66,6 +66,16 @@ Graphic redesigned again per detailed feedback: all stages now show duration+win
 **Overpass/vector layer data is now pre-warmed** alongside the regular tile pre-caching (nature reserves, non-landable terrain, region names, place labels) - the data quietly loads into memory for whatever's currently in view, so turning a layer on for the first time doesn't need to wait for a fresh fetch, without touching the map or the layer's loading dot until you actually enable it.
 
 Twilight icons redesigned again (bigger, bolder, a classic sun-at-the-horizon pictogram) and the "Enable Manual Mode" button text is no longer bold.
+
+**Real bugs fixed this round:**
+- **SondeHub click was using the wrong endpoint** (`/sondes/{serial}` isn't a real route - the correct one is `/sondes/telemetry?serial=X&duration=Y`, with a differently-structured nested response). Fixed.
+- **METAR staying stuck on yellow**: reduced the request limit back to MetarCentral's own documented example value (an undocumented cap above that may have been returning an error response without CORS headers, indistinguishable from a real CORS block) and made coordinate-field extraction more robust.
+- **Precipitation tile-like artifacts appearing/disappearing**: a real race condition - overlapping requests (a slower older one finishing after a newer one) could briefly draw stale rectangles for an outdated map position. Both the rain and METAR layers now use a generation counter to discard out-of-order responses.
+- **Staged Descent's Monte-Carlo area/path still not reliably matching the clicked point**: rebuilt the search from scratch as an exhaustive deterministic grid search over the simplex of possible stage time-allocations (rather than random/heuristic search, which could get stuck away from the true optimum) - and, critically, the reachable-area polygon and the specific-point search now share the *exact same* underlying grid, so they can no longer disagree about what's actually reachable.
+- **Quick Descent's own map layers now hide while Staged Descent is active**, and reappear (only the ones that were actually shown) when switching back.
+- Intercept now always includes a mandatory minimum 5-minute stabilization time in the model itself - a real gas balloon can't glide straight through intercept to the ground.
+
+Twilight icons and the METAR layer's header icon redesigned again (smaller, filled, closer to a reference icon provided). Staged Descent graphic: zero-duration intermediate stages are no longer shown, no duration shown on the starting level (that's where the descent begins, not a stop), the configured descent rate is now shown below the start level, "Intercept" no longer pushes the AMSL value off the left edge, ballast total sits on the same line as total time, per-stage ballast is now whole kg, and the ground line/label is a darker, more prominent green.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

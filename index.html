@@ -318,7 +318,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
       <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
       <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
-      <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="12" rx="2"/><path d="M8 9 V5 a4 4 0 0 1 8 0 v4"/></svg></button>
+      <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 v12 M12 3 L18 6 M12 3 L7 8"/><circle cx="18" cy="6" r="1.6" fill="currentColor" stroke="none"/><circle cx="7" cy="8" r="1.6" fill="currentColor" stroke="none"/><path d="M8 21 h8 M12 15 v6"/></svg></button>
       <button class="ltbtn" id="tgRain" title="Precipitation (Open-Meteo forecast grid)"><span class="layer-load-dot" id="dotTgRain"></span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1-1 6.9"/><path d="M9 20 L8 22 M13 20 L12 22 M17 20 L16 22"/></svg></button>
     </div>
     <div class="sep"></div>
@@ -825,8 +825,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
-        <div id="stagedPlanTotalTime" style="font-size:11px;color:var(--muted);">—</div>
-        <div id="stagedPlanBallastTotal" style="font-size:11px;color:var(--muted);margin-bottom:6px;">—</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
         <div id="stagedPlanSvgWrap" style="width:100%;"></div>
       </div>
       <div id="chartExpandOverlay">
@@ -920,7 +919,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v86';
+const APP_VERSION = 'v87';
 const APP_DATE = '31.07.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1038,23 +1037,23 @@ function updateTwilightChip(){
   upcoming.sort((a,b)=>a.date-b.date);
   const l1 = document.getElementById('twilightLabel1'), l2 = document.getElementById('twilightLabel2');
   function twilightIconSvg(label){
-    // Classic sunrise/sunset pictogram: sun straddling the horizon line
-    // (rays shown) for the actual SR/SS moment, sun fully hidden below the
-    // horizon (no rays) for civil twilight BCT/ECT - a much more universally
-    // recognizable convention than a small outline circle, and rendered
-    // much larger with bold strokes for real legibility.
+    // Flat, filled sunrise/sunset pictogram (rounded rays + solid arrow),
+    // modelled closely on a reference icon the user provided - much more
+    // immediately recognizable than a thin outline, and kept compact.
     const isMoment = (label==='SR'||label==='SS'); // sun visible at the horizon
     const rising = (label==='BCT'||label==='SR');
-    const sunCy = isMoment ? 17 : 20;
-    const rays = isMoment ? `<path d="M12 6 V3 M7.5 8 L5.5 6 M16.5 8 L18.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>` : '';
+    const rays = isMoment ? `
+      <line x1="12" y1="9.5" x2="12" y2="6.5" stroke="#e8a838" stroke-width="2" stroke-linecap="round"/>
+      <line x1="8" y1="10.3" x2="6.3" y2="8.6" stroke="#e8a838" stroke-width="2" stroke-linecap="round"/>
+      <line x1="16" y1="10.3" x2="17.7" y2="8.6" stroke="#e8a838" stroke-width="2" stroke-linecap="round"/>` : '';
     const arrow = rising
-      ? `<path d="M12 2 L12 10 M8 6 L12 2 L16 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
-      : `<path d="M12 2 L12 10 M8 6 L12 10 L16 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
-    return `<svg width="30" height="30" viewBox="0 0 24 24" style="vertical-align:-9px;">
-      <line x1="2" y1="17" x2="22" y2="17" stroke="currentColor" stroke-width="1.6"/>
-      ${rays}
-      <circle cx="12" cy="${sunCy}" r="5" fill="${isMoment?'currentColor':'none'}" fill-opacity="0.25" stroke="currentColor" stroke-width="1.8"/>
+      ? `<path d="M12 1 L12 7.5 M8.5 4.5 L12 1 L15.5 4.5" stroke="#e8862e" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      : `<path d="M12 1 L12 7.5 M8.5 4 L12 7.5 L15.5 4" stroke="#e8862e" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    return `<svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align:-6px;">
       ${arrow}
+      ${rays}
+      <path d="M6 15.5 A6 6 0 0 1 18 15.5 Z" fill="${isMoment?'#eecb6b':'#d9d9d9'}" opacity="${isMoment?1:0.55}"/>
+      <line x1="4" y1="15.5" x2="20" y2="15.5" stroke="#e8862e" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`;
   }
   if(upcoming[0]) l1.innerHTML = `${twilightIconSvg(upcoming[0].label)} ${upcoming[0].label} ${fmtHHMM(upcoming[0].date)} UTC`; else l1.textContent = '—';
@@ -1767,9 +1766,16 @@ async function fetchSondeHubNearby(){
 }
 async function openSondeHubProfile(serial){
   try{
-    const r = await fetch(`https://api.v2.sondehub.org/sondes/${encodeURIComponent(serial)}`);
-    const points = await r.json();
-    if(!Array.isArray(points) || points.length<2){ alert('Not enough telemetry yet for this sonde.'); return; }
+    // The correct endpoint takes the serial as a QUERY parameter on
+    // /sondes/telemetry, not as a path segment on /sondes/{serial} (which
+    // isn't a real route and was causing the fetch to fail outright). The
+    // response is also a nested object keyed by serial, then by timestamp -
+    // not a flat array.
+    const r = await fetch(`https://api.v2.sondehub.org/sondes/telemetry?serial=${encodeURIComponent(serial)}&duration=6h`);
+    const data = await r.json();
+    const bySerial = data[serial] || {};
+    const points = Object.keys(bySerial).map(ts=>({...bySerial[ts], datetime: bySerial[ts].datetime||ts}));
+    if(points.length<2){ alert('Not enough telemetry yet for this sonde.'); return; }
     // SondeHub telemetry gives position+time, not wind directly - derive
     // the implied wind vector (bearing+speed) from horizontal drift
     // between consecutive fixes, same idea as our own GPS-observed-course
@@ -1833,30 +1839,40 @@ function scheduleMetarFetch(){
   metarFetchTimer = setTimeout(fetchMetarStations, 600);
 }
 map.on('moveend zoomend', ()=>{ if(metarActive) scheduleMetarFetch(); });
+let metarFetchGeneration = 0;
 async function fetchMetarStations(){
   if(!metarActive) return;
+  const myGeneration = ++metarFetchGeneration;
   try{
     // MetarCentral's bulk endpoint is filterable by region rather than a
     // bounding box - "europe" covers this app's typical flying area; we
-    // additionally filter client-side to the current viewport.
-    const r = await fetch('https://metarcentral.com/api/airports/metar-status?region=europe&limit=400');
+    // additionally filter client-side to the current viewport. Kept at
+    // their own documented example limit (50) rather than guessing a
+    // higher one, since exceeding an undocumented cap could plausibly
+    // return an error response without CORS headers (which surfaces to us
+    // as a generic failed fetch, indistinguishable from a real CORS block).
+    const r = await fetch('https://metarcentral.com/api/airports/metar-status?region=europe&limit=50');
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const j = await r.json();
+    if(myGeneration !== metarFetchGeneration) return;
     const list = Array.isArray(j) ? j : (j.airports || j.data || []);
     const b = map.getBounds().pad(0.15);
     metarLayer.clearLayers();
     list.forEach(a=>{
-      const lat = a.latitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[1]) ?? a.lat;
-      const lon = a.longitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[0]) ?? a.lon;
+      const ap = a.airport || {};
+      const lat = a.latitude ?? ap.latitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[1]) ?? a.lat;
+      const lon = a.longitude ?? ap.longitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[0]) ?? a.lon;
       if(lat==null || lon==null || !b.contains([lat,lon])) return;
       const category = a.flight_rules || a.flight_category || 'UNKN';
       const raw = (a.metar && a.metar.raw) || a.raw_text || a.raw || '(no recent METAR)';
-      const name = a.name || (a.airport && a.airport.name) || a.icao || '?';
+      const name = a.name || ap.name || a.icao || '?';
       L.marker([lat,lon], {icon: metarIcon(category)})
         .bindTooltip(`<b>${a.icao||''}</b> ${name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
         .addTo(metarLayer);
     });
     setLayerLoadDot('tgMetar','ready');
   }catch(e){
+    console.error('METAR fetch failed:', e);
     if(metarActive) setLayerLoadDot('tgMetar','loading');
   }
 }
@@ -1889,8 +1905,10 @@ function scheduleRainFetch(){
   rainFetchTimer = setTimeout(fetchRainGrid, 600);
 }
 map.on('moveend zoomend', ()=>{ if(rainActive) scheduleRainFetch(); });
+let rainFetchGeneration = 0;
 async function fetchRainGrid(){
   if(!rainActive) return;
+  const myGeneration = ++rainFetchGeneration;
   try{
     const b = map.getBounds();
     const points = [];
@@ -1910,6 +1928,12 @@ async function fetchRainGrid(){
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&minutely_15=precipitation&models=${resolvedModel}&forecast_minutely_15=4&timezone=UTC`;
     const r = await fetch(url);
     const j = await r.json();
+    // If a NEWER fetch has started since this one began (e.g. the user kept
+    // panning while this was still in flight), discard this result rather
+    // than drawing it - applying an out-of-order response for a now-stale
+    // map position/bounds was exactly what produced tile-like rectangles
+    // that briefly appeared in the wrong place and then got overwritten.
+    if(myGeneration !== rainFetchGeneration) return;
     const results = Array.isArray(j) ? j : [j];
     rainLayer.clearLayers();
     const cellLatH = (b.getNorth()-b.getSouth())/(RAIN_GRID_N-1)/2;
@@ -2305,10 +2329,19 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
   }
   return path;
 }
+const MIN_INTERCEPT_STABILIZE_S = 300; // a gas balloon must always be stabilized at intercept before searching for a landing spot - "straight through" to the ground isn't a real option
 function stagedDiscretionarySeconds(altitudes){
-  let forcedS = 0;
+  let forcedS = MIN_INTERCEPT_STABILIZE_S;
   for(let i=0;i<altitudes.length-1;i++) forcedS += Math.abs(altitudes[i]-altitudes[i+1])/stagedDescentRateMs;
   return Math.max(0, stagedTotalTimeMin*60 - forcedS);
+}
+// Converts strategy fractions into actual linger durations per stage - the
+// intercept (last stage) always gets its mandatory minimum stabilization
+// time on top of whatever share of the discretionary budget it was given.
+function fracsToLingerDurations(fracs, discretionaryS){
+  const durations = fracs.map(f=>f*discretionaryS);
+  durations[durations.length-1] += MIN_INTERCEPT_STABILIZE_S;
+  return durations;
 }
 function randomFracs(n){
   const raw = Array.from({length:n}, ()=>Math.random());
@@ -2369,30 +2402,27 @@ async function computeStagedReachableArea(){
   const altitudes = computeStageAltitudes(state.altAMSL, interceptAlt, roughHourIdx);
   const discretionaryS = stagedDiscretionarySeconds(altitudes);
   const n = altitudes.length;
-  // Deterministic EXTREME strategies rather than random sampling: uniformly
-  // random time-splits statistically cluster toward the middle of the
-  // possible outcomes, not the edges - the wrong tool for finding a
-  // boundary. Concentrating ALL discretionary time on a single stage (one
-  // strategy per stage) instead pushes as far as possible in THAT stage's
-  // wind direction, which is what actually traces out the true reachable
-  // boundary. Pairwise 50/50 splits between every two stages fill in the
-  // curvature between adjacent single-stage extremes (a mix of two wind
-  // regimes doesn't necessarily fall strictly between their pure results
-  // once the downstream transition/ground-descent physics is applied).
-  const strategies = [];
-  strategies.push(new Array(n).fill(0)); // fastest possible completion, no lingering anywhere
-  for(let i=0;i<n;i++){
-    const fracs = new Array(n).fill(0); fracs[i] = 1;
-    strategies.push(fracs);
-  }
-  if(n<=20){ // pairwise combinations grow as O(n^2) - skip them for an unusually large stage count to stay fast
-    for(let i=0;i<n;i++){
-      for(let j=i+1;j<n;j++){
-        const fracs = new Array(n).fill(0); fracs[i]=0.5; fracs[j]=0.5;
-        strategies.push(fracs);
+  // The SAME exhaustive grid used by the specific-point search below (see
+  // searchStagedDescentToTarget) - critically important that both use
+  // identical strategy sets, otherwise the drawn reachable area and what
+  // the search can actually achieve could silently disagree, which was
+  // exactly the reported "landing area computed behind/away from the
+  // clicked point" symptom: the boundary and the search were previously
+  // built from two different (extremes-only vs random-seeded) strategy
+  // pools that didn't necessarily agree on what's truly reachable.
+  const resolution = n<=3 ? 24 : n<=4 ? 16 : n<=5 ? 12 : 8;
+  function* simplexCompositions(remaining, partsLeft){
+    if(partsLeft===1){ yield [remaining]; return; }
+    for(let i=0;i<=remaining;i++){
+      for(const rest of simplexCompositions(remaining-i, partsLeft-1)){
+        yield [i, ...rest];
       }
     }
   }
+  const strategies = [];
+  for(const combo of simplexCompositions(resolution, n)) strategies.push(combo.map(v=>v/resolution));
+  state.stagedGridStrategies = strategies; // reused by searchStagedDescentToTarget as its starting pool
+  state.stagedGridContext = {markerLat:markerPos.lat, markerLon:markerPos.lng, startT, interceptAlt, roughHourIdx, discretionaryS, rate2, altitudes};
   const endpoints = [];
   // Quick-Descent-equivalent: a straight, non-staged descent at the normal
   // (faster) rate from the Descent Parameters slider, starting from this
@@ -2404,7 +2434,7 @@ async function computeStagedReachableArea(){
   const quickLast = quickPath[quickPath.length-1];
   endpoints.push([quickLast.lon, quickLast.lat]);
   for(const fracs of strategies){
-    const lingerDurations = fracs.map(f=>f*discretionaryS);
+    const lingerDurations = fracsToLingerDurations(fracs, discretionaryS);
     // Each strategy is run three times - with the wind exactly as forecast,
     // and with the plausible +/- uncertainty applied throughout - so the
     // area reflects forecast uncertainty as well as strategy choice, not
@@ -2455,32 +2485,46 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   const altitudes = computeStageAltitudes(state.altAMSL, interceptAlt, roughHourIdx);
   const discretionaryS = stagedDiscretionarySeconds(altitudes);
   function evalFracs(fracs){
-    const lingerDurations = fracs.map(f=>f*discretionaryS);
+    const lingerDurations = fracsToLingerDurations(fracs, discretionaryS);
     const path = simulateStagedDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, startT, interceptAlt, roughHourIdx, lingerDurations, rate2);
     const last = path[path.length-1];
     return {dist: haversine(last.lat,last.lon,targetLat,targetLon), path, lingerDurations, fracs};
   }
-  // Seed with the single-stage extremes and an even split - these span the
-  // full range of achievable directions (same idea as the reachable-area
-  // hull), giving a much better starting point than pure chance.
-  let best = evalFracs(new Array(altitudes.length).fill(1/altitudes.length));
-  for(let i=0;i<altitudes.length;i++){
-    const fracs = new Array(altitudes.length).fill(0); fracs[i]=1;
-    const res = evalFracs(fracs);
-    if(res.dist<best.dist) best = res;
+  // Reuse the EXACT SAME grid the reachable-area polygon was built from
+  // (computeStagedReachableArea stores it) whenever it's still valid for
+  // this marker position/time - guarantees the search and the drawn
+  // boundary can never disagree about what's reachable, which was the
+  // actual root cause of the area/path not corresponding to the clicked
+  // point. Falls back to generating a fresh grid only if none is cached
+  // yet (e.g. called before the area was ever computed).
+  const n = altitudes.length;
+  const ctx = state.stagedGridContext;
+  const ctxMatches = ctx && Math.abs(ctx.markerLat-markerPos.lat)<1e-6 && Math.abs(ctx.markerLon-markerPos.lng)<1e-6
+    && ctx.startT===startT && ctx.altitudes.length===n;
+  let strategies = ctxMatches ? state.stagedGridStrategies : null;
+  if(!strategies){
+    const resolution = n<=3 ? 24 : n<=4 ? 16 : n<=5 ? 12 : 8;
+    function* simplexCompositions(remaining, partsLeft){
+      if(partsLeft===1){ yield [remaining]; return; }
+      for(let i=0;i<=remaining;i++){
+        for(const rest of simplexCompositions(remaining-i, partsLeft-1)){
+          yield [i, ...rest];
+        }
+      }
+    }
+    strategies = [];
+    for(const combo of simplexCompositions(resolution, n)) strategies.push(combo.map(v=>v/resolution));
   }
-  for(let trial=0; trial<60; trial++){
-    const res = evalFracs(randomFracs(altitudes.length));
-    if(res.dist<best.dist) best = res;
+  let best = null;
+  for(const fracs of strategies){
+    const res = evalFracs(fracs);
+    if(!best || res.dist<best.dist) best = res;
   }
   // Systematic coordinate descent: for each stage in turn, try nudging its
   // time share up or down (redistributing the change proportionally among
   // the other stages so fractions still sum to 1), keeping whichever nudge
-  // improves the distance to target most. This converges far more reliably
-  // than blind random perturbation, which was leaving the result stuck
-  // well short of (or to one side of) the actual target in a several-
-  // dimensional search space - exactly the reported "landing area doesn't
-  // surround the clicked point" and "path doesn't reach it" symptoms.
+  // improves the distance to target most. This polishes the grid search's
+  // result to a finer precision than the grid resolution alone allows.
   const STEPS = [0.2, -0.2, 0.08, -0.08, 0.03, -0.03, 0.01, -0.01];
   for(let round=0; round<10; round++){
     let improved = false;
@@ -2575,6 +2619,14 @@ function drawStagedPlanChart(result){
     };
   });
   stages.push({altM: groundAlt, lingerS:0, speedKmh:0, dirFrom:0, isGround:true});
+  // If an intermediate stage ended up with essentially zero dwell time, the
+  // model considered it but didn't actually use it - showing it (and its
+  // ballast estimate) as if it were a real part of the plan is misleading,
+  // so those stages are dropped from the display, keeping start/intercept/
+  // ground always visible.
+  const stagesFiltered = stages.filter((s,i)=> i===0 || s.isIntercept || s.isGround || s.lingerS>=30);
+  stages.length = 0;
+  stages.push(...stagesFiltered);
 
   // Build the timeline: flat (linger) segments proportional to dwell time,
   // diagonal (transition) segments proportional to how long that drop
@@ -2597,7 +2649,7 @@ function drawStagedPlanChart(result){
   // shape on the left, not a full-width precise plot - the actual numbers
   // live in the label column to its right, which is where collision with
   // the curve is avoided entirely (nothing is drawn ON TOP of the line).
-  const W=340, H=270, ML=80, plotW=55, MT=14, MB=24;
+  const W=340, H=310, ML=80, plotW=55, MT=14, MB=24;
   const plotH = H-MT-MB;
   const infoX = ML+plotW+12;
   const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
@@ -2650,13 +2702,20 @@ function drawStagedPlanChart(result){
     if(!doneAlts.has(key)){
       doneAlts.add(key);
       const isGroundLine = s.isGround;
-      gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${isGroundLine?'#3ddc6f':(s.isIntercept?'#BA7517':'var(--muted)')}" stroke-width="${isGroundLine?1.5:0.5}" opacity="${isGroundLine?0.8:0.3}"/>`;
+      gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${isGroundLine?'#1a9850':(s.isIntercept?'#BA7517':'var(--muted)')}" stroke-width="${isGroundLine?2:0.5}" opacity="${isGroundLine?0.9:0.3}"/>`;
       if(isGroundLine){
-        yLabels += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="11.5" font-weight="400" fill="#3ddc6f">Ground</text>`;
+        yLabels += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="11.5" font-weight="600" fill="#1a9850">Ground</text>`;
       } else {
-        // "Intercept" sits next to the AMSL number (not the AGL line below
-        // it), so it no longer pushes the AGL value far to the left.
-        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="var(--muted)"> m AMSL</tspan>${s.isIntercept?'<tspan font-size="9" fill="#BA7517">  Intercept</tspan>':''}</text>`;
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="var(--muted)"> m AMSL</tspan></text>`;
+        // "Intercept" sits to the RIGHT of the axis (not appended to the
+        // right-aligned AMSL text, which was what pushed it past the left
+        // edge) - directly above the shaded final-descent band, with an
+        // opaque background so the descent line passing behind it doesn't
+        // visually collide with the text.
+        if(s.isIntercept){
+          yLabels += `<rect x="${ML+3}" y="${y-13}" width="52" height="13" fill="var(--panel2)"/>`;
+          yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" font-weight="600" fill="#BA7517">Intercept</text>`;
+        }
         // Only the start (cruise) and intercept levels show AGL too - the
         // intermediate plateaus are identified by AMSL alone, keeping the
         // axis less cluttered.
@@ -2672,11 +2731,19 @@ function drawStagedPlanChart(result){
     const rowY = y - 6;
     const durMin = Math.round(s.lingerS/60);
     if(!s.isGround){
-      infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="var(--muted)">${durMin} min</text>`;
+      if(i>0){
+        infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="var(--muted)">${durMin} min</text>`;
+      }
       const arrowRot = (s.dirFrom+180)%360;
       const windX = infoX+44;
       infoRows += `<g transform="translate(${windX+1},${rowY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
         `<text x="${windX+14}" y="${rowY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
+      if(i===0){
+        // The configured descent rate (from the slider) applies starting
+        // right at this top level - shown fairly prominently since it's a
+        // key input, not a computed result.
+        infoRows += `<text x="${infoX}" y="${rowY+16}" font-size="11" font-weight="700" fill="#ff6a00">↓ ${stagedDescentRateMs.toFixed(1)} m/s descent rate</text>`;
+      }
     }
     // Braking ballast: for every intermediate/intercept stage (arresting
     // INTO that plateau), plus the final intercept-to-ground segment
@@ -2686,9 +2753,9 @@ function drawStagedPlanChart(result){
     if(s.isGround) ballastKg = ballastFor(groundAlt, rate2);
     if(ballastKg>0.05){
       totalBallastKg += ballastKg;
-      const bw=56;
+      const bw=48;
       infoRows += `<rect x="${W-6-bw}" y="${y-19}" width="${bw}" height="14" rx="3" fill="var(--panel)" stroke="var(--border)" stroke-width="0.5"/>`;
-      infoRows += `<text x="${W-6-bw/2}" y="${y-12}" text-anchor="middle" dominant-baseline="central" font-size="9.5" fill="var(--muted)">${ballastKg.toFixed(1)} kg</text>`;
+      infoRows += `<text x="${W-6-bw/2}" y="${y-12}" text-anchor="middle" dominant-baseline="central" font-size="9.5" fill="var(--muted)">${Math.round(ballastKg)} kg</text>`;
     }
   });
 
@@ -2704,6 +2771,15 @@ function drawStagedPlanChart(result){
 }
 document.getElementById('subModeQuick').addEventListener('click', ()=>setSubMode('quick'));
 document.getElementById('subModeStaged').addEventListener('click', ()=>setSubMode('staged'));
+const QUICK_DESCENT_LAYERS = [
+  {layer: ()=>intendedLandingMarker, name:'intendedLandingMarker'},
+  {layer: ()=>plannedLandingPolyLayer, name:'plannedLandingPolyLayer'},
+  {layer: ()=>plannedLandingCenterMarker, name:'plannedLandingCenterMarker'},
+  {layer: ()=>plannedCruiseSegmentLayer, name:'plannedCruiseSegmentLayer'},
+  {layer: ()=>plannedDescentPathLayer, name:'plannedDescentPathLayer'},
+  {layer: ()=>plannedDescentInitMarker, name:'plannedDescentInitMarker'}
+];
+let quickDescentHiddenLayers = null; // snapshot of which ones were actually visible before hiding, so we restore only those
 function setSubMode(mode){
   currentSubMode = mode;
   document.getElementById('subModeQuick').classList.toggle('active', mode==='quick');
@@ -2712,6 +2788,15 @@ function setSubMode(mode){
   stagedCard.style.display = mode==='staged' ? 'block' : 'none';
   stagedCard.style.border = mode==='staged' ? '2px solid var(--bad)' : '';
   if(mode==='staged'){
+    // Quick Descent's own results (violet path, orange landing area, etc.)
+    // would otherwise sit on the map at the same time as the staged-descent
+    // exploration, which is confusing - hide them here, and remember which
+    // ones were actually shown so only those come back when switching back.
+    quickDescentHiddenLayers = QUICK_DESCENT_LAYERS.filter(({layer})=>{
+      const l = layer();
+      return l && map.hasLayer(l);
+    });
+    quickDescentHiddenLayers.forEach(({layer})=>map.removeLayer(layer()));
     ensureStagedLayers();
     if(!state.stagedMarkerInitialized){
       // Default the marker to ~30 min along the reference trajectory, a
@@ -2732,6 +2817,11 @@ function setSubMode(mode){
     // plan's path/landing area/descent point) now stays visible on the map
     // regardless of which subfunction or main function is active - only an
     // explicit new drag/click replaces it, never just switching views.
+    // Quick Descent's own layers come back exactly as they were before.
+    if(quickDescentHiddenLayers){
+      quickDescentHiddenLayers.forEach(({layer})=>layer().addTo(map));
+      quickDescentHiddenLayers = null;
+    }
   }
 }
 document.getElementById('btnCenterStaged').addEventListener('click', ()=>{

@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v92** (31.07.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html` and the version chip shown in the app's header.
+**Current version: v1.04.04** (02.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -86,6 +86,24 @@ The last two Staged Descent graphic items are now also in: any transition segmen
 Rain layer's minimum precipitation threshold raised, since very light/noisy model values below any real significance were what looked like "random tiles."
 
 MetarCentral API key support added (Settings, below the layer sections) - raises the result limit from 10 to 500 per request and the daily quota from 100 to 1000. As with any client-side app, a filled-in key is visible in the page source to anyone who views it.
+
+**METAR key was actually breaking the layer entirely** - sending it as an `X-API-Key` header triggers a CORS preflight request that MetarCentral's server doesn't allow that header on, rejecting every request outright (confirmed directly from your console output). Switched to the query-parameter authentication option instead, which doesn't trigger a preflight.
+
+**Real bug found: the staged descent panel could stay invisible even after a successful computation** - the panel's `display:block` was set only AFTER drawing the (fairly complex) chart, so any exception in that drawing code silently prevented the panel from ever showing. The panel now becomes visible first, and the whole function is wrapped defensively so a display bug can no longer hide the entire result.
+
+Staged descent placement changed: the orange marker no longer starts pre-placed - it only appears once you tap the map within ±40° of the reference trajectory's own direction (with a brief on-map hint otherwise), snapping to the nearest point on that trajectory. Tapping outside the reachable area now also shows a brief hint instead of doing nothing. Once a plan is computed, the red target marker fades out after ~1s, leaving the black landing-center marker as the lasting reference. "Clear results" now also resets the placement itself, back to tap-to-place.
+
+Silent background emergency email via EmailJS added (Settings, optional) - a real no-app-switch send when configured, with the existing mailto: flow as a fallback.
+
+Target/landing marker icon simplified (a filled ring instead of a full crosshair), the descent-initiation triangle in function 1 now rotates to sit perpendicular to the trajectory at its position, and the projected-trajectory colour is now the same green in both function 2 subfunctions.
+
+METAR fetch now logs the full raw response shape to the console for easier diagnosis if it's still not showing stations.
+
+Header decluttered for iPad: GPS shows just a colour-coded dot (red/yellow/green by fix accuracy) plus the accuracy figure, "Model" label removed and its text shrunk, twilight times no longer wrap and UTC is smaller, Day/Night + Capture + Settings + Test Mode are now behind a single "☰ More" dropdown, and the version/date moved from the header down to a small badge at the map's bottom-left corner (matching the Leaflet attribution box's own styling).
+
+Header decluttered for iPad: GPS indicator is now a compact 3-colour dot (red/yellow/green by fix accuracy) with just the accuracy figure next to it, the weather model chip dropped its "Model" label, twilight times no longer wrap, and Day/Night, Capture, Settings, and Test Mode all live in a single "More" (hamburger) dropdown. The Wicki Partners Ballonteam logo now sits small in the top-right.
+
+Favicon changed to a light target/crosshair symbol.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

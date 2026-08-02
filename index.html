@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d1117'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='%233fd0c9' stroke-width='3.5'/%3E%3Ccircle cx='32' cy='32' r='6.5' fill='%233fd0c9'/%3E%3Cpath d='M32 6v9M32 49v9M6 32h9M49 32h9' stroke='%233fd0c9' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f6f3ec'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23e0483f' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='32' r='12' fill='none' stroke='%23e0483f' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='32' r='4.5' fill='%23e0483f'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{
   --bg:#0d1117; --panel:#141a21; --panel2:#1b232c; --border:#2a3540;
@@ -45,6 +46,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 .iconbtn.active{border-color:var(--accent);color:var(--accent);}
 .gps-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);}
 .gps-dot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
+.gps-dot.warn{background:#e8a838;box-shadow:0 0 6px #e8a838;}
 .gps-dot.bad{background:var(--bad);}
 
 /* ---- settings popover ---- */
@@ -221,6 +223,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .copyline button{flex-shrink:0;background:var(--accent);border:none;color:#00201d;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;}
 
 .leaflet-control-attribution{font-size:9px !important;}
+.version-badge{position:absolute;left:6px;bottom:2px;z-index:900;pointer-events:none;}
 canvas.mini{width:100% !important;height:115px !important;}
 canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 .chart-thumb-title{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
@@ -236,6 +239,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 .map-scale-ruler > div:nth-child(even){background:#fff;}
 .map-scale-text{font-weight:700;white-space:nowrap;text-align:center;}
 .map-scale-ratio{font-weight:400;}
+.map-hint-popup .leaflet-popup-content-wrapper{background:rgba(20,26,33,0.92);color:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.map-hint-popup .leaflet-popup-content{margin:6px 10px;font-size:11.5px;white-space:nowrap;}
+.map-hint-popup .leaflet-popup-tip{background:rgba(20,26,33,0.92);}
 #chartExpandOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5000;display:none;align-items:center;justify-content:center;}
 #tutorialOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5500;display:none;align-items:center;justify-content:center;}
 #tutorialOverlay.show{display:flex;}
@@ -283,15 +289,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <circle cx="13" cy="12" r="2" fill="#ff8a00"/>
         <path d="M13 20 L11.5 25 L14.5 25 Z" fill="#ffb400" stroke="#000" stroke-width="0.8"/>
       </svg>
-      <div class="wx-chip" id="versionChip" style="font-size:8px;color:var(--muted);"></div>
     </div>
     <div class="sep"></div>
-    <div class="wx-chip"><span class="gps-dot" id="gpsDot"></span></div>
-    <div class="wx-chip"><b id="gpsStatusTxt">Acquiring GPS…</b><span id="gpsAcc">—</span></div>
+    <div class="wx-chip" style="gap:4px;"><span class="gps-dot" id="gpsDot"></span><span id="gpsAcc" style="font-size:10px;">—</span></div>
     <div class="sep"></div>
     <div class="wx-chip" style="align-items:flex-start;">
-      <div><span style="font-size:9px;color:var(--muted);text-transform:uppercase;">Model </span><b id="wxModelName">Loading…</b></div>
-      <span id="wxModelAge" style="color:var(--muted);font-size:10px;">—</span>
+      <div><b id="wxModelName" style="font-size:11.5px;">Loading…</b></div>
+      <span id="wxModelAge" style="color:var(--muted);font-size:9px;">—</span>
     </div>
     <button id="btnUseSondeData" class="iconbtn" style="display:none;background:var(--accent);color:#00201d;font-size:11px;padding:6px 8px;" title="Switch to loaded sonde data">Use sonde data</button>
     <div id="sondeActiveChip" class="wx-chip" style="display:none;align-items:flex-start;">
@@ -300,9 +304,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     </div>
     <button id="btnCancelSonde" class="iconbtn" style="display:none;background:var(--bad);color:#fff;font-size:11px;padding:6px 8px;" title="Switch back to weather model">Cancel</button>
     <div style="width:1px;align-self:stretch;background:var(--border);margin:0 8px;"></div>
-    <div class="wx-chip" id="twilightChip" style="align-items:stretch;display:grid;grid-template-columns:auto auto;column-gap:6px;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
-      <span id="twilightLabel1a" style="font-size:10.5px;color:var(--muted);">—</span><span id="twilightLabel1b" style="font-size:10.5px;color:var(--muted);text-align:right;">—</span>
-      <span id="twilightLabel2a" style="font-size:10.5px;color:var(--muted);">—</span><span id="twilightLabel2b" style="font-size:10.5px;color:var(--muted);text-align:right;">—</span>
+    <div class="wx-chip" id="twilightChip" style="align-items:stretch;display:grid;grid-template-columns:auto auto;column-gap:6px;white-space:nowrap;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
+      <span id="twilightLabel1a" style="font-size:10.5px;color:var(--muted);white-space:nowrap;">—</span><span id="twilightLabel1b" style="font-size:10.5px;color:var(--muted);text-align:right;white-space:nowrap;">—</span>
+      <span id="twilightLabel2a" style="font-size:10.5px;color:var(--muted);white-space:nowrap;">—</span><span id="twilightLabel2b" style="font-size:10.5px;color:var(--muted);text-align:right;white-space:nowrap;">—</span>
     </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;border:none;color:var(--bad);font-size:24px;cursor:pointer;padding:0 6px;line-height:1;">⚠</button>
@@ -328,6 +332,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <option value="FL">FL</option>
     </select>
     <button class="ltbtn" id="tgFlightCharts" title="Show/hide Flight Charts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg></button>
+    <div style="position:relative;">
+      <button class="iconbtn" id="btnHeaderMore" title="More"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div id="headerMoreMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px;z-index:5000;display:flex;flex-direction:column;gap:4px;min-width:150px;"></div>
+    </div>
+    <span style="background:#fff;border-radius:5px;padding:2px 5px;margin-left:4px;display:inline-flex;align-items:center;"><img src="http://static1.squarespace.com/static/5c603f6f7eb88c2edd690e48/t/5ccdb9f051e58c0001e89503/1556986355383/17_03_17_Wicki_Ballonteam_Logo_RZ.png?format=300w" alt="Wicki Partners Ballonteam" style="height:20px;width:auto;display:block;" title="Wicki Partners Ballonteam"></span>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">
       <svg id="iconSun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
       <svg id="iconMoon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
@@ -484,6 +493,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <input type="tel" id="cfgSmsRecipient5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
 
+        <div class="subhead">Silent Emergency Email (optional, via EmailJS)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the 🆘 panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key), but is still visible to anyone viewing this page's source.</p>
+        <input type="text" id="cfgEmailJsServiceId" placeholder="EmailJS Service ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="text" id="cfgEmailJsTemplateId" placeholder="EmailJS Template ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="text" id="cfgEmailJsPublicKey" placeholder="EmailJS Public Key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Your EmailJS template needs a variable that receives the message body - name it <code>message</code> - and a "To email" set to the address you want the report sent to.</p>
+
         <div class="subhead">Staged Descent (Plan Descent, subfunction 2)</div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <span style="font-size:12.5px;flex:1;">Minimum stage separation</span>
@@ -593,6 +609,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
   <div id="main">
     <div id="mapwrap">
+      <div id="versionChip" class="leaflet-control-attribution version-badge"></div>
       <div id="map"></div>
       <div id="topAlertStack">
         <div id="regionNamesWarnBar" class="blue-warn">
@@ -620,14 +637,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <button id="modeMonitor" class="active" title="Show landing area"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg> <span data-i18n="modeLandingArea">Landing Area</span></button>
             <button id="modePlan" title="Plan a descent point"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg> <span data-i18n="modePlanDescent">Plan Descent</span></button>
           </div>
-          <button id="btnClearStagedFromMonitor" onclick="clearStagedResults(); document.getElementById('btnClearStagedFromMonitor').style.display='none';" title="Clear staged descent results from the map" style="display:none;background:transparent;border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear staged descent area</button>
+          <button id="btnClearStagedFromMonitor" onclick="clearStagedResults(true); document.getElementById('btnClearStagedFromMonitor').style.display='none';" title="Clear staged descent results from the map" style="display:none;background:transparent;border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear staged descent area</button>
         </div>
         <div style="display:flex;align-items:center;gap:14px;margin-top:6px;">
           <div id="subModeToggle" style="display:none;">
             <button id="subModeQuick" class="active" title="Click a target point for a direct descent">⚡ Quick Descent</button>
             <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options">⬇⬇ Staged Descent</button>
           </div>
-          <button id="btnClearStagedResults" onclick="clearStagedResults()" title="Clear staged descent results from the map" style="display:none;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
+          <button id="btnClearStagedResults" onclick="clearStagedResults(true)" title="Clear staged descent results from the map" style="display:none;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
         </div>
       </div>
       <div id="mapControlsStack" class="map-controls-stack">
@@ -755,7 +772,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               </div>
             </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
-              <label data-i18n="fieldEstimatedDescentPoint">Estimated Descent Point</label>
+              <label data-i18n="fieldEstimatedDescentPoint"><svg width="11" height="10" viewBox="0 0 26 24" style="vertical-align:-1px;margin-right:3px;"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>Estimated Descent Point</label>
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
@@ -929,8 +946,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v92';
-const APP_DATE = '31.07.2026';
+const APP_VERSION = 'v1.04.04';
+const APP_DATE = '02.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
 // ---------- state ----------
@@ -1067,8 +1084,8 @@ function updateTwilightChip(){
       <line x1="4" y1="15.5" x2="20" y2="15.5" stroke="#e8862e" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`;
   }
-  if(upcoming[0]){ l1a.innerHTML = `${twilightIconSvg(upcoming[0].label)} ${upcoming[0].label}`; l1b.textContent = `${fmtHHMM(upcoming[0].date)} UTC`; } else { l1a.textContent='—'; l1b.textContent=''; }
-  if(upcoming[1]){ l2a.innerHTML = `${twilightIconSvg(upcoming[1].label)} ${upcoming[1].label}`; l2b.textContent = `${fmtHHMM(upcoming[1].date)} UTC`; } else { l2a.textContent='—'; l2b.textContent=''; }
+  if(upcoming[0]){ l1a.innerHTML = `${twilightIconSvg(upcoming[0].label)} ${upcoming[0].label}`; l1b.innerHTML = `${fmtHHMM(upcoming[0].date)} <span style="font-size:8.5px;">UTC</span>`; } else { l1a.textContent='—'; l1b.textContent=''; }
+  if(upcoming[1]){ l2a.innerHTML = `${twilightIconSvg(upcoming[1].label)} ${upcoming[1].label}`; l2b.innerHTML = `${fmtHHMM(upcoming[1].date)} <span style="font-size:8.5px;">UTC</span>`; } else { l2a.textContent='—'; l2b.textContent=''; }
 }
 setInterval(updateTwilightChip, 60000);
 
@@ -1874,21 +1891,35 @@ async function fetchMetarStations(){
     // (per MetarCentral's own documented rate limits) - exceeding either
     // without realizing it was very likely why this used to get stuck on
     // "loading" indefinitely.
+    // The header-based auth option (X-API-Key) triggers a CORS preflight
+    // request that MetarCentral's server doesn't actually allow that header
+    // on, so it gets rejected outright - the query-parameter option avoids
+    // a preflight entirely (a plain GET with only URL parameters is a
+    // "simple request" under CORS rules) and works correctly instead.
     const apiKey = (document.getElementById('sMetarApiKey').value||'').trim();
     const limit = apiKey ? 500 : 10;
-    const headers = apiKey ? {'X-API-Key': apiKey} : {};
-    const r = await fetch(`https://metarcentral.com/api/airports/metar-status?region=europe&limit=${limit}`, {headers});
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    const keyParam = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
+    const url = `https://metarcentral.com/api/airports/metar-status?region=europe&limit=${limit}${keyParam}`;
+    const r = await fetch(url);
+    if(!r.ok){
+      const errText = await r.text().catch(()=>'(no body)');
+      console.error('METAR request failed:', r.status, url, errText);
+      throw new Error('HTTP '+r.status);
+    }
     const j = await r.json();
     if(myGeneration !== metarFetchGeneration) return;
-    const list = Array.isArray(j) ? j : (j.airports || j.data || []);
+    const list = Array.isArray(j) ? j : (j.airports || j.data || j.results || []);
+    console.log('METAR: raw response received, top-level keys:', Array.isArray(j)?'(array)':Object.keys(j), '- resolved list length:', list.length, '- first item:', list[0]);
     const b = map.getBounds().pad(0.15);
     metarLayer.clearLayers();
+    let inViewCount = 0;
     list.forEach(a=>{
       const ap = a.airport || {};
       const lat = a.latitude ?? ap.latitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[1]) ?? a.lat;
       const lon = a.longitude ?? ap.longitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[0]) ?? a.lon;
-      if(lat==null || lon==null || !b.contains([lat,lon])) return;
+      if(lat==null || lon==null){ return; }
+      if(!b.contains([lat,lon])) return;
+      inViewCount++;
       const category = a.flight_rules || a.flight_category || 'UNKN';
       const raw = (a.metar && a.metar.raw) || a.raw_text || a.raw || '(no recent METAR)';
       const name = a.name || ap.name || a.icao || '?';
@@ -1896,6 +1927,7 @@ async function fetchMetarStations(){
         .bindTooltip(`<b>${a.icao||''}</b> ${name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
         .addTo(metarLayer);
     });
+    console.log(`METAR: ${inViewCount} station(s) shown within the current map view (of ${list.length} received).`);
     setLayerLoadDot('tgMetar','ready');
   }catch(e){
     console.error('METAR fetch failed:', e);
@@ -2169,12 +2201,26 @@ const violetDotIcon = L.divIcon({
   html:'<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>',
   className:'', iconSize:[26,24], iconAnchor:[13,20]
 });
+// A version of the same marker rotated to sit PERPENDICULAR to the
+// trajectory at its position (a cross-tick marking the descent-initiation
+// point along the path, rather than always pointing straight up regardless
+// of heading). The rotation is an SVG attribute on the shape itself, not a
+// CSS transform on Leaflet's own positioning wrapper - that wrapper's
+// transform gets overwritten on every pan/zoom, which would otherwise wipe
+// out the rotation the next time the map moved.
+function violetTickIcon(bearingDeg){
+  const rot = ((bearingDeg||0)+90)%360; // perpendicular to the direction of travel
+  return L.divIcon({
+    html:`<svg width="26" height="24" viewBox="0 0 26 24"><g transform="rotate(${rot},13,12)"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></g></svg>`,
+    className:'', iconSize:[26,24], iconAnchor:[13,12]
+  });
+}
 let plannedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon, opacity:0, draggable:true});
 let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
 let initPointMarker = null;
 const crossIcon = L.divIcon({
-  html:'<svg width="28" height="28" viewBox="0 0 28 28"><line x1="14" y1="2" x2="14" y2="26" stroke="#ff5a3c" stroke-width="3"/><line x1="2" y1="14" x2="26" y2="14" stroke="#ff5a3c" stroke-width="3"/><circle cx="14" cy="14" r="5" fill="none" stroke="#ff5a3c" stroke-width="2.5"/></svg>',
-  className:'', iconSize:[28,28], iconAnchor:[14,14]
+  html:'<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#ff5a3c" stroke-width="2.5"/><circle cx="12" cy="12" r="2.5" fill="#ff5a3c"/></svg>',
+  className:'', iconSize:[24,24], iconAnchor:[12,12]
 });
 // Small crosshair used to mark the CENTER of any landing area (live or planned).
 const smallCrossIcon = L.divIcon({
@@ -2188,12 +2234,12 @@ const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:3, dashAr
 // Extended course (cruise continuation to the descent point) vs. the actual
 // descent - kept visually distinct, same idea as the live projection in
 // function 1 (teal cruise / yellow descent), just in the planning colors.
-const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e5c8', weight:4, dashArray:'5,6', lineCap:'round', opacity:1});
+const plannedCruiseSegmentLayer = L.polyline([], {color:'#3ddc6f', weight:4, dashArray:'5,6', lineCap:'round', opacity:1});
 // A long (360 min) reference trajectory at the CURRENT cruise altitude,
 // shown only in Plan Descent - helps judge which areas are even reachable
 // before committing to a specific target point. Purely informational: it
 // does NOT trigger any auto-zoom, unlike the actual planned-area result.
-const referenceTrajectoryLayer = L.polyline([], {color:'#faff00', weight:4, dashArray:'9,5', opacity:0.95, interactive:false});
+const referenceTrajectoryLayer = L.polyline([], {color:'#3ddc6f', weight:4, dashArray:'9,5', opacity:0.95, interactive:false});
 function computeReferenceTrajectory(){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
@@ -2376,6 +2422,7 @@ function randomFracs(n){
 }
 let stagedMarker = null, stagedReachableLayer = null, stagedAreaFetchTimer = null;
 let stagedLandingAreaLayer = null, stagedLandingCenterMarker = null;
+let stagedTargetFadeTimer = null;
 let stagedDescentPathLayer2 = null, stagedTargetMarker = null;
 function ensureStagedLayers(){
   if(!stagedReachableLayer){
@@ -2630,6 +2677,12 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   return {...best, altitudes, landingHull};
 }
 function showStagedDescentPlan(result){
+  // Make the panel visible FIRST, before anything else in this function
+  // runs - guarantees it's never left invisible because of an exception
+  // somewhere in the (fairly involved) work below, which is very likely
+  // what caused the repeatedly-reported "the side graphic doesn't open".
+  document.getElementById('stagedPlanPanel').style.display = 'block';
+  try{
   ensureStagedLayers();
   state.lastStagedPlanResult = result; // so the panel can be reopened later, even from function 1
   stagedDescentPathLayer2.setLatLngs(result.path.map(p=>[p.lat,p.lon]));
@@ -2665,14 +2718,47 @@ function showStagedDescentPlan(result){
       document.getElementById('stagedPlanLandingInfo').textContent = toCompact(cLat, cLon) + (name ? `  ·  near ${name}` : '');
     });
     state.stagedLandingCenter = {lat:cLat, lon:cLon};
+    // The red "clicked point" marker has done its job once the plan is
+    // computed - fade it out over ~1.5s so the black landing-area-center
+    // marker (placed just above) becomes the lasting reference instead of
+    // two overlapping/competing markers.
+    if(stagedTargetFadeTimer) clearTimeout(stagedTargetFadeTimer);
+    const markerToFade = stagedTargetMarker;
+    if(markerToFade){
+      let opacity = 1;
+      const fadeStep = ()=>{
+        opacity -= 0.12;
+        if(opacity<=0){
+          if(map.hasLayer(markerToFade)) map.removeLayer(markerToFade);
+          if(stagedTargetMarker===markerToFade) stagedTargetMarker = null;
+          return;
+        }
+        markerToFade.setOpacity(opacity);
+        stagedTargetFadeTimer = setTimeout(fadeStep, 130);
+      };
+      stagedTargetFadeTimer = setTimeout(fadeStep, 900); // stays fully visible briefly first
+    }
   }
   document.getElementById('btnReopenStagedPlan').style.display = 'none';
   document.getElementById('btnCenterStaged').style.display = 'block';
   const startT = state.stagedMarkerT || 0;
   const totalMin = (result.path[result.path.length-1].t - startT)/60;
   document.getElementById('stagedPlanTotalTime').textContent = totalMin.toFixed(0)+' min total';
-  drawStagedPlanChart(result);
-  document.getElementById('stagedPlanPanel').style.display = 'block';
+  // Show the panel FIRST, before attempting to draw the (fairly complex)
+  // chart - a bug in the drawing code used to throw before the panel's
+  // display was ever set, silently leaving the whole thing invisible even
+  // though everything else about the plan had been computed successfully.
+  // Wrapping the draw call itself means a rendering problem now shows a
+  // plain error message in its place instead of hiding the entire panel.
+  try{
+    drawStagedPlanChart(result);
+  }catch(e){
+    console.error('drawStagedPlanChart failed:', e);
+    document.getElementById('stagedPlanSvgWrap').innerHTML = '<p style="color:var(--bad);font-size:11px;">⚠ Could not draw the chart (see console) - the plan itself was computed fine, this is just a display problem.</p>';
+  }
+  }catch(e){
+    console.error('showStagedDescentPlan failed partway through:', e);
+  }
 }
 function drawStagedPlanChart(result){
   const wrap = document.getElementById('stagedPlanSvgWrap');
@@ -2927,20 +3013,18 @@ function setSubMode(mode){
     });
     quickDescentHiddenLayers.forEach(({layer})=>map.removeLayer(layer()));
     ensureStagedLayers();
-    if(!state.stagedMarkerInitialized){
-      // Default the marker to ~30 min along the reference trajectory, a
-      // reasonable starting point to explore from - only on first use, so
-      // switching subfunctions back and forth doesn't reset a position the
-      // user already chose.
-      const path = state.referenceTrajectoryPath || [];
-      const target = path.find(p=>p.t>=1800) || path[Math.floor(path.length/2)] || {lat:state.lat,lon:state.lon,t:0};
-      stagedMarker.setLatLng([target.lat, target.lon]);
-      state.stagedMarkerT = target.t;
-      state.stagedMarkerInitialized = true;
+    if(state.stagedMarkerInitialized){
+      // Already placed in an earlier visit to this subfunction this
+      // session - restore it exactly as it was, don't make the user tap
+      // again.
+      stagedMarker.addTo(map);
+      if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
+      computeStagedReachableArea();
     }
-    stagedMarker.addTo(map);
-    if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
-    computeStagedReachableArea();
+    // If not yet placed, deliberately show NOTHING here - the marker only
+    // appears once the user taps the map within the trajectory's direction
+    // cone (see the click handler), rather than starting pre-placed at an
+    // arbitrary default position.
   } else {
     // Everything computed in Staged Descent (the reachable area, the found
     // plan's path/landing area/descent point) now stays visible on the map
@@ -2958,14 +3042,22 @@ document.getElementById('btnCenterStaged').addEventListener('click', ()=>{
     map.fitBounds(state.lastStagedPlanResult.landingHull.map(p=>[p[1],p[0]]), {padding:[30,30]});
   }
 });
-function clearStagedResults(){
+function clearStagedResults(resetPlacement){
   if(stagedReachableLayer && map.hasLayer(stagedReachableLayer)) map.removeLayer(stagedReachableLayer);
   if(stagedDescentPathLayer2 && map.hasLayer(stagedDescentPathLayer2)) map.removeLayer(stagedDescentPathLayer2);
   if(stagedLandingAreaLayer && map.hasLayer(stagedLandingAreaLayer)) map.removeLayer(stagedLandingAreaLayer);
   if(stagedLandingCenterMarker && map.hasLayer(stagedLandingCenterMarker)) map.removeLayer(stagedLandingCenterMarker);
   if(stagedTargetMarker){ map.removeLayer(stagedTargetMarker); stagedTargetMarker=null; }
+  if(stagedTargetFadeTimer){ clearTimeout(stagedTargetFadeTimer); stagedTargetFadeTimer=null; }
   state.stagedReachableHull = null;
   state.lastStagedPlanResult = null;
+  if(resetPlacement){
+    // The explicit "Clear results" button also removes the placement point
+    // itself - back to the tap-to-place state, not just clearing what was
+    // computed from wherever it currently sits.
+    if(stagedMarker && map.hasLayer(stagedMarker)) map.removeLayer(stagedMarker);
+    state.stagedMarkerInitialized = false;
+  }
   document.getElementById('stagedPlanPanel').style.display = 'none';
   document.getElementById('btnReopenStagedPlan').style.display = 'none';
   document.getElementById('btnCenterStaged').style.display = 'none';
@@ -2993,9 +3085,14 @@ let lastKnownGpsOk = null;
 function setGpsStatus(ok, txt){
   const justRestored = ok && lastKnownGpsOk===false;
   lastKnownGpsOk = ok;
-  document.getElementById('gpsDot').className = 'gps-dot ' + (ok?'ok':'bad');
-  document.getElementById('gpsStatusTxt').textContent = ok ? 'GPS live' : 'GPS unavailable';
-  document.getElementById('gpsAcc').textContent = txt;
+  // Three-state colour: red (no GPS), yellow (live but degraded accuracy or
+  // no accuracy figure available), green (live with a good fix) - a single
+  // glance at the dot now tells you more than just on/off.
+  const accM = ok ? parseFloat((txt.match(/±(\d+)/)||[])[1]) : null;
+  const level = !ok ? 'bad' : (accM!=null && accM<=20) ? 'ok' : 'warn';
+  document.getElementById('gpsDot').className = 'gps-dot ' + level;
+  document.getElementById('gpsDot').title = ok ? ('GPS live - '+txt) : 'GPS unavailable';
+  document.getElementById('gpsAcc').textContent = ok ? txt : 'no GPS';
   if(ok){
     // GPS is back: if we're in Manual Mode purely because GPS had dropped,
     // ASK before leaving it automatically - the user may be deliberately
@@ -4284,6 +4381,35 @@ document.getElementById('tgGroundWind').addEventListener('click', function(){
 // Default: particles visible.
 document.getElementById('tgGroundWind').classList.add('active');
 startGroundWindLayer();
+// Header decluttering: move Day/Night, Capture (+ its popover), Settings
+// (+ its popover) and Test Mode into a single "More" dropdown, without
+// touching any of their existing IDs/click handlers/positioning logic -
+// they keep working exactly as before, just live in a different part of
+// the DOM now, which is enough since none of them depend on their old
+// physical position (the two popovers are position:fixed).
+(function relocateHeaderButtonsIntoMoreMenu(){
+  const menu = document.getElementById('headerMoreMenu');
+  const dayNightBtn = document.getElementById('btnDayNight');
+  const captureWrap = document.getElementById('btnCapture').closest('div');
+  const settingsWrap = document.getElementById('btnSettings').closest('div');
+  const testModeBtn = document.getElementById('btnTestMode');
+  [dayNightBtn, captureWrap, settingsWrap, testModeBtn].forEach(el=>{
+    if(el){ el.style.width='100%'; menu.appendChild(el); }
+  });
+  document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    menu.style.display = menu.style.display==='none' ? 'flex' : 'none';
+  });
+  document.addEventListener('click', (e)=>{
+    if(menu.style.display!=='none' && !menu.contains(e.target) && e.target.id!=='btnHeaderMore'){
+      menu.style.display = 'none';
+    }
+  });
+  // Close the "More" menu once any of its items actually opens its own
+  // popover/does its thing, so the small dropdown doesn't linger visually
+  // behind/around the larger Settings or Capture panels.
+  [dayNightBtn, testModeBtn].forEach(el=>{ if(el) el.addEventListener('click', ()=>{ menu.style.display='none'; }); });
+})();
 // Region names is on by default too - mirror the click handler's "on"
 // branch directly rather than relying on a synthetic click (which would
 // toggle it OFF, since the button already starts marked active in HTML).
@@ -4407,6 +4533,41 @@ map.on('click', async (e)=>{
   }
   if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
   if(currentSubMode==='staged'){
+    if(!state.stagedMarkerInitialized){
+      // Placement phase: the marker doesn't exist on the map yet - a tap
+      // only places it if it falls within +/-40 degrees of the reference
+      // trajectory's own initial direction (as seen from the current
+      // position) - anywhere else genuinely wouldn't make sense for this
+      // function, since the marker always snaps onto that trajectory
+      // anyway.
+      const path = state.referenceTrajectoryPath;
+      if(!path || path.length<2) return;
+      const trajRef = path.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || path[path.length-1];
+      const trajBearing = (Math.atan2(
+        (trajRef.lon-state.lon)*Math.cos(state.lat*Math.PI/180), (trajRef.lat-state.lat)
+      )*180/Math.PI+360)%360;
+      const clickBearing = (Math.atan2(
+        (e.latlng.lng-state.lon)*Math.cos(state.lat*Math.PI/180), (e.latlng.lat-state.lat)
+      )*180/Math.PI+360)%360;
+      let diff = Math.abs(clickBearing-trajBearing); if(diff>180) diff = 360-diff;
+      if(diff>40){
+        showMapHint(e.latlng, "click +/- 40° of projected trajectory");
+        return;
+      }
+      let bestIdx=0, bestD=Infinity;
+      for(let i=0;i<path.length;i++){
+        const d = haversine(e.latlng.lat,e.latlng.lng,path[i].lat,path[i].lon);
+        if(d<bestD){ bestD=d; bestIdx=i; }
+      }
+      const snapped = path[bestIdx];
+      stagedMarker.setLatLng([snapped.lat, snapped.lon]);
+      state.stagedMarkerT = snapped.t;
+      state.stagedMarkerInitialized = true;
+      stagedMarker.addTo(map);
+      if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
+      await computeStagedReachableArea();
+      return;
+    }
     // Force a FRESH reachable-area computation right now, rather than
     // trusting whatever the debounced background recompute (400ms after
     // the last drag) happened to leave in state - that could still be
@@ -4417,8 +4578,12 @@ map.on('click', async (e)=>{
     if(!state.stagedReachableHull){ return; }
     // Clicking outside the reachable area isn't a meaningful action - that
     // point genuinely isn't achievable, so there's nothing to search for.
-    if(!pointInPolygon([e.latlng.lng, e.latlng.lat], state.stagedReachableHull)) return;
+    if(!pointInPolygon([e.latlng.lng, e.latlng.lat], state.stagedReachableHull)){
+      showMapHint(e.latlng, "select point within potential landing area");
+      return;
+    }
     if(stagedTargetMarker) map.removeLayer(stagedTargetMarker);
+    if(stagedTargetFadeTimer) clearTimeout(stagedTargetFadeTimer);
     stagedTargetMarker = L.marker([e.latlng.lat,e.latlng.lng], {icon: crossIcon}).addTo(map);
     const result = searchStagedDescentToTarget(e.latlng.lat, e.latlng.lng);
     showStagedDescentPlan(result);
@@ -4430,6 +4595,17 @@ map.on('click', async (e)=>{
   // within the live landing area.
   await planDescentToTarget(e.latlng.lat, e.latlng.lng);
 });
+// A brief, self-dismissing tooltip at a map point - used for the staged-
+// descent placement/target-selection guidance messages, so an invalid tap
+// gives clear feedback instead of just silently doing nothing.
+let mapHintPopup = null, mapHintTimer = null;
+function showMapHint(latlng, text){
+  if(mapHintPopup){ map.closePopup(mapHintPopup); mapHintPopup=null; }
+  clearTimeout(mapHintTimer);
+  mapHintPopup = L.popup({closeButton:false, autoClose:true, className:'map-hint-popup', offset:[0,-4]})
+    .setLatLng(latlng).setContent(text).openOn(map);
+  mapHintTimer = setTimeout(()=>{ if(mapHintPopup){ map.closePopup(mapHintPopup); mapHintPopup=null; } }, 2200);
+}
 function pointInPolygon(pt, poly){
   let inside=false;
   for(let i=0,j=poly.length-1;i<poly.length;j=i++){
@@ -4544,6 +4720,11 @@ async function planDescentToTarget(lat, lon){
   if(!map.hasLayer(plannedCruiseSegmentLayer)) plannedCruiseSegmentLayer.addTo(map);
   plannedDescentInitMarker.setLatLng([initFix.lat, initFix.lon]);
   plannedDescentInitMarker.setOpacity(1);
+  if(plannedCruiseSeg.length>=2){
+    const p1 = plannedCruiseSeg[plannedCruiseSeg.length-2], p2 = plannedCruiseSeg[plannedCruiseSeg.length-1];
+    const bearing = (Math.atan2((p2.lon-p1.lon)*Math.cos(p1.lat*Math.PI/180), p2.lat-p1.lat)*180/Math.PI+360)%360;
+    plannedDescentInitMarker.setIcon(violetTickIcon(bearing));
+  }
   if(!map.hasLayer(plannedDescentInitMarker)) plannedDescentInitMarker.addTo(map);
 
   const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
@@ -5095,7 +5276,10 @@ const EMERGENCY_FIELD_IDS = {
   cfgSmsRecipient2: 'gblp_sms_recipient_2',
   cfgSmsRecipient3: 'gblp_sms_recipient_3',
   cfgSmsRecipient4: 'gblp_sms_recipient_4',
-  cfgSmsRecipient5: 'gblp_sms_recipient_5'
+  cfgSmsRecipient5: 'gblp_sms_recipient_5',
+  cfgEmailJsServiceId: 'gblp_emailjs_service_id',
+  cfgEmailJsTemplateId: 'gblp_emailjs_template_id',
+  cfgEmailJsPublicKey: 'gblp_emailjs_public_key'
 };
 try{
   Object.entries(EMERGENCY_FIELD_IDS).forEach(([id,key])=>{
@@ -5222,11 +5406,37 @@ function sendEmergencySms(){
   window.open(`sms:${recipients.join(',')}?body=${text}`, '_blank');
   logEmergencyEvent('sms');
 }
-function sendEmergencyEmail(){
+async function sendEmergencyEmail(){
   const email = document.getElementById('cfgEmergencyEmail').value;
   const reg = document.getElementById('cfgAircraftReg').value.trim();
   const subject = encodeURIComponent(`${reg || 'Aircraft'} Emergency Position Report`);
-  const body = encodeURIComponent(document.getElementById('emergencyMsgText').value);
+  const messageText = document.getElementById('emergencyMsgText').value;
+  const body = encodeURIComponent(messageText);
+  const serviceId = document.getElementById('cfgEmailJsServiceId').value.trim();
+  const templateId = document.getElementById('cfgEmailJsTemplateId').value.trim();
+  const publicKey = document.getElementById('cfgEmailJsPublicKey').value.trim();
+  const btn = document.getElementById('btnEmergencyEmailSend');
+  if(serviceId && templateId && publicKey && typeof emailjs!=='undefined'){
+    // A genuinely silent background send - no app-switch, no manual "send"
+    // tap - via EmailJS, which is specifically designed to be used with a
+    // public (safe-for-client-side) key from a page with no server of its
+    // own. Falls back to the manual mailto: flow if it fails for any
+    // reason (network, misconfiguration, etc.) rather than leaving the
+    // pilot with no path to actually get the message out.
+    const originalText = btn.textContent;
+    btn.textContent = 'Sending…'; btn.disabled = true;
+    try{
+      await emailjs.send(serviceId, templateId, {message: messageText, subject: `${reg||'Aircraft'} Emergency Position Report`, to_email: email}, {publicKey});
+      btn.textContent = '✓ Sent silently'; 
+      logEmergencyEvent('email-silent');
+      setTimeout(()=>{ btn.textContent=originalText; btn.disabled=false; }, 3000);
+      return;
+    }catch(e){
+      console.error('EmailJS send failed, falling back to mailto:', e);
+      btn.textContent = '⚠ Failed - opening mail app';
+      setTimeout(()=>{ btn.textContent=originalText; btn.disabled=false; }, 3000);
+    }
+  }
   window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   logEmergencyEvent('email');
 }

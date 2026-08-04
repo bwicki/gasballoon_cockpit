@@ -348,7 +348,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="layerToggleGroup" id="layerToggleGroup">
       <div class="ltbtn-group cat-blue">
         <button class="ltbtn active" id="tgGroundWind" title="Wind Animation"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
-        <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral airports + Open-Meteo general stations)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 V5 a2 2 0 0 1 4 0 v9 a4 4 0 1 1 -4 0 Z"/><line x1="14" y1="8" x2="16" y2="8"/><line x1="14" y1="11" x2="16" y2="11"/></svg></button>
+        <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral airports + real MeteoSwiss stations in Switzerland)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 V5 a2 2 0 0 1 4 0 v9 a4 4 0 1 1 -4 0 Z"/><line x1="14" y1="8" x2="16" y2="8"/><line x1="14" y1="11" x2="16" y2="11"/></svg></button>
         <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
         <button class="ltbtn" id="tgRain" title="Precipitation (Open-Meteo forecast grid)"><span class="layer-load-dot" id="dotTgRain"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1-1 6.9"/><path d="M9 20 L8 22 M13 20 L12 22 M17 20 L16 22"/></svg></button>
       </div>
@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.23';
+const APP_VERSION = 'v1.05.24';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2145,7 +2145,7 @@ function metarInfoBoxIcon(icao, parsed, summaryLine){
 // barb, in light/bold colours so it reads clearly against any map
 // background - the same lesson learned from the airport symbols above.
 function skyCoverSvg(coverPct){
-  if(coverPct==null) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8" stroke-dasharray="2,2"/>';
+  if(coverPct==null) return ''; // not measured by this station - nothing to show, rather than a misleading placeholder
   const frac = coverPct/100;
   if(frac<0.12) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/>';
   if(frac>0.9) return '<circle cx="12" cy="12" r="7" fill="#fff" stroke="#fff" stroke-width="1.8"/>';
@@ -2178,6 +2178,15 @@ function weatherStationIcon(tempC, windDir, windKmh, cloudPct){
     className:'', iconSize:[22,32], iconAnchor:[11,16]
   });
 }
+const SWISS_SMN_STATIONS = [
+  ['ABO','Adelboden',46.491703,7.560703],['AEG','Oberägeri',47.133636,8.608206],['AIG','Aigle',46.326647,6.924472],['ALT','Altdorf',46.887069,8.621894],['AND','Andeer',46.610139,9.431981],['ANT','Andermatt',46.630914,8.580553],['ARH','Altenrhein',47.483631,9.56685],['ARO','Arosa',46.792661,9.679014],['ATT','Les Attelas',46.0991,7.26865],['BAN','Bantiger',46.977806,7.528667],['BAS','Basel',47.541142,7.583525],['BEH','Passo del Bernina',46.409158,10.019567],['BER','Bern',46.990744,7.464061],['BEZ','Beznau',47.557256,8.233325],['BIA','Biasca',46.336053,8.978197],['BIE','Bière',46.524908,6.342386],['BIN','Binn',46.367661,8.192306],['BIV','Bivio',46.462494,9.668639],['BIZ','Bischofszell',47.508828,9.266797],['BLA','Blatten',46.422261,7.825914],['BOL','Boltigen',46.623519,7.384206],['BOU','Bouveret',46.393447,6.857006],['BRL','La Brevine',46.983844,6.610297],['BRZ','Brienz',46.740719,8.060864],['BUF','Buffalora',46.648408,10.2672],['BUS','Buchs/Aarau',47.384381,8.07955],['CDF','La Chaux-de-Fonds',47.082947,6.792314],['CDM','Col des Mosses',46.391525,7.098239],['CEV','Cevio',46.320486,8.603161],['CGI','Nyon',46.401053,6.227722],['CHA','Chasseral',47.131761,7.054367],['CHB','Les Charbonnieres',46.67015,6.312428],['CHD','Chateau-dOex',46.479819,7.139656],['CHM','Chaumont',47.049169,6.978825],['CHU','Chur',46.870572,9.530761],['CHZ','Cham',47.188278,8.464642],['CIM','Cimetta',46.200467,8.79165],['CMA','Crap Masegn',46.842275,9.180042],['COM','Comprovasco',46.459517,8.935486],['COV','Piz Corvatsch',46.418039,9.821308],['COY','Courtelary',47.180811,7.090656],['CRM','Cressier',47.047581,7.059147],['DAV','Davos',46.812969,9.843558],['DEM','Delemont',47.351706,7.349567],['DIA','Les Diablerets',46.32675,7.203781],['DIS','Disentis',46.706569,8.853478],['DOL','La Dole',46.424794,6.099453],['EBK','Ebnat-Kappel',47.273389,9.108494],['EGH','Eggishorn',46.426528,8.092728],['EGO','Egolzwil',47.179428,8.004758],['EIN','Einsiedeln',47.133042,8.756556],['ELM','Elm',46.923742,9.175347],['ENG','Engelberg',46.821639,8.410514],['EVI','Evionnaz',46.182953,7.026747],['EVO','Evolene',46.112211,7.508631],['FAH','Fahy',47.423814,6.941194],['FLU','Fluhli',46.889436,8.020336],['FRE','La Fretaz',46.840622,6.576369],['FRU','Frutigen',46.599003,7.657542],['GEN','Monte Generoso',45.927592,9.017875],['GES','Gersau',46.996069,8.523442],['GIH','Giswil',46.849447,8.190225],['GLA','Glarus',47.034586,9.066961],['GOE','Gosgen',47.363147,7.973733],['GOR','Gornergrat',45.983644,7.785944],['GOS','Goschenen',46.692678,8.595364],['GRA','Fribourg/Grangeneuve',46.7714,7.113736],['GRC','Grachen',46.195314,7.836822],['GRE','Grenchen',47.179097,7.415144],['GRH','Grimsel Hospiz',46.571689,8.333256],['GRO','Grono',46.255075,9.163758],['GSB','Grand St-Bernard',45.869092,7.170683],['GUE','Gutsch/Andermatt',46.652475,8.615531],['GUT','Guttingen',47.601733,9.279428],['GVE','Geneve',46.247519,6.127742],['HAI','Salen-Reutenen',47.651242,9.023911],['HLL','Hallau',47.697278,8.470464],['HOE','Hornli',47.370864,8.941644],['ILZ','Ilanz',46.775039,9.215353],['INT','Interlaken',46.672033,7.87045],['JUN','Jungfraujoch',46.547556,7.985444],['KLO','Zurich/Kloten',47.479611,8.535961],['KOP','Koppigen',47.11885,7.605503],['LAC','Lachen',47.179197,8.858686],['LAE','Lagern',47.481933,8.397222],['LAG','Langnau',46.939633,7.806425],['LAT','Bergun/Latsch',46.627275,9.753706],['LEI','Leibstadt',47.597361,8.1882],['LUG','Lugano',46.004217,8.960322],['LUZ','Luzern',47.036439,8.301022],['MAG','Magadino',46.160025,8.933672],['MAH','Mathod',46.736978,6.567983],['MAR','Les Marecottes',46.118903,7.016597],['MAS','Marsens',46.656486,7.069669],['MER','Meiringen',46.732222,8.169247],['MLS','Le Moleson',46.546197,7.017753],['MOA','Mosen',47.243847,8.232831],['MOB','Montagnier',46.071019,7.225272],['MOE','Mohlin',47.572197,7.877911],['MRP','Monte Rosa-Plattje',45.956628,7.814575]
+];
+// Real, named, official Swiss automatic weather stations (MeteoSwiss SwissMetNet,
+// via api.existenz.ch - confirmed CORS-open, no key needed) - NOT the fabricated
+// grid-point approach used before, which showed misleading fake "stations" at
+// arbitrary coordinates. Only covers Switzerland; outside it, no general
+// stations are shown (still no verified source for other countries).
+
 const metarLayer = L.layerGroup();
 let metarActive = false;
 let metarFetchTimer = null;
@@ -2242,29 +2251,21 @@ async function fetchMetarStations(force){
       .sort((x,y)=>x.dist-y.dist)
       .slice(0, 15); // keep it modest - each one is its own request, and the anonymous quota is limited
 
-    // General (non-airport) weather stations: MetarCentral only covers
-    // airports, so this uses Open-Meteo's current-conditions data (already
-    // used elsewhere in this app, confirmed CORS-open, no key needed) at a
-    // small grid of points across the current view instead - blended from
-    // real station/radar/satellite observations, even if not literally
-    // "the nearest physical station" the way an airport METAR is.
-    const WX_GRID_N = 3;
-    const gridPoints = [];
-    for(let j=0;j<WX_GRID_N;j++){
-      for(let i=0;i<WX_GRID_N;i++){
-        gridPoints.push({
-          lat: b.getSouth() + (b.getNorth()-b.getSouth())*(j+0.5)/WX_GRID_N,
-          lon: b.getWest() + (b.getEast()-b.getWest())*(i+0.5)/WX_GRID_N
-        });
-      }
-    }
-    const latStr = gridPoints.map(p=>p.lat.toFixed(3)).join(',');
-    const lonStr = gridPoints.map(p=>p.lon.toFixed(3)).join(',');
-    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&current=temperature_2m,wind_speed_10m,wind_direction_10m,cloud_cover&timezone=UTC`;
+    // Real, named Swiss weather stations (MeteoSwiss SwissMetNet, via
+    // api.existenz.ch - confirmed CORS-open) - replaces the earlier grid-
+    // point approach, which fabricated arbitrary coordinates and looked
+    // like real stations without being any. Switzerland only for now.
+    const nearbyStations = SWISS_SMN_STATIONS
+      .filter(s=>b.contains([s[2],s[3]]))
+      .map(s=>({code:s[0], name:s[1], lat:s[2], lon:s[3], dist:haversine(center.lat,center.lng,s[2],s[3])}))
+      .sort((x,y)=>x.dist-y.dist)
+      .slice(0, 20);
+    const stationCodes = nearbyStations.map(s=>s.code).join(',');
+    const wxUrl = stationCodes ? `https://api.existenz.ch/apiv1/smn/latest?locations=${stationCodes}&parameters=dd,ff,tt&app=gb.landing.planner&version=${APP_VERSION}` : null;
 
     const [metarResults, wxResp] = await Promise.all([
       Promise.allSettled(nearby.map(a=>fetchSingleMetar(a.icao))),
-      fetch(wxUrl).then(r=>r.json()).catch(e=>{ console.error('General weather stations fetch failed:', e); return null; })
+      wxUrl ? fetch(wxUrl).then(r=>r.json()).catch(e=>{ console.error('Swiss weather stations fetch failed:', e); return null; }) : Promise.resolve(null)
     ]);
     if(myGeneration !== metarFetchGeneration) return;
     metarLayer.clearLayers();
@@ -2294,24 +2295,51 @@ async function fetchMetarStations(force){
 
     let wxShown = 0;
     if(wxResp){
-      const wxList = Array.isArray(wxResp) ? wxResp : [wxResp];
-      wxList.forEach((stationData, idx)=>{
-        const cur = stationData && stationData.current;
-        if(!cur) return;
-        const pt = gridPoints[idx];
-        // Skip a grid point if it landed right on/very near an airport
-        // already shown above, to avoid two near-duplicate symbols stacked
-        // on each other.
-        const tooClose = nearby.some(a=>haversine(pt.lat,pt.lon,a.lat,a.lon)<8000);
+      console.log('Swiss weather stations: raw response (for format verification):', JSON.stringify(wxResp).slice(0,800));
+      // The exact response shape isn't documented publicly in detail, so
+      // this handles a few plausible layouts defensively rather than
+      // assuming one - an object keyed by station code, an array of
+      // per-station records, or an array of flat per-reading records.
+      const byCode = {};
+      const addReading = (code, paramCode, value)=>{
+        if(!byCode[code]) byCode[code] = {};
+        byCode[code][paramCode] = value;
+      };
+      if(Array.isArray(wxResp)){
+        wxResp.forEach(rec=>{
+          const code = rec.location || rec.station || rec.code;
+          if(!code) return;
+          if(rec.parameter && rec.value!=null){ addReading(code, rec.parameter, parseFloat(rec.value)); }
+          else if(rec.values){ Object.entries(rec.values).forEach(([k,v])=>addReading(code, k, parseFloat(v&&v.value!=null?v.value:v))); }
+          else { ['dd','ff','tt'].forEach(k=>{ if(rec[k]!=null) addReading(code, k, parseFloat(rec[k])); }); }
+        });
+      } else if(typeof wxResp==='object'){
+        Object.entries(wxResp).forEach(([code, rec])=>{
+          if(!rec) return;
+          const vals = rec.values || rec;
+          ['dd','ff','tt'].forEach(k=>{
+            const v = vals[k];
+            if(v==null) return;
+            addReading(code, k, parseFloat(typeof v==='object' ? v.value : v));
+          });
+        });
+      }
+      nearbyStations.forEach(s=>{
+        const vals = byCode[s.code];
+        if(!vals || (vals.tt==null && vals.dd==null)) return; // no current reading for this station
+        // Skip a station if it lands right on/very near an airport already
+        // shown above, to avoid two near-duplicate symbols stacked on
+        // each other.
+        const tooClose = nearby.some(a=>haversine(s.lat,s.lon,a.lat,a.lon)<8000);
         if(tooClose) return;
         wxShown++;
-        L.marker([pt.lat, pt.lon], {icon: weatherStationIcon(cur.temperature_2m, cur.wind_direction_10m, cur.wind_speed_10m, cur.cloud_cover), pane:'metarPane'})
-          .bindTooltip(`General weather (model-derived)<br>${cur.temperature_2m!=null?cur.temperature_2m+'°C':''} · ${cur.wind_speed_10m!=null?Math.round(cur.wind_speed_10m)+' km/h':''} ${cur.wind_direction_10m!=null?'from '+cur.wind_direction_10m+'°':''}<br>Cloud cover: ${cur.cloud_cover!=null?cur.cloud_cover+'%':'—'}`, {sticky:true})
+        L.marker([s.lat, s.lon], {icon: weatherStationIcon(vals.tt, vals.dd, vals.ff, null), pane:'metarPane'})
+          .bindTooltip(`<b>${s.name}</b> (${s.code})<br>MeteoSwiss SwissMetNet - real station<br>${vals.tt!=null?vals.tt+'°C':''} · ${vals.ff!=null?Math.round(vals.ff)+' km/h':''} ${vals.dd!=null?'from '+Math.round(vals.dd)+'°':''}`, {sticky:true})
           .addTo(metarLayer);
       });
     }
 
-    console.log(`METAR: ${shownCount} airport station(s) shown (${failedCount} of ${nearby.length} failed). General weather: ${wxShown} grid point(s) shown. Layer on map: ${map.hasLayer(metarLayer)}.`);
+    console.log(`METAR: ${shownCount} airport station(s) shown (${failedCount} of ${nearby.length} failed). Swiss weather stations: ${wxShown} shown (of ${nearbyStations.length} nearby). Layer on map: ${map.hasLayer(metarLayer)}.`);
     if(metarActive) setLayerLoadDot('tgMetar','ready');
     metarFailCount = 0;
   }catch(e){

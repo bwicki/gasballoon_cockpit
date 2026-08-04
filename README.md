@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.23** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.24** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -188,6 +188,8 @@ METAR markers redesigned again: the station-model graphic is gone, replaced with
 Aircraft FL/rate readout box switched to a light background with a dark grey border, clearly distinct from METAR's dark info boxes.
 
 **General weather stations added to the same layer as METAR**, closing the gap - MetarCentral only covers airports, so this uses Open-Meteo's current-conditions data (already used elsewhere in this app, confirmed CORS-open, no key needed) at a small 3×3 grid of points across the current view. Each shows the international station-model symbol (wind barb + sky-cover circle, in bold white for contrast against the map) plus temperature, and a hover tooltip with the full reading. Grid points that would land right on an already-shown airport are skipped to avoid duplicate symbols stacked on each other. This is model-derived (blended from real station/radar/satellite data, not read from one specific physical station), which is disclosed in the tooltip.
+
+**Correction from the last version: the "general weather stations" were fabricated grid points, not real stations** - fixed by switching to actual, named MeteoSwiss SwissMetNet stations (100 of them, hardcoded with real codes/names/coordinates) via api.existenz.ch, an unofficial but CORS-confirmed wrapper around MeteoSwiss's own official open data. Shows real wind (direction+speed) and temperature per station, with the station's real name in the tooltip. Switzerland only for now - no verified source yet for other countries. The exact response format from this API wasn't confirmed ahead of time, so the parsing is defensive and logs the raw response for verification; also added to `cors_test.html` for the same reason.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

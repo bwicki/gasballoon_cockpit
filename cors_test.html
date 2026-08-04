@@ -44,10 +44,13 @@ const TESTS = [
   { name: 'MetarCentral (KJFK)', url: 'https://metarcentral.com/api/weather/KJFK' },
   { name: 'MetarCentral (EDDF - Frankfurt, näher an deiner Region)', url: 'https://metarcentral.com/api/weather/EDDF' },
   { name: 'MetarCentral (LSZH - Zürich)', url: 'https://metarcentral.com/api/weather/LSZH' },
+  { name: '★ MetarCentral BULK-Endpunkt OHNE Key (das nutzt die App tatsächlich, nicht die Einzelabfrage oben!)', url: 'https://metarcentral.com/api/airports/metar-status?region=europe&limit=10' },
+  { name: '★ MetarCentral BULK-Endpunkt MIT deinem Key (so wie in Settings hinterlegt)', url: 'https://metarcentral.com/api/airports/metar-status?region=europe&limit=500&api_key=mc_a454ffc3755e61b9e082b599903b6c00067f013a81295f22' },
   { name: 'CheckWX', url: 'https://api.checkwx.com/metar/KJFK' },
   { name: 'aviationweather.gov (zum Vergleich - bekannt CORS-blockiert)', url: 'https://aviationweather.gov/api/data/metar?ids=KJFK&format=json' },
   { name: 'SondeHub (zum Vergleich - bekannt CORS-offen, funktioniert bereits in GBLP)', url: 'https://api.v2.sondehub.org/sites' },
-  { name: 'adsb.fi - Flugverkehr im Umkreis (100 NM um Zürich, für den geplanten Luftverkehrs-Layer)', url: 'https://opendata.adsb.fi/api/v3/lat/47.3769/lon/8.5417/dist/100' }
+  { name: 'adsb.fi - Flugverkehr im Umkreis (100 NM um Zürich, für den geplanten Luftverkehrs-Layer)', url: 'https://opendata.adsb.fi/api/v3/lat/47.3769/lon/8.5417/dist/100' },
+  { name: 'ADSBExchange via RapidAPI (echter Key, mit Custom-Headern - Risiko: CORS-Preflight wie zuvor bei MetarCentral)', url: 'https://adsbexchange-com1.p.rapidapi.com/v2/lat/47.3769/lon/8.5417/dist/100/', headers: {'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com','X-RapidAPI-Key':'7f65c7997dmshfb6965d901c11bp166af9jsn724691adb0b5'} }
 ];
 
 function render(){
@@ -71,7 +74,7 @@ async function runTest(i){
   statusEl.className = 'status pending';
   try{
     const start = performance.now();
-    const r = await fetch(t.url, { method: 'GET' });
+    const r = await fetch(t.url, { method: 'GET', headers: t.headers || {} });
     const ms = Math.round(performance.now()-start);
     const text = await r.text();
     statusEl.textContent = `✓ CORS OK - HTTP ${r.status}, ${ms}ms`;

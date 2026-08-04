@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.29** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.30** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -204,6 +204,14 @@ Airspace icon finalised: crosshair/target circle (approved from the reference im
 **Real bug found and fixed, confirmed via your live test: Swiss weather station parsing was reading the wrong response shape.** The actual response is `{"source":..., "payload":[{"loc":"BER","par":"tt","val":33.7}, ...]}` - a flat array of one reading per entry. The code checked `Array.isArray(wxResp)` first (false, since the top-level value is an object with a `payload` key, not an array itself) and fell through to a branch that treated the response's own top-level keys (`source`, `apiurl`, `payload` itself) as if they were station codes - producing nothing useful. Now reads `wxResp.payload` directly, matching the confirmed format exactly.
 
 Also confirmed via the same test: MetarCentral's bulk endpoint is still CORS-blocked (as before) - unrelated to the app, which already switched to per-airport lookups a few versions back; RapidAPI/ADSBExchange and all the Overpass/Open-Meteo/Nominatim/SondeHub endpoints are all still working correctly.
+
+Swiss weather stations redesigned: much bolder circular badge with a wind-direction arrow coloured on the exact same scale as the ground-wind particle layer, plus a full-message info box (station code, wind, temperature) matching METAR's approach - temperature de-prioritised to secondary/small text rather than the main readout.
+
+Added 429 (rate-limit) detection for MetarCentral's per-airport requests, with a specific console warning - after many rounds of testing today, the anonymous daily quota may simply be exhausted, which would explain airports temporarily not showing while Swiss stations (a different, unrelated API) do.
+
+**Rain layer rebuilt on RainViewer's free public radar tile API** instead of the coarse Open-Meteo grid-of-rectangles approximation - real radar imagery, no API key needed, tile-based (so no CORS risk the way a `fetch()`-based API would carry). Refreshes roughly every 10 minutes, matching how often RainViewer publishes new frames.
+
+FLARM/FANET (glider/paraglider) data is confirmed NOT integrated into Air Traffic - this was explicitly deferred earlier since OGN's live-data API isn't clearly documented publicly, and building on unverified assumptions was the same trap that caused several of the METAR/weather-station issues above.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

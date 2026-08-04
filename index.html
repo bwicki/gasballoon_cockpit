@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.29';
+const APP_VERSION = 'v1.05.30';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2140,42 +2140,33 @@ function metarInfoBoxIcon(icao, parsed, summaryLine){
     className:'', iconSize:null, iconAnchor:[-6,10]
   });
 }
-// International station-model symbol for the general (non-airport)
-// weather stations: a sky-cover circle (per WMO convention) plus a wind
-// barb, in light/bold colours so it reads clearly against any map
-// background - the same lesson learned from the airport symbols above.
-function skyCoverSvg(coverPct){
-  if(coverPct==null) return ''; // not measured by this station - nothing to show, rather than a misleading placeholder
-  const frac = coverPct/100;
-  if(frac<0.12) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/>';
-  if(frac>0.9) return '<circle cx="12" cy="12" r="7" fill="#fff" stroke="#fff" stroke-width="1.8"/>';
-  if(frac<0.4) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 5 A7 7 0 0 1 19 12 L12 12 Z" fill="#fff"/>';
-  if(frac<0.65) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 5 A7 7 0 0 1 12 19 Z" fill="#fff"/>';
-  return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 5 A7 7 0 1 1 6.4 16.2 Z" fill="#fff"/>';
-}
-function windBarbSvg(dir, kmh){
-  if(dir==null || kmh==null) return '';
-  const kt = kmh/1.852;
-  if(kt<2) return '<circle cx="12" cy="12" r="1.6" fill="#fff"/>';
-  const ticks = Math.min(5, Math.max(1, Math.round(kt/10)));
-  let ticksHtml = '';
-  for(let i=0;i<ticks;i++){
-    const y = 1 + i*2.8;
-    ticksHtml += `<line x1="12" y1="${y}" x2="18" y2="${y-2.2}" stroke="#fff" stroke-width="1.6"/>`;
-  }
-  return `<g transform="rotate(${dir},12,12)"><line x1="12" y1="1" x2="12" y2="12" stroke="#fff" stroke-width="1.8"/>${ticksHtml}</g>`;
-}
-function weatherStationIcon(tempC, windDir, windKmh, cloudPct){
+// Bold circular badge with a wind-direction arrow, coloured on the same
+// scale as the ground-wind particle layer (groundWindSpeedColor, defined
+// later in the script - safe to call here since function declarations are
+// hoisted) - deliberately high-contrast so it reads clearly against any
+// map background, matching the same lesson learned from the airport
+// symbols. The arrow points where the wind is blowing TO (dir+180), the
+// same convention used everywhere else in this app.
+function weatherStationBadgeIcon(windDir, windKmh){
+  const hasWind = windDir!=null && windKmh!=null;
+  const color = hasWind ? groundWindSpeedColor(windKmh/3.6) : '#8b98a5';
+  const arrow = hasWind
+    ? `<g transform="rotate(${(windDir+180)%360},12,12)"><path d="M12 3.5 L12 18.5 M6.8 9.2 L12 3.5 L17.2 9.2" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`
+    : '<circle cx="12" cy="12" r="2" fill="#fff"/>';
   return L.divIcon({
-    html:`<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));">
-      <svg width="22" height="22" viewBox="0 0 24 24" style="overflow:visible;">
-        ${windBarbSvg(windDir, windKmh)}
-        ${skyCoverSvg(cloudPct)}
-        <circle cx="12" cy="12" r="9" fill="none" stroke="#3fa9ff" stroke-width="1.6"/>
-      </svg>
-      <div style="background:rgba(20,26,33,0.85);border-radius:3px;padding:0 4px;font-size:9px;font-weight:700;color:#fff;margin-top:1px;">${tempC!=null?Math.round(tempC)+'°':'—'}</div>
+    html:`<svg width="28" height="28" viewBox="0 0 24 24" style="overflow:visible;filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));"><circle cx="12" cy="12" r="10.5" fill="${color}" stroke="#fff" stroke-width="2.2"/>${arrow}</svg>`,
+    className:'', iconSize:[28,28], iconAnchor:[14,14]
+  });
+}
+function weatherStationInfoBoxIcon(name, windDir, windKmh, tempC){
+  const windText = (windDir!=null && windKmh!=null) ? `${Math.round(windDir).toString().padStart(3,'0')}° ${Math.round(windKmh)}km/h` : 'no wind data';
+  const tempText = tempC!=null ? `${Math.round(tempC)}°C` : '';
+  return L.divIcon({
+    html:`<div style="background:rgba(30,35,41,0.9);border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 6px;font-family:sans-serif;font-size:10px;color:#e6edf3;line-height:1.35;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4);">
+      <div style="font-weight:700;">${name} ${windText}</div>
+      <div style="color:#b8c2cc;">${tempText}</div>
     </div>`,
-    className:'', iconSize:[22,32], iconAnchor:[11,16]
+    className:'', iconSize:null, iconAnchor:[-6,10]
   });
 }
 const SWISS_SMN_STATIONS = [
@@ -2236,7 +2227,11 @@ const EUROPE_AIRPORTS = [
 ];
 async function fetchSingleMetar(icao){
   const r = await fetch(`https://metarcentral.com/api/weather/${icao}`);
-  if(!r.ok) throw new Error('HTTP '+r.status);
+  if(!r.ok){
+    const err = new Error('HTTP '+r.status);
+    err.httpStatus = r.status;
+    throw err;
+  }
   return r.json();
 }
 async function fetchMetarStations(force){
@@ -2270,10 +2265,15 @@ async function fetchMetarStations(force){
     if(myGeneration !== metarFetchGeneration) return;
     metarLayer.clearLayers();
 
-    let shownCount = 0, failedCount = 0;
+    let shownCount = 0, failedCount = 0, rateLimitedCount = 0;
     metarResults.forEach((res,i)=>{
       const a = nearby[i];
-      if(res.status!=='fulfilled'){ failedCount++; console.warn(`METAR: request for ${a.icao} failed:`, res.reason); return; }
+      if(res.status!=='fulfilled'){
+        failedCount++;
+        if(res.reason && res.reason.httpStatus===429) rateLimitedCount++;
+        console.warn(`METAR: request for ${a.icao} failed:`, res.reason);
+        return;
+      }
       const j = res.value;
       if(shownCount===0) console.log('METAR: first successful raw response (for field-name verification):', JSON.stringify(j));
       const category = j.flight_rules || (j.metar && j.metar.flight_rules) || (j.airport && j.airport.flight_rules) || 'UNKN';
@@ -2336,14 +2336,21 @@ async function fetchMetarStations(force){
         const tooClose = nearby.some(a=>haversine(s.lat,s.lon,a.lat,a.lon)<8000);
         if(tooClose) return;
         wxShown++;
-        L.marker([s.lat, s.lon], {icon: weatherStationIcon(vals.tt, vals.dd, vals.ff, null), pane:'metarPane'})
-          .bindTooltip(`<b>${s.name}</b> (${s.code})<br>MeteoSwiss SwissMetNet - real station<br>${vals.tt!=null?vals.tt+'°C':''} · ${vals.ff!=null?Math.round(vals.ff)+' km/h':''} ${vals.dd!=null?'from '+Math.round(vals.dd)+'°':''}`, {sticky:true})
+        const fullTooltip = `<b>${s.name}</b> (${s.code})<br>MeteoSwiss SwissMetNet - real station<br>${vals.dd!=null&&vals.ff!=null?Math.round(vals.dd)+'° '+Math.round(vals.ff)+' km/h':'no wind data'}${vals.tt!=null?' · '+vals.tt+'°C':''}`;
+        L.marker([s.lat, s.lon], {icon: weatherStationBadgeIcon(vals.dd, vals.ff), pane:'metarPane'})
+          .bindTooltip(fullTooltip, {sticky:true})
+          .addTo(metarLayer);
+        L.marker([s.lat, s.lon], {icon: weatherStationInfoBoxIcon(s.code, vals.dd, vals.ff, vals.tt), pane:'metarPane', interactive:true})
+          .bindTooltip(fullTooltip, {sticky:true})
           .addTo(metarLayer);
       });
     }
 
     const totalShown = shownCount + wxShown;
-    console.log(`METAR: ${shownCount} airport station(s) shown (${failedCount} of ${nearby.length} failed). Swiss weather stations: ${wxShown} shown (of ${nearbyStations.length} nearby). Layer on map: ${map.hasLayer(metarLayer)}.`);
+    console.log(`METAR: ${shownCount} airport station(s) shown (${failedCount} of ${nearby.length} failed, ${rateLimitedCount} rate-limited [429]). Swiss weather stations: ${wxShown} shown (of ${nearbyStations.length} nearby). Layer on map: ${map.hasLayer(metarLayer)}.`);
+    if(rateLimitedCount>0){
+      console.warn(`METAR: ${rateLimitedCount} of ${nearby.length} airport requests were rate-limited (HTTP 429) by MetarCentral's anonymous quota - likely from repeated testing today. This isn't a bug; it should recover once the quota resets.`);
+    }
     if(totalShown===0){
       // The fetches themselves didn't throw, but nothing ended up on the
       // map - showing green here would be actively misleading (it looked
@@ -2505,27 +2512,18 @@ async function fetchAirTraffic(force){
   }
 }
 
-// ---- precipitation grid (Open-Meteo forecast, "RainViewer-style" overlay
-// built from our already-integrated data source rather than a new API) ----
-const RAIN_COLOR_STEPS = [
-  {min:0.5, color:'#3fa9ff', op:0.3},
-  {min:2,   color:'#3f6fff', op:0.4},
-  {min:6,   color:'#a63fff', op:0.5},
-  {min:15,  color:'#ff3f6f', op:0.6}
-];
-function rainColorFor(mmh){
-  let chosen = null;
-  for(const s of RAIN_COLOR_STEPS){ if(mmh>=s.min) chosen = s; }
-  return chosen;
-}
-const RAIN_GRID_N = 6;
-const rainLayer = L.layerGroup();
+// ---- precipitation radar (RainViewer's free public tile API - real radar
+// imagery, not an approximation built from a coarse forecast grid) ----
+// RainViewer's tiles are pre-rendered up to zoom 7; maxNativeZoom lets
+// Leaflet keep using those tiles (scaled up) at closer zoom levels instead
+// of requesting non-existent higher-zoom tiles.
+const rainLayer = L.tileLayer('', {opacity:0.55, maxNativeZoom:7, pane:'overlayTilesPane', errorTileUrl:''});
 let rainActive = false;
 let rainFetchTimer = null;
 document.getElementById('tgRain').addEventListener('click', function(){
   rainActive = this.classList.toggle('active');
   if(rainActive){
-    setLayerLoadDot('tgRain', rainLayer.getLayers().length ? 'ready' : 'loading');
+    setLayerLoadDot('tgRain', rainLayer._url ? 'ready' : 'loading');
     rainLayer.addTo(map);
     scheduleRainFetch();
   } else {
@@ -2538,56 +2536,36 @@ function scheduleRainFetch(){
   clearTimeout(rainFetchTimer);
   rainFetchTimer = setTimeout(fetchRainGrid, 600);
 }
-map.on('moveend zoomend', ()=>{ if(rainActive) scheduleRainFetch(); });
+// Refresh the radar frame periodically (RainViewer publishes a new one
+// roughly every 10 minutes) - no need to re-fetch on every pan/zoom the
+// way the old per-point grid did, since this is now a normal map tile
+// layer that handles panning/zooming on its own.
 let rainFetchGeneration = 0;
 async function fetchRainGrid(force){
   if(!rainActive && !force) return;
   const myGeneration = ++rainFetchGeneration;
   try{
-    const b = map.getBounds();
-    const points = [];
-    for(let j=0;j<RAIN_GRID_N;j++){
-      for(let i=0;i<RAIN_GRID_N;i++){
-        points.push({
-          lat: b.getSouth() + (b.getNorth()-b.getSouth())*j/(RAIN_GRID_N-1),
-          lon: b.getWest() + (b.getEast()-b.getWest())*i/(RAIN_GRID_N-1)
-        });
-      }
-    }
-    const center = map.getCenter();
-    const modelSel = document.getElementById('wxModelSelect').value;
-    const resolvedModel = modelSel==='auto' ? pickAutoModel(center.lat, center.lng) : modelSel;
-    const latStr = points.map(p=>p.lat.toFixed(3)).join(',');
-    const lonStr = points.map(p=>p.lon.toFixed(3)).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&minutely_15=precipitation&models=${resolvedModel}&forecast_minutely_15=4&timezone=UTC`;
-    const r = await fetch(url);
+    const r = await fetch('https://api.rainviewer.com/public/weather-maps.json');
     const j = await r.json();
-    // If a NEWER fetch has started since this one began (e.g. the user kept
-    // panning while this was still in flight), discard this result rather
-    // than drawing it - applying an out-of-order response for a now-stale
-    // map position/bounds was exactly what produced tile-like rectangles
-    // that briefly appeared in the wrong place and then got overwritten.
     if(myGeneration !== rainFetchGeneration) return;
-    const results = Array.isArray(j) ? j : [j];
-    rainLayer.clearLayers();
-    const cellLatH = (b.getNorth()-b.getSouth())/(RAIN_GRID_N-1)/2;
-    const cellLonH = (b.getEast()-b.getWest())/(RAIN_GRID_N-1)/2;
-    points.forEach((pt,idx)=>{
-      const m15 = results[idx] && results[idx].minutely_15;
-      const mm15 = m15 && m15.precipitation ? m15.precipitation[0] : null;
-      if(mm15==null) return;
-      const mmh = mm15*4; // 15-minute total -> mm/h equivalent rate
-      const step = rainColorFor(mmh);
-      if(!step) return;
-      const rect = L.rectangle([
-        [pt.lat-cellLatH, pt.lon-cellLonH],
-        [pt.lat+cellLatH, pt.lon+cellLonH]
-      ], {stroke:false, fillColor:step.color, fillOpacity:step.op, interactive:false});
-      rect.addTo(rainLayer);
-    });
+    const frames = j.radar && j.radar.past;
+    if(!frames || !frames.length) throw new Error('No radar frames in RainViewer response');
+    const latest = frames[frames.length-1];
+    console.log('Rain radar: using frame from', new Date(latest.time*1000).toISOString());
+    // Colour scheme 2 (universal blue), smooth=1, snow shown separately=1 -
+    // matches RainViewer's own documented tile URL pattern.
+    const url = `${j.host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`;
+    rainLayer.setUrl(url);
     if(rainActive) setLayerLoadDot('tgRain','ready');
+    clearTimeout(rainFetchTimer);
+    rainFetchTimer = setTimeout(()=>{ if(rainActive) fetchRainGrid(); }, 10*60*1000); // refresh roughly as often as RainViewer publishes new frames
   }catch(e){
-    if(rainActive) setLayerLoadDot('tgRain','loading');
+    console.error('Rain radar fetch failed:', e);
+    if(rainActive){
+      setLayerLoadDot('tgRain','loading');
+      clearTimeout(rainFetchTimer);
+      rainFetchTimer = setTimeout(fetchRainGrid, 8000);
+    }
   }
 }
 

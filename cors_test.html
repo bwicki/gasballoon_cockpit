@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.05.15</title>
+<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.05.17</title>
 <style>
   body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
   h1{font-size:18px;}
@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.05.15</span></h1>
+<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.05.17</span></h1>
 <p class="intro">
 Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie GBLP sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
@@ -41,16 +41,16 @@ if(location.protocol==='file:'){
 
 <script>
 const TESTS = [
-  { name: 'MetarCentral (KJFK)', url: 'https://metarcentral.com/api/weather/KJFK' },
-  { name: 'MetarCentral (EDDF - Frankfurt, näher an deiner Region)', url: 'https://metarcentral.com/api/weather/EDDF' },
-  { name: 'MetarCentral (LSZH - Zürich)', url: 'https://metarcentral.com/api/weather/LSZH' },
-  { name: '★ MetarCentral BULK-Endpunkt OHNE Key (das nutzt die App tatsächlich, nicht die Einzelabfrage oben!)', url: 'https://metarcentral.com/api/airports/metar-status?region=europe&limit=10' },
-  { name: '★ MetarCentral BULK-Endpunkt MIT deinem Key (so wie in Settings hinterlegt)', url: 'https://metarcentral.com/api/airports/metar-status?region=europe&limit=500&api_key=mc_a454ffc3755e61b9e082b599903b6c00067f013a81295f22' },
-  { name: 'CheckWX', url: 'https://api.checkwx.com/metar/KJFK' },
-  { name: 'aviationweather.gov (zum Vergleich - bekannt CORS-blockiert)', url: 'https://aviationweather.gov/api/data/metar?ids=KJFK&format=json' },
-  { name: 'SondeHub (zum Vergleich - bekannt CORS-offen, funktioniert bereits in GBLP)', url: 'https://api.v2.sondehub.org/sites' },
-  { name: 'adsb.fi - Flugverkehr im Umkreis (100 NM um Zürich, für den geplanten Luftverkehrs-Layer)', url: 'https://opendata.adsb.fi/api/v3/lat/47.3769/lon/8.5417/dist/100' },
-  { name: 'ADSBExchange via RapidAPI (echter Key, mit Custom-Headern - Risiko: CORS-Preflight wie zuvor bei MetarCentral)', url: 'https://adsbexchange-com1.p.rapidapi.com/v2/lat/47.3769/lon/8.5417/dist/100/', headers: {'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com','X-RapidAPI-Key':'7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5'} }
+  { name: 'Overpass Mirror 1 (overpass-api.de) - für Naturschutzgebiete/Bodenbedeckung/Regionsnamen/Strassen', url: 'https://overpass-api.de/api/interpreter', method:'POST', body:'data='+encodeURIComponent('[out:json][timeout:20];way["leisure"="nature_reserve"](47.3,8.4,47.5,8.6);out geom;') },
+  { name: 'Overpass Mirror 2 (overpass.kumi.systems) - Fallback-Spiegel', url: 'https://overpass.kumi.systems/api/interpreter', method:'POST', body:'data='+encodeURIComponent('[out:json][timeout:20];way["leisure"="nature_reserve"](47.3,8.4,47.5,8.6);out geom;') },
+  { name: 'Overpass Mirror 3 (lz4.overpass-api.de) - Fallback-Spiegel', url: 'https://lz4.overpass-api.de/api/interpreter', method:'POST', body:'data='+encodeURIComponent('[out:json][timeout:20];way["leisure"="nature_reserve"](47.3,8.4,47.5,8.6);out geom;') },
+  { name: 'SondeHub - aktive Sonden-Liste', url: 'https://api.v2.sondehub.org/sondes' },
+  { name: 'MetarCentral BULK-Endpunkt OHNE Key (das nutzt die App tatsächlich für den METAR-Layer)', url: 'https://metarcentral.com/api/airports/metar-status?region=europe&limit=10' },
+  { name: 'MetarCentral BULK-Endpunkt MIT deinem Key (so wie in Settings hinterlegt)', url: 'https://metarcentral.com/api/airports/metar-status?region=europe&limit=500&api_key=mc_a454ffc3755e61b9e082b599903b6c00067f013a81295f22' },
+  { name: 'ADSBExchange via RapidAPI (korrigierter Key, für den Air-Traffic-Layer)', url: 'https://adsbexchange-com1.p.rapidapi.com/v2/lat/47.3769/lon/8.5417/dist/100/', headers: {'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com','X-RapidAPI-Key':'7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5'} },
+  { name: 'Open-Meteo - Windprognose (wie für den Windlayer/die Berechnungen genutzt)', url: 'https://api.open-meteo.com/v1/forecast?latitude=47.3769&longitude=8.5417&hourly=wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa&models=icon_eu&forecast_hours=3&timezone=UTC' },
+  { name: 'Open-Meteo - Höhenabfrage (Geländehöhe)', url: 'https://api.open-meteo.com/v1/elevation?latitude=47.3769&longitude=8.5417' },
+  { name: 'Nominatim - Reverse-Geocoding (Ortsnamen für Landeplatz)', url: 'https://nominatim.openstreetmap.org/reverse?lat=47.3769&lon=8.5417&zoom=12&format=json' }
 ];
 
 function render(){
@@ -58,7 +58,7 @@ function render(){
   el.innerHTML = TESTS.map((t,i)=>`
     <div class="test" id="test${i}">
       <h3>${t.name}</h3>
-      <div class="url">${t.url}</div>
+      <div class="url">${t.method||'GET'} ${t.url}</div>
       <div class="status pending" id="status${i}">Noch nicht getestet</div>
       <div class="detail" id="detail${i}" style="display:none;"></div>
     </div>
@@ -74,7 +74,7 @@ async function runTest(i){
   statusEl.className = 'status pending';
   try{
     const start = performance.now();
-    const r = await fetch(t.url, { method: 'GET', headers: t.headers || {} });
+    const r = await fetch(t.url, { method: t.method || 'GET', headers: t.headers || {}, body: t.body });
     const ms = Math.round(performance.now()-start);
     const text = await r.text();
     statusEl.textContent = `✓ CORS OK - HTTP ${r.status}, ${ms}ms`;

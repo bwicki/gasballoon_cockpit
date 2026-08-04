@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.22** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.23** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -184,6 +184,10 @@ Air traffic markers overhauled: the grey halo circle is gone, the symbol itself 
 METAR/weather stations rebuilt as an actual station-model symbol: a simplified wind barb (direction + rough speed), a sky-cover circle following the international clear/few/scattered/broken/overcast convention, and the temperature - all parsed directly out of the raw METAR text, since the API doesn't return these as separate fields. The flight-category colour ring is still there around the symbol. Tapping a station now opens a proper popup box with the colour-coded category and the full raw METAR text, instead of only a hover tooltip.
 
 METAR markers redesigned again: the station-model graphic is gone, replaced with the international "airport" pictogram (a bold plane silhouette in a filled, white-bordered, flight-category-coloured circle - deliberately high-contrast so it reads clearly against any map background) plus an adjacent info box showing "ICAO wind" on one line and a CAVOK/visibility+cloud summary on the second. Hovering either shows the full raw METAR. TAF is NOT included - MetarCentral's own official API documentation (fetched directly) lists only four endpoints, none of them TAF, despite mentioning TAF as one of their underlying data sources elsewhere on the site.
+
+Aircraft FL/rate readout box switched to a light background with a dark grey border, clearly distinct from METAR's dark info boxes.
+
+**General weather stations added to the same layer as METAR**, closing the gap - MetarCentral only covers airports, so this uses Open-Meteo's current-conditions data (already used elsewhere in this app, confirmed CORS-open, no key needed) at a small 3×3 grid of points across the current view. Each shows the international station-model symbol (wind barb + sky-cover circle, in bold white for contrast against the map) plus temperature, and a hover tooltip with the full reading. Grid points that would land right on an already-shown airport are skipped to avoid duplicate symbols stacked on each other. This is model-derived (blended from real station/radar/satellite data, not read from one specific physical station), which is disclosed in the tooltip.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

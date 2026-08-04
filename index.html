@@ -348,7 +348,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div class="layerToggleGroup" id="layerToggleGroup">
       <div class="ltbtn-group cat-blue">
         <button class="ltbtn active" id="tgGroundWind" title="Wind Animation"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
-        <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 V5 a2 2 0 0 1 4 0 v9 a4 4 0 1 1 -4 0 Z"/><line x1="14" y1="8" x2="16" y2="8"/><line x1="14" y1="11" x2="16" y2="11"/></svg></button>
+        <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral airports + Open-Meteo general stations)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 V5 a2 2 0 0 1 4 0 v9 a4 4 0 1 1 -4 0 Z"/><line x1="14" y1="8" x2="16" y2="8"/><line x1="14" y1="11" x2="16" y2="11"/></svg></button>
         <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
         <button class="ltbtn" id="tgRain" title="Precipitation (Open-Meteo forecast grid)"><span class="layer-load-dot" id="dotTgRain"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1-1 6.9"/><path d="M9 20 L8 22 M13 20 L12 22 M17 20 L16 22"/></svg></button>
       </div>
@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.22';
+const APP_VERSION = 'v1.05.23';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2140,6 +2140,44 @@ function metarInfoBoxIcon(icao, parsed, summaryLine){
     className:'', iconSize:null, iconAnchor:[-6,10]
   });
 }
+// International station-model symbol for the general (non-airport)
+// weather stations: a sky-cover circle (per WMO convention) plus a wind
+// barb, in light/bold colours so it reads clearly against any map
+// background - the same lesson learned from the airport symbols above.
+function skyCoverSvg(coverPct){
+  if(coverPct==null) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8" stroke-dasharray="2,2"/>';
+  const frac = coverPct/100;
+  if(frac<0.12) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/>';
+  if(frac>0.9) return '<circle cx="12" cy="12" r="7" fill="#fff" stroke="#fff" stroke-width="1.8"/>';
+  if(frac<0.4) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 5 A7 7 0 0 1 19 12 L12 12 Z" fill="#fff"/>';
+  if(frac<0.65) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 5 A7 7 0 0 1 12 19 Z" fill="#fff"/>';
+  return '<circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 5 A7 7 0 1 1 6.4 16.2 Z" fill="#fff"/>';
+}
+function windBarbSvg(dir, kmh){
+  if(dir==null || kmh==null) return '';
+  const kt = kmh/1.852;
+  if(kt<2) return '<circle cx="12" cy="12" r="1.6" fill="#fff"/>';
+  const ticks = Math.min(5, Math.max(1, Math.round(kt/10)));
+  let ticksHtml = '';
+  for(let i=0;i<ticks;i++){
+    const y = 1 + i*2.8;
+    ticksHtml += `<line x1="12" y1="${y}" x2="18" y2="${y-2.2}" stroke="#fff" stroke-width="1.6"/>`;
+  }
+  return `<g transform="rotate(${dir},12,12)"><line x1="12" y1="1" x2="12" y2="12" stroke="#fff" stroke-width="1.8"/>${ticksHtml}</g>`;
+}
+function weatherStationIcon(tempC, windDir, windKmh, cloudPct){
+  return L.divIcon({
+    html:`<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));">
+      <svg width="22" height="22" viewBox="0 0 24 24" style="overflow:visible;">
+        ${windBarbSvg(windDir, windKmh)}
+        ${skyCoverSvg(cloudPct)}
+        <circle cx="12" cy="12" r="9" fill="none" stroke="#3fa9ff" stroke-width="1.6"/>
+      </svg>
+      <div style="background:rgba(20,26,33,0.85);border-radius:3px;padding:0 4px;font-size:9px;font-weight:700;color:#fff;margin-top:1px;">${tempC!=null?Math.round(tempC)+'°':'—'}</div>
+    </div>`,
+    className:'', iconSize:[22,32], iconAnchor:[11,16]
+  });
+}
 const metarLayer = L.layerGroup();
 let metarActive = false;
 let metarFetchTimer = null;
@@ -2203,17 +2241,36 @@ async function fetchMetarStations(force){
       .map(a=>({icao:a[0], name:a[1], lat:a[2], lon:a[3], dist:haversine(center.lat,center.lng,a[2],a[3])}))
       .sort((x,y)=>x.dist-y.dist)
       .slice(0, 15); // keep it modest - each one is its own request, and the anonymous quota is limited
-    if(!nearby.length){
-      metarLayer.clearLayers();
-      if(metarActive) setLayerLoadDot('tgMetar','ready');
-      console.log('METAR: no known airports from the built-in list fall within the current view.');
-      return;
+
+    // General (non-airport) weather stations: MetarCentral only covers
+    // airports, so this uses Open-Meteo's current-conditions data (already
+    // used elsewhere in this app, confirmed CORS-open, no key needed) at a
+    // small grid of points across the current view instead - blended from
+    // real station/radar/satellite observations, even if not literally
+    // "the nearest physical station" the way an airport METAR is.
+    const WX_GRID_N = 3;
+    const gridPoints = [];
+    for(let j=0;j<WX_GRID_N;j++){
+      for(let i=0;i<WX_GRID_N;i++){
+        gridPoints.push({
+          lat: b.getSouth() + (b.getNorth()-b.getSouth())*(j+0.5)/WX_GRID_N,
+          lon: b.getWest() + (b.getEast()-b.getWest())*(i+0.5)/WX_GRID_N
+        });
+      }
     }
-    const results = await Promise.allSettled(nearby.map(a=>fetchSingleMetar(a.icao)));
+    const latStr = gridPoints.map(p=>p.lat.toFixed(3)).join(',');
+    const lonStr = gridPoints.map(p=>p.lon.toFixed(3)).join(',');
+    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&current=temperature_2m,wind_speed_10m,wind_direction_10m,cloud_cover&timezone=UTC`;
+
+    const [metarResults, wxResp] = await Promise.all([
+      Promise.allSettled(nearby.map(a=>fetchSingleMetar(a.icao))),
+      fetch(wxUrl).then(r=>r.json()).catch(e=>{ console.error('General weather stations fetch failed:', e); return null; })
+    ]);
     if(myGeneration !== metarFetchGeneration) return;
     metarLayer.clearLayers();
+
     let shownCount = 0, failedCount = 0;
-    results.forEach((res,i)=>{
+    metarResults.forEach((res,i)=>{
       const a = nearby[i];
       if(res.status!=='fulfilled'){ failedCount++; console.warn(`METAR: request for ${a.icao} failed:`, res.reason); return; }
       const j = res.value;
@@ -2234,7 +2291,27 @@ async function fetchMetarStations(force){
         .bindTooltip(fullTooltip, {sticky:true})
         .addTo(metarLayer);
     });
-    console.log(`METAR: ${shownCount} station(s) shown (${failedCount} of ${nearby.length} individual requests failed). Layer on map: ${map.hasLayer(metarLayer)}.`);
+
+    let wxShown = 0;
+    if(wxResp){
+      const wxList = Array.isArray(wxResp) ? wxResp : [wxResp];
+      wxList.forEach((stationData, idx)=>{
+        const cur = stationData && stationData.current;
+        if(!cur) return;
+        const pt = gridPoints[idx];
+        // Skip a grid point if it landed right on/very near an airport
+        // already shown above, to avoid two near-duplicate symbols stacked
+        // on each other.
+        const tooClose = nearby.some(a=>haversine(pt.lat,pt.lon,a.lat,a.lon)<8000);
+        if(tooClose) return;
+        wxShown++;
+        L.marker([pt.lat, pt.lon], {icon: weatherStationIcon(cur.temperature_2m, cur.wind_direction_10m, cur.wind_speed_10m, cur.cloud_cover), pane:'metarPane'})
+          .bindTooltip(`General weather (model-derived)<br>${cur.temperature_2m!=null?cur.temperature_2m+'°C':''} · ${cur.wind_speed_10m!=null?Math.round(cur.wind_speed_10m)+' km/h':''} ${cur.wind_direction_10m!=null?'from '+cur.wind_direction_10m+'°':''}<br>Cloud cover: ${cur.cloud_cover!=null?cur.cloud_cover+'%':'—'}`, {sticky:true})
+          .addTo(metarLayer);
+      });
+    }
+
+    console.log(`METAR: ${shownCount} airport station(s) shown (${failedCount} of ${nearby.length} failed). General weather: ${wxShown} grid point(s) shown. Layer on map: ${map.hasLayer(metarLayer)}.`);
     if(metarActive) setLayerLoadDot('tgMetar','ready');
     metarFailCount = 0;
   }catch(e){
@@ -2288,13 +2365,13 @@ function aircraftIcon(headingDeg, category, typeDesignator, flAlt, baroRateFtMin
   let rateArrow = '', rateColor = '#c9d3db';
   if(baroRateFtMin!=null && Math.abs(baroRateFtMin)>=100){
     rateArrow = baroRateFtMin>0 ? '&#9650;' : '&#9660;';
-    rateColor = baroRateFtMin>0 ? '#3ddc6f' : '#e0483f';
+    rateColor = baroRateFtMin>0 ? '#0e8a3f' : '#b8342a';
   }
   const flText = flAlt!=null ? 'FL'+Math.round(flAlt/100).toString().padStart(3,'0') : '';
   return L.divIcon({
     html:`<div style="display:flex;align-items:center;gap:2px;">
       <svg width="22" height="22" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);flex-shrink:0;color:${color};">${shape}</svg>
-      <div style="background:rgba(40,46,54,0.85);border-radius:3px;padding:1px 4px;font-size:9px;font-family:sans-serif;font-weight:600;color:#dfe6ea;white-space:nowrap;line-height:1.3;">${flText}<span style="color:${rateColor};margin-left:2px;">${rateArrow}</span></div>
+      <div style="background:#f2f2f0;border:1.3px solid #4a4a48;border-radius:3px;padding:1px 4px;font-size:9px;font-family:sans-serif;font-weight:700;color:#2a2a28;white-space:nowrap;line-height:1.3;">${flText}<span style="color:${rateColor};margin-left:2px;">${rateArrow}</span></div>
     </div>`,
     className:'', iconSize:[70,22], iconAnchor:[11,11]
   });

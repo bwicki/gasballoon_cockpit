@@ -142,6 +142,10 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 .ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:2px solid rgba(224,72,63,0.8);}
 .ltbtn-group .ltbtn{background:var(--panel2);border-color:transparent;}
 .ltbtn-group .ltbtn.active{border-color:var(--accent);}
+#headerMoreMenu > *:not(:last-child){border-bottom:1px solid var(--border);}
+#headerMoreMenu .iconbtn{width:100%;background:none;border:none;border-radius:0;justify-content:flex-start;padding:9px 12px;gap:10px;font-size:12px;font-weight:400;}
+#headerMoreMenu .iconbtn.active{background:rgba(63,208,201,0.1);color:var(--accent);}
+#headerMoreMenu .iconbtn:active{background:var(--panel);}
 .layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;}
 .layer-load-dot.loading{background:#ffd400;}
 .layer-load-dot.ready{background:var(--good);}
@@ -294,7 +298,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="topbar">
     <div style="position:relative;">
       <button id="btnHeaderMore" title="Menu" style="background:none;border:none;color:var(--text);cursor:pointer;padding:4px;display:flex;align-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px;z-index:5000;flex-direction:column;gap:4px;min-width:150px;"></div>
+      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:4px 0;z-index:5000;flex-direction:column;min-width:170px;overflow:hidden;"></div>
     </div>
     <div class="wx-chip" style="gap:3px;">
       <svg id="gpsPin" width="16" height="16" viewBox="0 0 24 24" class="gps-pin bad"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="currentColor" stroke="#1a1a1a" stroke-width="1"/><circle cx="12" cy="10" r="3.4" fill="#1a1a1a" opacity="0.35"/></svg>
@@ -332,8 +336,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <span style="color:var(--muted);font-size:7px;text-align:right;white-space:nowrap;">UTC</span>
     </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
-    <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;color:var(--bad);border:2px solid var(--bad);border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg></button>
-    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;color:#3fa9ff;border:2px solid #3fa9ff;border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 6 19 6 22 12 C19 18 5 18 2 12 Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+    <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;color:var(--bad);border:1.5px solid var(--bad);border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;opacity:0.85;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg></button>
+    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;color:#3fa9ff;border:1.5px solid #3fa9ff;border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;opacity:0.85;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 6 19 6 22 12 C19 18 5 18 2 12 Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
     <button id="btnReopenStagedPlan" onclick="if(state.lastStagedPlanResult) showStagedDescentPlan(state.lastStagedPlanResult);" title="Reopen the staged descent plan" style="display:none;background:none;color:#ff6a00;border:2px solid #ff6a00;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;box-sizing:border-box;">⬇⬇</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
@@ -359,15 +363,17 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <option value="ft">ft</option>
       <option value="FL">FL</option>
     </select>
-    <button class="ltbtn" id="tgFlightCharts" title="Show/hide Flight Charts"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg></button>
+    <button class="iconbtn" id="tgFlightCharts" title="Show/hide Flight Charts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg><span>Flight Charts</span></button>
     <button class="iconbtn" id="btnDayNight" title="Day/Night">
       <svg id="iconSun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
       <svg id="iconMoon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
+      <span>Day / Night</span>
     </button>
     <div style="position:relative;">
       <button class="iconbtn" id="btnCapture" title="Screenshot / Recording">
         <svg id="btnCaptureIconNormal" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 6.5 L9.3 4 h5.4 L16 6.5"/><rect x="2.5" y="6.5" width="19" height="13.5" rx="2"/><circle cx="12" cy="13" r="3.6"/></svg>
         <svg id="btnCaptureIconRecording" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        <span>Capture</span>
       </button>
       <div id="capturePanel" class="settings-popover" style="width:220px;">
         <button class="ghost" id="capShotBtn">📷 Take screenshot</button>
@@ -376,7 +382,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       </div>
     </div>
     <div style="position:relative;">
-      <button class="iconbtn" id="btnSettings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
+      <button class="iconbtn" id="btnSettings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg><span>Settings</span></button>
       <div id="settingsPanel">
         <div class="subhead" style="margin-top:0;">Altitude Unit</div>
         <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
@@ -587,6 +593,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div style="position:relative;">
       <button class="iconbtn" id="btnLogbook" title="Flight Log">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        <span>Flight Log</span>
       </button>
       <div id="logbookPanel" class="settings-popover" style="width:230px;">
         <div class="subhead" style="margin-top:0;">Flight Log</div>
@@ -970,7 +977,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.08';
+const APP_VERSION = 'v1.05.10';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -4416,12 +4423,13 @@ startGroundWindLayer();
 // physical position (the two popovers are position:fixed).
 (function relocateHeaderButtonsIntoMoreMenu(){
   const menu = document.getElementById('headerMoreMenu');
+  const flightChartsBtn = document.getElementById('tgFlightCharts');
   const dayNightBtn = document.getElementById('btnDayNight');
   const captureWrap = document.getElementById('btnCapture').closest('div');
   const settingsWrap = document.getElementById('btnSettings').closest('div');
   const logbookWrap = document.getElementById('btnLogbook').closest('div');
   const testModeBtn = document.getElementById('btnTestMode');
-  [dayNightBtn, captureWrap, settingsWrap, logbookWrap, testModeBtn].forEach(el=>{
+  [flightChartsBtn, dayNightBtn, captureWrap, settingsWrap, logbookWrap, testModeBtn].forEach(el=>{
     if(el){ el.style.width='100%'; menu.appendChild(el); }
   });
   document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{

@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.08** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.10** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -132,6 +132,10 @@ Layer buttons regrouped into three "pill" containers (one shared background per 
 Pill group borders thickened and made more saturated (was too subtle to read as a border). More space added to the right of the airspace pill (its vertical divider removed, replaced by margin instead), and the whole button row nudged left slightly.
 
 Legend-reopen icon changed once more to an eye symbol - matches what the button actually does (bring back hidden legends) more directly than the previous layer-stack icon.
+
+Warning/eye icon borders thinned (2px to 1.5px) and slightly less opaque for a more elegant look.
+
+Flight Charts moved into the "More" menu too (alongside Day/Night, Capture, Settings, Flight Log, Test Mode), and the whole menu redesigned as uniform icon+label rows with subtle divider lines instead of each item being its own bordered box.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

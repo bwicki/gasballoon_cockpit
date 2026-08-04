@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.27';
+const APP_VERSION = 'v1.05.28';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2339,8 +2339,21 @@ async function fetchMetarStations(force){
       });
     }
 
+    const totalShown = shownCount + wxShown;
     console.log(`METAR: ${shownCount} airport station(s) shown (${failedCount} of ${nearby.length} failed). Swiss weather stations: ${wxShown} shown (of ${nearbyStations.length} nearby). Layer on map: ${map.hasLayer(metarLayer)}.`);
-    if(metarActive) setLayerLoadDot('tgMetar','ready');
+    if(totalShown===0){
+      // The fetches themselves didn't throw, but nothing ended up on the
+      // map - showing green here would be actively misleading (it looked
+      // exactly like "working" from the button alone). This is either
+      // genuinely zero known airports/stations in the current view, or a
+      // response-format mismatch that silently produced no usable
+      // readings - the console logging above/below is what actually
+      // distinguishes those two cases.
+      console.warn(`METAR: nothing to show despite no fetch errors - either genuinely no known airports/stations in view (${nearby.length} airports, ${nearbyStations.length} Swiss stations checked), or a response format mismatch. Check the raw response logged above.`);
+      if(metarActive) setLayerLoadDot('tgMetar', 'error');
+    } else {
+      if(metarActive) setLayerLoadDot('tgMetar','ready');
+    }
     metarFailCount = 0;
   }catch(e){
     console.error('METAR fetch failed:', e);

@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.27** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.28** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -196,6 +196,10 @@ Air Traffic icon changed to two crossing aircraft silhouettes (from left and rig
 Air Traffic icon replaced with an actual vectorised trace of the uploaded reference image (via OpenCV contour extraction, not a hand-drawn reinterpretation) - a single instance, not duplicated/crossed. Airspace icon still pending - the "crosshair/target" reference image you sent is a good candidate, awaiting confirmation before implementing.
 
 Airspace icon finalised: crosshair/target circle (approved from the reference image sent). Both Airspace and Air Traffic icons are now settled.
+
+**Real bug fixed: METAR could show green (ready) while displaying nothing at all** - the "success" state was set regardless of whether anything actually got added to the map. Now: if a fetch completes without errors but zero airports and zero stations end up shown, the button goes to the red "error" state instead of misleadingly green, with a specific console warning to help pin down whether it's genuinely nothing-in-view or a response-parsing mismatch.
+
+**Real bug fixed in cors_test.html: a slow/hanging request (Overpass in particular) could block the entire test sequence indefinitely**, since there was no timeout - it looked like the tool "stopped after the first test" when it was actually just still waiting. Each test now aborts after 20s with a clear "timed out, not necessarily CORS" message, and the run loop has an extra safety net so nothing can halt the sequence early.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

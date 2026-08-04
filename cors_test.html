@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.05.24</title>
+<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.05.28</title>
 <style>
   body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
   h1{font-size:18px;}
@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.05.24</span></h1>
+<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.05.28</span></h1>
 <p class="intro">
 Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie GBLP sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
@@ -73,9 +73,12 @@ async function runTest(i){
   const detailEl = document.getElementById('detail'+i);
   statusEl.textContent = 'Läuft…';
   statusEl.className = 'status pending';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=>controller.abort(), 20000); // don't let one slow/hanging request (Overpass in particular) block the rest of the sequence indefinitely
   try{
     const start = performance.now();
-    const r = await fetch(t.url, { method: t.method || 'GET', headers: t.headers || {}, body: t.body });
+    const r = await fetch(t.url, { method: t.method || 'GET', headers: t.headers || {}, body: t.body, signal: controller.signal });
+    clearTimeout(timeoutId);
     const ms = Math.round(performance.now()-start);
     const text = await r.text();
     statusEl.textContent = `✓ CORS OK - HTTP ${r.status}, ${ms}ms`;
@@ -83,10 +86,14 @@ async function runTest(i){
     detailEl.style.display = 'block';
     detailEl.textContent = text.slice(0, 400) + (text.length>400?'…':'');
   }catch(e){
-    statusEl.textContent = '✗ Fehlgeschlagen (sehr wahrscheinlich CORS-blockiert)';
+    clearTimeout(timeoutId);
+    const timedOut = e.name === 'AbortError';
+    statusEl.textContent = timedOut ? '⏱ Zeitüberschreitung (20s) - Server antwortet zu langsam' : '✗ Fehlgeschlagen (sehr wahrscheinlich CORS-blockiert)';
     statusEl.className = 'status fail';
     detailEl.style.display = 'block';
-    detailEl.textContent = 'Fehlermeldung: ' + e.message + '\n\nHinweis: Browser verstecken den genauen CORS-Grund aus Sicherheitsgründen - schau zusätzlich in die Browser-Konsole (F12) für Details. Ein Netzwerkfehler kann auch andere Ursachen haben (Server down, falsche URL, Authentifizierung nötig).';
+    detailEl.textContent = timedOut
+      ? 'Der Server hat innerhalb von 20 Sekunden nicht geantwortet - kein CORS-Problem, sondern echte Serverträgheit (bei Overpass unter Last keine Seltenheit).'
+      : 'Fehlermeldung: ' + e.message + '\n\nHinweis: Browser verstecken den genauen CORS-Grund aus Sicherheitsgründen - schau zusätzlich in die Browser-Konsole (F12) für Details. Ein Netzwerkfehler kann auch andere Ursachen haben (Server down, falsche URL, Authentifizierung nötig).';
   }
 }
 
@@ -95,7 +102,14 @@ document.getElementById('btnRun').addEventListener('click', async ()=>{
   document.getElementById('btnCopyAll').style.display = 'none';
   document.getElementById('copyConfirm').style.display = 'none';
   for(let i=0;i<TESTS.length;i++){
-    await runTest(i);
+    try{
+      await runTest(i);
+    }catch(e){
+      // runTest already catches its own fetch errors - this is a last-
+      // resort safety net so literally nothing can stop the sequence
+      // from reaching every remaining test.
+      console.error('Unexpected error running test', i, e);
+    }
   }
   document.getElementById('btnRun').disabled = false;
   document.getElementById('btnCopyAll').style.display = 'inline-block';

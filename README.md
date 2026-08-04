@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.11** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.14** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -146,6 +146,14 @@ Added a close (✕) button to the "More" menu.
 **Real bug fixed: METAR never retried after a failed request** - it just stayed yellow indefinitely until a manual pan/zoom/toggle. It now retries automatically every 8s, same as the Overpass-based layers already did.
 
 All four map-data layers (METAR, nature reserves, land cover, region names) now show a red "repeatedly failing" state after 3 consecutive failed attempts, instead of staying yellow ("still loading") forever - a more honest signal when the underlying service is having trouble. Regarding nature reserves/land cover/region names specifically: the public Overpass API infrastructure has well-documented, ongoing reliability issues completely independent of this app (confirmed via OpenStreetMap community discussions) - our own request throttling/multi-mirror fallback was already reasonably solid, but can't fully compensate for that.
+
+Layer buttons inside each pill are now fully transparent (no background of their own) - only the pill carries colour, so the icon and its on/off border read more clearly instead of competing with a separate box behind it.
+
+New layer: **Air traffic** (red pill, next to Airspace) - live aircraft positions via ADSBExchange's RapidAPI subscription (Settings: your own RapidAPI key, plus an altitude band below/above the balloon's current altitude to filter what's shown). Requires a paid RapidAPI subscription to "ADSBexchange.com" - there's no free tier for this data source as of March 2025. The custom `X-RapidAPI-*` headers this needs could in principle trigger the same CORS-preflight issue MetarCentral's header-based auth once did - added to `cors_test.html` alongside a free alternative (adsb.fi, personal/non-commercial use, no subscription) for comparison, since that wasn't confirmed working yet either.
+
+OGN/glidernet.org (FLARM/glider traffic) was researched but not implemented yet - its live-aircraft API endpoint isn't clearly documented publicly (the one example found returned ground station markers, not aircraft), so it needs proper verification before being built on, rather than guessing at undocumented parameters.
+
+Corrected a transcription error in the RapidAPI key (a character was dropped when it was originally read from a screenshot) - fixed in both the app's Settings default and the `cors_test.html` test entry.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

@@ -140,7 +140,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 .ltbtn-group.cat-blue{background:rgba(63,169,255,0.14);border:2px solid rgba(63,169,255,0.75);}
 .ltbtn-group.cat-green{background:rgba(61,220,111,0.14);border:2px solid rgba(61,220,111,0.75);}
 .ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:2px solid rgba(224,72,63,0.8);}
-.ltbtn-group .ltbtn{background:var(--panel2);border-color:var(--border);}
+.ltbtn-group .ltbtn{background:transparent;border-color:var(--border);}
 .ltbtn-group.cat-blue .ltbtn.active{border-color:#3fa9ff;border-width:2px;}
 .ltbtn-group.cat-green .ltbtn.active{border-color:#3ddc6f;border-width:2px;}
 .ltbtn-group.cat-red .ltbtn.active{border-color:#e0483f;border-width:2px;}
@@ -361,6 +361,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       </div>
       <div class="ltbtn-group cat-red">
         <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
+        <button class="ltbtn" id="tgAirTraffic" title="Air traffic (ADSBExchange, requires your own RapidAPI key in Settings)"><span class="layer-load-dot" id="dotTgAirTraffic"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z"/></svg></button>
       </div>
     </div>
     <select id="altUnitSelect" style="display:none;">
@@ -473,6 +474,21 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <input type="text" id="sMetarApiKey" placeholder="mc_..." value="mc_a454ffc3755e61b9e082b599903b6c00067f013a81295f22" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
         </div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Raises the result limit per request from 10 to 500 and the daily quota from 100 to 1000. Leave empty to use the API anonymously. Note: as with any client-side app, this key is visible in the page source to anyone who views it.</p>
+
+        <div class="subhead">Air Traffic (ADSBExchange via RapidAPI)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own RapidAPI subscription to "ADSBexchange.com" - as with the other API keys in this app, it's visible in the page source to anyone who views it.</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:12.5px;flex:1;">RapidAPI key</span>
+          <input type="text" id="sAdsbApiKey" placeholder="RapidAPI key" value="7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
+        </div>
+        <div class="slider-row">
+          <div class="lbl"><span>Show traffic below current altitude by</span><b id="lblAdsbBelow" style="color:var(--accent2);">1000 m</b></div>
+          <input type="range" id="sAdsbBelow" min="0" max="5000" step="100" value="1000">
+        </div>
+        <div class="slider-row">
+          <div class="lbl"><span>Show traffic above current altitude by</span><b id="lblAdsbAbove" style="color:var(--accent2);">300 m</b></div>
+          <input type="range" id="sAdsbAbove" min="0" max="3000" step="100" value="300">
+        </div>
 
         <div class="subhead">Non-landable Terrain (OpenStreetMap)</div>
         <div class="checkgrid">
@@ -982,7 +998,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.11';
+const APP_VERSION = 'v1.05.14';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1993,6 +2009,99 @@ async function fetchMetarStations(){
       // loads" reports even when the service was only briefly unavailable.
       clearTimeout(metarFetchTimer);
       metarFetchTimer = setTimeout(fetchMetarStations, 8000);
+    }
+  }
+}
+
+// ---- air traffic (ADSBExchange via RapidAPI - requires the user's own key) ----
+document.getElementById('sAdsbBelow').addEventListener('input', e=>{
+  document.getElementById('lblAdsbBelow').textContent = e.target.value+' m';
+});
+document.getElementById('sAdsbAbove').addEventListener('input', e=>{
+  document.getElementById('lblAdsbAbove').textContent = e.target.value+' m';
+});
+function aircraftIcon(headingDeg, isGlider){
+  const rot = headingDeg||0;
+  const color = isGlider ? '#3fa9ff' : '#e0483f';
+  return L.divIcon({
+    html:`<svg width="16" height="16" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);"><path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="${color}" stroke="#fff" stroke-width="0.6"/></svg>`,
+    className:'', iconSize:[16,16], iconAnchor:[8,8]
+  });
+}
+const airTrafficLayer = L.layerGroup();
+let airTrafficActive = false;
+let airTrafficFetchTimer = null;
+let airTrafficFailCount = 0;
+let airTrafficFetchGeneration = 0;
+document.getElementById('tgAirTraffic').addEventListener('click', function(){
+  airTrafficActive = this.classList.toggle('active');
+  if(airTrafficActive){ setLayerLoadDot('tgAirTraffic','loading'); airTrafficLayer.addTo(map); scheduleAirTrafficFetch(); }
+  else { map.removeLayer(airTrafficLayer); airTrafficLayer.clearLayers(); setLayerLoadDot('tgAirTraffic', null); clearTimeout(airTrafficFetchTimer); }
+});
+function scheduleAirTrafficFetch(){
+  if(!airTrafficActive) return;
+  clearTimeout(airTrafficFetchTimer);
+  airTrafficFetchTimer = setTimeout(fetchAirTraffic, 600);
+}
+map.on('moveend zoomend', ()=>{ if(airTrafficActive) scheduleAirTrafficFetch(); });
+async function fetchAirTraffic(){
+  if(!airTrafficActive) return;
+  const apiKey = (document.getElementById('sAdsbApiKey').value||'').trim();
+  if(!apiKey){
+    console.error('Air traffic: no RapidAPI key set in Settings.');
+    setLayerLoadDot('tgAirTraffic','error');
+    return;
+  }
+  const myGeneration = ++airTrafficFetchGeneration;
+  try{
+    const center = map.getCenter();
+    // Distance covering the current viewport (roughly - the API takes a
+    // single radius around a center point, not a rectangular bbox), capped
+    // at the API's own 250 NM limit.
+    const b = map.getBounds();
+    const distKm = Math.min(463, haversine(center.lat,center.lng,b.getNorth(),b.getEast())/1000 + 20);
+    const distNm = Math.round(distKm/1.852);
+    const url = `https://adsbexchange-com1.p.rapidapi.com/v2/lat/${center.lat}/lon/${center.lng}/dist/${distNm}/`;
+    const r = await fetch(url, {headers: {
+      'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com',
+      'X-RapidAPI-Key': apiKey
+    }});
+    if(!r.ok){
+      const errText = await r.text().catch(()=>'(no body)');
+      console.error('Air traffic request failed:', r.status, errText);
+      throw new Error('HTTP '+r.status);
+    }
+    const j = await r.json();
+    if(myGeneration !== airTrafficFetchGeneration) return;
+    console.log('Air traffic: raw response top-level keys:', Object.keys(j));
+    const list = j.ac || j.aircraft || [];
+    const belowM = parseFloat(document.getElementById('sAdsbBelow').value);
+    const aboveM = parseFloat(document.getElementById('sAdsbAbove').value);
+    const minAlt = state.altAMSL - belowM, maxAlt = state.altAMSL + aboveM;
+    airTrafficLayer.clearLayers();
+    let shownCount = 0;
+    list.forEach(a=>{
+      if(a.lat==null || a.lon==null) return;
+      const altFt = (typeof a.alt_baro==='number') ? a.alt_baro : (typeof a.alt_geom==='number' ? a.alt_geom : null);
+      if(altFt==null) return; // on the ground / no altitude - not relevant for balloon separation
+      const altM = altFt*0.3048;
+      if(altM<minAlt || altM>maxAlt) return;
+      shownCount++;
+      const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
+      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, false)})
+        .bindTooltip(`<b>${label}</b><br>${Math.round(altM)} m AMSL<br>${a.gs!=null?Math.round(a.gs*1.852)+' km/h':''}`, {sticky:true})
+        .addTo(airTrafficLayer);
+    });
+    console.log(`Air traffic: ${shownCount} aircraft shown within the configured altitude band (of ${list.length} received).`);
+    setLayerLoadDot('tgAirTraffic','ready');
+    airTrafficFailCount = 0;
+  }catch(e){
+    console.error('Air traffic fetch failed:', e);
+    if(airTrafficActive){
+      airTrafficFailCount = (airTrafficFailCount||0) + 1;
+      setLayerLoadDot('tgAirTraffic', airTrafficFailCount>=3 ? 'error' : 'loading');
+      clearTimeout(airTrafficFetchTimer);
+      airTrafficFetchTimer = setTimeout(fetchAirTraffic, 8000);
     }
   }
 }
@@ -6219,7 +6328,7 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sMetarApiKey'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sMetarApiKey','sAdsbApiKey','sAdsbBelow','sAdsbAbove'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 function saveConfig(){

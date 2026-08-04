@@ -50,7 +50,7 @@ const TESTS = [
   { name: 'aviationweather.gov (zum Vergleich - bekannt CORS-blockiert)', url: 'https://aviationweather.gov/api/data/metar?ids=KJFK&format=json' },
   { name: 'SondeHub (zum Vergleich - bekannt CORS-offen, funktioniert bereits in GBLP)', url: 'https://api.v2.sondehub.org/sites' },
   { name: 'adsb.fi - Flugverkehr im Umkreis (100 NM um Zürich, für den geplanten Luftverkehrs-Layer)', url: 'https://opendata.adsb.fi/api/v3/lat/47.3769/lon/8.5417/dist/100' },
-  { name: 'ADSBExchange via RapidAPI (echter Key, mit Custom-Headern - Risiko: CORS-Preflight wie zuvor bei MetarCentral)', url: 'https://adsbexchange-com1.p.rapidapi.com/v2/lat/47.3769/lon/8.5417/dist/100/', headers: {'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com','X-RapidAPI-Key':'7f65c7997dmshfb6965d901c11bp166af9jsn724691adb0b5'} }
+  { name: 'ADSBExchange via RapidAPI (echter Key, mit Custom-Headern - Risiko: CORS-Preflight wie zuvor bei MetarCentral)', url: 'https://adsbexchange-com1.p.rapidapi.com/v2/lat/47.3769/lon/8.5417/dist/100/', headers: {'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com','X-RapidAPI-Key':'7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5'} }
 ];
 
 function render(){

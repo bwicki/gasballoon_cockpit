@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.04.04** (02.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.04.06** (02.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -104,6 +104,14 @@ Header decluttered for iPad: GPS shows just a colour-coded dot (red/yellow/green
 Header decluttered for iPad: GPS indicator is now a compact 3-colour dot (red/yellow/green by fix accuracy) with just the accuracy figure next to it, the weather model chip dropped its "Model" label, twilight times no longer wrap, and Day/Night, Capture, Settings, and Test Mode all live in a single "More" (hamburger) dropdown. The Wicki Partners Ballonteam logo now sits small in the top-right.
 
 Favicon changed to a light target/crosshair symbol.
+
+**Real bug found: the hamburger menu never actually toggled** - its inline style set `display` twice (`none` then `flex`), so the second declaration silently won and the menu was effectively stuck open/inconsistent from the start regardless of clicks. Fixed.
+
+Header restructured further: old logo + separator removed from the top-left, replaced by the hamburger button there (borderless); GPS is now a colour-changing pin icon (red/yellow/green) instead of a small dot; twilight times are bottom-aligned with their SR/SS/etc. label; the blue "reopen legends" info icon no longer relies on a Unicode glyph that iOS renders as its own coloured icon on top of the button's border (a real rendering collision) - it's a plain drawn SVG now; Flight Log moved into the hamburger menu; the Wicki Partners logo moved to the far right (bigger), with the emergency button just to its left.
+
+Layer buttons reordered (wind, sondes, weather stations, rain, then roads, protected areas, terrain, then airspace) and lightly tinted by category (blue for weather/sonde/rain layers, green for roads/terrain/protected areas, yellow for airspace) so related layers read as a group at a glance.
+
+Weather model display redesigned to two compact lines (cloud icon + short model name, then a small download-arrow + fetch age and clock + run age below), and the verbose "fetched X ago · run ~Y h old" text is gone entirely. Twilight rows switched to a single flex line each (icon, SR/SS label, time, UTC all with `flex-shrink:0`) so they can no longer wrap, bottom-aligned, with smaller SR/SS/BCT/ECT labels and a more compact but still-visible UTC suffix. Layer buttons: the loading-state indicator moved from a floating corner dot to a thin strip along the bottom edge, and the buttons themselves are now smaller (28px vs 34px) with proportionally smaller icons.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

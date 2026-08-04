@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
-<title>GB Landing Planner</title>
+<title>Gasballoon Cockpit</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -289,7 +289,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 <body>
 <div id="passwordGate">
   <div class="box">
-    <h2>🎈 GB Landing Planner</h2>
+    <h2>🎈 Gasballoon Cockpit</h2>
     <p>Enter password to continue</p>
     <input type="password" id="gatePw" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password">
     <button onclick="checkGatePassword()">Unlock</button>
@@ -1072,7 +1072,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
   // No secure context (e.g. opened via file:// for local testing) - the
   // password check can't run reliably here, so skip the gate rather than
   // false-block. On real https hosting (GitHub Pages) this branch won't fire.
-  console.warn('GB Landing Planner: SubtleCrypto unavailable (no secure context) - password gate skipped for local testing.');
+  console.warn('Gasballoon Cockpit: SubtleCrypto unavailable (no secure context) - password gate skipped for local testing.');
   document.getElementById('passwordGate').style.display = 'none';
 } else if(localStorage.getItem(GATE_STORAGE_KEY) === '1'){
   document.getElementById('passwordGate').style.display = 'none';
@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.30';
+const APP_VERSION = 'v1.05.32';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -6315,8 +6315,8 @@ function buildGpx(){
     `      <trkpt lat="${e.lat.toFixed(6)}" lon="${e.lon.toFixed(6)}"><ele>${e.altAMSL.toFixed(1)}</ele><time>${new Date(e.t).toISOString()}</time></trkpt>`
   ).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="GB Landing Planner" xmlns="http://www.topografix.com/GPX/1/1">
-  <trk><name>GB Landing Planner Flight Log</name><trkseg>
+<gpx version="1.1" creator="Gasballoon Cockpit" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><name>Gasballoon Cockpit Flight Log</name><trkseg>
 ${points}
   </trkseg></trk>
 </gpx>`;
@@ -6325,7 +6325,7 @@ function buildKml(){
   const coords = state.flightLog.map(e=>`${e.lon.toFixed(6)},${e.lat.toFixed(6)},${e.altAMSL.toFixed(1)}`).join(' ');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document>
-  <name>GB Landing Planner Flight Log</name>
+  <name>Gasballoon Cockpit Flight Log</name>
   <Placemark>
     <name>Flight track</name>
     <LineString><altitudeMode>absolute</altitudeMode><coordinates>${coords}</coordinates></LineString>

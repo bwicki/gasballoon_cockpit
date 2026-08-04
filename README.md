@@ -1,8 +1,8 @@
-# GB Landing Planner
+# Gasballoon Cockpit
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.30** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.32** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -212,6 +212,14 @@ Added 429 (rate-limit) detection for MetarCentral's per-airport requests, with a
 **Rain layer rebuilt on RainViewer's free public radar tile API** instead of the coarse Open-Meteo grid-of-rectangles approximation - real radar imagery, no API key needed, tile-based (so no CORS risk the way a `fetch()`-based API would carry). Refreshes roughly every 10 minutes, matching how often RainViewer publishes new frames.
 
 FLARM/FANET (glider/paraglider) data is confirmed NOT integrated into Air Traffic - this was explicitly deferred earlier since OGN's live-data API isn't clearly documented publicly, and building on unverified assumptions was the same trap that caused several of the METAR/weather-station issues above.
+
+**App renamed to "Gasballoon Cockpit"** everywhere user-visible (title, header, GPX export metadata). Internal cache keys, localStorage keys, and the Dropbox folder name intentionally stay on their old "gblp" naming for data continuity, matching the same approach used for the earlier "GBLP → GB Landing Planner" rename.
+
+OGN/FLARM researched again, properly this time: confirmed via a third-party developer's own documentation (LiveTraffic's docs) that OGN's live position data has no officially documented REST API - only raw APRS-IS streaming (unusable from browser JS) or the same undocumented `live.glidernet.org` endpoint found before, which that same third-party doc explicitly calls "not officially standardized, subject to change." Added it to `cors_test.html` anyway (marked ★, clearly labelled as unverified/unofficial) so it can be tested before any decision to build on it - not implemented into the app itself yet, pending that test.
+
+`cors_test.html` also cleaned up: removed the MetarCentral bulk-endpoint tests (confirmed broken multiple times now, no further value in re-testing every round) and the SwissMetNet/ADSBExchange entries' "unverified" labels (both now confirmed working and in active use) - added a RainViewer metadata check for the new radar layer.
+
+Spelling corrected to "Gasballoon Cockpit" (double-o) everywhere.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

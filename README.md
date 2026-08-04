@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.04** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.06** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -120,6 +120,10 @@ Emergency button is now round (distinguishes it more clearly from the square lay
 **Twilight icon bottom-alignment - actual root cause found**: the SVG's own viewBox had a lot of empty space below the visible horizon line (viewBox went to y=24, the horizon line was at y=15.5), so even with the grid correctly bottom-aligning the icon's box, the visible artwork inside it still sat noticeably higher than the text baseline next to it. Cropped the viewBox tightly to the actual artwork, which is the real fix (the grid `align-items:end` alone couldn't fix this, since it only aligns boxes, not the visual content within them).
 
 Layer button groups redefined and re-coloured: weather (blue) = wind, weather stations, sondes, rain; ground cover (green) = power lines, roads, protected areas, terrain, region names; airspace (red) = airspace alone. Power lines and region names had previously been left outside any group/colour.
+
+Version badge's z-index raised further (defensive - couldn't find a code-level reason it would be hidden, see chat about checking for a stale cached page instead).
+
+Layer buttons regrouped into three "pill" containers (one shared background per category) instead of colouring each button individually - the individual-icon tinting apparently wasn't showing clearly enough in practice. Version badge also given its own explicit background/padding instead of depending on Leaflet's `.leaflet-control-attribution` styling being available, in case that was the actual cause of it not appearing.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

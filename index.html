@@ -130,12 +130,18 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #particleHeightLabelAmsl{font-size:10px;font-weight:400;color:var(--text);white-space:normal;text-align:center;line-height:1.2;margin-bottom:5px;}
 
 /* ---- layer toggle group (header, top-left) ---- */
-.layerToggleGroup{display:flex;gap:4px;flex-shrink:0;}
+.layerToggleGroup{display:flex;gap:10px;flex-shrink:0;}
 .ltbtn{position:relative;overflow:hidden;background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:6px;width:28px;height:28px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .ltbtn.cat-blue{background:rgba(63,169,255,0.14);border-color:rgba(63,169,255,0.35);}
 .ltbtn.cat-green{background:rgba(61,220,111,0.14);border-color:rgba(61,220,111,0.35);}
 .ltbtn.cat-yellow{background:rgba(232,168,56,0.16);border-color:rgba(232,168,56,0.4);}
 .ltbtn.cat-red{background:rgba(224,72,63,0.16);border-color:rgba(224,72,63,0.4);}
+.ltbtn-group{display:flex;gap:2px;border-radius:8px;padding:3px;}
+.ltbtn-group.cat-blue{background:rgba(63,169,255,0.14);border:1px solid rgba(63,169,255,0.35);}
+.ltbtn-group.cat-green{background:rgba(61,220,111,0.14);border:1px solid rgba(61,220,111,0.35);}
+.ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:1px solid rgba(224,72,63,0.4);}
+.ltbtn-group .ltbtn{background:var(--panel2);border-color:transparent;}
+.ltbtn-group .ltbtn.active{border-color:var(--accent);}
 .layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;}
 .layer-load-dot.loading{background:#ffd400;}
 .layer-load-dot.ready{background:var(--good);}
@@ -227,7 +233,7 @@ button.ghost{background:transparent;border:1px solid var(--border);color:var(--t
 .copyline button{flex-shrink:0;background:var(--accent);border:none;color:#00201d;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;}
 
 .leaflet-control-attribution{font-size:9px !important;}
-.version-badge{position:absolute;left:6px;bottom:2px;z-index:900;pointer-events:none;}
+.version-badge{position:absolute;left:6px;bottom:2px;z-index:5000;pointer-events:none;background:rgba(255,255,255,0.8);color:#1a1a1a;padding:2px 6px;border-radius:4px;font-size:9px;font-family:sans-serif;line-height:1.4;}
 canvas.mini{width:100% !important;height:115px !important;}
 canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 .chart-thumb-title{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
@@ -331,18 +337,22 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <button id="btnReopenStagedPlan" onclick="if(state.lastStagedPlanResult) showStagedDescentPlan(state.lastStagedPlanResult);" title="Reopen the staged descent plan" style="display:none;background:none;color:#ff6a00;border:2px solid #ff6a00;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;box-sizing:border-box;">⬇⬇</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
-      <button class="ltbtn active cat-blue" id="tgGroundWind" title="Wind Animation"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
-      <button class="ltbtn cat-blue" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 V5 a2 2 0 0 1 4 0 v9 a4 4 0 1 1 -4 0 Z"/><line x1="14" y1="8" x2="16" y2="8"/><line x1="14" y1="11" x2="16" y2="11"/></svg></button>
-      <button class="ltbtn cat-blue" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
-      <button class="ltbtn cat-blue" id="tgRain" title="Precipitation (Open-Meteo forecast grid)"><span class="layer-load-dot" id="dotTgRain"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1-1 6.9"/><path d="M9 20 L8 22 M13 20 L12 22 M17 20 L16 22"/></svg></button>
-      <div style="width:10px;"></div>
-      <button class="ltbtn cat-green" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
-      <button class="ltbtn cat-green" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
-      <button class="ltbtn cat-green" id="tgNatureReserves" title="Nature reserves &amp; protected areas"><span class="layer-load-dot" id="dotTgNatureReserves"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
-      <button class="ltbtn cat-green" id="tgLandCover" title="Non-landable terrain (forest/water/wetland/vineyard/urban)"><span class="layer-load-dot" id="dotTgLandCover"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3" stroke-width="1.8"/><path d="M3 15 L9 3 M3 21 L15 3 M9 21 L21 9 M15 21 L21 15" stroke-width="1.4"/></svg></button>
-      <button class="ltbtn active cat-green" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
-      <div style="width:10px;"></div>
-      <button class="ltbtn cat-red" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
+      <div class="ltbtn-group cat-blue">
+        <button class="ltbtn active" id="tgGroundWind" title="Wind Animation"><span class="layer-load-dot" id="dotTgGroundWind"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 13h17a3 3 0 1 1-3 3"/><path d="M3 18h10"/></svg></button>
+        <button class="ltbtn" id="tgMetar" title="Weather stations / METAR (MetarCentral)"><span class="layer-load-dot" id="dotTgMetar"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 V5 a2 2 0 0 1 4 0 v9 a4 4 0 1 1 -4 0 Z"/><line x1="14" y1="8" x2="16" y2="8"/><line x1="14" y1="11" x2="16" y2="11"/></svg></button>
+        <button class="ltbtn" id="tgSondeHub" title="Live radiosondes (SondeHub)"><span class="layer-load-dot" id="dotTgSondeHub"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M12 13 L12 21 M9 21 L15 21"/></svg></button>
+        <button class="ltbtn" id="tgRain" title="Precipitation (Open-Meteo forecast grid)"><span class="layer-load-dot" id="dotTgRain"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1-1 6.9"/><path d="M9 20 L8 22 M13 20 L12 22 M17 20 L16 22"/></svg></button>
+      </div>
+      <div class="ltbtn-group cat-green">
+        <button class="ltbtn" id="tgPower" title="Power lines"><span class="layer-load-dot" id="dotTgPower"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M13 2 L4 14 h6 l-1 8 9-12h-6z" fill="currentColor"/></svg></button>
+        <button class="ltbtn" id="tgRoads" title="Roads &amp; paths + place names"><span class="layer-load-dot" id="dotTgRoads"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3 L4 21 M16 3 L20 21 M12 4 v3 M12 10.5 v3 M12 17 v3"/></svg></button>
+        <button class="ltbtn" id="tgNatureReserves" title="Nature reserves &amp; protected areas"><span class="layer-load-dot" id="dotTgNatureReserves"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L18 12 L15 12 L19 18 L13 18 L13 22 L11 22 L11 18 L5 18 L9 12 L6 12 Z"/></svg></button>
+        <button class="ltbtn" id="tgLandCover" title="Non-landable terrain (forest/water/wetland/vineyard/urban)"><span class="layer-load-dot" id="dotTgLandCover"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3" stroke-width="1.8"/><path d="M3 15 L9 3 M3 21 L15 3 M9 21 L21 9 M15 21 L21 15" stroke-width="1.4"/></svg></button>
+        <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
+      </div>
+      <div class="ltbtn-group cat-red">
+        <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
+      </div>
     </div>
     <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
@@ -961,7 +971,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.04';
+const APP_VERSION = 'v1.05.06';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 

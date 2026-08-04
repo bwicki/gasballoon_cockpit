@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.04.06** (02.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.02** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -112,6 +112,10 @@ Header restructured further: old logo + separator removed from the top-left, rep
 Layer buttons reordered (wind, sondes, weather stations, rain, then roads, protected areas, terrain, then airspace) and lightly tinted by category (blue for weather/sonde/rain layers, green for roads/terrain/protected areas, yellow for airspace) so related layers read as a group at a glance.
 
 Weather model display redesigned to two compact lines (cloud icon + short model name, then a small download-arrow + fetch age and clock + run age below), and the verbose "fetched X ago · run ~Y h old" text is gone entirely. Twilight rows switched to a single flex line each (icon, SR/SS label, time, UTC all with `flex-shrink:0`) so they can no longer wrap, bottom-aligned, with smaller SR/SS/BCT/ECT labels and a more compact but still-visible UTC suffix. Layer buttons: the loading-state indicator moved from a floating corner dot to a thin strip along the bottom edge, and the buttons themselves are now smaller (28px vs 34px) with proportionally smaller icons.
+
+Weather model name no longer shows the "· auto" suffix in the compact header display (still available as a tooltip). Twilight display switched to a proper CSS grid (icon/label/time/UTC columns) so times and the UTC suffix stay aligned in their own column regardless of whether the label above is "SS" or the wider "ECT" - and bottom-aligned per row as intended; icons enlarged again since the last size was too small to read. Layer button groups (weather/sonde/rain, roads/terrain/protected areas, airspace) now have a visible gap between them. Emergency button shrunk to match the more compact header sizing.
+
+Emergency button is now round (distinguishes it more clearly from the square layer buttons). The legend-reopen icon switched from a plain "i" to a layer-stack icon (clearer that it's about map layer legends specifically). The warnings-reopen icon also switched from a raw "⚠" Unicode character to a hand-drawn SVG triangle - the same class of rendering collision found earlier with the info icon (iOS substituting its own coloured glyph) was possible here too, now avoided the same way.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

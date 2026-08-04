@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.20** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.21** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -176,6 +176,12 @@ METAR and Air Traffic markers moved to their own explicit map panes (above the d
 **Sonde workflow rebuilt from the ground up**: no more native browser `alert()`/`confirm()` dialogs (which show the page's github.io origin in their title - the "GitHub messages" from your report). Tapping a sonde now opens the app's own modal, showing the vertical profile (a table of derived wind levels) and key data (launch time, last fix, position, point/level counts) first, with a proper close button - only once that's open can you choose "Use as trajectory source". Sparse telemetry no longer gets silently discarded: whatever's available is shown, with a short inline note if it's thin, instead of refusing to display anything below an arbitrary minimum.
 
 Settings moved to the very bottom of the "More" menu, below Flight Log and Test Mode.
+
+Pre-cache radius switched from a slider to a numeric input (km).
+
+Air traffic markers overhauled: the grey halo circle is gone, the symbol itself is bigger/bolder, and it now shows a small grey FL + climb/descent-arrow readout to the right. Aircraft type is detected from the ADS-B emitter category (and, as a fallback, the type designator against a short list of common helicopter models) so helicopters and gliders get their own distinct symbol instead of every aircraft using the same fixed-wing silhouette.
+
+METAR/weather stations rebuilt as an actual station-model symbol: a simplified wind barb (direction + rough speed), a sky-cover circle following the international clear/few/scattered/broken/overcast convention, and the temperature - all parsed directly out of the raw METAR text, since the API doesn't return these as separate fields. The flight-category colour ring is still there around the symbol. Tapping a station now opens a proper popup box with the colour-coded category and the full raw METAR text, instead of only a hover tooltip.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

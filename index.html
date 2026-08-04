@@ -512,9 +512,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         
         <hr>
         <div class="subhead">Offline Tile Cache Radius</div>
-        <div class="slider-row">
-          <div class="lbl"><span>Pre-cache radius</span><b id="lblCacheRadius" style="color:var(--accent2);">75 km</b></div>
-          <input type="range" id="sCacheRadius" min="10" max="1050" step="10" value="75">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Pre-cache radius</span>
+          <input type="number" id="sCacheRadius" min="10" max="1050" step="10" value="75" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">km</span>
         </div>
         <button class="ghost" id="btnRefreshCacheNow" style="margin-top:6px;">↻ Refresh current cache now</button>
         <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Re-downloads map tiles AND all currently-enabled data layers (airspace, roads, nature reserves, non-landable terrain, region names) around the current position right away, instead of waiting for the automatic re-check.</p>
@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.20';
+const APP_VERSION = 'v1.05.21';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1538,7 +1538,6 @@ let landingLayerOn = true;
 let cacheRadiusKm = 75;
 document.getElementById('sCacheRadius').addEventListener('input', e=>{
   cacheRadiusKm = parseInt(e.target.value);
-  document.getElementById('lblCacheRadius').textContent = cacheRadiusKm + ' km';
   updateCacheBoundaryCircle();
 });
 // A ring showing the boundary of the pre-cached tile area (for offline use)
@@ -2080,11 +2079,72 @@ async function openSondeHubProfile(serial){
 
 // ---- weather stations / METAR (MetarCentral - CORS confirmed working) ----
 const METAR_CATEGORY_COLORS = { VFR:'#3ddc6f', MVFR:'#3fa9ff', IFR:'#e0483f', LIFR:'#b026ff' };
-function metarIcon(category){
+// Parses the handful of fields needed for a classic synoptic station-model
+// symbol directly out of the raw METAR text (wind, temperature, sky
+// cover) - the API doesn't return these as separate structured fields.
+function parseMetarRaw(raw){
+  const out = {windDir:null, windKt:null, calmOrVrb:false, tempC:null, cloud:null};
+  if(!raw) return out;
+  const windM = raw.match(/\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/);
+  if(windM){
+    if(windM[1]==='VRB'){ out.calmOrVrb = true; } else { out.windDir = parseInt(windM[1]); }
+    out.windKt = parseInt(windM[2]);
+    if(out.windKt===0) out.calmOrVrb = true;
+  }
+  const tempM = raw.match(/\s(M?\d{2})\/(M?\d{2}|M?XX)\s/);
+  if(tempM){ out.tempC = parseInt(tempM[1].replace('M','-')); }
+  // Highest/most significant cloud layer reported wins, in ascending cover
+  // order - OVC/VV (fully obscured) takes priority over a lower BKN etc.
+  const cloudOrder = ['SKC','CLR','FEW','SCT','BKN','OVC','VV'];
+  let best = null;
+  const cloudMatches = raw.matchAll(/\b(FEW|SCT|BKN|OVC)(\d{3})\b|\b(SKC|CLR)\b|\bVV(\d{3}|\/\/\/)\b/g);
+  for(const m of cloudMatches){
+    const code = m[1] || m[3] || 'VV';
+    if(!best || cloudOrder.indexOf(code) > cloudOrder.indexOf(best)) best = code;
+  }
+  out.cloud = best || (/\bCAVOK\b/.test(raw) ? 'SKC' : null);
+  return out;
+}
+// Sky-cover circle fill fraction per the international station-model
+// convention (empty=clear ... fully filled=overcast/obscured).
+const CLOUD_FILL = {SKC:0, CLR:0, FEW:0.25, SCT:0.5, BKN:0.75, OVC:1, VV:1};
+function skyCoverSvg(cloud){
+  const frac = CLOUD_FILL[cloud];
+  if(frac==null) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5" stroke-dasharray="2,2"/>'; // unknown
+  if(frac===0) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/>';
+  if(frac===1) return '<circle cx="12" cy="12" r="7" fill="#dfe6ea" stroke="#dfe6ea" stroke-width="1.5"/>';
+  if(frac===0.25) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/><path d="M12 5 A7 7 0 0 1 19 12 L12 12 Z" fill="#dfe6ea"/>';
+  if(frac===0.5) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/><path d="M12 5 A7 7 0 0 1 12 19 Z" fill="#dfe6ea"/>';
+  return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/><path d="M12 5 A7 7 0 1 1 6.4 16.2 Z" fill="#dfe6ea"/>';
+}
+// A simplified wind barb - a shaft pointing FROM the wind direction, with
+// tick marks scaled to speed. Not full meteorological notation (no
+// distinct 5/10/50kt flag shapes), but immediately readable as "wind from
+// this direction, roughly this strong" at the small size these render at.
+function windBarbSvg(dir, kt, calm){
+  if(calm) return '<circle cx="12" cy="12" r="1.5" fill="#dfe6ea"/>';
+  if(dir==null || kt==null) return '';
+  const ticks = Math.min(5, Math.round(kt/10));
+  let ticksHtml = '';
+  for(let i=0;i<ticks;i++){
+    const y = 2 + i*2.6;
+    ticksHtml += `<line x1="12" y1="${y}" x2="17" y2="${y-2}" stroke="#dfe6ea" stroke-width="1.4"/>`;
+  }
+  return `<g transform="rotate(${dir},12,12)"><line x1="12" y1="2" x2="12" y2="12" stroke="#dfe6ea" stroke-width="1.6"/>${ticksHtml}</g>`;
+}
+function metarIcon(category, parsed){
   const col = METAR_CATEGORY_COLORS[category] || '#8b98a5';
+  const p = parsed || {};
   return L.divIcon({
-    html:`<div style="width:14px;height:14px;border-radius:50%;background:${col};border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.5);"></div>`,
-    className:'', iconSize:[14,14], iconAnchor:[7,7]
+    html:`<div style="display:flex;flex-direction:column;align-items:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" style="overflow:visible;">
+        ${windBarbSvg(p.windDir, p.windKt, p.calmOrVrb)}
+        ${skyCoverSvg(p.cloud)}
+        <circle cx="12" cy="12" r="9" fill="none" stroke="${col}" stroke-width="2"/>
+      </svg>
+      <div style="background:rgba(40,46,54,0.85);border-radius:3px;padding:0 3px;font-size:9px;font-weight:600;color:#dfe6ea;margin-top:1px;">${p.tempC!=null?p.tempC+'°':''}</div>
+    </div>`,
+    className:'', iconSize:[24,34], iconAnchor:[12,17]
   });
 }
 const metarLayer = L.layerGroup();
@@ -2167,9 +2227,11 @@ async function fetchMetarStations(force){
       if(shownCount===0) console.log('METAR: first successful raw response (for field-name verification):', JSON.stringify(j));
       const category = j.flight_rules || (j.metar && j.metar.flight_rules) || (j.airport && j.airport.flight_rules) || 'UNKN';
       const raw = (j.metar && j.metar.raw) || '(no recent METAR)';
+      const parsed = parseMetarRaw(raw);
       shownCount++;
-      L.marker([a.lat, a.lon], {icon: metarIcon(category), pane:'metarPane'})
-        .bindTooltip(`<b>${a.icao}</b> ${a.name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
+      const catColor = METAR_CATEGORY_COLORS[category] || '#8b98a5';
+      L.marker([a.lat, a.lon], {icon: metarIcon(category, parsed), pane:'metarPane'})
+        .bindPopup(`<div style="min-width:180px;"><b>${a.icao}</b> ${a.name}<br><span style="color:${catColor};font-weight:700;">${category}</span><div style="font-family:monospace;font-size:10.5px;background:rgba(0,0,0,0.06);border-radius:4px;padding:4px 6px;margin-top:4px;word-break:break-all;">${raw}</div></div>`)
         .addTo(metarLayer);
     });
     console.log(`METAR: ${shownCount} station(s) shown (${failedCount} of ${nearby.length} individual requests failed). Layer on map: ${map.hasLayer(metarLayer)}.`);
@@ -2197,12 +2259,44 @@ function updateAirTrafficTooltip(){
 }
 document.getElementById('sAdsbAbove').addEventListener('input', updateAirTrafficTooltip);
 updateAirTrafficTooltip();
-function aircraftIcon(headingDeg, isGlider){
+// Aircraft symbol shapes by broad category - the rotating part (the
+// symbol itself) is kept separate from the FL/rate readout box, which
+// must stay upright and readable regardless of heading.
+const AIRCRAFT_SHAPES = {
+  heli: '<circle cx="12" cy="6" r="1.6"/><path d="M12 6 L3 4.5 M12 6 L21 4.5" stroke-width="2" stroke-linecap="round"/><path d="M12 7.5 L12 17 M8 20 L16 20 M8.5 17 L15.5 17 L16.5 20 L7.5 20 Z" fill="currentColor" stroke="none"/><path d="M15.5 19 L20 19.7" stroke-width="1.6" stroke-linecap="round"/>',
+  glider: '<path d="M12 3 L11 9 L1 10.5 L1 12 L11 11.5 L11 18 L8 20 L8 21.3 L12 20.3 L16 21.3 L16 20 L13 18 L13 11.5 L23 12 L23 10.5 L13 9 Z" fill="currentColor" stroke="none"/>',
+  plane: '<path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="currentColor" stroke="#fff" stroke-width="1.3"/>'
+};
+function aircraftCategoryFromCode(category, typeDesignator){
+  // ADS-B "emitter category": A7 = rotorcraft, B2 = glider/sailplane,
+  // B1/B4 = balloon/ultralight (shown as glider shape - closer to correct
+  // than a fixed-wing airliner silhouette). Falls back to the type
+  // designator for the handful of common helicopter models in case the
+  // category field itself isn't populated by this particular feed.
+  const cat = (category||'').toUpperCase();
+  if(cat==='A7') return 'heli';
+  if(cat==='B2'||cat==='B1'||cat==='B4') return 'glider';
+  const t = (typeDesignator||'').toUpperCase();
+  if(/^(EC|AS|R22|R44|R66|B06|B407|B429|H125|H130|H145|AW1|A109|A139|S76|S92|MD5|AS35|AS50)/.test(t)) return 'heli';
+  return 'plane';
+}
+function aircraftIcon(headingDeg, category, typeDesignator, flAlt, baroRateFtMin){
   const rot = headingDeg||0;
-  const color = isGlider ? '#3fa9ff' : '#e0483f';
+  const shapeKind = aircraftCategoryFromCode(category, typeDesignator);
+  const color = shapeKind==='heli' ? '#e8a838' : (shapeKind==='glider' ? '#3fa9ff' : '#e0483f');
+  const shape = AIRCRAFT_SHAPES[shapeKind];
+  let rateArrow = '', rateColor = '#c9d3db';
+  if(baroRateFtMin!=null && Math.abs(baroRateFtMin)>=100){
+    rateArrow = baroRateFtMin>0 ? '&#9650;' : '&#9660;';
+    rateColor = baroRateFtMin>0 ? '#3ddc6f' : '#e0483f';
+  }
+  const flText = flAlt!=null ? 'FL'+Math.round(flAlt/100).toString().padStart(3,'0') : '';
   return L.divIcon({
-    html:`<svg width="26" height="26" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);overflow:visible;"><circle cx="12" cy="12" r="10" fill="rgba(0,0,0,0.35)"/><path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="${color}" stroke="#fff" stroke-width="1.3"/></svg>`,
-    className:'', iconSize:[26,26], iconAnchor:[13,13]
+    html:`<div style="display:flex;align-items:center;gap:2px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);flex-shrink:0;color:${color};">${shape}</svg>
+      <div style="background:rgba(40,46,54,0.85);border-radius:3px;padding:1px 4px;font-size:9px;font-family:sans-serif;font-weight:600;color:#dfe6ea;white-space:nowrap;line-height:1.3;">${flText}<span style="color:${rateColor};margin-left:2px;">${rateArrow}</span></div>
+    </div>`,
+    className:'', iconSize:[70,22], iconAnchor:[11,11]
   });
 }
 const airTrafficLayer = L.layerGroup();
@@ -2271,8 +2365,9 @@ async function fetchAirTraffic(force){
       if(altM>maxAlt) return;
       shownCount++;
       const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
-      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, false), pane:'airTrafficPane'})
-        .bindTooltip(`<b>${label}</b><br>${Math.round(altM)} m AMSL<br>${a.gs!=null?Math.round(a.gs*1.852)+' km/h':''}`, {sticky:true})
+      const typeInfo = a.t ? ` (${a.t})` : '';
+      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, a.category, a.t, altFt, a.baro_rate), pane:'airTrafficPane'})
+        .bindTooltip(`<b>${label}</b>${typeInfo}<br>${Math.round(altM)} m AMSL (FL${Math.round(altFt/100)})<br>${a.gs!=null?Math.round(a.gs*1.852)+' km/h':''}`, {sticky:true})
         .addTo(airTrafficLayer);
     });
     console.log(`Air traffic: ${shownCount} aircraft shown within the configured altitude band (of ${list.length} received).`);

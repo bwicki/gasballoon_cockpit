@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.02** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.04** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -116,6 +116,10 @@ Weather model display redesigned to two compact lines (cloud icon + short model 
 Weather model name no longer shows the "· auto" suffix in the compact header display (still available as a tooltip). Twilight display switched to a proper CSS grid (icon/label/time/UTC columns) so times and the UTC suffix stay aligned in their own column regardless of whether the label above is "SS" or the wider "ECT" - and bottom-aligned per row as intended; icons enlarged again since the last size was too small to read. Layer button groups (weather/sonde/rain, roads/terrain/protected areas, airspace) now have a visible gap between them. Emergency button shrunk to match the more compact header sizing.
 
 Emergency button is now round (distinguishes it more clearly from the square layer buttons). The legend-reopen icon switched from a plain "i" to a layer-stack icon (clearer that it's about map layer legends specifically). The warnings-reopen icon also switched from a raw "⚠" Unicode character to a hand-drawn SVG triangle - the same class of rendering collision found earlier with the info icon (iOS substituting its own coloured glyph) was possible here too, now avoided the same way.
+
+**Twilight icon bottom-alignment - actual root cause found**: the SVG's own viewBox had a lot of empty space below the visible horizon line (viewBox went to y=24, the horizon line was at y=15.5), so even with the grid correctly bottom-aligning the icon's box, the visible artwork inside it still sat noticeably higher than the text baseline next to it. Cropped the viewBox tightly to the actual artwork, which is the real fix (the grid `align-items:end` alone couldn't fix this, since it only aligns boxes, not the visual content within them).
+
+Layer button groups redefined and re-coloured: weather (blue) = wind, weather stations, sondes, rain; ground cover (green) = power lines, roads, protected areas, terrain, region names; airspace (red) = airspace alone. Power lines and region names had previously been left outside any group/colour.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

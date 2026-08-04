@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.28';
+const APP_VERSION = 'v1.05.29';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2296,16 +2296,19 @@ async function fetchMetarStations(force){
     let wxShown = 0;
     if(wxResp){
       console.log('Swiss weather stations: raw response (for format verification):', JSON.stringify(wxResp).slice(0,800));
-      // The exact response shape isn't documented publicly in detail, so
-      // this handles a few plausible layouts defensively rather than
-      // assuming one - an object keyed by station code, an array of
-      // per-station records, or an array of flat per-reading records.
+      // Confirmed via a live browser test: {"source":..., "payload":[{"timestamp":...,"loc":"BER","par":"tt","val":33.7}, ...]}
+      // - a flat array of one reading per entry, not grouped by station.
       const byCode = {};
       const addReading = (code, paramCode, value)=>{
         if(!byCode[code]) byCode[code] = {};
         byCode[code][paramCode] = value;
       };
-      if(Array.isArray(wxResp)){
+      if(Array.isArray(wxResp.payload)){
+        wxResp.payload.forEach(rec=>{
+          if(!rec || !rec.loc || !rec.par || rec.val==null) return;
+          addReading(rec.loc, rec.par, parseFloat(rec.val));
+        });
+      } else if(Array.isArray(wxResp)){
         wxResp.forEach(rec=>{
           const code = rec.location || rec.station || rec.code;
           if(!code) return;

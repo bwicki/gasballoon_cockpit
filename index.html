@@ -360,8 +360,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
       </div>
       <div class="ltbtn-group cat-red">
-        <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 14h18"/><path d="M3 8 L6 5 M21 8 L18 5 M3 14 L6 11 M21 14 L18 11"/></svg></button>
-        <button class="ltbtn" id="tgAirTraffic" title="Air traffic (ADSBExchange, requires your own RapidAPI key in Settings)"><span class="layer-load-dot" id="dotTgAirTraffic"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 12 L18 7" stroke-linecap="round"/><circle cx="16" cy="9" r="1" fill="#e0483f" stroke="none"/></svg></button>
+        <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="18" height="18" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="5" stroke="currentColor" stroke-width="2.4"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2.4"/><line x1="1" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2.4"/><line x1="19" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7.5 A4.5 4.5 0 0 1 12 16.5 Z" fill="currentColor"/></svg></button>
+        <button class="ltbtn" id="tgAirTraffic" title="Air traffic (ADSBExchange, requires your own RapidAPI key in Settings)"><span class="layer-load-dot" id="dotTgAirTraffic"></span><svg width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M23.24,0.48 L21.24,0.00 L19.86,0.62 L15.72,4.28 L4.41,1.03 L1.86,3.03 L1.93,4.14 L10.97,8.90 L6.34,13.66 L2.41,13.79 L0.00,16.07 L0.21,16.83 L5.10,18.90 L7.31,23.93 L10.14,21.59 L10.28,17.66 L14.90,13.03 L20.00,22.21 L22.83,20.07 L19.72,8.21 L23.66,3.45 L23.93,1.52 Z M22.28,1.45 L22.55,2.48 L21.86,3.93 L18.21,7.93 L21.45,19.59 L20.34,20.21 L15.72,11.38 L14.97,11.10 L9.03,16.97 L8.83,21.03 L7.79,21.86 L6.14,17.93 L2.07,15.93 L2.97,15.10 L7.03,14.90 L12.83,8.55 L3.59,3.31 L4.55,2.48 L16.00,5.72 L19.86,2.21 Z"/></svg></button>
       </div>
     </div>
     <select id="altUnitSelect" style="display:none;">
@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.24';
+const APP_VERSION = 'v1.05.27';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 

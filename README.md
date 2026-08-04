@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.06** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.08** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -124,6 +124,14 @@ Layer button groups redefined and re-coloured: weather (blue) = wind, weather st
 Version badge's z-index raised further (defensive - couldn't find a code-level reason it would be hidden, see chat about checking for a stale cached page instead).
 
 Layer buttons regrouped into three "pill" containers (one shared background per category) instead of colouring each button individually - the individual-icon tinting apparently wasn't showing clearly enough in practice. Version badge also given its own explicit background/padding instead of depending on Leaflet's `.leaflet-control-attribution` styling being available, in case that was the actual cause of it not appearing.
+
+**Real bug found: the hamburger menu really was rendering behind the map** - `#topbar` has `overflow-y:hidden` (for the horizontal-scroll behaviour when the header gets crowded), which clips any `position:absolute` child that tries to extend below the header's own box, exactly what a dropdown does. Every other popover (Settings, Capture, Emergency) uses `position:fixed` instead, which escapes that clipping - the hamburger menu now does too, with its position computed from the button's location when it opens.
+
+**Real collision found: the version badge and the bottom-stacked legends really did overlap** - legends stack starting 8px from the bottom and span the full width, the version badge sits at 2px from the bottom-left - raised the legend stack's starting position to clear it.
+
+Pill group borders thickened and made more saturated (was too subtle to read as a border). More space added to the right of the airspace pill (its vertical divider removed, replaced by margin instead), and the whole button row nudged left slightly.
+
+Legend-reopen icon changed once more to an eye symbol - matches what the button actually does (bring back hidden legends) more directly than the previous layer-stack icon.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

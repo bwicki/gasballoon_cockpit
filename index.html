@@ -130,16 +130,16 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #particleHeightLabelAmsl{font-size:10px;font-weight:400;color:var(--text);white-space:normal;text-align:center;line-height:1.2;margin-bottom:5px;}
 
 /* ---- layer toggle group (header, top-left) ---- */
-.layerToggleGroup{display:flex;gap:10px;flex-shrink:0;}
+.layerToggleGroup{display:flex;gap:10px;flex-shrink:0;margin-left:-6px;margin-right:14px;}
 .ltbtn{position:relative;overflow:hidden;background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:6px;width:28px;height:28px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .ltbtn.cat-blue{background:rgba(63,169,255,0.14);border-color:rgba(63,169,255,0.35);}
 .ltbtn.cat-green{background:rgba(61,220,111,0.14);border-color:rgba(61,220,111,0.35);}
 .ltbtn.cat-yellow{background:rgba(232,168,56,0.16);border-color:rgba(232,168,56,0.4);}
 .ltbtn.cat-red{background:rgba(224,72,63,0.16);border-color:rgba(224,72,63,0.4);}
 .ltbtn-group{display:flex;gap:2px;border-radius:8px;padding:3px;}
-.ltbtn-group.cat-blue{background:rgba(63,169,255,0.14);border:1px solid rgba(63,169,255,0.35);}
-.ltbtn-group.cat-green{background:rgba(61,220,111,0.14);border:1px solid rgba(61,220,111,0.35);}
-.ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:1px solid rgba(224,72,63,0.4);}
+.ltbtn-group.cat-blue{background:rgba(63,169,255,0.14);border:2px solid rgba(63,169,255,0.75);}
+.ltbtn-group.cat-green{background:rgba(61,220,111,0.14);border:2px solid rgba(61,220,111,0.75);}
+.ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:2px solid rgba(224,72,63,0.8);}
 .ltbtn-group .ltbtn{background:var(--panel2);border-color:transparent;}
 .ltbtn-group .ltbtn.active{border-color:var(--accent);}
 .layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;}
@@ -294,7 +294,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="topbar">
     <div style="position:relative;">
       <button id="btnHeaderMore" title="Menu" style="background:none;border:none;color:var(--text);cursor:pointer;padding:4px;display:flex;align-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div id="headerMoreMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px;z-index:5000;flex-direction:column;gap:4px;min-width:150px;"></div>
+      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px;z-index:5000;flex-direction:column;gap:4px;min-width:150px;"></div>
     </div>
     <div class="wx-chip" style="gap:3px;">
       <svg id="gpsPin" width="16" height="16" viewBox="0 0 24 24" class="gps-pin bad"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="currentColor" stroke="#1a1a1a" stroke-width="1"/><circle cx="12" cy="10" r="3.4" fill="#1a1a1a" opacity="0.35"/></svg>
@@ -333,7 +333,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;color:var(--bad);border:2px solid var(--bad);border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg></button>
-    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;color:#3fa9ff;border:2px solid #3fa9ff;border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 13 L12 18 L21 13"/><path d="M3 18 L12 23 L21 18"/></svg></button>
+    <button id="allLegendsReopenBtn" title="Show all dismissed legends" style="display:none;background:none;color:#3fa9ff;border:2px solid #3fa9ff;border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 6 19 6 22 12 C19 18 5 18 2 12 Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
     <button id="btnReopenStagedPlan" onclick="if(state.lastStagedPlanResult) showStagedDescentPlan(state.lastStagedPlanResult);" title="Reopen the staged descent plan" style="display:none;background:none;color:#ff6a00;border:2px solid #ff6a00;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;padding:0;line-height:1;align-items:center;justify-content:center;box-sizing:border-box;">⬇⬇</button>
     <div class="spacer"></div>
     <div class="layerToggleGroup" id="layerToggleGroup">
@@ -354,7 +354,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
       </div>
     </div>
-    <div class="sep"></div>
     <select id="altUnitSelect" style="display:none;">
       <option value="m">m</option>
       <option value="ft">ft</option>
@@ -971,7 +970,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.06';
+const APP_VERSION = 'v1.05.08';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -3961,7 +3960,7 @@ async function runObstacleCheck(path){
 // ---- generic dismiss-to-icon banner system, shared by the red obstacle
 // warning and the yellow descent-time wind notice ----
 function restackBottomLegends(){
-  let bottom = 8;
+  let bottom = 26; // leaves room for the version badge sitting at the very bottom-left
   legendStackOrder.forEach(id=>{
     const el = document.getElementById(id);
     el.style.bottom = bottom + 'px';
@@ -4427,7 +4426,15 @@ startGroundWindLayer();
   });
   document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{
     e.stopPropagation();
-    menu.style.display = menu.style.display==='none' ? 'flex' : 'none';
+    const willOpen = menu.style.display==='none' || !menu.style.display;
+    if(willOpen){
+      const rect = e.currentTarget.getBoundingClientRect();
+      menu.style.top = (rect.bottom+4)+'px';
+      menu.style.left = rect.left+'px';
+      menu.style.display = 'flex';
+    } else {
+      menu.style.display = 'none';
+    }
   });
   document.addEventListener('click', (e)=>{
     if(menu.style.display!=='none' && !menu.contains(e.target) && e.target.id!=='btnHeaderMore'){

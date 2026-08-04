@@ -140,15 +140,18 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 .ltbtn-group.cat-blue{background:rgba(63,169,255,0.14);border:2px solid rgba(63,169,255,0.75);}
 .ltbtn-group.cat-green{background:rgba(61,220,111,0.14);border:2px solid rgba(61,220,111,0.75);}
 .ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:2px solid rgba(224,72,63,0.8);}
-.ltbtn-group .ltbtn{background:var(--panel2);border-color:transparent;}
-.ltbtn-group .ltbtn.active{border-color:var(--accent);}
-#headerMoreMenu > *:not(:last-child){border-bottom:1px solid var(--border);}
+.ltbtn-group .ltbtn{background:var(--panel2);border-color:var(--border);}
+.ltbtn-group.cat-blue .ltbtn.active{border-color:#3fa9ff;border-width:2px;}
+.ltbtn-group.cat-green .ltbtn.active{border-color:#3ddc6f;border-width:2px;}
+.ltbtn-group.cat-red .ltbtn.active{border-color:#e0483f;border-width:2px;}
+#headerMoreMenu > *:not(:last-child):not(#btnCloseHeaderMore){border-bottom:1px solid var(--border);}
 #headerMoreMenu .iconbtn{width:100%;background:none;border:none;border-radius:0;justify-content:flex-start;padding:9px 12px;gap:10px;font-size:12px;font-weight:400;}
 #headerMoreMenu .iconbtn.active{background:rgba(63,208,201,0.1);color:var(--accent);}
 #headerMoreMenu .iconbtn:active{background:var(--panel);}
 .layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;}
 .layer-load-dot.loading{background:#ffd400;}
 .layer-load-dot.ready{background:var(--good);}
+.layer-load-dot.error{background:var(--bad);}
 .ltbtn.active{border-color:var(--accent);background:rgba(63,208,201,0.15);color:var(--text);}
 .legend-row{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;}
 
@@ -298,7 +301,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="topbar">
     <div style="position:relative;">
       <button id="btnHeaderMore" title="Menu" style="background:none;border:none;color:var(--text);cursor:pointer;padding:4px;display:flex;align-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:4px 0;z-index:5000;flex-direction:column;min-width:170px;overflow:hidden;"></div>
+      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:26px 0 4px;z-index:5000;flex-direction:column;min-width:170px;overflow:hidden;">
+        <button id="btnCloseHeaderMore" title="Close menu" style="position:absolute;top:4px;right:4px;background:none;border:none;color:var(--muted);cursor:pointer;width:20px;height:20px;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></button>
+      </div>
     </div>
     <div class="wx-chip" style="gap:3px;">
       <svg id="gpsPin" width="16" height="16" viewBox="0 0 24 24" class="gps-pin bad"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="currentColor" stroke="#1a1a1a" stroke-width="1"/><circle cx="12" cy="10" r="3.4" fill="#1a1a1a" opacity="0.35"/></svg>
@@ -977,7 +982,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.10';
+const APP_VERSION = 'v1.05.11';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1361,9 +1366,10 @@ document.getElementById('allLegendsReopenBtn').addEventListener('click', ()=>{
 function setLayerLoadDot(btnId, dotState){
   const dot = document.getElementById('dotTg'+btnId.replace('tg',''));
   if(!dot) return;
-  dot.classList.remove('loading','ready');
+  dot.classList.remove('loading','ready','error');
   if(dotState==='loading') dot.classList.add('loading');
   else if(dotState==='ready') dot.classList.add('ready');
+  else if(dotState==='error') dot.classList.add('error');
 }
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
@@ -1489,6 +1495,7 @@ map.on('zoomend moveend', updateCacheBoundaryCircleVisibility);
 // ---- nature reserves / protected areas (OpenStreetMap via Overpass) ----
 const natureReservesLayer = L.layerGroup();
 let natureReservesFetchTimer = null;
+let natureReservesFailCount = 0;
 let natureReservesActive = false;
 document.getElementById('tgNatureReserves').addEventListener('click', function(){
   natureReservesActive = this.classList.toggle('active');
@@ -1623,12 +1630,19 @@ out geom;`;
       }
     }
     if(natureReservesActive) setLayerLoadDot('tgNatureReserves','ready');
+    natureReservesFailCount = 0;
   }catch(e){
     // Don't just give up until the next pan/zoom/toggle - retry on our own
     // once the shared cooldown (or a short delay) has passed, so a toggle
     // off/on or a timed-out attempt recovers by itself.
     if(natureReservesActive){
-      setLayerLoadDot('tgNatureReserves','loading'); // still trying - stays yellow, not green
+      natureReservesFailCount = (natureReservesFailCount||0) + 1;
+      // After a few consecutive failures this is a genuine, ongoing problem
+      // (the public Overpass mirrors are well-documented as unreliable at
+      // times) rather than "still loading" - show that honestly instead of
+      // leaving the dot yellow forever, which looked identical to a layer
+      // that was actually about to succeed.
+      setLayerLoadDot('tgNatureReserves', natureReservesFailCount>=3 ? 'error' : 'loading');
       const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
       clearTimeout(natureReservesFetchTimer);
       natureReservesFetchTimer = setTimeout(fetchNatureReserves, retryDelay);
@@ -1659,6 +1673,7 @@ const LANDCOVER_TAG_QUERIES = {
 };
 const landCoverLayer = L.layerGroup();
 let landCoverFetchTimer = null;
+let landCoverFailCount = 0;
 let landCoverActive = false;
 document.getElementById('tgLandCover').addEventListener('click', function(){
   landCoverActive = this.classList.toggle('active');
@@ -1714,9 +1729,11 @@ async function fetchLandCover(force){
         .addTo(landCoverLayer);
     }
     if(landCoverActive) setLayerLoadDot('tgLandCover','ready');
+    landCoverFailCount = 0;
   }catch(e){
     if(landCoverActive){
-      setLayerLoadDot('tgLandCover','loading');
+      landCoverFailCount = (landCoverFailCount||0) + 1;
+      setLayerLoadDot('tgLandCover', landCoverFailCount>=3 ? 'error' : 'loading');
       const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
       clearTimeout(landCoverFetchTimer);
       landCoverFetchTimer = setTimeout(fetchLandCover, retryDelay);
@@ -1728,6 +1745,7 @@ map.on('moveend zoomend', ()=>{ if(landCoverActive) scheduleLandCoverFetch(); })
 // ---- region names (experimental) layer ----
 const regionNamesLayer = L.layerGroup();
 let regionNamesFetchTimer = null;
+let regionNamesFailCount = 0;
 let regionNamesActive = false;
 let regionNamesWarnAutoCloseTimer = null;
 function showRegionNamesWarnWithAutoClose(){
@@ -1781,9 +1799,11 @@ async function fetchRegionNames(force){
       L.marker([el.lat, el.lon], {icon, pane:'regionNamesPane', interactive:false}).addTo(regionNamesLayer);
     }
     if(regionNamesActive) setLayerLoadDot('tgRegionNames','ready');
+    regionNamesFailCount = 0;
   }catch(e){
     if(regionNamesActive){
-      setLayerLoadDot('tgRegionNames','loading');
+      regionNamesFailCount = (regionNamesFailCount||0) + 1;
+      setLayerLoadDot('tgRegionNames', regionNamesFailCount>=3 ? 'error' : 'loading');
       const retryDelay = Math.max(5000, overpassCooldownUntil - Date.now() + 1000);
       clearTimeout(regionNamesFetchTimer);
       regionNamesFetchTimer = setTimeout(fetchRegionNames, retryDelay);
@@ -1899,6 +1919,7 @@ function metarIcon(category){
 const metarLayer = L.layerGroup();
 let metarActive = false;
 let metarFetchTimer = null;
+let metarFailCount = 0;
 document.getElementById('tgMetar').addEventListener('click', function(){
   metarActive = this.classList.toggle('active');
   if(metarActive){ setLayerLoadDot('tgMetar','loading'); metarLayer.addTo(map); scheduleMetarFetch(); }
@@ -1960,9 +1981,19 @@ async function fetchMetarStations(){
     });
     console.log(`METAR: ${inViewCount} station(s) shown within the current map view (of ${list.length} received).`);
     setLayerLoadDot('tgMetar','ready');
+    metarFailCount = 0;
   }catch(e){
     console.error('METAR fetch failed:', e);
-    if(metarActive) setLayerLoadDot('tgMetar','loading');
+    if(metarActive){
+      metarFailCount = (metarFailCount||0) + 1;
+      setLayerLoadDot('tgMetar', metarFailCount>=3 ? 'error' : 'loading');
+      // This previously never retried on its own at all - a single failed
+      // request left it stuck yellow indefinitely until the next manual
+      // pan/zoom/toggle, which likely explains a lot of the "just never
+      // loads" reports even when the service was only briefly unavailable.
+      clearTimeout(metarFetchTimer);
+      metarFetchTimer = setTimeout(fetchMetarStations, 8000);
+    }
   }
 }
 
@@ -4444,6 +4475,10 @@ startGroundWindLayer();
       menu.style.display = 'none';
     }
   });
+  document.getElementById('btnCloseHeaderMore').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    menu.style.display = 'none';
+  });
   document.addEventListener('click', (e)=>{
     if(menu.style.display!=='none' && !menu.contains(e.target) && e.target.id!=='btnHeaderMore'){
       menu.style.display = 'none';
@@ -5209,13 +5244,23 @@ function setupPopover(btnId, panelId){
     document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
     if(willOpen){
       const r = btn.getBoundingClientRect();
-      // Always flush to the screen's right edge (not relative to the
-      // button) - on iPad the map's own top-right controls could otherwise
-      // end up overlapping/covering part of the panel depending on exactly
-      // where the triggering button sits.
-      panel.style.right = '8px';
-      panel.style.left = 'auto';
-      panel.style.top = Math.max(8, r.bottom + 8) + 'px';
+      // Anchor to the "More" menu itself (to its right, top-aligned) rather
+      // than to whichever individual button was clicked - those buttons
+      // now live at varying heights inside that menu, which is exactly why
+      // this used to end up at an inconsistent/"random" position depending
+      // on which item was clicked.
+      const moreMenu = document.getElementById('headerMoreMenu');
+      const menuOpen = moreMenu && moreMenu.style.display!=='none' && moreMenu.style.display;
+      if(menuOpen){
+        const mr = moreMenu.getBoundingClientRect();
+        panel.style.left = (mr.right+10)+'px';
+        panel.style.right = 'auto';
+        panel.style.top = Math.max(8, mr.top)+'px';
+      } else {
+        panel.style.right = '8px';
+        panel.style.left = 'auto';
+        panel.style.top = Math.max(8, r.bottom + 8) + 'px';
+      }
       panel.classList.add('open');
     }
   });

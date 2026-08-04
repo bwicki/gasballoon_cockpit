@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.10** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.11** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -136,6 +136,16 @@ Legend-reopen icon changed once more to an eye symbol - matches what the button 
 Warning/eye icon borders thinned (2px to 1.5px) and slightly less opaque for a more elegant look.
 
 Flight Charts moved into the "More" menu too (alongside Day/Night, Capture, Settings, Flight Log, Test Mode), and the whole menu redesigned as uniform icon+label rows with subtle divider lines instead of each item being its own bordered box.
+
+**Real bug fixed: layer button outlines were fully transparent** regardless of on/off state - now always visible (subtle when off, thicker in the category colour when on).
+
+**Real bug fixed: Settings/Capture/Flight Log panels opened at an inconsistent position** - they positioned themselves relative to whichever button was clicked, but those buttons now live at varying heights inside the "More" menu. They're now anchored to the "More" menu itself (to its right, top-aligned) instead. Flight Charts is unaffected (unchanged, fixed position at the bottom of the right column).
+
+Added a close (✕) button to the "More" menu.
+
+**Real bug fixed: METAR never retried after a failed request** - it just stayed yellow indefinitely until a manual pan/zoom/toggle. It now retries automatically every 8s, same as the Overpass-based layers already did.
+
+All four map-data layers (METAR, nature reserves, land cover, region names) now show a red "repeatedly failing" state after 3 consecutive failed attempts, instead of staying yellow ("still loading") forever - a more honest signal when the underlying service is having trouble. Regarding nature reserves/land cover/region names specifically: the public Overpass API infrastructure has well-documented, ongoing reliability issues completely independent of this app (confirmed via OpenStreetMap community discussions) - our own request throttling/multi-mirror fallback was already reasonably solid, but can't fully compensate for that.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

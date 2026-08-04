@@ -389,7 +389,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     </div>
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg><span>Settings</span></button>
-      <div id="settingsPanel">
+        <div id="settingsPanel">
         <div class="subhead" style="margin-top:0;">Altitude Unit</div>
         <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
           <label><input type="radio" name="altUnitRadio" value="m" checked>m AMSL</label>
@@ -397,6 +397,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <label><input type="radio" name="altUnitRadio" value="FL">FL</label>
         </div>
 
+        
         <div class="subhead">Language / Sprache</div>
         <div class="checkgrid" style="grid-template-columns:1fr 1fr;">
           <label><input type="radio" name="langRadio" value="en" checked>English</label>
@@ -404,6 +405,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Translates the main card titles and field labels. Not every message/tooltip in the app is translated yet.</p>
 
+        
         <hr>
         <div class="subhead">Weather Model</div>
         <select id="wxModelSelect">
@@ -428,6 +430,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <option value="120">120 min</option>
           </select>
         </div>
+        
         <div class="subhead" style="margin-top:10px;">Radiosonde Data</div>
         <label class="ghost" style="display:block;text-align:center;cursor:pointer;">
           Upload CSV with sonde data
@@ -436,6 +439,21 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div id="sondeUploadStatus" style="font-size:10px;color:var(--muted);margin-top:6px;">No sonde data loaded - using the weather model above.</div>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Expected columns: utc_time, altitude_m_msl, pressure_hPa, temperature_C, wind_speed_kt, wind_direction_from_deg. Auto-clears 12h after upload or on app restart.</p>
 
+        
+        <hr>
+        <div class="subhead">Weather Stations / METAR (MetarCentral)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Shows the nearest known airports (from a built-in list) individually, since MetarCentral's bulk endpoint turned out to be CORS-blocked even though the single-airport one isn't - confirmed via a live browser test. No API key needed for this.</p>
+
+        
+        <div class="subhead">Air Traffic (ADSBExchange via RapidAPI)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own RapidAPI subscription to "ADSBexchange.com" - the key itself is entered in "API Keys &amp; Tokens" at the bottom of Settings, alongside the app's other credentials.</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Altitude band above current position</span>
+          <input type="number" id="sAdsbAbove" min="0" max="20000" step="100" value="6000" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">ft</span>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">All traffic below the balloon is always shown (a balloon can descend into it); only traffic above this altitude band is filtered out.</p>
+
+        
         <hr>
         <div class="subhead">Power Line Categories</div>
         <div class="checkgrid">
@@ -451,38 +469,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">"Overhead only" hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
 
-        <hr>
-        <div class="subhead">Airspace Classes</div>
-        <div class="checkgrid">
-          <label><input type="checkbox" checked data-as="A">Class A</label>
-          <label><input type="checkbox" checked data-as="B">Class B</label>
-          <label><input type="checkbox" checked data-as="C">Class C</label>
-          <label><input type="checkbox" checked data-as="D">Class D</label>
-          <label><input type="checkbox" data-as="E">Class E</label>
-          <label><input type="checkbox" data-as="G">Class G</label>
-          <label><input type="checkbox" checked data-as="R">Restricted</label>
-          <label><input type="checkbox" checked data-as="P">Prohibited</label>
-          <label><input type="checkbox" data-as="TMZ">TMZ</label>
-          <label><input type="checkbox" data-as="RMZ">RMZ</label>
-        </div>
-        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
-
-        <hr>
-        <div class="subhead">Weather Stations / METAR (MetarCentral)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Shows the nearest known airports (from a built-in list) individually, since MetarCentral's bulk endpoint turned out to be CORS-blocked even though the single-airport one isn't - confirmed via a live browser test. No API key needed for this.</p>
-
-        <div class="subhead">Air Traffic (ADSBExchange via RapidAPI)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own RapidAPI subscription to "ADSBexchange.com" - as with the other API keys in this app, it's visible in the page source to anyone who views it.</p>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-size:12.5px;flex:1;">RapidAPI key</span>
-          <input type="text" id="sAdsbApiKey" placeholder="RapidAPI key" value="7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:12.5px;flex:1;">Altitude band above current position</span>
-          <input type="number" id="sAdsbAbove" min="0" max="20000" step="100" value="2000" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">ft</span>
-        </div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">All traffic below the balloon is always shown (a balloon can descend into it); only traffic above this altitude band is filtered out.</p>
-
+        
         <div class="subhead">Non-landable Terrain (OpenStreetMap)</div>
         <div class="checkgrid">
           <label><input type="checkbox" checked data-landcover="forest">Forest/Wood</label>
@@ -505,6 +492,24 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">Shown (violet-red hatched) via the terrain icon in the header, next to Roads. Note: steep mountain terrain isn't included - OpenStreetMap has no slope/gradient data, that would need a separate elevation-based layer.</p>
 
+        
+        <hr>
+        <div class="subhead">Airspace Classes</div>
+        <div class="checkgrid">
+          <label><input type="checkbox" checked data-as="A">Class A</label>
+          <label><input type="checkbox" checked data-as="B">Class B</label>
+          <label><input type="checkbox" checked data-as="C">Class C</label>
+          <label><input type="checkbox" checked data-as="D">Class D</label>
+          <label><input type="checkbox" data-as="E">Class E</label>
+          <label><input type="checkbox" data-as="G">Class G</label>
+          <label><input type="checkbox" checked data-as="R">Restricted</label>
+          <label><input type="checkbox" checked data-as="P">Prohibited</label>
+          <label><input type="checkbox" data-as="TMZ">TMZ</label>
+          <label><input type="checkbox" data-as="RMZ">RMZ</label>
+        </div>
+        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
+
+        
         <hr>
         <div class="subhead">Offline Tile Cache Radius</div>
         <div class="slider-row">
@@ -515,12 +520,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Re-downloads map tiles AND all currently-enabled data layers (airspace, roads, nature reserves, non-landable terrain, region names) around the current position right away, instead of waiting for the automatic re-check.</p>
 
         <hr>
+        
         <hr>
         <div class="subhead">External GPS (Bluetooth, experimental)</div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic. Hardware compatibility varies widely - there is no universal BLE GPS standard for aviation receivers.</p>
         <button class="ghost" id="btnConnectBleGps">Connect Bluetooth GPS</button>
         <div id="bleGpsStatus" style="font-size:11px;color:var(--muted);margin-top:6px;">Not connected</div>
 
+        
         <hr>
         <div class="subhead">Pilot &amp; Emergency Contact</div>
         <input type="text" id="cfgPilotName" placeholder="Pilot name, e.g. Peter Müller" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
@@ -536,13 +543,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <input type="tel" id="cfgSmsRecipient5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
 
-        <div class="subhead">Silent Emergency Email (optional, via EmailJS)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the 🆘 panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key), but is still visible to anyone viewing this page's source.</p>
-        <input type="text" id="cfgEmailJsServiceId" placeholder="EmailJS Service ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <input type="text" id="cfgEmailJsTemplateId" placeholder="EmailJS Template ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <input type="text" id="cfgEmailJsPublicKey" placeholder="EmailJS Public Key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Your EmailJS template needs a variable that receives the message body - name it <code>message</code> - and a "To email" set to the address you want the report sent to.</p>
-
+        
         <div class="subhead">Staged Descent (Plan Descent, subfunction 2)</div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <span style="font-size:12.5px;flex:1;">Minimum stage separation</span>
@@ -556,6 +557,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Default 2 - stages are only worth stopping at if the wind there genuinely differs (direction/speed) from the surrounding levels; the biggest such shear points below cruise altitude are picked automatically, up to this many, rather than descending in many small fixed steps.</p>
 
+        
         <div class="subhead">Adiabatic Braking Model</div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <span style="font-size:12.5px;flex:1;">Balloon gas volume</span>
@@ -574,6 +576,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Scales the computed adiabatic lift bonus up or down to match your own empirical flight data (100% = model as-is).</p>
 
+        
         <hr>
         <div class="subhead">Dropbox Auto-Backup (Flight Log)</div>
         <div id="dropboxFolderPickerRow" style="display:none;margin-bottom:6px;">
@@ -581,12 +584,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <button class="ghost" id="btnDropboxConnect">Connect Dropbox</button>
         <div id="dropboxStatus" style="font-size:10px;color:var(--muted);margin-top:6px;">Not connected.</div>
-        <details style="margin-top:8px;">
-          <summary style="font-size:10.5px;color:var(--muted);cursor:pointer;">Advanced setup (one-time, needed before first connect)</summary>
-          <p style="font-size:10px;color:var(--muted);margin:6px 0;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled.</p>
-          <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
-          <input type="text" id="dropboxAppKey" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
-        </details>
+        <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">One-time advanced setup (Dropbox app key + redirect URI) has moved to "API Keys &amp; Tokens" at the bottom of Settings.</p>
         <input type="hidden" id="dropboxFolder" value="/GBLP_Logs">
 
         <div id="dropboxFolderPickerOverlay">
@@ -599,6 +597,31 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
           </div>
         </div>
+
+        
+<hr>
+        <details id="apiKeysDetails" style="margin-top:8px;">
+          <summary style="font-size:12px;color:var(--text);cursor:pointer;font-weight:600;padding:4px 0;">API Keys &amp; Tokens</summary>
+          <p style="font-size:10px;color:var(--muted);margin:6px 0 10px;">Every external service credential this app uses, gathered in one place. As with any client-side app, these are visible in the page source to anyone who views it. Changing anything here asks for confirmation first, since a mistyped key would otherwise silently break a working connection.</p>
+
+          <div class="subhead" style="margin-top:0;">Air Traffic (RapidAPI)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:12.5px;flex:1;">RapidAPI key</span>
+            <input type="text" id="sAdsbApiKey" class="api-key-input" placeholder="RapidAPI key" value="7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
+          </div>
+
+          <div class="subhead">Silent Emergency Email (EmailJS)</div>
+          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the 🆘 panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key).</p>
+          <input type="text" id="cfgEmailJsServiceId" class="api-key-input" placeholder="EmailJS Service ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+          <input type="text" id="cfgEmailJsTemplateId" class="api-key-input" placeholder="EmailJS Template ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+          <input type="text" id="cfgEmailJsPublicKey" class="api-key-input" placeholder="EmailJS Public Key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+          <p style="font-size:10px;color:var(--muted);margin:2px 0 10px;">Your EmailJS template needs a variable that receives the message body - name it <code>message</code> - and a "To email" set to the address you want the report sent to.</p>
+
+          <div class="subhead">Dropbox Auto-Backup</div>
+          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled. Needed once before first connecting Dropbox above.</p>
+          <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
+          <input type="text" id="dropboxAppKey" class="api-key-input" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+        </details>
 
         <hr>
         <button class="ghost" id="btnResetDefaults">Reset all settings to defaults</button>
@@ -931,6 +954,25 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
       </div>
 
+      <div id="sondeProfileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5500;align-items:center;justify-content:center;">
+        <div id="sondeProfileBox" style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;width:min(92vw,380px);max-height:85vh;overflow-y:auto;position:relative;">
+          <button id="sondeProfileClose" onclick="closeSondeProfileModal()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);cursor:pointer;width:26px;height:26px;padding:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></button>
+          <h3 id="sondeProfileTitle" style="margin:0 0 10px;font-size:15px;padding-right:24px;">Sonde</h3>
+          <div id="sondeProfileKeyData" style="font-size:12px;color:var(--text);margin-bottom:10px;line-height:1.6;"></div>
+          <div id="sondeProfileWarning" style="display:none;font-size:11px;color:#e8a838;background:rgba(232,168,56,0.12);border:1px solid rgba(232,168,56,0.35);border-radius:6px;padding:6px 8px;margin-bottom:10px;"></div>
+          <div id="sondeProfileTableWrap" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              <thead><tr style="position:sticky;top:0;background:var(--panel);"><th style="text-align:right;padding:5px 8px;">Alt (m)</th><th style="text-align:right;padding:5px 8px;">Speed</th><th style="text-align:right;padding:5px 8px;">Dir</th><th style="text-align:right;padding:5px 8px;">Temp</th></tr></thead>
+              <tbody id="sondeProfileTableBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:12px;">
+            <button class="ghost" id="sondeProfileUseBtn" style="flex:1;background:var(--accent);color:#00201d;font-weight:600;" onclick="useSondeProfileAsSource()">Use as trajectory source</button>
+            <button class="ghost" style="flex:1;" onclick="closeSondeProfileModal()">Close</button>
+          </div>
+        </div>
+      </div>
+
 
     </div>
   </div>
@@ -940,6 +982,55 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 /* ============================================================
    GB LANDING PLANNER - prototype
    ============================================================ */
+
+// ---------- API key confirmation guard ----------
+// Registered here, deliberately as early in the script as possible, so it
+// is the FIRST 'change' listener on each of these fields - every other
+// listener that actually persists a key (the Dropbox-specific one, the
+// EmailJS one, and the general config save/restore one) is registered
+// later in the script, so stopImmediatePropagation() below reliably stops
+// them from running whenever the user cancels the confirmation, instead
+// of the field's old value getting saved anyway due to listener ordering.
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.api-key-input').forEach(el=>{
+    el.dataset.prevValue = el.value;
+    el.addEventListener('focus', ()=>{ el.dataset.prevValue = el.value; });
+    el.addEventListener('change', (e)=>{
+      if(el.value === el.dataset.prevValue) return; // no actual change - nothing to confirm
+      const ok = confirm(`Change this API key/token?\n\nField: ${el.placeholder || el.id}\n\nThis affects a live external connection this app uses - only continue if you're sure the new value is correct.`);
+      if(!ok){
+        el.value = el.dataset.prevValue;
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      } else {
+        el.dataset.prevValue = el.value;
+      }
+    });
+  });
+});
+// Since this script block runs after the HTML is already fully parsed
+// (it sits at the end of <body>), DOMContentLoaded may have already fired
+// by the time this line runs - the listener above would then never get a
+// chance to fire. Covering both cases directly is simpler than relying on
+// event timing.
+if(document.readyState !== 'loading'){
+  document.querySelectorAll('.api-key-input').forEach(el=>{
+    if(el.dataset.prevValue !== undefined) return; // already set up by the DOMContentLoaded path
+    el.dataset.prevValue = el.value;
+    el.addEventListener('focus', ()=>{ el.dataset.prevValue = el.value; });
+    el.addEventListener('change', (e)=>{
+      if(el.value === el.dataset.prevValue) return;
+      const ok = confirm(`Change this API key/token?\n\nField: ${el.placeholder || el.id}\n\nThis affects a live external connection this app uses - only continue if you're sure the new value is correct.`);
+      if(!ok){
+        el.value = el.dataset.prevValue;
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      } else {
+        el.dataset.prevValue = el.value;
+      }
+    });
+  });
+}
 
 // ---------- password gate ----------
 // Soft client-side gate only (GitHub Pages has no server-side auth - anyone
@@ -991,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.18';
+const APP_VERSION = 'v1.05.20';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1225,6 +1316,10 @@ map.createPane('overlayTilesPane');
 map.getPane('overlayTilesPane').style.zIndex = 350;
 map.createPane('regionNamesPane');
 map.getPane('regionNamesPane').style.zIndex = 360; // above place labels/roads (both in overlayTilesPane), so region names always win when both are shown
+map.createPane('metarPane');
+map.getPane('metarPane').style.zIndex = 650; // explicitly above the default marker pane (600) - ruling out any z-index/stacking concern for this layer specifically
+map.createPane('airTrafficPane');
+map.getPane('airTrafficPane').style.zIndex = 650;
 map.getPane('overlayTilesPane').style.pointerEvents = 'none';
 
 const baseLayers = {
@@ -1886,7 +1981,30 @@ async function fetchSondeHubNearby(force){
     if(sondeHubActive) setLayerLoadDot('tgSondeHub','loading');
   }
 }
+let pendingSondeProfile = null;
+function closeSondeProfileModal(){
+  document.getElementById('sondeProfileOverlay').style.display = 'none';
+  pendingSondeProfile = null;
+}
+function useSondeProfileAsSource(){
+  if(!pendingSondeProfile || !pendingSondeProfile.profile.length){ closeSondeProfileModal(); return; }
+  state.sondeProfile = pendingSondeProfile.profile;
+  state.sondeLaunchTime = pendingSondeProfile.launchTime;
+  state.sondeUploadedAt = Date.now();
+  activateSondeData();
+  closeSondeProfileModal();
+}
 async function openSondeHubProfile(serial){
+  // Show the modal immediately with a loading state, rather than doing the
+  // fetch first and only showing anything once it's fully done - a slow
+  // connection would otherwise leave the tap feeling like it did nothing.
+  const overlay = document.getElementById('sondeProfileOverlay');
+  document.getElementById('sondeProfileTitle').textContent = `Sonde ${serial}`;
+  document.getElementById('sondeProfileKeyData').textContent = 'Loading telemetry…';
+  document.getElementById('sondeProfileWarning').style.display = 'none';
+  document.getElementById('sondeProfileTableBody').innerHTML = '';
+  document.getElementById('sondeProfileUseBtn').disabled = true;
+  overlay.style.display = 'flex';
   try{
     // The correct endpoint takes the serial as a QUERY parameter on
     // /sondes/telemetry, not as a path segment on /sondes/{serial} (which
@@ -1897,12 +2015,14 @@ async function openSondeHubProfile(serial){
     const data = await r.json();
     const bySerial = data[serial] || {};
     const points = Object.keys(bySerial).map(ts=>({...bySerial[ts], datetime: bySerial[ts].datetime||ts}));
-    if(points.length<2){ alert('Not enough telemetry yet for this sonde.'); return; }
     // SondeHub telemetry gives position+time, not wind directly - derive
     // the implied wind vector (bearing+speed) from horizontal drift
     // between consecutive fixes, same idea as our own GPS-observed-course
     // logic elsewhere in the app, then bucket by altitude like a normal
-    // uploaded sonde CSV.
+    // uploaded sonde CSV. Whatever comes out of this - even just one or
+    // two levels - gets shown; the app itself decides whether that's
+    // "enough", the person looking at it can judge that far better than
+    // an early return ever could.
     const sorted = points.filter(p=>p.lat!=null&&p.lon!=null&&p.alt!=null&&p.datetime)
       .sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
     const seenBuckets = new Set();
@@ -1925,16 +2045,36 @@ async function openSondeHubProfile(serial){
       profile.push({alt_m: altM, speed_ms: speedMs, dir_deg: dirFrom, temp_c: tempC});
     }
     profile.sort((a,b)=>a.alt_m-b.alt_m);
-    if(profile.length<3){ alert('Could not derive enough wind levels from this sonde track yet.'); return; }
-    const launchTime = new Date(sorted[0].datetime);
-    if(confirm(`Use this SondeHub track (${serial}, ${profile.length} levels, launched ${launchTime.toISOString().replace('T',' ').slice(0,16)} UTC) as the active sounding data?`)){
-      state.sondeProfile = profile;
-      state.sondeLaunchTime = launchTime;
-      state.sondeUploadedAt = Date.now();
-      activateSondeData();
+    const launchTime = sorted.length ? new Date(sorted[0].datetime) : null;
+    const lastFix = sorted.length ? sorted[sorted.length-1] : null;
+    pendingSondeProfile = {profile, launchTime, serial};
+
+    const keyDataEl = document.getElementById('sondeProfileKeyData');
+    if(!sorted.length){
+      keyDataEl.textContent = 'No usable telemetry received yet for this sonde.';
+    } else {
+      keyDataEl.innerHTML = `
+        <b>Launched:</b> ${launchTime.toISOString().replace('T',' ').slice(0,16)} UTC<br>
+        <b>Last fix:</b> ${new Date(lastFix.datetime).toISOString().replace('T',' ').slice(11,16)} UTC, ${Math.round(lastFix.alt)} m AMSL<br>
+        <b>Position:</b> ${lastFix.lat.toFixed(3)}°, ${lastFix.lon.toFixed(3)}°<br>
+        <b>Telemetry points:</b> ${sorted.length} &nbsp;·&nbsp; <b>Derived wind levels:</b> ${profile.length}
+      `;
     }
+    const warnEl = document.getElementById('sondeProfileWarning');
+    if(sorted.length<2){
+      warnEl.style.display = 'block';
+      warnEl.textContent = 'Not enough telemetry yet to derive any wind data from this sonde - check back in a moment.';
+    } else if(profile.length<3){
+      warnEl.style.display = 'block';
+      warnEl.textContent = `Only ${profile.length} wind level(s) could be derived so far - shown below, but this is a thin profile. It'll fill in as the sonde climbs.`;
+    }
+    document.getElementById('sondeProfileTableBody').innerHTML = profile.map(p=>
+      `<tr><td style="text-align:right;padding:4px 8px;">${Math.round(p.alt_m)}</td><td style="text-align:right;padding:4px 8px;">${p.speed_ms.toFixed(1)} m/s</td><td style="text-align:right;padding:4px 8px;">${Math.round(p.dir_deg)}°</td><td style="text-align:right;padding:4px 8px;">${p.temp_c!=null?p.temp_c.toFixed(1)+'°C':'—'}</td></tr>`
+    ).join('') || '<tr><td colspan="4" style="text-align:center;padding:10px;color:var(--muted);">No levels yet</td></tr>';
+    document.getElementById('sondeProfileUseBtn').disabled = profile.length===0;
   }catch(e){
-    alert('Could not load telemetry for this sonde: '+e.message);
+    document.getElementById('sondeProfileKeyData').textContent = 'Could not load telemetry for this sonde: '+e.message;
+    document.getElementById('sondeProfileUseBtn').disabled = true;
   }
 }
 
@@ -2022,16 +2162,17 @@ async function fetchMetarStations(force){
     let shownCount = 0, failedCount = 0;
     results.forEach((res,i)=>{
       const a = nearby[i];
-      if(res.status!=='fulfilled'){ failedCount++; return; }
+      if(res.status!=='fulfilled'){ failedCount++; console.warn(`METAR: request for ${a.icao} failed:`, res.reason); return; }
       const j = res.value;
-      const category = j.flight_rules || (j.metar && j.metar.flight_rules) || 'UNKN';
+      if(shownCount===0) console.log('METAR: first successful raw response (for field-name verification):', JSON.stringify(j));
+      const category = j.flight_rules || (j.metar && j.metar.flight_rules) || (j.airport && j.airport.flight_rules) || 'UNKN';
       const raw = (j.metar && j.metar.raw) || '(no recent METAR)';
       shownCount++;
-      L.marker([a.lat, a.lon], {icon: metarIcon(category)})
+      L.marker([a.lat, a.lon], {icon: metarIcon(category), pane:'metarPane'})
         .bindTooltip(`<b>${a.icao}</b> ${a.name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
         .addTo(metarLayer);
     });
-    console.log(`METAR: ${shownCount} station(s) shown (${failedCount} of ${nearby.length} individual requests failed).`);
+    console.log(`METAR: ${shownCount} station(s) shown (${failedCount} of ${nearby.length} individual requests failed). Layer on map: ${map.hasLayer(metarLayer)}.`);
     if(metarActive) setLayerLoadDot('tgMetar','ready');
     metarFailCount = 0;
   }catch(e){
@@ -2060,8 +2201,8 @@ function aircraftIcon(headingDeg, isGlider){
   const rot = headingDeg||0;
   const color = isGlider ? '#3fa9ff' : '#e0483f';
   return L.divIcon({
-    html:`<svg width="16" height="16" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);"><path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="${color}" stroke="#fff" stroke-width="0.6"/></svg>`,
-    className:'', iconSize:[16,16], iconAnchor:[8,8]
+    html:`<svg width="26" height="26" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);overflow:visible;"><circle cx="12" cy="12" r="10" fill="rgba(0,0,0,0.35)"/><path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="${color}" stroke="#fff" stroke-width="1.3"/></svg>`,
+    className:'', iconSize:[26,26], iconAnchor:[13,13]
   });
 }
 const airTrafficLayer = L.layerGroup();
@@ -2130,7 +2271,7 @@ async function fetchAirTraffic(force){
       if(altM>maxAlt) return;
       shownCount++;
       const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
-      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, false)})
+      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, false), pane:'airTrafficPane'})
         .bindTooltip(`<b>${label}</b><br>${Math.round(altM)} m AMSL<br>${a.gs!=null?Math.round(a.gs*1.852)+' km/h':''}`, {sticky:true})
         .addTo(airTrafficLayer);
     });
@@ -4617,7 +4758,7 @@ startGroundWindLayer();
   const settingsWrap = document.getElementById('btnSettings').closest('div');
   const logbookWrap = document.getElementById('btnLogbook').closest('div');
   const testModeBtn = document.getElementById('btnTestMode');
-  [flightChartsBtn, dayNightBtn, captureWrap, settingsWrap, logbookWrap, testModeBtn].forEach(el=>{
+  [flightChartsBtn, dayNightBtn, captureWrap, logbookWrap, testModeBtn, settingsWrap].forEach(el=>{
     if(el){ el.style.width='100%'; menu.appendChild(el); }
   });
   document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{

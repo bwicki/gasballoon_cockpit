@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.18** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.20** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -166,6 +166,16 @@ Air Traffic simplified: only one setting now, a numeric altitude band (ft) above
 **Real bug fixed across every map-data layer: turning a layer off destroyed its cached data** (`clearLayers()` ran on every toggle-off), so turning it back on always meant a full fresh fetch and a yellow "loading" flash - even seconds later with the map untouched. Every layer (nature reserves, terrain, region names, place labels, sondes, METAR, air traffic, rain) now just hides on toggle-off and keeps its data; toggling back on shows the cached content immediately (green) while a background refresh runs, rather than clearing and reloading from scratch. The area pre-caching step also now silently warms up METAR, air traffic, rain, and sonde data too (previously only nature reserves/terrain/region names/place labels), so all eight layers are ready the first time they're switched on.
 
 Airspace and Air Traffic icons redesigned - a stacked altitude-band symbol (zone, not object) for Airspace, and a radar sweep symbol for Air Traffic, since the two previously used near-identical plane silhouettes.
+
+Aircraft markers on the map made much more prominent (26px, thicker white outline, dark halo for contrast against any map background - was easy to miss at 16px). Air Traffic's default altitude band changed to 6000ft above the balloon's current position.
+
+**Settings substantially reorganized**: sections now follow the same left-to-right order the corresponding toggles appear in the header (weather group, then terrain/airspace group, then general settings, contact, and backup). Every API key/token in the app (RapidAPI, EmailJS's three credentials, the Dropbox app key) moved into one collapsed "API Keys & Tokens" section at the very bottom, and changing any of them now asks for confirmation first - cancelling reverts to the previous value rather than silently keeping a possibly-mistyped edit.
+
+METAR and Air Traffic markers moved to their own explicit map panes (above the default marker pane) - couldn't find a code-level cause for METAR still not showing, so this rules out any z-index/stacking explanation definitively; also added much more detailed console logging (raw response of the first successful station, per-station failure reasons) for the next round of diagnosis if it's still not appearing.
+
+**Sonde workflow rebuilt from the ground up**: no more native browser `alert()`/`confirm()` dialogs (which show the page's github.io origin in their title - the "GitHub messages" from your report). Tapping a sonde now opens the app's own modal, showing the vertical profile (a table of derived wind levels) and key data (launch time, last fix, position, point/level counts) first, with a proper close button - only once that's open can you choose "Use as trajectory source". Sparse telemetry no longer gets silently discarded: whatever's available is shown, with a short inline note if it's thin, instead of refusing to display anything below an arbitrary minimum.
+
+Settings moved to the very bottom of the "More" menu, below Flight Log and Test Mode.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

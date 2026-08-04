@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.21';
+const APP_VERSION = 'v1.05.22';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2083,7 +2083,7 @@ const METAR_CATEGORY_COLORS = { VFR:'#3ddc6f', MVFR:'#3fa9ff', IFR:'#e0483f', LI
 // symbol directly out of the raw METAR text (wind, temperature, sky
 // cover) - the API doesn't return these as separate structured fields.
 function parseMetarRaw(raw){
-  const out = {windDir:null, windKt:null, calmOrVrb:false, tempC:null, cloud:null};
+  const out = {windDir:null, windKt:null, calmOrVrb:false, tempC:null, cloud:null, cavok:false, visM:null};
   if(!raw) return out;
   const windM = raw.match(/\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/);
   if(windM){
@@ -2093,6 +2093,11 @@ function parseMetarRaw(raw){
   }
   const tempM = raw.match(/\s(M?\d{2})\/(M?\d{2}|M?XX)\s/);
   if(tempM){ out.tempC = parseInt(tempM[1].replace('M','-')); }
+  out.cavok = /\bCAVOK\b/.test(raw);
+  if(!out.cavok){
+    const visM4 = raw.match(/\s(\d{4})\s/); // 4-digit visibility in metres (European/ICAO style)
+    if(visM4) out.visM = parseInt(visM4[1]);
+  }
   // Highest/most significant cloud layer reported wins, in ascending cover
   // order - OVC/VV (fully obscured) takes priority over a lower BKN etc.
   const cloudOrder = ['SKC','CLR','FEW','SCT','BKN','OVC','VV'];
@@ -2102,49 +2107,37 @@ function parseMetarRaw(raw){
     const code = m[1] || m[3] || 'VV';
     if(!best || cloudOrder.indexOf(code) > cloudOrder.indexOf(best)) best = code;
   }
-  out.cloud = best || (/\bCAVOK\b/.test(raw) ? 'SKC' : null);
+  out.cloud = best || (out.cavok ? 'SKC' : null);
   return out;
 }
-// Sky-cover circle fill fraction per the international station-model
-// convention (empty=clear ... fully filled=overcast/obscured).
-const CLOUD_FILL = {SKC:0, CLR:0, FEW:0.25, SCT:0.5, BKN:0.75, OVC:1, VV:1};
-function skyCoverSvg(cloud){
-  const frac = CLOUD_FILL[cloud];
-  if(frac==null) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5" stroke-dasharray="2,2"/>'; // unknown
-  if(frac===0) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/>';
-  if(frac===1) return '<circle cx="12" cy="12" r="7" fill="#dfe6ea" stroke="#dfe6ea" stroke-width="1.5"/>';
-  if(frac===0.25) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/><path d="M12 5 A7 7 0 0 1 19 12 L12 12 Z" fill="#dfe6ea"/>';
-  if(frac===0.5) return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/><path d="M12 5 A7 7 0 0 1 12 19 Z" fill="#dfe6ea"/>';
-  return '<circle cx="12" cy="12" r="7" fill="none" stroke="#dfe6ea" stroke-width="1.5"/><path d="M12 5 A7 7 0 1 1 6.4 16.2 Z" fill="#dfe6ea"/>';
+function metarSummaryLine(p){
+  if(p.cavok) return 'CAVOK';
+  const parts = [];
+  if(p.visM!=null) parts.push(p.visM.toString().padStart(4,'0'));
+  if(p.cloud && p.cloud!=='SKC' && p.cloud!=='CLR') parts.push(p.cloud);
+  return parts.length ? parts.join(' ') : (p.cloud==='SKC'||p.cloud==='CLR' ? 'CLR' : '—');
 }
-// A simplified wind barb - a shaft pointing FROM the wind direction, with
-// tick marks scaled to speed. Not full meteorological notation (no
-// distinct 5/10/50kt flag shapes), but immediately readable as "wind from
-// this direction, roughly this strong" at the small size these render at.
-function windBarbSvg(dir, kt, calm){
-  if(calm) return '<circle cx="12" cy="12" r="1.5" fill="#dfe6ea"/>';
-  if(dir==null || kt==null) return '';
-  const ticks = Math.min(5, Math.round(kt/10));
-  let ticksHtml = '';
-  for(let i=0;i<ticks;i++){
-    const y = 2 + i*2.6;
-    ticksHtml += `<line x1="12" y1="${y}" x2="17" y2="${y-2}" stroke="#dfe6ea" stroke-width="1.4"/>`;
-  }
-  return `<g transform="rotate(${dir},12,12)"><line x1="12" y1="2" x2="12" y2="12" stroke="#dfe6ea" stroke-width="1.6"/>${ticksHtml}</g>`;
-}
-function metarIcon(category, parsed){
+// The international "airport" pictogram (ISO 7001-style side-view plane
+// silhouette), used inside a bold filled circle so the whole symbol reads
+// clearly against any map background/zoom level - a thin outline alone
+// (the previous station-model ring) was too easy to lose against the map.
+const AIRPORT_SYMBOL_PATH = 'M12 3.5c-.5 0-.9.4-.9.9v3.7L4.5 12v1.4l6.6-2v3.9l-1.8 1.4v1.2l2.7-.7 2.7.7v-1.2l-1.8-1.4v-3.9l6.6 2V12l-6.6-3.9V4.4c0-.5-.4-.9-.9-.9z';
+function metarIcon(category){
   const col = METAR_CATEGORY_COLORS[category] || '#8b98a5';
-  const p = parsed || {};
   return L.divIcon({
-    html:`<div style="display:flex;flex-direction:column;align-items:center;">
-      <svg width="24" height="24" viewBox="0 0 24 24" style="overflow:visible;">
-        ${windBarbSvg(p.windDir, p.windKt, p.calmOrVrb)}
-        ${skyCoverSvg(p.cloud)}
-        <circle cx="12" cy="12" r="9" fill="none" stroke="${col}" stroke-width="2"/>
-      </svg>
-      <div style="background:rgba(40,46,54,0.85);border-radius:3px;padding:0 3px;font-size:9px;font-weight:600;color:#dfe6ea;margin-top:1px;">${p.tempC!=null?p.tempC+'°':''}</div>
+    html:`<svg width="28" height="28" viewBox="0 0 24 24" style="overflow:visible;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));"><circle cx="12" cy="12" r="10.5" fill="${col}" stroke="#fff" stroke-width="2.2"/><path d="${AIRPORT_SYMBOL_PATH}" fill="#fff"/></svg>`,
+    className:'', iconSize:[28,28], iconAnchor:[14,14]
+  });
+}
+function metarInfoBoxIcon(icao, parsed, summaryLine){
+  const p = parsed || {};
+  const windText = p.calmOrVrb ? 'CALM' : (p.windDir!=null && p.windKt!=null ? `${p.windDir.toString().padStart(3,'0')}° ${p.windKt}kn` : '');
+  return L.divIcon({
+    html:`<div style="background:rgba(30,35,41,0.9);border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 6px;font-family:sans-serif;font-size:10px;color:#e6edf3;line-height:1.35;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4);">
+      <div style="font-weight:700;">${icao} ${windText}</div>
+      <div style="color:#b8c2cc;">${summaryLine}</div>
     </div>`,
-    className:'', iconSize:[24,34], iconAnchor:[12,17]
+    className:'', iconSize:null, iconAnchor:[-6,10]
   });
 }
 const metarLayer = L.layerGroup();
@@ -2230,8 +2223,15 @@ async function fetchMetarStations(force){
       const parsed = parseMetarRaw(raw);
       shownCount++;
       const catColor = METAR_CATEGORY_COLORS[category] || '#8b98a5';
-      L.marker([a.lat, a.lon], {icon: metarIcon(category, parsed), pane:'metarPane'})
-        .bindPopup(`<div style="min-width:180px;"><b>${a.icao}</b> ${a.name}<br><span style="color:${catColor};font-weight:700;">${category}</span><div style="font-family:monospace;font-size:10.5px;background:rgba(0,0,0,0.06);border-radius:4px;padding:4px 6px;margin-top:4px;word-break:break-all;">${raw}</div></div>`)
+      const fullTooltip = `<b>${a.icao}</b> ${a.name}<br><span style="color:${catColor};font-weight:700;">${category}</span><div style="font-family:monospace;font-size:10.5px;background:rgba(0,0,0,0.06);border-radius:4px;padding:4px 6px;margin-top:4px;word-break:break-all;">${raw}</div><div style="font-size:9.5px;color:var(--muted);margin-top:3px;">TAF not available from this data source</div>`;
+      // Two markers at the same position: the prominent airport symbol
+      // itself, plus a small offset info box beside it - both show the
+      // same full METAR on hover.
+      L.marker([a.lat, a.lon], {icon: metarIcon(category), pane:'metarPane'})
+        .bindTooltip(fullTooltip, {sticky:true})
+        .addTo(metarLayer);
+      L.marker([a.lat, a.lon], {icon: metarInfoBoxIcon(a.icao, parsed, metarSummaryLine(parsed)), pane:'metarPane', interactive:true})
+        .bindTooltip(fullTooltip, {sticky:true})
         .addTo(metarLayer);
     });
     console.log(`METAR: ${shownCount} station(s) shown (${failedCount} of ${nearby.length} individual requests failed). Layer on map: ${map.hasLayer(metarLayer)}.`);

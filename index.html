@@ -140,7 +140,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 .ltbtn-group.cat-blue{background:rgba(63,169,255,0.14);border:2px solid rgba(63,169,255,0.75);}
 .ltbtn-group.cat-green{background:rgba(61,220,111,0.14);border:2px solid rgba(61,220,111,0.75);}
 .ltbtn-group.cat-red{background:rgba(224,72,63,0.16);border:2px solid rgba(224,72,63,0.8);}
-.ltbtn-group .ltbtn{background:transparent;border-color:var(--border);}
+.ltbtn-group .ltbtn{background:var(--panel2);border-color:var(--border);}
 .ltbtn-group.cat-blue .ltbtn.active{border-color:#3fa9ff;border-width:2px;}
 .ltbtn-group.cat-green .ltbtn.active{border-color:#3ddc6f;border-width:2px;}
 .ltbtn-group.cat-red .ltbtn.active{border-color:#e0483f;border-width:2px;}
@@ -360,8 +360,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button class="ltbtn active" id="tgRegionNames" title="Regional/cultural place names (experimental)"><span class="layer-load-dot" id="dotTgRegionNames"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h13l3 6-3 6H4z"/><text x="7" y="14" font-size="8" fill="currentColor" stroke="none">Aa</text></svg></button>
       </div>
       <div class="ltbtn-group cat-red">
-        <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="14" height="14" viewBox="0 0 24 24"><path d="M21,16V14L13,9V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9L2,14V16L10,13.5V19L7.5,20.5V22L11.5,21L15.5,22V20.5L13,19V13.5L21,16Z" fill="currentColor"/></svg></button>
-        <button class="ltbtn" id="tgAirTraffic" title="Air traffic (ADSBExchange, requires your own RapidAPI key in Settings)"><span class="layer-load-dot" id="dotTgAirTraffic"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z"/></svg></button>
+        <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 14h18"/><path d="M3 8 L6 5 M21 8 L18 5 M3 14 L6 11 M21 14 L18 11"/></svg></button>
+        <button class="ltbtn" id="tgAirTraffic" title="Air traffic (ADSBExchange, requires your own RapidAPI key in Settings)"><span class="layer-load-dot" id="dotTgAirTraffic"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 12 L18 7" stroke-linecap="round"/><circle cx="16" cy="9" r="1" fill="#e0483f" stroke="none"/></svg></button>
       </div>
     </div>
     <select id="altUnitSelect" style="display:none;">
@@ -469,11 +469,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
         <hr>
         <div class="subhead">Weather Stations / METAR (MetarCentral)</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:12.5px;flex:1;">API key (optional)</span>
-          <input type="text" id="sMetarApiKey" placeholder="mc_..." value="mc_a454ffc3755e61b9e082b599903b6c00067f013a81295f22" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
-        </div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Raises the result limit per request from 10 to 500 and the daily quota from 100 to 1000. Leave empty to use the API anonymously. Note: as with any client-side app, this key is visible in the page source to anyone who views it.</p>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Shows the nearest known airports (from a built-in list) individually, since MetarCentral's bulk endpoint turned out to be CORS-blocked even though the single-airport one isn't - confirmed via a live browser test. No API key needed for this.</p>
 
         <div class="subhead">Air Traffic (ADSBExchange via RapidAPI)</div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own RapidAPI subscription to "ADSBexchange.com" - as with the other API keys in this app, it's visible in the page source to anyone who views it.</p>
@@ -481,14 +477,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <span style="font-size:12.5px;flex:1;">RapidAPI key</span>
           <input type="text" id="sAdsbApiKey" placeholder="RapidAPI key" value="7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
         </div>
-        <div class="slider-row">
-          <div class="lbl"><span>Show traffic below current altitude by</span><b id="lblAdsbBelow" style="color:var(--accent2);">1000 m</b></div>
-          <input type="range" id="sAdsbBelow" min="0" max="5000" step="100" value="1000">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Altitude band above current position</span>
+          <input type="number" id="sAdsbAbove" min="0" max="20000" step="100" value="2000" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">ft</span>
         </div>
-        <div class="slider-row">
-          <div class="lbl"><span>Show traffic above current altitude by</span><b id="lblAdsbAbove" style="color:var(--accent2);">300 m</b></div>
-          <input type="range" id="sAdsbAbove" min="0" max="3000" step="100" value="300">
-        </div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">All traffic below the balloon is always shown (a balloon can descend into it); only traffic above this altitude band is filtered out.</p>
 
         <div class="subhead">Non-landable Terrain (OpenStreetMap)</div>
         <div class="checkgrid">
@@ -998,7 +991,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.14';
+const APP_VERSION = 'v1.05.18';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1515,8 +1508,19 @@ let natureReservesFailCount = 0;
 let natureReservesActive = false;
 document.getElementById('tgNatureReserves').addEventListener('click', function(){
   natureReservesActive = this.classList.toggle('active');
-  if(natureReservesActive){ setLayerLoadDot('tgNatureReserves','loading'); natureReservesLayer.addTo(map); scheduleNatureReservesFetch(); }
-  else { map.removeLayer(natureReservesLayer); natureReservesLayer.clearLayers(); setLayerLoadDot('tgNatureReserves', null); }
+  if(natureReservesActive){
+    // If we already have data from before (e.g. the layer was just
+    // switched off and back on), show it immediately instead of a
+    // pointless yellow "loading" flash - a background refresh still runs
+    // in case anything has changed, but the cached markers stay visible
+    // throughout rather than disappearing and reappearing.
+    setLayerLoadDot('tgNatureReserves', natureReservesLayer.getLayers().length ? 'ready' : 'loading');
+    natureReservesLayer.addTo(map);
+    scheduleNatureReservesFetch();
+  } else {
+    map.removeLayer(natureReservesLayer);
+    setLayerLoadDot('tgNatureReserves', null);
+  }
 });
 function scheduleNatureReservesFetch(){
   clearTimeout(natureReservesFetchTimer);
@@ -1693,8 +1697,14 @@ let landCoverFailCount = 0;
 let landCoverActive = false;
 document.getElementById('tgLandCover').addEventListener('click', function(){
   landCoverActive = this.classList.toggle('active');
-  if(landCoverActive){ setLayerLoadDot('tgLandCover','loading'); landCoverLayer.addTo(map); scheduleLandCoverFetch(); }
-  else { map.removeLayer(landCoverLayer); landCoverLayer.clearLayers(); setLayerLoadDot('tgLandCover', null); }
+  if(landCoverActive){
+    setLayerLoadDot('tgLandCover', landCoverLayer.getLayers().length ? 'ready' : 'loading');
+    landCoverLayer.addTo(map);
+    scheduleLandCoverFetch();
+  } else {
+    map.removeLayer(landCoverLayer);
+    setLayerLoadDot('tgLandCover', null);
+  }
 });
 document.querySelectorAll('[data-landcover]').forEach(cb=>cb.addEventListener('change', ()=>{ if(landCoverActive) scheduleLandCoverFetch(); }));
 function scheduleLandCoverFetch(){
@@ -1778,13 +1788,12 @@ function showRegionNamesWarnWithAutoClose(){
 document.getElementById('tgRegionNames').addEventListener('click', function(){
   regionNamesActive = this.classList.toggle('active');
   if(regionNamesActive){
-    setLayerLoadDot('tgRegionNames','loading');
+    setLayerLoadDot('tgRegionNames', regionNamesLayer.getLayers().length ? 'ready' : 'loading');
     regionNamesLayer.addTo(map);
     scheduleRegionNamesFetch();
     showRegionNamesWarnWithAutoClose();
   } else {
     map.removeLayer(regionNamesLayer);
-    regionNamesLayer.clearLayers();
     setLayerLoadDot('tgRegionNames', null);
     dismissBanner('regionNamesWarnBar','regionNamesWarnIcon');
   }
@@ -1841,8 +1850,14 @@ let sondeHubActive = false;
 let sondeHubFetchTimer = null;
 document.getElementById('tgSondeHub').addEventListener('click', function(){
   sondeHubActive = this.classList.toggle('active');
-  if(sondeHubActive){ setLayerLoadDot('tgSondeHub','loading'); sondeHubLayer.addTo(map); scheduleSondeHubFetch(); }
-  else { map.removeLayer(sondeHubLayer); sondeHubLayer.clearLayers(); setLayerLoadDot('tgSondeHub', null); }
+  if(sondeHubActive){
+    setLayerLoadDot('tgSondeHub', sondeHubLayer.getLayers().length ? 'ready' : 'loading');
+    sondeHubLayer.addTo(map);
+    scheduleSondeHubFetch();
+  } else {
+    map.removeLayer(sondeHubLayer);
+    setLayerLoadDot('tgSondeHub', null);
+  }
 });
 function scheduleSondeHubFetch(){
   if(!sondeHubActive) return;
@@ -1850,8 +1865,8 @@ function scheduleSondeHubFetch(){
   sondeHubFetchTimer = setTimeout(fetchSondeHubNearby, 600);
 }
 map.on('moveend zoomend', ()=>{ if(sondeHubActive) scheduleSondeHubFetch(); });
-async function fetchSondeHubNearby(){
-  if(!sondeHubActive) return;
+async function fetchSondeHubNearby(force){
+  if(!sondeHubActive && !force) return;
   try{
     const r = await fetch('https://api.v2.sondehub.org/sondes');
     const data = await r.json();
@@ -1866,7 +1881,7 @@ async function fetchSondeHubNearby(){
         .on('click', ()=>openSondeHubProfile(serial));
       marker.addTo(sondeHubLayer);
     });
-    setLayerLoadDot('tgSondeHub','ready');
+    if(sondeHubActive) setLayerLoadDot('tgSondeHub','ready');
   }catch(e){
     if(sondeHubActive) setLayerLoadDot('tgSondeHub','loading');
   }
@@ -1938,8 +1953,14 @@ let metarFetchTimer = null;
 let metarFailCount = 0;
 document.getElementById('tgMetar').addEventListener('click', function(){
   metarActive = this.classList.toggle('active');
-  if(metarActive){ setLayerLoadDot('tgMetar','loading'); metarLayer.addTo(map); scheduleMetarFetch(); }
-  else { map.removeLayer(metarLayer); metarLayer.clearLayers(); setLayerLoadDot('tgMetar', null); }
+  if(metarActive){
+    setLayerLoadDot('tgMetar', metarLayer.getLayers().length ? 'ready' : 'loading');
+    metarLayer.addTo(map);
+    scheduleMetarFetch();
+  } else {
+    map.removeLayer(metarLayer);
+    setLayerLoadDot('tgMetar', null);
+  }
 });
 function scheduleMetarFetch(){
   if(!metarActive) return;
@@ -1948,55 +1969,70 @@ function scheduleMetarFetch(){
 }
 map.on('moveend zoomend', ()=>{ if(metarActive) scheduleMetarFetch(); });
 let metarFetchGeneration = 0;
-async function fetchMetarStations(){
-  if(!metarActive) return;
+// A curated list of major/regional European airports (ICAO + position) -
+// needed because MetarCentral's bulk endpoint (region=europe) is CORS-
+// blocked even though its single-airport endpoint isn't (confirmed via a
+// live browser test, not a guess) - so this layer now queries several
+// individual airports near the current view instead of one bulk call.
+const EUROPE_AIRPORTS = [
+  ['LSZH','Zürich',47.4647,8.5492],['LSGG','Geneva',46.2381,6.1089],['LSZB','Bern',46.9141,7.4971],
+  ['LSZS','Samedan',46.5339,9.8838],['LSMD','Dübendorf',47.3986,8.6483],['LFSB','Basel-Mulhouse',47.5896,7.5299],
+  ['EDDM','Munich',48.3538,11.7861],['EDDF','Frankfurt',50.0333,8.5706],['EDDS','Stuttgart',48.6899,9.2219],
+  ['EDNY','Friedrichshafen',47.6713,9.5115],['EDTL','Lahr',48.3669,7.8278],['EDMA','Augsburg',48.4256,10.9317],
+  ['EDDK','Cologne',50.8659,7.1427],['EDDL','Düsseldorf',51.2895,6.7668],['EDDB','Berlin',52.3667,13.5033],
+  ['EDDH','Hamburg',53.6304,9.9882],['EDDN','Nuremberg',49.4987,11.0669],['EDDV','Hannover',52.4611,9.6851],
+  ['LOWW','Vienna',48.1103,16.5697],['LOWS','Salzburg',47.7933,13.0043],['LOWI','Innsbruck',47.2602,11.344],
+  ['LOWL','Linz',48.2332,14.1875],['LOWG','Graz',46.9911,15.4396],['LIML','Milan Linate',45.4451,9.2767],
+  ['LIMC','Milan Malpensa',45.6306,8.7281],['LIME','Bergamo',45.6739,9.7042],['LIPZ','Venice',45.5053,12.3519],
+  ['LIRF','Rome Fiumicino',41.8003,12.2389],['LFSD','Dijon',47.2689,5.0903],['LFLL','Lyon',45.7256,5.0811],
+  ['LFLB','Chambéry',45.6381,5.8803],['LFLS','Grenoble',45.3629,5.3294],['LFMN','Nice',43.6584,7.2159],
+  ['LFLC','Clermont-Ferrand',45.7867,3.1692],['LFSB','Mulhouse',47.5896,7.5299],['LFGA','Colmar',48.1099,7.3597],
+  ['LFST','Strasbourg',48.5383,7.6282],['LFQQ','Lille',50.5619,3.0894],['LFPG','Paris CDG',49.0097,2.5479],
+  ['LFPO','Paris Orly',48.7233,2.3794],['LKPR','Prague',50.1008,14.26],['LKTB','Brno',49.1513,16.6944],
+  ['LZIB','Bratislava',48.1702,17.2127],['LHBP','Budapest',47.4298,19.2611],['EPWA','Warsaw',52.1657,20.9671],
+  ['EPKK','Krakow',50.0777,19.7848],['EDQM','Neuburg',48.7107,11.2139],['EDMO','Oberpfaffenhofen',48.0814,11.2825],
+  ['EDPA','Allgäu',47.9888,10.239],['LSZR','Altenrhein',47.4853,9.5605],['LFLI','Annemasse',46.1922,6.2686],
+  ['LFHM','Megève',45.8283,6.6497],['LFLJ','Courchevel',45.3967,6.6347],['LSPF','Birrfeld',47.4444,8.2331]
+];
+async function fetchSingleMetar(icao){
+  const r = await fetch(`https://metarcentral.com/api/weather/${icao}`);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function fetchMetarStations(force){
+  if(!metarActive && !force) return;
   const myGeneration = ++metarFetchGeneration;
   try{
-    // MetarCentral's bulk endpoint is filterable by region rather than a
-    // bounding box - "europe" covers this app's typical flying area; we
-    // additionally filter client-side to the current viewport. The result
-    // limit is capped at 10 for anonymous requests, 500 with an API key
-    // (per MetarCentral's own documented rate limits) - exceeding either
-    // without realizing it was very likely why this used to get stuck on
-    // "loading" indefinitely.
-    // The header-based auth option (X-API-Key) triggers a CORS preflight
-    // request that MetarCentral's server doesn't actually allow that header
-    // on, so it gets rejected outright - the query-parameter option avoids
-    // a preflight entirely (a plain GET with only URL parameters is a
-    // "simple request" under CORS rules) and works correctly instead.
-    const apiKey = (document.getElementById('sMetarApiKey').value||'').trim();
-    const limit = apiKey ? 500 : 10;
-    const keyParam = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
-    const url = `https://metarcentral.com/api/airports/metar-status?region=europe&limit=${limit}${keyParam}`;
-    const r = await fetch(url);
-    if(!r.ok){
-      const errText = await r.text().catch(()=>'(no body)');
-      console.error('METAR request failed:', r.status, url, errText);
-      throw new Error('HTTP '+r.status);
+    const b = map.getBounds().pad(0.3);
+    const center = map.getCenter();
+    const nearby = EUROPE_AIRPORTS
+      .filter(a=>b.contains([a[2],a[3]]))
+      .map(a=>({icao:a[0], name:a[1], lat:a[2], lon:a[3], dist:haversine(center.lat,center.lng,a[2],a[3])}))
+      .sort((x,y)=>x.dist-y.dist)
+      .slice(0, 15); // keep it modest - each one is its own request, and the anonymous quota is limited
+    if(!nearby.length){
+      metarLayer.clearLayers();
+      if(metarActive) setLayerLoadDot('tgMetar','ready');
+      console.log('METAR: no known airports from the built-in list fall within the current view.');
+      return;
     }
-    const j = await r.json();
+    const results = await Promise.allSettled(nearby.map(a=>fetchSingleMetar(a.icao)));
     if(myGeneration !== metarFetchGeneration) return;
-    const list = Array.isArray(j) ? j : (j.airports || j.data || j.results || []);
-    console.log('METAR: raw response received, top-level keys:', Array.isArray(j)?'(array)':Object.keys(j), '- resolved list length:', list.length, '- first item:', list[0]);
-    const b = map.getBounds().pad(0.15);
     metarLayer.clearLayers();
-    let inViewCount = 0;
-    list.forEach(a=>{
-      const ap = a.airport || {};
-      const lat = a.latitude ?? ap.latitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[1]) ?? a.lat;
-      const lon = a.longitude ?? ap.longitude ?? (a.geometry&&a.geometry.coordinates&&a.geometry.coordinates[0]) ?? a.lon;
-      if(lat==null || lon==null){ return; }
-      if(!b.contains([lat,lon])) return;
-      inViewCount++;
-      const category = a.flight_rules || a.flight_category || 'UNKN';
-      const raw = (a.metar && a.metar.raw) || a.raw_text || a.raw || '(no recent METAR)';
-      const name = a.name || ap.name || a.icao || '?';
-      L.marker([lat,lon], {icon: metarIcon(category)})
-        .bindTooltip(`<b>${a.icao||''}</b> ${name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
+    let shownCount = 0, failedCount = 0;
+    results.forEach((res,i)=>{
+      const a = nearby[i];
+      if(res.status!=='fulfilled'){ failedCount++; return; }
+      const j = res.value;
+      const category = j.flight_rules || (j.metar && j.metar.flight_rules) || 'UNKN';
+      const raw = (j.metar && j.metar.raw) || '(no recent METAR)';
+      shownCount++;
+      L.marker([a.lat, a.lon], {icon: metarIcon(category)})
+        .bindTooltip(`<b>${a.icao}</b> ${a.name}<br>${category}<br><span style="font-family:monospace;font-size:10px;">${raw}</span>`, {sticky:true})
         .addTo(metarLayer);
     });
-    console.log(`METAR: ${inViewCount} station(s) shown within the current map view (of ${list.length} received).`);
-    setLayerLoadDot('tgMetar','ready');
+    console.log(`METAR: ${shownCount} station(s) shown (${failedCount} of ${nearby.length} individual requests failed).`);
+    if(metarActive) setLayerLoadDot('tgMetar','ready');
     metarFailCount = 0;
   }catch(e){
     console.error('METAR fetch failed:', e);
@@ -2014,12 +2050,12 @@ async function fetchMetarStations(){
 }
 
 // ---- air traffic (ADSBExchange via RapidAPI - requires the user's own key) ----
-document.getElementById('sAdsbBelow').addEventListener('input', e=>{
-  document.getElementById('lblAdsbBelow').textContent = e.target.value+' m';
-});
-document.getElementById('sAdsbAbove').addEventListener('input', e=>{
-  document.getElementById('lblAdsbAbove').textContent = e.target.value+' m';
-});
+function updateAirTrafficTooltip(){
+  const ft = document.getElementById('sAdsbAbove').value;
+  document.getElementById('tgAirTraffic').title = `Air Traffic below and ${ft}ft above position`;
+}
+document.getElementById('sAdsbAbove').addEventListener('input', updateAirTrafficTooltip);
+updateAirTrafficTooltip();
 function aircraftIcon(headingDeg, isGlider){
   const rot = headingDeg||0;
   const color = isGlider ? '#3fa9ff' : '#e0483f';
@@ -2035,8 +2071,15 @@ let airTrafficFailCount = 0;
 let airTrafficFetchGeneration = 0;
 document.getElementById('tgAirTraffic').addEventListener('click', function(){
   airTrafficActive = this.classList.toggle('active');
-  if(airTrafficActive){ setLayerLoadDot('tgAirTraffic','loading'); airTrafficLayer.addTo(map); scheduleAirTrafficFetch(); }
-  else { map.removeLayer(airTrafficLayer); airTrafficLayer.clearLayers(); setLayerLoadDot('tgAirTraffic', null); clearTimeout(airTrafficFetchTimer); }
+  if(airTrafficActive){
+    setLayerLoadDot('tgAirTraffic', airTrafficLayer.getLayers().length ? 'ready' : 'loading');
+    airTrafficLayer.addTo(map);
+    scheduleAirTrafficFetch();
+  } else {
+    map.removeLayer(airTrafficLayer);
+    setLayerLoadDot('tgAirTraffic', null);
+    clearTimeout(airTrafficFetchTimer);
+  }
 });
 function scheduleAirTrafficFetch(){
   if(!airTrafficActive) return;
@@ -2044,12 +2087,12 @@ function scheduleAirTrafficFetch(){
   airTrafficFetchTimer = setTimeout(fetchAirTraffic, 600);
 }
 map.on('moveend zoomend', ()=>{ if(airTrafficActive) scheduleAirTrafficFetch(); });
-async function fetchAirTraffic(){
-  if(!airTrafficActive) return;
+async function fetchAirTraffic(force){
+  if(!airTrafficActive && !force) return;
   const apiKey = (document.getElementById('sAdsbApiKey').value||'').trim();
   if(!apiKey){
     console.error('Air traffic: no RapidAPI key set in Settings.');
-    setLayerLoadDot('tgAirTraffic','error');
+    if(airTrafficActive) setLayerLoadDot('tgAirTraffic','error');
     return;
   }
   const myGeneration = ++airTrafficFetchGeneration;
@@ -2075,9 +2118,8 @@ async function fetchAirTraffic(){
     if(myGeneration !== airTrafficFetchGeneration) return;
     console.log('Air traffic: raw response top-level keys:', Object.keys(j));
     const list = j.ac || j.aircraft || [];
-    const belowM = parseFloat(document.getElementById('sAdsbBelow').value);
-    const aboveM = parseFloat(document.getElementById('sAdsbAbove').value);
-    const minAlt = state.altAMSL - belowM, maxAlt = state.altAMSL + aboveM;
+    const aboveFt = parseFloat(document.getElementById('sAdsbAbove').value) || 0;
+    const maxAlt = state.altAMSL + aboveFt*0.3048; // all traffic below the balloon is always shown - it could descend into it
     airTrafficLayer.clearLayers();
     let shownCount = 0;
     list.forEach(a=>{
@@ -2085,7 +2127,7 @@ async function fetchAirTraffic(){
       const altFt = (typeof a.alt_baro==='number') ? a.alt_baro : (typeof a.alt_geom==='number' ? a.alt_geom : null);
       if(altFt==null) return; // on the ground / no altitude - not relevant for balloon separation
       const altM = altFt*0.3048;
-      if(altM<minAlt || altM>maxAlt) return;
+      if(altM>maxAlt) return;
       shownCount++;
       const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
       L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, false)})
@@ -2093,7 +2135,7 @@ async function fetchAirTraffic(){
         .addTo(airTrafficLayer);
     });
     console.log(`Air traffic: ${shownCount} aircraft shown within the configured altitude band (of ${list.length} received).`);
-    setLayerLoadDot('tgAirTraffic','ready');
+    if(airTrafficActive) setLayerLoadDot('tgAirTraffic','ready');
     airTrafficFailCount = 0;
   }catch(e){
     console.error('Air traffic fetch failed:', e);
@@ -2125,8 +2167,14 @@ let rainActive = false;
 let rainFetchTimer = null;
 document.getElementById('tgRain').addEventListener('click', function(){
   rainActive = this.classList.toggle('active');
-  if(rainActive){ setLayerLoadDot('tgRain','loading'); rainLayer.addTo(map); scheduleRainFetch(); }
-  else { map.removeLayer(rainLayer); rainLayer.clearLayers(); setLayerLoadDot('tgRain', null); }
+  if(rainActive){
+    setLayerLoadDot('tgRain', rainLayer.getLayers().length ? 'ready' : 'loading');
+    rainLayer.addTo(map);
+    scheduleRainFetch();
+  } else {
+    map.removeLayer(rainLayer);
+    setLayerLoadDot('tgRain', null);
+  }
 });
 function scheduleRainFetch(){
   if(!rainActive) return;
@@ -2135,8 +2183,8 @@ function scheduleRainFetch(){
 }
 map.on('moveend zoomend', ()=>{ if(rainActive) scheduleRainFetch(); });
 let rainFetchGeneration = 0;
-async function fetchRainGrid(){
-  if(!rainActive) return;
+async function fetchRainGrid(force){
+  if(!rainActive && !force) return;
   const myGeneration = ++rainFetchGeneration;
   try{
     const b = map.getBounds();
@@ -2180,7 +2228,7 @@ async function fetchRainGrid(){
       ], {stroke:false, fillColor:step.color, fillOpacity:step.op, interactive:false});
       rect.addTo(rainLayer);
     });
-    setLayerLoadDot('tgRain','ready');
+    if(rainActive) setLayerLoadDot('tgRain','ready');
   }catch(e){
     if(rainActive) setLayerLoadDot('tgRain','loading');
   }
@@ -2193,8 +2241,8 @@ const FINE_ROADS_MIN_ZOOM = 14; // keep Overpass queries small/fast
 
 bindLayerToggle('tgRoads', false, on=>{
   roadsShown = on;
-  if(on){ setLayerLoadDot('tgRoads','loading'); roadsOverlay.addTo(map); if(!map.hasLayer(placeLabelsLayer)) placeLabelsLayer.addTo(map); schedulePlaceLabelsFetch(); }
-  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placeLabelsLayer)) map.removeLayer(placeLabelsLayer); placeLabelsLayer.clearLayers(); setLayerLoadDot('tgRoads', null); }
+  if(on){ setLayerLoadDot('tgRoads', placeLabelsLayer.getLayers().length ? 'ready' : 'loading'); roadsOverlay.addTo(map); if(!map.hasLayer(placeLabelsLayer)) placeLabelsLayer.addTo(map); schedulePlaceLabelsFetch(); }
+  else { if(map.hasLayer(roadsOverlay)) map.removeLayer(roadsOverlay); if(map.hasLayer(placeLabelsLayer)) map.removeLayer(placeLabelsLayer); setLayerLoadDot('tgRoads', null); }
   updateFineRoadsVisibility();
 });
 roadsOverlay.on('load', ()=>{ if(document.getElementById('tgRoads').classList.contains('active')) setLayerLoadDot('tgRoads','ready'); });
@@ -5830,16 +5878,19 @@ async function precacheAreaTiles(lat, lon, radiusKm, force){
     }
     await Promise.all(Array.from({length:CONCURRENCY}, worker));
     console.log('Pre-caching done.');
-    // Also warm up the Overpass/vector-layer data for whatever's currently
-    // in view - so if the user later toggles Nature Reserves, Non-landable
-    // Terrain, Region Names, or Place Labels on, it's already sitting in
-    // memory instead of making them wait for a fresh fetch. Deliberately
-    // NOT touching the layer-load dots or adding anything to the map here -
-    // this is silent prep work, not an actual activation.
+    // Also warm up every other on-demand map layer's data for whatever's
+    // currently in view - so toggling any of them on later shows cached
+    // content immediately instead of a fresh yellow "loading" wait.
+    // Deliberately NOT touching the layer-load dots or adding anything to
+    // the map here - this is silent prep work, not an actual activation.
     fetchNatureReserves(true);
     fetchLandCover(true);
     fetchRegionNames(true);
     fetchPlaceLabels(true);
+    fetchMetarStations(true);
+    fetchAirTraffic(true);
+    fetchRainGrid(true);
+    fetchSondeHubNearby(true);
   } finally {
     precacheInFlight = false;
   }
@@ -6328,7 +6379,7 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sMetarApiKey','sAdsbApiKey','sAdsbBelow','sAdsbAbove'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sAdsbApiKey','sAdsbAbove'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 function saveConfig(){

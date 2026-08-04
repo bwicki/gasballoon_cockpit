@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.14** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.18** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -154,6 +154,18 @@ New layer: **Air traffic** (red pill, next to Airspace) - live aircraft position
 OGN/glidernet.org (FLARM/glider traffic) was researched but not implemented yet - its live-aircraft API endpoint isn't clearly documented publicly (the one example found returned ground station markers, not aircraft), so it needs proper verification before being built on, rather than guessing at undocumented parameters.
 
 Corrected a transcription error in the RapidAPI key (a character was dropped when it was originally read from a screenshot) - fixed in both the app's Settings default and the `cors_test.html` test entry.
+
+Layer buttons back to their own solid background (not transparent) - the pill-only colouring made icons hard to distinguish, since they visually blended into the pill's own tint instead of standing out in front of it.
+
+Air Traffic simplified: only one setting now, a numeric altitude band (ft) above the balloon's current position (default 2000ft) - all traffic below is always shown regardless, since the balloon could descend into it. The layer button's hover text now reflects this value live ("Air Traffic below and 2000ft above position").
+
+**METAR - the real, confirmed cause finally found**: a live browser CORS test proved MetarCentral's bulk endpoint (`/api/airports/metar-status`) is CORS-blocked, while its single-airport endpoint (`/api/weather/{icao}`) works fine - not a guess this time, an actual verified test result. The layer now queries a built-in list of ~50 major/regional European airports individually (nearest 15 to the current view), instead of the one bulk call that never worked. No API key needed for this anymore, so that Settings field was removed.
+
+**Air Traffic confirmed working** via the same live test (HTTP 200 with real aircraft data through RapidAPI's gateway, custom headers included) - no changes needed there.
+
+**Real bug fixed across every map-data layer: turning a layer off destroyed its cached data** (`clearLayers()` ran on every toggle-off), so turning it back on always meant a full fresh fetch and a yellow "loading" flash - even seconds later with the map untouched. Every layer (nature reserves, terrain, region names, place labels, sondes, METAR, air traffic, rain) now just hides on toggle-off and keeps its data; toggling back on shows the cached content immediately (green) while a background refresh runs, rather than clearing and reloading from scratch. The area pre-caching step also now silently warms up METAR, air traffic, rain, and sonde data too (previously only nature reserves/terrain/region names/place labels), so all eight layers are ready the first time they're switched on.
+
+Airspace and Air Traffic icons redesigned - a stacked altitude-band symbol (zone, not object) for Airspace, and a radar sweep symbol for Air Traffic, since the two previously used near-identical plane silhouettes.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

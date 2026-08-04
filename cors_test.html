@@ -29,6 +29,8 @@ Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> 
   <b>Bitte so testen:</b> Lade diese Datei zusammen mit <code>index.html</code> auf denselben GitHub-Pages-Server hoch und öffne sie von dort aus (z.B. <code>https://DEINBENUTZERNAME.github.io/DEINREPO/cors_test.html</code>). Nur dann ist das Ergebnis aussagekräftig.
 </div>
 <button id="btnRun">Alle Tests starten</button>
+<button id="btnCopyAll" style="display:none;background:#1b232c;color:#e6edf3;border:1px solid #2a3540;">📋 Alle Ergebnisse kopieren</button>
+<div id="copyConfirm" style="display:none;color:#3ddc6f;font-size:12px;margin-bottom:12px;">✓ In die Zwischenablage kopiert - kannst du jetzt einfügen</div>
 <div id="results"></div>
 
 <script>
@@ -86,10 +88,43 @@ async function runTest(i){
 
 document.getElementById('btnRun').addEventListener('click', async ()=>{
   document.getElementById('btnRun').disabled = true;
+  document.getElementById('btnCopyAll').style.display = 'none';
+  document.getElementById('copyConfirm').style.display = 'none';
   for(let i=0;i<TESTS.length;i++){
     await runTest(i);
   }
   document.getElementById('btnRun').disabled = false;
+  document.getElementById('btnCopyAll').style.display = 'inline-block';
+});
+
+document.getElementById('btnCopyAll').addEventListener('click', async ()=>{
+  const lines = [`CORS-Test-Ergebnisse — ${new Date().toISOString()} — Origin: ${location.origin}`, ''];
+  TESTS.forEach((t,i)=>{
+    const statusEl = document.getElementById('status'+i);
+    const detailEl = document.getElementById('detail'+i);
+    lines.push(`## ${t.name}`);
+    lines.push(t.url);
+    lines.push('Status: ' + (statusEl ? statusEl.textContent : '(nicht getestet)'));
+    if(detailEl && detailEl.textContent.trim()){
+      lines.push('Details: ' + detailEl.textContent.trim());
+    }
+    lines.push('');
+  });
+  const text = lines.join('\n');
+  try{
+    await navigator.clipboard.writeText(text);
+    document.getElementById('copyConfirm').style.display = 'block';
+    setTimeout(()=>{ document.getElementById('copyConfirm').style.display = 'none'; }, 4000);
+  }catch(e){
+    // Clipboard API can fail (older browsers, permissions) - fall back to
+    // a selectable textarea so the user can copy manually instead of
+    // getting nothing at all.
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'width:100%;height:200px;margin-top:12px;background:#1b232c;color:#e6edf3;border:1px solid #2a3540;border-radius:8px;padding:8px;font-family:monospace;font-size:11px;';
+    document.getElementById('results').after(ta);
+    ta.select();
+  }
 });
 </script>
 </body>

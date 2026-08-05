@@ -1186,7 +1186,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.23';
+const APP_VERSION = 'v260805.24';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2203,7 +2203,10 @@ function renderStueveDiagram(profile){
   const stMin = Math.min(...stueveVals), stMax = Math.max(...stueveVals);
   const tMin = Math.min(...withTemp.map(p=>p.temp_c))-2, tMax = Math.max(...withTemp.map(p=>p.temp_c))+2;
   const xOf = t => mL + ((t-tMin)/(tMax-tMin||1))*plotW;
-  const yOf = altM => mT + (1-((stueveY(altM)-stMin)/((stMax-stMin)||1)))*plotH;
+  // Low altitude (high pressure/high stueveY) at the BOTTOM, high altitude
+  // at the TOP - the standard convention (and how a real Stüve diagram
+  // reads) - this was inverted before (ground at the top).
+  const yOf = altM => mT + ((stueveY(altM)-stMin)/((stMax-stMin)||1))*plotH;
   const linePts = withTemp.map(p=>`${xOf(p.temp_c).toFixed(1)},${yOf(p.alt_m).toFixed(1)}`).join(' ');
   // Thin the wind column to at most ~7 evenly-spaced levels so arrows don't overlap
   const windLevels = [];
@@ -2211,6 +2214,14 @@ function renderStueveDiagram(profile){
   for(let i=0;i<profile.length;i+=step) windLevels.push(profile[i]);
   const altLabels = [profile[0], profile[Math.floor(profile.length/2)], profile[profile.length-1]];
   let svg = `<svg width="100%" viewBox="0 0 ${w} ${h}" style="background:rgba(255,255,255,0.03);border-radius:6px;">`;
+  // Fine vertical gridlines at round temperature intervals, the defining
+  // visual feature of a Stüve/skew-T style diagram.
+  const gridStepC = 10;
+  const gridStart = Math.ceil(tMin/gridStepC)*gridStepC;
+  for(let t=gridStart; t<=tMax; t+=gridStepC){
+    const x = xOf(t);
+    svg += `<line x1="${x}" y1="${mT}" x2="${x}" y2="${h-marginB}" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
+  }
   // Axes
   svg += `<line x1="${mL}" y1="${mT}" x2="${mL}" y2="${h-marginB}" stroke="var(--border)" stroke-width="1"/>`;
   svg += `<line x1="${mL}" y1="${h-marginB}" x2="${w-mR}" y2="${h-marginB}" stroke="var(--border)" stroke-width="1"/>`;
@@ -2246,14 +2257,18 @@ async function openSondeHubProfile(serial){
   // Show the modal immediately with a loading state, rather than doing the
   // fetch first and only showing anything once it's fully done - a slow
   // connection would otherwise leave the tap feeling like it did nothing.
+  // Visibility is set FIRST, before anything else, and alignment is
+  // wrapped defensively - same reasoning as showStagedDescentPlan's own
+  // "make visible first" comment: an exception anywhere else must never be
+  // able to leave this looking like it silently failed to open.
   const overlay = document.getElementById('sondeProfileOverlay');
+  overlay.style.display = 'block';
+  try{ alignPanelToPositionCard(document.getElementById('sondeProfileBox')); }catch(e){ console.error('Sonde profile: panel alignment failed (window still opened):', e); }
   document.getElementById('sondeProfileTitle').textContent = `Sonde ${serial}`;
   document.getElementById('sondeProfileKeyData').textContent = 'Loading telemetry…';
   document.getElementById('sondeProfileWarning').style.display = 'none';
   document.getElementById('sondeProfileTableBody').innerHTML = '';
   document.getElementById('sondeProfileUseBtn').disabled = true;
-  alignPanelToPositionCard(document.getElementById('sondeProfileBox'));
-  overlay.style.display = 'block';
   try{
     // The correct endpoint takes the serial as a QUERY parameter on
     // /sondes/telemetry, not as a path segment on /sondes/{serial} (which
@@ -4267,7 +4282,7 @@ function showStagedDescentPlan(result){
   // somewhere in the (fairly involved) work below, which is very likely
   // what caused the repeatedly-reported "the side graphic doesn't open".
   document.getElementById('stagedPlanPanel').style.display = 'block';
-  alignPanelToPositionCard(document.getElementById('stagedPlanPanel'));
+  try{ alignPanelToPositionCard(document.getElementById('stagedPlanPanel')); }catch(e){ console.error('Staged plan panel: alignment failed (panel still opened):', e); }
   try{
   ensureStagedLayers();
   state.lastStagedPlanResult = result; // so the panel can be reopened later, even from function 1
@@ -6699,6 +6714,7 @@ document.getElementById('sInit').addEventListener('input', checkDescentTimeWindW
 
 // ---- yellow notice: ground wind is shown for the PLANNED descent time,
 // not right now, whenever that time isn't "immediate" ----
+let descentWindWarnAutoHideTimer = null;
 function checkDescentTimeWindWarning(){
   const initMin = parseFloat(document.getElementById('sInit').value);
   const shouldShow = groundWindLayer.active && initMin > 30 && state.appMode!=='plan';
@@ -6717,10 +6733,13 @@ function checkDescentTimeWindWarning(){
   updateAllWarningsReopenBtn();
   lastWindWarnInitMin = initMin;
   repositionModeToggle();
+  clearTimeout(descentWindWarnAutoHideTimer);
+  descentWindWarnAutoHideTimer = setTimeout(hideYellowWarning, 20000);
 }
 function hideYellowWarning(){
   document.getElementById('descentWindWarnBar').classList.remove('show');
   bannerActiveButDismissed.descentWindWarnBar = false;
+  clearTimeout(descentWindWarnAutoHideTimer);
   updateAllWarningsReopenBtn();
   repositionModeToggle();
 }

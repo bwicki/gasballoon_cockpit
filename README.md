@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.23** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.24** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -327,6 +327,14 @@ Extended trajectory preview: added a second close (X) button at the start of the
 **Function 1 onboarding hint, shown once on app start**: a light callout box appears offset to one side of the outgoing trajectory (so it doesn't cover it), reading "Adjust highlighted sliders, select descent time and reachable landing area and descent path will be calculated". At the same time, the four sliders that most directly shape the prediction (Descent rate, Intercept height AGL, Descent rate below intercept, Rate scatter) get a green highlight box. Both disappear after 5 seconds, on the hint's own close button, or the moment any of those four sliders is actually touched - whichever happens first. "Descent rate after intercept" renamed to "Descent rate below intercept" throughout (English and German).
 
 **Continuous recompute in Function 1, made explicit**: the landing area and descent point already recomputed on every position update and every wind-model refresh (confirmed by reading the code, not just assumed) - added a 30-second periodic recompute as an explicit belt-and-suspenders guarantee, covering edge cases neither of those triggers would (e.g. a stationary balloon on the ground before launch with no new GPS fixes).
+
+**Ground wind warning now auto-closes after 20 seconds**, same as it can already be dismissed manually or superseded by a longer descent time.
+
+**Sonde profile window resilience fix**: made the same "show first, align defensively after" fix already applied to the staged descent panel - if `alignPanelToPositionCard` throws for any reason, the window still opens instead of silently failing to appear. Applied to both panels that use this helper.
+
+**Stüve diagram fixed - was upside down**: ground level was rendering at the top and high altitude at the bottom, backwards from the standard convention (and from how a real Stüve diagram reads). The vertical axis math had an inversion that looked plausible but was wrong; verified the fix numerically (500m now maps below 5000m) rather than just visually. Added fine vertical gridlines at 10°C intervals, the defining visual feature of this diagram style.
+
+**METAR alternative researched**: aviationweather.gov (the official US source) explicitly states "Cross-origin resource sharing is not permitted at this time" - ruled out. CheckWX looks like the strongest candidate: supports up to 25 airports in a single request (MetarCentral only ever did one at a time), and its docs show a browser-usable URL pattern for "development and debugging" - a good sign, though CORS isn't confirmed by a live test yet. Added to `cors_test.html` (★) with a real Swiss-airport query - needs your own free CheckWX API key to verify before it gets implemented.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

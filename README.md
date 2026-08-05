@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.22** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.23** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -323,6 +323,10 @@ APRS indicator refined further: "no callsigns entered yet" now shows a neutral g
 **New feature: extended trajectory preview, Function 1 (monitor mode) only.** Click anywhere within ±60° of the current trajectory's direction, and the trajectory extends out to whichever point on it passes closest (perpendicular distance) to that click - shown as a green line, slightly thinner than the main trajectory, with the same black outline treatment. Uses a 48-hour cruise-only simulation so it can reach well past the cached area, as far as the weather model still has data (gracefully "coasts" on the last available forecast hour once the model horizon runs out, rather than failing). A small round close (X) button appears at the far end to remove it. Deliberately a frozen snapshot, computed once from the balloon's position and the weather data available at the moment of the click - it does not get recomputed as the balloon actually moves, so it stays useful for comparing the real flown track against what was predicted earlier. Verified the closest-point and angle-cone geometry against test coordinates before deploying.
 
 Extended trajectory preview: added a second close (X) button at the start of the extended trajectory (the balloon's position), not just at the far end - either one closes it.
+
+**Function 1 onboarding hint, shown once on app start**: a light callout box appears offset to one side of the outgoing trajectory (so it doesn't cover it), reading "Adjust highlighted sliders, select descent time and reachable landing area and descent path will be calculated". At the same time, the four sliders that most directly shape the prediction (Descent rate, Intercept height AGL, Descent rate below intercept, Rate scatter) get a green highlight box. Both disappear after 5 seconds, on the hint's own close button, or the moment any of those four sliders is actually touched - whichever happens first. "Descent rate after intercept" renamed to "Descent rate below intercept" throughout (English and German).
+
+**Continuous recompute in Function 1, made explicit**: the landing area and descent point already recomputed on every position update and every wind-model refresh (confirmed by reading the code, not just assumed) - added a 30-second periodic recompute as an explicit belt-and-suspenders guarantee, covering edge cases neither of those triggers would (e.g. a stationary balloon on the ground before launch with no new GPS fixes).
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

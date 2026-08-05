@@ -188,6 +188,7 @@ body.day #map{background:#dfe6ea;}
 .datacell.wide{grid-column:1/3;}
 
 .slider-row{margin-bottom:3px;}
+.slider-row.onboarding-highlight{outline:2px solid var(--good);outline-offset:3px;border-radius:6px;background:rgba(61,220,111,0.1);transition:outline-color .3s ease, background-color .3s ease;}
 .slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
@@ -958,23 +959,23 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div class="card">
         <h3 onclick="toggleCard(this)"><span data-i18n="cardDescentParams">Descent Parameters</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
-          <div class="slider-row">
+          <div class="slider-row" id="sInitRow">
             <div class="lbl"><span><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit">30 min</b></span><span id="lblInitDist" class="dist-badge" style="margin-left:auto;">0.00 km</span></div>
             <input type="range" id="sInit" min="0" max="240" step="1" value="30">
           </div>
-          <div class="slider-row">
+          <div class="slider-row" id="sRateRow">
             <div class="lbl"><span><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate">4.0 m/s</b></span><span id="lblAdiaRateBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
           </div>
-          <div class="slider-row">
+          <div class="slider-row" id="sIntHRow">
             <div class="lbl"><span><span data-i18n="sliderInterceptHeight">Intercept height AGL</span> <b id="lblIntH">400 m</b></span><span id="lblInterceptTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sIntH" min="100" max="1000" step="10" value="400">
           </div>
-          <div class="slider-row">
-            <div class="lbl"><span><span data-i18n="sliderRate2">Descent rate after intercept</span> <b id="lblRate2">1.5 m/s</b></span><span id="lblGroundTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
+          <div class="slider-row" id="sRate2Row">
+            <div class="lbl"><span><span data-i18n="sliderRate2">Descent rate below intercept</span> <b id="lblRate2">1.5 m/s</b></span><span id="lblGroundTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate2" min="0.5" max="4" step="0.1" value="1.5">
           </div>
-          <div class="slider-row">
+          <div class="slider-row" id="sScatterRow">
             <div class="lbl"><span data-i18n="sliderScatter">Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
             <input type="range" id="sScatter" min="0" max="40" step="1" value="15">
           </div>
@@ -1185,7 +1186,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.22';
+const APP_VERSION = 'v260805.23';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1601,6 +1602,61 @@ function setLayerLoadDot(btnId, dotState){
   else if(dotState==='ready') dot.classList.add('ready');
   else if(dotState==='error') dot.classList.add('error');
   else if(dotState==='inactive') dot.classList.add('inactive');
+}
+// ---------- Function 1 onboarding hint (shown once, on first load) ----------
+// A light callout box placed just off to the side of the outgoing
+// trajectory (not on top of it) pointing at the four sliders that most
+// directly shape the landing-area prediction, since those are the ones a
+// new user most needs to know about first. Disappears after 5s, on its own
+// close button, or the moment any of those four sliders actually changes -
+// whichever comes first.
+const ONBOARDING_HIGHLIGHT_SLIDER_IDS = ['sRate','sIntH','sRate2','sScatter'];
+let onboardingHintMarker = null;
+let onboardingHintTimer = null;
+function dismissFunction1OnboardingHint(){
+  if(onboardingHintMarker){ map.removeLayer(onboardingHintMarker); onboardingHintMarker = null; }
+  clearTimeout(onboardingHintTimer);
+  ONBOARDING_HIGHLIGHT_SLIDER_IDS.forEach(id=>{
+    const row = document.getElementById(id+'Row');
+    if(row) row.classList.remove('onboarding-highlight');
+    document.getElementById(id).removeEventListener('input', dismissFunction1OnboardingHint);
+  });
+}
+function showFunction1OnboardingHint(){
+  if(state.appMode!=='monitor') return; // only relevant/shown for Function 1
+  // Bearing of the outgoing trajectory - reuses whatever a short simulation
+  // gives right now, same idea as the staged-descent marker's own bearing
+  // check elsewhere in the app.
+  const rate1 = parseFloat(document.getElementById('sRate').value);
+  const interceptAGL = parseFloat(document.getElementById('sIntH').value);
+  const rate2 = parseFloat(document.getElementById('sRate2').value);
+  const initDelayMin = parseFloat(document.getElementById('sInit').value);
+  const path = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
+  const ref = path.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || path[path.length-1];
+  const bearing = bearingBetween(state.lat, state.lon, ref.lat, ref.lon);
+  // Offset perpendicular to the trajectory (90 degrees to one side), far
+  // enough that the callout box clearly doesn't sit on top of the
+  // trajectory line itself, but still close enough to obviously belong to
+  // it - 1.5km is a reasonable middle ground across typical zoom levels.
+  const [offLat, offLon] = destPoint(state.lat, state.lon, bearing+90, 1500);
+  const html = `<div style="background:#fdfdfb;color:#1a1a1a;border:1px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 10px;width:200px;font-size:11.5px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.35);position:relative;">
+    <button id="onboardingHintClose" style="position:absolute;top:4px;right:4px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;">✕</button>
+    <div style="padding-right:16px;">Adjust highlighted sliders, select descent time and reachable landing area and descent path will be calculated</div>
+  </div>`;
+  onboardingHintMarker = L.marker([offLat, offLon], {
+    icon: L.divIcon({html, className:'', iconSize:null, iconAnchor:[100,25]}),
+    interactive:true, zIndexOffset:2000
+  }).addTo(map);
+  onboardingHintMarker.on('add', ()=>{
+    const btn = document.getElementById('onboardingHintClose');
+    if(btn) btn.addEventListener('click', dismissFunction1OnboardingHint);
+  });
+  ONBOARDING_HIGHLIGHT_SLIDER_IDS.forEach(id=>{
+    const row = document.getElementById(id+'Row');
+    if(row) row.classList.add('onboarding-highlight');
+    document.getElementById(id).addEventListener('input', dismissFunction1OnboardingHint);
+  });
+  onboardingHintTimer = setTimeout(dismissFunction1OnboardingHint, 5000);
 }
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
@@ -7987,7 +8043,7 @@ const I18N = {
     fieldInversion:'Inversions, Isothermal Layers, Wind Shear',
     modeLandingArea:'Landing Area', modePlanDescent:'Plan Descent',
     sliderInitiate:'Initiate descent in', sliderDescentRate:'Descent rate',
-    sliderInterceptHeight:'Intercept height AGL', sliderRate2:'Descent rate after intercept',
+    sliderInterceptHeight:'Intercept height AGL', sliderRate2:'Descent rate below intercept',
     sliderScatter:'Rate scatter (σ, probability cone)'
   },
   de: {
@@ -7998,7 +8054,7 @@ const I18N = {
     fieldInversion:'Inversionen, Isotherme Schichten, Windscherung',
     modeLandingArea:'Landegebiet', modePlanDescent:'Abstieg planen',
     sliderInitiate:'Abstieg einleiten in', sliderDescentRate:'Sinkrate',
-    sliderInterceptHeight:'Abfanghöhe AGL', sliderRate2:'Sinkrate nach Abfanghöhe',
+    sliderInterceptHeight:'Abfanghöhe AGL', sliderRate2:'Sinkrate unter Abfanghöhe',
     sliderScatter:'Streuung (σ, Wahrscheinlichkeitskegel)'
   }
 };
@@ -8042,7 +8098,14 @@ try{
   renderSidebarPosition();
   recomputeAll();
   precacheAreaTiles(state.lat, state.lon, cacheRadiusKm);
+  setTimeout(showFunction1OnboardingHint, 500); // short delay so the trajectory itself has settled before the hint positions itself off of it
 })();
+// Belt-and-suspenders: the landing area/descent point already recompute on
+// every position update and every wind-model refresh, but this guarantees
+// it stays truly continuous even in an edge case neither of those covers -
+// e.g. a stationary balloon on the ground before launch, with no new GPS
+// fixes to trigger a recompute on their own.
+setInterval(()=>{ if(state.appMode==='monitor') recomputeAll(); }, 30000);
 let wxRefreshTimer = null;
 function restartWxRefreshTimer(){
   clearInterval(wxRefreshTimer);

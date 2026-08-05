@@ -468,7 +468,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         
         
           <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
-        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Shows the nearest known airports (from a built-in list) individually, since MetarCentral's bulk endpoint turned out to be CORS-blocked even though the single-airport one isn't - confirmed via a live browser test. No API key needed for this.</p>
+        <p style="font-size:10px;color:var(--bad);margin:0 0 8px;">⚠ Currently not working: MetarCentral now blocks both the bulk AND the single-airport endpoint via CORS (confirmed via a live browser test - this changed since an earlier test where the single-airport one worked). Switzerland, Germany, and the rest-of-Europe sources below are unaffected and still work.</p>
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">Lightning (part of Rain layer)</div>
@@ -772,7 +772,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     </div>
     <button class="iconbtn" id="btnTestMode" title="Test Mode">Test Mode</button>
     <input type="checkbox" id="testEnable" style="display:none;">
-    <span style="background:#fff;border-radius:6px;padding:3px 7px;margin-left:10px;display:inline-flex;align-items:center;"><img src="http://static1.squarespace.com/static/5c603f6f7eb88c2edd690e48/t/5ccdb9f051e58c0001e89503/1556986355383/17_03_17_Wicki_Ballonteam_Logo_RZ.png?format=300w" alt="Wicki Partners Ballonteam" style="height:28px;width:auto;display:block;" title="Wicki Partners Ballonteam"></span>
+    <span style="background:#fff;border-radius:6px;padding:3px 7px;margin-left:10px;display:inline-flex;align-items:center;"><img src="https://static1.squarespace.com/static/5c603f6f7eb88c2edd690e48/t/5ccdb9f051e58c0001e89503/1556986355383/17_03_17_Wicki_Ballonteam_Logo_RZ.png?format=300w" alt="Wicki Partners Ballonteam" style="height:28px;width:auto;display:block;" title="Wicki Partners Ballonteam"></span>
   </div>
 
   <div id="main">
@@ -1184,7 +1184,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.17';
+const APP_VERSION = 'v260805.18';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2608,7 +2608,18 @@ async function fetchMetarStations(force){
       for(let i=0;i<points.length;i+=3){
         const batch = points.slice(i,i+3);
         const results = await Promise.allSettled(batch.map(g=>
-          fetch(`https://api.brightsky.dev/current_weather?lat=${g.lat}&lon=${g.lon}&max_dist=50000`).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+          // max_dist widened from 50km to 100km - a live test showed every
+          // single grid point coming back 404 ("no station within range"),
+          // and stations near the southern German border are sparser than
+          // assumed. A 404 here is an expected, valid response (nothing
+          // nearby) rather than a genuine failure, so it resolves to null
+          // instead of throwing - keeps it from cluttering the console as
+          // if something were actually broken.
+          fetch(`https://api.brightsky.dev/current_weather?lat=${g.lat}&lon=${g.lon}&max_dist=100000`).then(r=>{
+            if(r.status===404) return null;
+            if(!r.ok) throw new Error('HTTP '+r.status);
+            return r.json();
+          })
         ));
         out.push(...results);
         if(i+3<points.length) await new Promise(res=>setTimeout(res, 300));
@@ -4196,6 +4207,12 @@ function drawStagedPlanChart(result){
   const groundAlt = state.groundElev;
   const rate2 = parseFloat(document.getElementById('sRate2').value);
   const n = result.altitudes.length;
+  // Elapsed seconds (from now) at the point where this chart's own local
+  // timeline (t=0, built below from linger/drop durations) begins - needed
+  // to convert a position along that local timeline back into an absolute
+  // elapsed time for the mid-segment wind lookup further down, the same
+  // way hourIdxAtStage does for the stage markers themselves.
+  const startT = (result.path.find(p=>p.stage===0) || result.path[0]).t;
   const stages = result.altitudes.map((alt,i)=>{
     const stagePoint = result.path.find(p=>p.stage===i) || result.path[0];
     const hourIdxAtStage = Math.round(stagePoint.t/3600);

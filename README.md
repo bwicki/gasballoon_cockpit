@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.17** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.18** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -304,6 +304,15 @@ Also found and fixed a real gap while wiring this up: there was no way to actual
 **APRS confirmed to need no additional authentication** beyond the single API key it already has - checked directly, a wrong key returns a clean JSON error from aprs.fi's own server, not a network-level failure, and "Failed to fetch" specifically matches CORS blocking rather than a missing credential.
 
 **Floating panel positions unified**: the staged descent plan panel (previously top-left, `left:8px`) and the sonde profile panel (previously top-right with a hardcoded pixel offset) now both align exactly with the "Current Position" card's top-left corner, via a shared helper that reads the card's actual on-screen position at the moment each panel opens - robust against the sidebar's responsive width (25% of viewport, clamped 280-420px) rather than relying on a fixed pixel value that would only happen to line up sometimes.
+
+**Fixes from your live browser console log - thank you, extremely useful:**
+
+- **Critical crash fixed**: `drawStagedPlanChart` threw `ReferenceError: startT is not defined` every single time the staged descent chart tried to draw a mid-segment wind readout (any drop over 1000m) - `startT` was used but never declared. Added the missing declaration (the elapsed time at the start of the staged descent, needed to convert the chart's own local timeline back into a real forecast hour for that wind lookup).
+- **MetarCentral confirmed now CORS-blocked on both endpoints**, not just the bulk one - the single-airport endpoint that worked in an earlier test apparently changed since then. Settings note corrected to say so plainly instead of the now-wrong claim that it still works; the other three weather-station sources (Switzerland, Germany, rest-of-Europe) are unaffected.
+- **Bright Sky (German stations) was failing 100% of the time** - every single grid point came back 404. Widened the search radius from 50km to 100km, and 404 ("nothing nearby") is no longer treated as an error worth logging, just a normal empty result.
+- Fixed a mixed-content warning: the Ballonteam logo was loading over plain HTTP even though the page is HTTPS - switched to HTTPS.
+
+MeteoGate's exact per-station value format still isn't fully confirmed - the response is a `FeatureCollection` as expected, but what's visible in the log is truncated right where the actual parameter/value fields would start. The parsing is defensive enough not to crash on it, but doesn't yet show any European station data either. If you can grab the complete (non-truncated) line from the browser console starting with "MeteoGate: raw per-station response", that would let this get finished properly.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

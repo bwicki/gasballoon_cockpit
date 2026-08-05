@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.06.01';
+const APP_VERSION = 'v1.06.02';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2573,6 +2573,28 @@ let airTrafficActive = false;
 let airTrafficFetchTimer = null;
 let airTrafficFailCount = 0;
 let airTrafficFetchGeneration = 0;
+// Tracked aircraft, keyed by a stable per-aircraft ID, surviving across
+// fetches so markers can be moved/updated in place instead of being torn
+// down and recreated every time (see fetchAirTraffic below).
+const airTrafficTracked = new Map();
+// Nudges every tracked aircraft along its course/speed vector between
+// fetches, using the same destination-point projection used elsewhere in
+// this app - so the display shows continuous movement instead of a
+// snapshot that only visibly updates once every several seconds. Purely
+// a visual extrapolation from the last known ground truth; each fetch
+// still resets it to the real reported position.
+setInterval(()=>{
+  if(!airTrafficActive || !airTrafficTracked.size) return;
+  const now = Date.now();
+  airTrafficTracked.forEach(t=>{
+    if(t.course==null || t.speedKmh==null || t.speedKmh<=0) return;
+    const elapsedS = (now-t.fixTime)/1000;
+    if(elapsedS<=0 || elapsedS>120) return; // ignore anything wildly stale - the next real fetch will correct it anyway
+    const distM = (t.speedKmh/3.6)*elapsedS;
+    const [lat,lon] = destPoint(t.lat, t.lon, t.course, distM);
+    t.marker.setLatLng([lat,lon]);
+  });
+}, 1000);
 document.getElementById('tgAirTraffic').addEventListener('click', function(){
   airTrafficActive = this.classList.toggle('active');
   if(airTrafficActive){
@@ -2594,7 +2616,7 @@ map.on('moveend zoomend', ()=>{ if(airTrafficActive) scheduleAirTrafficFetch(); 
 // Aircraft move fast enough that a static snapshot looks wrong within
 // seconds - refresh on a timer too, not just when the map itself is
 // panned/zoomed, so the traffic display actually shows movement over time.
-setInterval(()=>{ if(airTrafficActive) fetchAirTraffic(); }, 15000);
+setInterval(()=>{ if(airTrafficActive) fetchAirTraffic(); }, 10000);
 // OGN/glidernet.org (FLARM/FANET - gliders, paragliders, helicopters and
 // other light aircraft, especially relevant in the Alps) - this endpoint
 // is NOT officially documented (confirmed via third-party developer docs
@@ -2659,8 +2681,31 @@ async function fetchAirTraffic(force){
 
     const [j, ognList] = await Promise.all([adsbPromise, ognPromise]);
     if(myGeneration !== airTrafficFetchGeneration) return;
-    airTrafficLayer.clearLayers();
     let shownCount = 0;
+    const seenIds = new Set();
+    const fixTime = Date.now();
+
+    // Rather than clearing and rebuilding every marker on every fetch (which
+    // is also what made positions "jump" instead of appearing to fly), each
+    // aircraft is tracked by a stable ID across fetches: an existing marker
+    // gets its ground-truth position/vector refreshed, a new one gets
+    // created, and anything no longer present gets removed. A separate
+    // dead-reckoning loop (below) then nudges each marker along its
+    // course/speed vector between fetches, so movement is visible instead
+    // of a static snapshot that only updates every several seconds.
+    function upsertAircraft(id, lat, lon, courseDeg, speedKmh, iconFn, tooltipHtml){
+      seenIds.add(id);
+      let t = airTrafficTracked.get(id);
+      if(t){
+        t.lat = lat; t.lon = lon; t.course = courseDeg; t.speedKmh = speedKmh; t.fixTime = fixTime;
+        t.marker.setLatLng([lat,lon]);
+        t.marker.setIcon(iconFn());
+        t.marker.setTooltipContent(tooltipHtml);
+      } else {
+        const marker = L.marker([lat,lon], {icon: iconFn(), pane:'airTrafficPane'}).bindTooltip(tooltipHtml, {sticky:true}).addTo(airTrafficLayer);
+        airTrafficTracked.set(id, {marker, lat, lon, course:courseDeg, speedKmh, fixTime});
+      }
+    }
 
     if(j){
       console.log('Air traffic: ADSBExchange raw response top-level keys:', Object.keys(j));
@@ -2674,9 +2719,9 @@ async function fetchAirTraffic(force){
         shownCount++;
         const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
         const typeInfo = a.t ? ` (${a.t})` : '';
-        L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, a.category, a.t, altFt, a.baro_rate), pane:'airTrafficPane'})
-          .bindTooltip(`<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${label}</b>${typeInfo} · ${Math.round(altM)}m AMSL (FL${Math.round(altFt/100)})${a.gs!=null?' · '+Math.round(a.gs*1.852)+'km/h':''}</div><div style="font-size:7.5px;color:var(--muted);">via ADSBExchange</div>`, {sticky:true})
-          .addTo(airTrafficLayer);
+        const tooltip = `<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${label}</b>${typeInfo} · ${Math.round(altM)}m AMSL (FL${Math.round(altFt/100)})${a.gs!=null?' · '+Math.round(a.gs*1.852)+'km/h':''}</div><div style="font-size:7.5px;color:var(--muted);">via ADSBExchange</div>`;
+        upsertAircraft('adsb_'+(a.hex||label), a.lat, a.lon, a.track, a.gs!=null?a.gs*1.852:null,
+          ()=>aircraftIcon(a.track, a.category, a.t, altFt, a.baro_rate), tooltip);
       });
     }
 
@@ -2686,9 +2731,18 @@ async function fetchAirTraffic(force){
       const shape = ognTypeToShape(a.typeCode);
       const climbFtMin = a.climbMs!=null ? a.climbMs*196.85 : null;
       const label = a.anonymous ? '(anonymous)' : (a.name || a.reg || '?');
-      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.course, null, null, a.altM/0.3048, climbFtMin, shape), pane:'airTrafficPane'})
-        .bindTooltip(`<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${label}</b> · ${Math.round(a.altM)}m AMSL${a.speedKmh!=null?' · '+Math.round(a.speedKmh)+'km/h':''}</div><div style="font-size:7.5px;color:var(--muted);">via OGN/FLARM</div>`, {sticky:true})
-        .addTo(airTrafficLayer);
+      const tooltip = `<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${label}</b> · ${Math.round(a.altM)}m AMSL${a.speedKmh!=null?' · '+Math.round(a.speedKmh)+'km/h':''}</div><div style="font-size:7.5px;color:var(--muted);">via OGN/FLARM</div>`;
+      upsertAircraft('ogn_'+(a.reg||a.name||(a.lat+','+a.lon)), a.lat, a.lon, a.course, a.speedKmh,
+        ()=>aircraftIcon(a.course, null, null, a.altM/0.3048, climbFtMin, shape), tooltip);
+    });
+
+    // Remove markers for aircraft that vanished from this fetch (landed,
+    // out of range, out of the altitude band, etc.)
+    airTrafficTracked.forEach((t,id)=>{
+      if(!seenIds.has(id)){
+        map.removeLayer(t.marker);
+        airTrafficTracked.delete(id);
+      }
     });
 
     console.log(`Air traffic: ${shownCount} aircraft shown total within the configured altitude band.`);

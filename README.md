@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.06.01** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.06.02** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -244,6 +244,8 @@ METAR's airport symbol now rotates to point with the wind (same "blowing toward"
 **Second national weather network added: Germany, via Bright Sky (api.brightsky.dev)** - an open-source, CORS-confirmed wrapper around DWD's official open data ("CORS requests are now allowed from all origins" per their own changelog). Unlike Switzerland, this doesn't need a fixed station list - `/current_weather?lat=..&lon=..` returns whichever real DWD station is nearest, with its real name, and includes dewpoint directly (no need to calculate it, unlike SwissMetNet). ~20 query points spread across Germany, weighted toward the south. Duplicate stations (multiple query points resolving to the same physical station) are filtered out before rendering.
 
 Covering "as many European countries as possible" is a genuinely large undertaking - each country typically has its own separate national service with its own API. Switzerland and Germany are now in; further countries (France, Austria, Italy, UK, etc.) would each need the same kind of dedicated research before being added, rather than guessed at.
+
+Air Traffic refresh shortened from 15s to 10s, and aircraft now visibly move between fetches: each one is tracked by a stable ID across updates (marker moved/updated in place rather than deleted and recreated), and a 1-second dead-reckoning loop nudges every tracked aircraft along its course/speed vector using the same destination-point projection used elsewhere in the app - purely a visual extrapolation from the last real fix, corrected back to ground truth on every actual fetch.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

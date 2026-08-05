@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.14** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.17** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -288,6 +288,22 @@ APRS icon switched to option A (concentric tracking rings) as chosen.
 Rain layer icon switched to option A (rounder cloud, diagonal rain streaks); when lightning monitoring is active, a small yellow bolt now appears in addition to the rain streaks, not instead of them.
 
 Also found and fixed a real gap while wiring this up: there was no way to actually stop lightning monitoring once started - `stopLightningPolling()` was defined but never called from anywhere. Added a "Stop monitoring" button under the status text in Settings.
+
+**Trajectory display unified between Function 1 and Function 2, completing the work started in the previous version:**
+
+- SOS emoji (🆘) replaced with the same triangle warning icon already used on the actual emergency button, in all three places it appeared (two Settings notes, the first-launch reminder banner).
+- Both landing-area polygons in Function 2 (`stagedLandingAreaLayer` and `plannedLandingPolyLayer`) now match Function 1's exact style (red border, green fill) - previously one used a different green border and the other used orange.
+- Found and fixed two more real gaps while auditing every call site for the new outline polylines introduced last version: a mode-switch function and a clear function were updating/removing the coloured layer but not its black outline companion, which would have left orphaned black lines on the map in those specific situations. Verified by counting `setLatLngs`/`addTo`/`removeLayer` calls programmatically to confirm every base layer and its outline now match exactly.
+
+**Findings from your latest CORS test:**
+
+- **APRS confirmed CORS-blocked** - the layer failed with real credentials, not just placeholder ones, so this isn't transient. Marked clearly non-functional in Settings (same treatment as openAIP's airspace-class filtering) rather than silently failing - left in place in case aprs.fi adds CORS support later.
+- **MeteoGate's per-station response confirmed as a single GeoJSON Feature, not a FeatureCollection** as originally assumed - fixed the parsing to handle both shapes. The full property structure still isn't confirmed (the response was truncated in what I could fetch), so this may need another look once you can see the complete raw response in the browser console.
+- Xweather's lightning endpoint also failed, but that test used placeholder credentials (`DEIN_CLIENT_ID`/`DEIN_CLIENT_SECRET`) by design, so it doesn't confirm anything either way - needs testing with your real Xweather credentials once you have them.
+
+**APRS confirmed to need no additional authentication** beyond the single API key it already has - checked directly, a wrong key returns a clean JSON error from aprs.fi's own server, not a network-level failure, and "Failed to fetch" specifically matches CORS blocking rather than a missing credential.
+
+**Floating panel positions unified**: the staged descent plan panel (previously top-left, `left:8px`) and the sonde profile panel (previously top-right with a hardcoded pixel offset) now both align exactly with the "Current Position" card's top-left corner, via a shared helper that reads the card's actual on-screen position at the moment each panel opens - robust against the sidebar's responsive width (25% of viewport, clamped 280-420px) rather than relying on a fixed pixel value that would only happen to line up sometimes.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

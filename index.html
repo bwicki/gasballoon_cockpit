@@ -104,8 +104,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 /* ---- predicted continuous flight path (pink) / planned descent path (yellow):
    both get a dark outline so they stay legible over green terrain, satellite
    imagery, or light basemaps alike ---- */
-.predicted-path-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 3px #000000);}
-.descent-path-glow{filter:drop-shadow(0 0 2px #000000) drop-shadow(0 0 3px #000000);}
+
 
 /* ---- floating mode toggle (now docked in header) ---- */
 #modeToggle{z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);align-self:flex-start;}
@@ -495,6 +494,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">APRS Stations (aprs.fi)</div>
+        <p style="font-size:10px;color:var(--bad);margin:0 0 6px;">⚠ Not currently functional: aprs.fi's API blocks direct browser requests via CORS - confirmed via a live test with a real key, not a temporary glitch. Left in place in case that changes, or a server-side relay becomes an option later.</p>
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Looks up the specific callsigns below (e.g. other balloons) via aprs.fi - not a general area search, since their API only supports looking up callsigns you already know. The API key goes in "API Keys &amp; Tokens" at the bottom of Settings. Only queried while this layer is switched on, per aprs.fi's own usage policy (no background pre-caching).</p>
         <textarea id="sAprsCallsigns" placeholder="One callsign per line, e.g.&#10;OE1XYZ-11&#10;DL2ABC-9" rows="3" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;font-family:var(--mono);resize:vertical;"></textarea>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 4px;">Show which classes (by APRS symbol):</p>
@@ -631,7 +631,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <input type="tel" id="cfgSmsRecipient3" placeholder="Recipient 3 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <input type="tel" id="cfgSmsRecipient4" placeholder="Recipient 4 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <input type="tel" id="cfgSmsRecipient5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
+        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> emergency message. Stored only on this device.</p>
 
         
         
@@ -707,7 +707,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <input type="text" id="sXweatherClientSecret" class="api-key-input" placeholder="Xweather Client Secret" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
 
           <div class="subhead">Silent Emergency Email (EmailJS)</div>
-          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the 🆘 panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key).</p>
+          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key).</p>
           <input type="text" id="cfgEmailJsServiceId" class="api-key-input" placeholder="EmailJS Service ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
           <input type="text" id="cfgEmailJsTemplateId" class="api-key-input" placeholder="EmailJS Template ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
           <input type="text" id="cfgEmailJsPublicKey" class="api-key-input" placeholder="EmailJS Public Key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
@@ -1184,7 +1184,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.14';
+const APP_VERSION = 'v260805.17';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2194,6 +2194,7 @@ async function openSondeHubProfile(serial){
   document.getElementById('sondeProfileWarning').style.display = 'none';
   document.getElementById('sondeProfileTableBody').innerHTML = '';
   document.getElementById('sondeProfileUseBtn').disabled = true;
+  alignPanelToPositionCard(document.getElementById('sondeProfileBox'));
   overlay.style.display = 'block';
   try{
     // The correct endpoint takes the serial as a QUERY parameter on
@@ -2774,8 +2775,13 @@ async function fetchMetarStations(force){
       let mgLogged = false;
       mgResults.forEach(({station, data})=>{
         if(!mgLogged){ console.log('MeteoGate: raw per-station response (for format verification):', JSON.stringify(data).slice(0,600)); mgLogged = true; }
-        const feats = data && data.features;
-        if(!Array.isArray(feats) || !feats.length) return;
+        // Confirmed via a live browser test: the response is a single
+        // GeoJSON Feature ({"type":"Feature",...}), not a FeatureCollection
+        // wrapping several - handled here as a one-item list so the same
+        // logic below works regardless of which shape actually comes back.
+        const feats = Array.isArray(data && data.features) ? data.features
+          : (data && data.type==='Feature') ? [data] : [];
+        if(!feats.length) return;
         const latestByParam = {};
         feats.forEach(f=>{
           const props = f.properties || {};
@@ -3045,9 +3051,10 @@ async function fetchAprsStations(){
     aprsFailCount = 0;
   }catch(e){
     console.error('APRS fetch failed:', e);
+    console.warn('APRS: this is very likely CORS-blocked, not a transient error - confirmed via a live browser test with real credentials. aprs.fi\'s API does not appear to send the headers needed for direct browser fetch(), the same situation as openAIP\'s airspace-class filtering elsewhere in this app.');
     if(aprsActive){
       aprsFailCount = (aprsFailCount||0)+1;
-      setLayerLoadDot('tgAprs', aprsFailCount>=3 ? 'error' : 'loading');
+      setLayerLoadDot('tgAprs', 'error');
     }
   }
   aprsFetchTimer = setTimeout(fetchAprsStations, 180000); // 3 minutes - conservative per aprs.fi's own guidance against frequent polling
@@ -3583,12 +3590,36 @@ function updateAircraftRotation(){
 setInterval(updateAircraftRotation, 2000);
 const breadcrumbLine = L.polyline([], {color:'#ff8a00', weight:4, opacity:0.85, lineCap:'butt', dashArray:'16,10'}).addTo(map);
 let landingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25, interactive:false}).addTo(map);
-let predictedCruiseLayer = L.polyline([], {color:'#00e5c8', weight:4, opacity:1, dashArray:'4,7', lineCap:'round', className:'predicted-path-glow'}).addTo(map);
-let predictedDescentSegmentLayer = L.polyline([], {color:'#ffee00', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round', className:'descent-path-glow'}).addTo(map);
+// Real black outline polylines (a wider black line drawn directly under the
+// coloured one, same coordinates) rather than a CSS drop-shadow filter -
+// filter effects on SVG paths are unreliable on iOS Safari (can render
+// inconsistently or not at all), which is very likely why these trajectory
+// lines didn't look the same on iPad as on desktop. A real outline stroke
+// renders identically everywhere since it's just plain SVG, no filter API
+// involved.
+let predictedCruiseOutline = L.polyline([], {color:'#000000', weight:7.5, opacity:1, lineCap:'round', interactive:false}).addTo(map);
+let predictedCruiseLayer = L.polyline([], {color:'#00e676', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round'}).addTo(map);
+let predictedDescentSegmentOutline = L.polyline([], {color:'#000000', weight:5.5, opacity:1, lineCap:'round', interactive:false}).addTo(map);
+let predictedDescentSegmentLayer = L.polyline([], {color:'#ffee00', weight:3, opacity:1, dashArray:'4,7', lineCap:'round'}).addTo(map);
 const blueDotIcon = L.divIcon({
   html:'<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 L2 2 L24 2 Z" fill="#ffee00" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>',
   className:'', iconSize:[26,24], iconAnchor:[13,20]
 });
+// Replaces the old triangle markers (both the fixed-orientation one above
+// and the perpendicular-rotated violet one below) with a single consistent
+// design used in both Function 1 (live projection) and Function 2 (staged
+// descent planning): a yellow X whose arms sit at ±45° from the
+// trajectory's own bearing at that point, rather than a triangle whose
+// meaning wasn't obvious at a glance. Real black outline strokes (not a
+// CSS filter) for the same cross-platform-reliability reason as the
+// trajectory lines above.
+function descentCrossIcon(bearingDeg){
+  const rot = ((bearingDeg||0)+45)%360;
+  return L.divIcon({
+    html:`<svg width="24" height="24" viewBox="0 0 24 24"><g transform="rotate(${rot},12,12)"><line x1="12" y1="3" x2="12" y2="21" stroke="#000" stroke-width="5.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#000" stroke-width="5.5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="#ffee00" stroke-width="3" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#ffee00" stroke-width="3" stroke-linecap="round"/></g></svg>`,
+    className:'', iconSize:[24,24], iconAnchor:[12,12]
+  });
+}
 // Same shape, violet - marks the descent-initiation point for the PLANNED
 // route, so it's visually distinct from the live projection's yellow one.
 const violetDotIcon = L.divIcon({
@@ -3609,8 +3640,8 @@ function violetTickIcon(bearingDeg){
     className:'', iconSize:[26,24], iconAnchor:[13,12]
   });
 }
-let plannedDescentInitMarker = L.marker([0,0], {icon: violetDotIcon, opacity:0, draggable:true});
-let descentInitMarker = L.marker([0,0], {icon: blueDotIcon, opacity:0}).addTo(map);
+let plannedDescentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0), opacity:0, draggable:true});
+let descentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0), opacity:0}).addTo(map);
 let initPointMarker = null;
 const crossIcon = L.divIcon({
   html:'<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#ff5a3c" stroke-width="2.5"/><circle cx="12" cy="12" r="2.5" fill="#ff5a3c"/></svg>',
@@ -3624,16 +3655,18 @@ const smallCrossIcon = L.divIcon({
 let liveLandingCenterMarker = null;
 let intendedLandingMarker = null;
 let plannedLandingCenterMarker = null;
-const plannedLandingPolyLayer = L.polygon([], {color:'#ff8a00', weight:3, dashArray:'8,5', fillColor:'#ff8a00', fillOpacity:0.28, interactive:false});
+const plannedLandingPolyLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25, interactive:false});
 // Extended course (cruise continuation to the descent point) vs. the actual
 // descent - kept visually distinct, same idea as the live projection in
 // function 1 (teal cruise / yellow descent), just in the planning colors.
-const plannedCruiseSegmentLayer = L.polyline([], {color:'#3ddc6f', weight:4, dashArray:'5,6', lineCap:'round', opacity:1});
+const plannedCruiseSegmentOutline = L.polyline([], {color:'#000000', weight:7.5, lineCap:'round', interactive:false});
+const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e676', weight:4.5, dashArray:'5,6', lineCap:'round', opacity:1});
 // A long (360 min) reference trajectory at the CURRENT cruise altitude,
 // shown only in Plan Descent - helps judge which areas are even reachable
 // before committing to a specific target point. Purely informational: it
 // does NOT trigger any auto-zoom, unlike the actual planned-area result.
-const referenceTrajectoryLayer = L.polyline([], {color:'#3ddc6f', weight:4, dashArray:'9,5', opacity:0.95, interactive:false});
+const referenceTrajectoryOutline = L.polyline([], {color:'#000000', weight:7.5, opacity:0.95, interactive:false});
+const referenceTrajectoryLayer = L.polyline([], {color:'#00e676', weight:4.5, dashArray:'9,5', opacity:0.95, interactive:false});
 function computeReferenceTrajectory(){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
@@ -3641,10 +3674,12 @@ function computeReferenceTrajectory(){
   const REFERENCE_MINUTES = 360;
   const path = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, REFERENCE_MINUTES*60, rate1, interceptAGL, rate2, 0);
   const cruiseOnly = path.filter(p=>p.t <= REFERENCE_MINUTES*60);
+  referenceTrajectoryOutline.setLatLngs(cruiseOnly.map(p=>[p.lat,p.lon]));
   referenceTrajectoryLayer.setLatLngs(cruiseOnly.map(p=>[p.lat,p.lon]));
   state.referenceTrajectoryPath = cruiseOnly; // kept WITH its time values, for the staged-descent draggable marker to snap to
 }
-const plannedDescentPathLayer = L.polyline([], {color:'#b026ff', weight:3, dashArray:'8,6', lineCap:'round'});
+const plannedDescentPathOutline = L.polyline([], {color:'#000000', weight:5.5, lineCap:'round', interactive:false});
+const plannedDescentPathLayer = L.polyline([], {color:'#ffee00', weight:3, dashArray:'8,6', lineCap:'round'});
 
 // ==================== STAGED DESCENT (subfunction 2 of Plan Descent) ====================
 let currentSubMode = 'quick'; // 'quick' | 'staged'
@@ -4076,6 +4111,7 @@ function showStagedDescentPlan(result){
   // somewhere in the (fairly involved) work below, which is very likely
   // what caused the repeatedly-reported "the side graphic doesn't open".
   document.getElementById('stagedPlanPanel').style.display = 'block';
+  alignPanelToPositionCard(document.getElementById('stagedPlanPanel'));
   try{
   ensureStagedLayers();
   state.lastStagedPlanResult = result; // so the panel can be reopened later, even from function 1
@@ -4084,7 +4120,7 @@ function showStagedDescentPlan(result){
   // The probable landing area (Monte-Carlo, forecast uncertainty around the
   // chosen plan) - distinct from the orange reachable-area polygon.
   if(!stagedLandingAreaLayer){
-    stagedLandingAreaLayer = L.polygon([], {color:'#00ff7f', weight:2.5, dashArray:'2,7', fillColor:'#00ff7f', fillOpacity:0.2, interactive:false});
+    stagedLandingAreaLayer = L.polygon([], {color:'#ff2b2b', weight:3, opacity:1, dashArray:'2,7', lineCap:'round', fillColor:'#00ff7f', fillOpacity:0.25, interactive:false});
   }
   if(map.hasLayer(stagedLandingAreaLayer)) map.removeLayer(stagedLandingAreaLayer);
   const landingHull = result.landingHull || [];
@@ -5215,9 +5251,14 @@ function doRecompute(){
   const splitIdx = initIdx>=0 ? initIdx : refPath.length-1;
   const cruiseSegment = refPath.slice(0, splitIdx+1);
   const descentSegment = refPath.slice(splitIdx);
+  predictedCruiseOutline.setLatLngs(cruiseSegment.map(p=>[p.lat,p.lon]));
   predictedCruiseLayer.setLatLngs(cruiseSegment.map(p=>[p.lat,p.lon]));
+  predictedDescentSegmentOutline.setLatLngs(descentSegment.map(p=>[p.lat,p.lon]));
   predictedDescentSegmentLayer.setLatLngs(descentSegment.map(p=>[p.lat,p.lon]));
   const initPt = refPath[splitIdx];
+  const initBearing = splitIdx>0 ? bearingBetween(refPath[splitIdx-1].lat, refPath[splitIdx-1].lon, initPt.lat, initPt.lon)
+    : (refPath.length>1 ? bearingBetween(initPt.lat, initPt.lon, refPath[1].lat, refPath[1].lon) : 0);
+  descentInitMarker.setIcon(descentCrossIcon(initBearing));
   descentInitMarker.setLatLng([initPt.lat, initPt.lon]);
   descentInitMarker.setOpacity(1);
 
@@ -5889,10 +5930,13 @@ function setAppMode(mode){
     // planning - a separate violet marker/dashed path represents the plan.
     if(map.hasLayer(landingPolyLayer)) map.removeLayer(landingPolyLayer);
     if(liveLandingCenterMarker && map.hasLayer(liveLandingCenterMarker)) map.removeLayer(liveLandingCenterMarker);
+    if(map.hasLayer(predictedCruiseOutline)) map.removeLayer(predictedCruiseOutline);
     if(map.hasLayer(predictedCruiseLayer)) map.removeLayer(predictedCruiseLayer);
+    if(map.hasLayer(predictedDescentSegmentOutline)) map.removeLayer(predictedDescentSegmentOutline);
     if(map.hasLayer(predictedDescentSegmentLayer)) map.removeLayer(predictedDescentSegmentLayer);
     if(map.hasLayer(descentInitMarker)) map.removeLayer(descentInitMarker);
     computeReferenceTrajectory();
+    referenceTrajectoryOutline.addTo(map);
     referenceTrajectoryLayer.addTo(map);
     document.getElementById('subModeToggle').style.display = 'flex';
     setTimeout(repositionModeToggle, 0);
@@ -5912,13 +5956,18 @@ function setAppMode(mode){
     setTimeout(repositionModeToggle, 0);
     if(landingLayerOn) landingPolyLayer.addTo(map);
     if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
+    predictedCruiseOutline.addTo(map);
     predictedCruiseLayer.addTo(map);
+    predictedDescentSegmentOutline.addTo(map);
     predictedDescentSegmentLayer.addTo(map);
     descentInitMarker.addTo(map);
+    if(map.hasLayer(referenceTrajectoryOutline)) map.removeLayer(referenceTrajectoryOutline);
     if(map.hasLayer(referenceTrajectoryLayer)) map.removeLayer(referenceTrajectoryLayer);
     if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
     if(map.hasLayer(plannedDescentInitMarker)) map.removeLayer(plannedDescentInitMarker);
+    if(map.hasLayer(plannedCruiseSegmentOutline)) map.removeLayer(plannedCruiseSegmentOutline);
     if(map.hasLayer(plannedCruiseSegmentLayer)) map.removeLayer(plannedCruiseSegmentLayer);
+    if(map.hasLayer(plannedDescentPathOutline)) map.removeLayer(plannedDescentPathOutline);
     if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
     // The sidebar card goes back to showing LIVE info - the "PLANNED" word
     // and the "Estimated Descent Point" box are specific to function 2 and
@@ -6131,14 +6180,16 @@ async function planDescentToTarget(lat, lon){
   const plannedSplitIdx = Math.max(0, bestPath.findIndex(p=>p.t>=initSec));
   const plannedCruiseSeg = bestPath.slice(0, plannedSplitIdx+1);
   const plannedDescentSeg = bestPath.slice(plannedSplitIdx);
+  plannedCruiseSegmentOutline.setLatLngs(plannedCruiseSeg.map(p=>[p.lat,p.lon]));
   plannedCruiseSegmentLayer.setLatLngs(plannedCruiseSeg.map(p=>[p.lat,p.lon]));
+  if(!map.hasLayer(plannedCruiseSegmentOutline)) plannedCruiseSegmentOutline.addTo(map);
   if(!map.hasLayer(plannedCruiseSegmentLayer)) plannedCruiseSegmentLayer.addTo(map);
   plannedDescentInitMarker.setLatLng([initFix.lat, initFix.lon]);
   plannedDescentInitMarker.setOpacity(1);
   if(plannedCruiseSeg.length>=2){
     const p1 = plannedCruiseSeg[plannedCruiseSeg.length-2], p2 = plannedCruiseSeg[plannedCruiseSeg.length-1];
     const bearing = (Math.atan2((p2.lon-p1.lon)*Math.cos(p1.lat*Math.PI/180), p2.lat-p1.lat)*180/Math.PI+360)%360;
-    plannedDescentInitMarker.setIcon(violetTickIcon(bearing));
+    plannedDescentInitMarker.setIcon(descentCrossIcon(bearing));
   }
   if(!map.hasLayer(plannedDescentInitMarker)) plannedDescentInitMarker.addTo(map);
 
@@ -6151,7 +6202,9 @@ async function planDescentToTarget(lat, lon){
   // land - which can differ slightly from the Monte-Carlo hull's center.
   const descentLatLngs = plannedDescentSeg.map(p=>[p.lat,p.lon]);
   if(descentLatLngs.length) descentLatLngs[descentLatLngs.length-1] = [cLat, cLon];
+  plannedDescentPathOutline.setLatLngs(descentLatLngs);
   plannedDescentPathLayer.setLatLngs(descentLatLngs);
+  if(!map.hasLayer(plannedDescentPathOutline)) plannedDescentPathOutline.addTo(map);
   if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
 
   state.plannedLandingActive = true;
@@ -6189,10 +6242,14 @@ function clearPlannedLandingArea(){
   state.plannedLandingActive = false;
   state.plannedLandingPolygon = null;
   plannedLandingPolyLayer.setLatLngs([]);
+  plannedCruiseSegmentOutline.setLatLngs([]);
   plannedCruiseSegmentLayer.setLatLngs([]);
+  plannedDescentPathOutline.setLatLngs([]);
   plannedDescentPathLayer.setLatLngs([]);
   if(map.hasLayer(plannedLandingPolyLayer)) map.removeLayer(plannedLandingPolyLayer);
+  if(map.hasLayer(plannedCruiseSegmentOutline)) map.removeLayer(plannedCruiseSegmentOutline);
   if(map.hasLayer(plannedCruiseSegmentLayer)) map.removeLayer(plannedCruiseSegmentLayer);
+  if(map.hasLayer(plannedDescentPathOutline)) map.removeLayer(plannedDescentPathOutline);
   if(map.hasLayer(plannedDescentPathLayer)) map.removeLayer(plannedDescentPathLayer);
   if(plannedLandingCenterMarker){ map.removeLayer(plannedLandingCenterMarker); plannedLandingCenterMarker=null; }
   if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
@@ -6245,7 +6302,9 @@ async function recomputeFromManualDescentPoint(lat, lon){
   const hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
   state.plannedLandingPolygon = hull;
   plannedLandingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
+  plannedCruiseSegmentOutline.setLatLngs([[state.lat,state.lon],[lat,lon]]);
   plannedCruiseSegmentLayer.setLatLngs([[state.lat,state.lon],[lat,lon]]);
+  plannedDescentPathOutline.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
   plannedDescentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
 
   const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
@@ -6539,6 +6598,23 @@ document.getElementById('iconSun').style.display = 'block';
 document.getElementById('iconMoon').style.display = 'none';
 
 // ---------- collapsible cards ----------
+// Every floating panel that isn't tied to a specific header button (sonde
+// profile, staged descent plan, etc.) should open at the exact same spot -
+// aligned top-left with the "Current Position" card - rather than each
+// having its own ad-hoc top/left value. The sidebar's width is responsive
+// (25% of viewport, clamped between 280-420px), so a fixed pixel offset
+// can't reliably match its edge; reading the card's actual rendered
+// position instead works regardless of viewport size or sidebar state.
+function alignPanelToPositionCard(panelEl){
+  const card = document.getElementById('positionCard');
+  if(!card) return;
+  const rect = card.getBoundingClientRect();
+  if(rect.width===0 && rect.height===0) return; // sidebar collapsed/hidden - leave the panel's existing position rather than snapping to (0,0)
+  panelEl.style.position = 'fixed';
+  panelEl.style.top = Math.round(rect.top) + 'px';
+  panelEl.style.left = Math.round(rect.left) + 'px';
+  panelEl.style.right = 'auto';
+}
 function toggleCard(h3){
   h3.parentElement.classList.toggle('collapsed');
   // A chart rendered while its card was collapsed (display:none) can end up
@@ -6881,7 +6957,7 @@ setTimeout(()=>{
   const anySet = Object.keys(EMERGENCY_FIELD_IDS).some(id=>document.getElementById(id).value.trim());
   if(!anySet){
     const w = document.getElementById('warnbar');
-    w.textContent = '⚠ No emergency contact set up yet - tap 🆘 → "Edit contact in Settings" to add your name, aircraft registration, and a contact.';
+    w.innerHTML = '⚠ No emergency contact set up yet - tap <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> → "Edit contact in Settings" to add your name, aircraft registration, and a contact.';
     w.classList.add('show');
     setTimeout(()=>w.classList.remove('show'), 8000);
   }

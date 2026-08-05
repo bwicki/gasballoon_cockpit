@@ -150,10 +150,11 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #headerMoreMenu .iconbtn{width:100%;background:none;border:none;border-radius:0;justify-content:flex-start;padding:9px 12px;gap:10px;font-size:12px;font-weight:400;}
 #headerMoreMenu .iconbtn.active{background:rgba(63,208,201,0.1);color:var(--accent);}
 #headerMoreMenu .iconbtn:active{background:var(--panel);}
-.layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;}
+.layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;z-index:2;}
 .layer-load-dot.loading{background:#ffd400;}
 .layer-load-dot.ready{background:var(--good);}
 .layer-load-dot.error{background:var(--bad);}
+.layer-load-dot.inactive{background:var(--muted);}
 .ltbtn.active{border-color:var(--accent);background:rgba(63,208,201,0.15);color:var(--text);}
 .legend-row{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;}
 
@@ -1184,7 +1185,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.18';
+const APP_VERSION = 'v260805.20';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1595,10 +1596,11 @@ document.getElementById('allLegendsReopenBtn').addEventListener('click', ()=>{
 function setLayerLoadDot(btnId, dotState){
   const dot = document.getElementById('dotTg'+btnId.replace('tg',''));
   if(!dot) return;
-  dot.classList.remove('loading','ready','error');
+  dot.classList.remove('loading','ready','error','inactive');
   if(dotState==='loading') dot.classList.add('loading');
   else if(dotState==='ready') dot.classList.add('ready');
   else if(dotState==='error') dot.classList.add('error');
+  else if(dotState==='inactive') dot.classList.add('inactive');
 }
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
@@ -3028,7 +3030,7 @@ async function fetchAprsStations(){
       .split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
     if(!apiKey || !callsigns.length){
       aprsLayer.clearLayers();
-      setLayerLoadDot('tgAprs', callsigns.length ? 'error' : null);
+      setLayerLoadDot('tgAprs', callsigns.length ? 'error' : 'inactive'); // no callsigns yet = grey/neutral, not an error to fix - a missing key (callsigns present) is an actual misconfiguration, stays red
       if(!callsigns.length) console.warn('APRS: no callsigns configured in Settings.');
       else console.error('APRS: no aprs.fi API key set in Settings (API Keys & Tokens).');
       aprsFetchTimer = setTimeout(fetchAprsStations, 60000);
@@ -6623,14 +6625,31 @@ document.getElementById('iconMoon').style.display = 'none';
 // can't reliably match its edge; reading the card's actual rendered
 // position instead works regardless of viewport size or sidebar state.
 function alignPanelToPositionCard(panelEl){
-  const card = document.getElementById('positionCard');
-  if(!card) return;
-  const rect = card.getBoundingClientRect();
-  if(rect.width===0 && rect.height===0) return; // sidebar collapsed/hidden - leave the panel's existing position rather than snapping to (0,0)
+  // Reads the SIDEBAR's own position, not the "Current Position" card's -
+  // the card lives inside the sidebar's scrollable content, so if the
+  // person has scrolled down to see other cards, the card's own
+  // getBoundingClientRect() would be off-screen (or even above the
+  // viewport), and a panel aligned to it would end up invisible off the
+  // edge of the screen. The sidebar element itself is the SCROLL
+  // CONTAINER, not scrolled content, so its top-left corner (plus its own
+  // padding, where the first card normally sits) stays stable regardless
+  // of scroll position.
+  const sidebar = document.getElementById('sidebar');
   panelEl.style.position = 'fixed';
-  panelEl.style.top = Math.round(rect.top) + 'px';
-  panelEl.style.left = Math.round(rect.left) + 'px';
   panelEl.style.right = 'auto';
+  const rect = sidebar ? sidebar.getBoundingClientRect() : null;
+  if(!rect || (rect.width===0 && rect.height===0)){
+    // Sidebar collapsed/hidden/not found - fall back to a reasonable fixed
+    // spot near the top-right rather than doing nothing, which could leave
+    // the panel wherever it happened to be before (potentially off-screen).
+    panelEl.style.top = '60px';
+    panelEl.style.left = 'auto';
+    panelEl.style.right = '10px';
+    return;
+  }
+  const sidebarPaddingPx = 6; // matches #sidebar's own CSS padding, where its first card's top-left corner actually sits
+  panelEl.style.top = Math.round(rect.top + sidebarPaddingPx) + 'px';
+  panelEl.style.left = Math.round(rect.left + sidebarPaddingPx) + 'px';
 }
 function toggleCard(h3){
   h3.parentElement.classList.toggle('collapsed');

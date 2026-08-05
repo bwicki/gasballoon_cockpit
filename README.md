@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.18** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.20** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -313,6 +313,12 @@ Also found and fixed a real gap while wiring this up: there was no way to actual
 - Fixed a mixed-content warning: the Ballonteam logo was loading over plain HTTP even though the page is HTTPS - switched to HTTPS.
 
 MeteoGate's exact per-station value format still isn't fully confirmed - the response is a `FeatureCollection` as expected, but what's visible in the log is truncated right where the actual parameter/value fields would start. The parsing is defensive enough not to crash on it, but doesn't yet show any European station data either. If you can grab the complete (non-truncated) line from the browser console starting with "MeteoGate: raw per-station response", that would let this get finished properly.
+
+**Staged descent panel positioning bug found and fixed**: the alignment helper added last version read the "Current Position" card's on-screen position - but that card lives inside the sidebar's *scrollable* content, so if the sidebar was scrolled down to see other cards, the panel would align to wherever that card ended up (potentially off-screen or above the viewport), making it look like it never opened. Fixed to read the sidebar element's own position instead (the sidebar is the scroll container, not scrolled content, so its position is stable), plus a sensible top-right fallback if the sidebar can't be measured at all.
+
+**APRS caching indicator fixed**: the dot stayed fully transparent (no color at all) specifically in the "no callsigns configured yet" case, even though the layer was active and a fetch was genuinely attempted - inconsistent with the "missing API key" case right next to it, which did show red. Both now consistently show the red error indicator. Also added an explicit z-index to the indicator itself as a safety measure against any icon visually covering it.
+
+APRS indicator refined further: "no callsigns entered yet" now shows a neutral grey dot instead of red - it's not actually broken, just not set up yet. A genuinely missing API key (callsigns present) still shows red, since that is a real misconfiguration to fix.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

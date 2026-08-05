@@ -52,6 +52,9 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 /* ---- settings popover ---- */
 #settingsPanel, .settings-popover{position:fixed;width:280px;max-height:75vh;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px;padding-top:32px;z-index:5000;display:none;}
 .popover-close{position:absolute;top:8px;right:8px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:13px;line-height:1;cursor:pointer;z-index:1;}
+.base-layer-radio{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 8px;display:flex;flex-direction:column;gap:3px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.base-layer-radio label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text);cursor:pointer;white-space:nowrap;}
+.base-layer-radio input[type="radio"]{margin:0;accent-color:var(--accent);cursor:pointer;}
 #settingsPanel.open, .settings-popover.open{display:block;}
 #settingsPanel .subhead, .settings-popover .subhead{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:10px 0 6px;}
 #settingsPanel .subhead:first-child, .settings-popover .subhead:first-child{margin-top:2px;}
@@ -324,11 +327,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       </div>
     </div>
     <button id="btnUseSondeData" class="iconbtn" style="display:none;background:var(--accent);color:#00201d;font-size:11px;padding:6px 8px;" title="Switch to loaded sonde data">Use sonde data</button>
-    <div id="sondeActiveChip" class="wx-chip" style="display:none;align-items:flex-start;">
-      <b style="color:var(--bad);font-size:11px;">⚠ Sonde Data Applied</b>
-      <span id="sondeActiveTime" style="color:var(--muted);font-size:10px;">—</span>
+    <div id="sondeActiveChip" style="display:none;align-items:center;gap:7px;padding:4px 6px 4px 9px;background:rgba(224,72,63,0.12);border:1px solid rgba(224,72,63,0.4);border-radius:6px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <div style="display:flex;flex-direction:column;line-height:1.2;">
+        <span style="color:var(--bad);font-size:9px;font-weight:700;">Sonde Data applied</span>
+        <span id="sondeActiveTime" style="color:var(--muted);font-size:8.5px;">—</span>
+      </div>
+      <button id="btnCancelSonde" title="Switch back to weather model" style="width:16px;height:16px;border-radius:50%;background:rgba(224,72,63,0.25);border:none;color:var(--bad);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></button>
     </div>
-    <button id="btnCancelSonde" class="iconbtn" style="display:none;background:var(--bad);color:#fff;font-size:11px;padding:6px 8px;" title="Switch back to weather model">Cancel</button>
     <div style="width:1px;align-self:stretch;background:var(--border);margin:0 8px;"></div>
     <div class="wx-chip" id="twilightChip" style="display:grid;grid-template-columns:auto auto auto auto;column-gap:4px;row-gap:2px;align-items:end;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
       <span id="twilightIcon1" style="flex-shrink:0;">—</span>
@@ -390,7 +396,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg><span>Settings</span></button>
         <div id="settingsPanel">
-        <div class="subhead" style="margin-top:0;">Altitude Unit</div>
+        <div class="settings-group" style="border-left:3px solid #8b98a5;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#8b98a5;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>General</span>
+          </div>
         <div class="checkgrid" style="grid-template-columns:1fr 1fr 1fr;">
           <label><input type="radio" name="altUnitRadio" value="m" checked>m AMSL</label>
           <label><input type="radio" name="altUnitRadio" value="ft">ft AMSL</label>
@@ -398,7 +407,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
 
         
-        <div class="subhead">Language / Sprache</div>
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="checkgrid" style="grid-template-columns:1fr 1fr;">
           <label><input type="radio" name="langRadio" value="en" checked>English</label>
           <label><input type="radio" name="langRadio" value="de">Deutsch</label>
@@ -406,8 +416,23 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Translates the main card titles and field labels. Not every message/tooltip in the app is translated yet.</p>
 
         
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Pre-cache radius</span>
+          <input type="number" id="sCacheRadius" min="10" max="1050" step="10" value="75" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">km</span>
+        </div>
+        <button class="ghost" id="btnRefreshCacheNow" style="margin-top:6px;">↻ Refresh current cache now</button>
+        <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Re-downloads map tiles AND all currently-enabled data layers (airspace, roads, nature reserves, non-landable terrain, region names) around the current position right away, instead of waiting for the automatic re-check.</p>
+
         <hr>
-        <div class="subhead">Weather Model</div>
+        
+        
+        </div>
+        <div class="settings-group" style="border-left:3px solid #3fa9ff;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#3fa9ff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10Z"/></svg><span>Weather</span>
+          </div>
         <select id="wxModelSelect">
           <option value="auto">Auto (finest available grid)</option>
           <option value="best_match">Best match</option>
@@ -431,7 +456,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </select>
         </div>
         
-        <div class="subhead" style="margin-top:10px;">Radiosonde Data</div>
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <label class="ghost" style="display:block;text-align:center;cursor:pointer;">
           Upload CSV with sonde data
           <input type="file" id="sondeFileInput" accept=".csv" style="display:none;">
@@ -440,12 +466,17 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Expected columns: utc_time, altitude_m_msl, pressure_hPa, temperature_C, wind_speed_kt, wind_direction_from_deg. Auto-clears 12h after upload or on app restart.</p>
 
         
-        <hr>
-        <div class="subhead">Weather Stations / METAR (MetarCentral)</div>
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Shows the nearest known airports (from a built-in list) individually, since MetarCentral's bulk endpoint turned out to be CORS-blocked even though the single-airport one isn't - confirmed via a live browser test. No API key needed for this.</p>
 
         
-        <div class="subhead">Air Traffic (ADSBExchange via RapidAPI)</div>
+        
+        </div>
+        <div class="settings-group" style="border-left:3px solid #e0483f;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#e0483f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span>Air Traffic & Airspace</span>
+          </div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own RapidAPI subscription to "ADSBexchange.com" - the key itself is entered in "API Keys &amp; Tokens" at the bottom of Settings, alongside the app's other credentials.</p>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <span style="font-size:12.5px;flex:1;">Altitude band above current position</span>
@@ -454,8 +485,29 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">All traffic below the balloon is always shown (a balloon can descend into it); only traffic above this altitude band is filtered out.</p>
 
         
-        <hr>
-        <div class="subhead">Power Line Categories</div>
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <div class="checkgrid">
+          <label><input type="checkbox" checked data-as="A">Class A</label>
+          <label><input type="checkbox" checked data-as="B">Class B</label>
+          <label><input type="checkbox" checked data-as="C">Class C</label>
+          <label><input type="checkbox" checked data-as="D">Class D</label>
+          <label><input type="checkbox" data-as="E">Class E</label>
+          <label><input type="checkbox" data-as="G">Class G</label>
+          <label><input type="checkbox" checked data-as="R">Restricted</label>
+          <label><input type="checkbox" checked data-as="P">Prohibited</label>
+          <label><input type="checkbox" data-as="TMZ">TMZ</label>
+          <label><input type="checkbox" data-as="RMZ">RMZ</label>
+        </div>
+        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
+
+        
+        
+        </div>
+        <div class="settings-group" style="border-left:3px solid #3ddc6f;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#3ddc6f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-11 4 7 3-5 5 9Z"/></svg><span>Terrain & Ground Features</span>
+          </div>
         <div class="checkgrid">
           <label><input type="checkbox" data-powercat="line" checked>Lines</label>
           <label><input type="checkbox" data-powercat="tower" checked>Towers</label>
@@ -470,7 +522,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">"Overhead only" hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
 
         
-        <div class="subhead">Non-landable Terrain (OpenStreetMap)</div>
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="checkgrid">
           <label><input type="checkbox" checked data-landcover="forest">Forest/Wood</label>
           <label><input type="checkbox" data-landcover="scrub">Scrub/Heath</label>
@@ -493,58 +546,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">Shown (violet-red hatched) via the terrain icon in the header, next to Roads. Note: steep mountain terrain isn't included - OpenStreetMap has no slope/gradient data, that would need a separate elevation-based layer.</p>
 
         
-        <hr>
-        <div class="subhead">Airspace Classes</div>
-        <div class="checkgrid">
-          <label><input type="checkbox" checked data-as="A">Class A</label>
-          <label><input type="checkbox" checked data-as="B">Class B</label>
-          <label><input type="checkbox" checked data-as="C">Class C</label>
-          <label><input type="checkbox" checked data-as="D">Class D</label>
-          <label><input type="checkbox" data-as="E">Class E</label>
-          <label><input type="checkbox" data-as="G">Class G</label>
-          <label><input type="checkbox" checked data-as="R">Restricted</label>
-          <label><input type="checkbox" checked data-as="P">Prohibited</label>
-          <label><input type="checkbox" data-as="TMZ">TMZ</label>
-          <label><input type="checkbox" data-as="RMZ">RMZ</label>
+        
         </div>
-        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
-
-        
-        <hr>
-        <div class="subhead">Offline Tile Cache Radius</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:12.5px;flex:1;">Pre-cache radius</span>
-          <input type="number" id="sCacheRadius" min="10" max="1050" step="10" value="75" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">km</span>
-        </div>
-        <button class="ghost" id="btnRefreshCacheNow" style="margin-top:6px;">↻ Refresh current cache now</button>
-        <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Re-downloads map tiles AND all currently-enabled data layers (airspace, roads, nature reserves, non-landable terrain, region names) around the current position right away, instead of waiting for the automatic re-check.</p>
-
-        <hr>
-        
-        <hr>
-        <div class="subhead">External GPS (Bluetooth, experimental)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic. Hardware compatibility varies widely - there is no universal BLE GPS standard for aviation receivers.</p>
-        <button class="ghost" id="btnConnectBleGps">Connect Bluetooth GPS</button>
-        <div id="bleGpsStatus" style="font-size:11px;color:var(--muted);margin-top:6px;">Not connected</div>
-
-        
-        <hr>
-        <div class="subhead">Pilot &amp; Emergency Contact</div>
-        <input type="text" id="cfgPilotName" placeholder="Pilot name, e.g. Peter Müller" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="text" id="cfgAircraftReg" placeholder="Aircraft registration, e.g. HB-XXX" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="tel" id="cfgPilotMobile" placeholder="Pilot mobile number, e.g. +41791234567" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="tel" id="cfgPilotSecondNumber" placeholder="Second number (e.g. SatPhone), optional" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="email" id="cfgEmergencyEmail" placeholder="Emergency email address" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px;">SMS recipients (up to 5, intl. format):</div>
-        <input type="tel" id="cfgSmsRecipient1" placeholder="Recipient 1" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <input type="tel" id="cfgSmsRecipient2" placeholder="Recipient 2 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <input type="tel" id="cfgSmsRecipient3" placeholder="Recipient 3 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <input type="tel" id="cfgSmsRecipient4" placeholder="Recipient 4 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <input type="tel" id="cfgSmsRecipient5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
-
-        
-        <div class="subhead">Staged Descent (Plan Descent, subfunction 2)</div>
+        <div class="settings-group" style="border-left:3px solid #c78bf0;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#c78bf0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg><span>Descent Planning</span>
+          </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <span style="font-size:12.5px;flex:1;">Minimum stage separation</span>
           <input type="number" id="sMinStageSeparation" min="50" max="2000" step="10" value="300" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
@@ -558,7 +565,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Default 2 - stages are only worth stopping at if the wind there genuinely differs (direction/speed) from the surrounding levels; the biggest such shear points below cruise altitude are picked automatically, up to this many, rather than descending in many small fixed steps.</p>
 
         
-        <div class="subhead">Adiabatic Braking Model</div>
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <span style="font-size:12.5px;flex:1;">Balloon gas volume</span>
           <input type="number" id="sBalloonVolume" min="200" max="5000" step="10" value="1050" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
@@ -577,8 +585,39 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Scales the computed adiabatic lift bonus up or down to match your own empirical flight data (100% = model as-is).</p>
 
         
-        <hr>
-        <div class="subhead">Dropbox Auto-Backup (Flight Log)</div>
+        
+        </div>
+        <div class="settings-group" style="border-left:3px solid #e8a838;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#e8a838;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6Z"/></svg><span>Safety & Positioning</span>
+          </div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Best-effort support for BLE receivers exposing the standard "Location and Speed" characteristic. Hardware compatibility varies widely - there is no universal BLE GPS standard for aviation receivers.</p>
+        <button class="ghost" id="btnConnectBleGps">Connect Bluetooth GPS</button>
+        <div id="bleGpsStatus" style="font-size:11px;color:var(--muted);margin-top:6px;">Not connected</div>
+
+        
+        
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <input type="text" id="cfgPilotName" placeholder="Pilot name, e.g. Peter Müller" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="cfgAircraftReg" placeholder="Aircraft registration, e.g. HB-XXX" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="tel" id="cfgPilotMobile" placeholder="Pilot mobile number, e.g. +41791234567" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="tel" id="cfgPilotSecondNumber" placeholder="Second number (e.g. SatPhone), optional" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <input type="email" id="cfgEmergencyEmail" placeholder="Emergency email address" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px;">SMS recipients (up to 5, intl. format):</div>
+        <input type="tel" id="cfgSmsRecipient1" placeholder="Recipient 1" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="tel" id="cfgSmsRecipient2" placeholder="Recipient 2 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="tel" id="cfgSmsRecipient3" placeholder="Recipient 3 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="tel" id="cfgSmsRecipient4" placeholder="Recipient 4 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="tel" id="cfgSmsRecipient5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the 🆘 emergency message. Stored only on this device.</p>
+
+        
+        
+        </div>
+        <div class="settings-group" style="border-left:3px solid #8b98a5;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#8b98a5;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Data & Backup</span>
+          </div>
         <div id="dropboxFolderPickerRow" style="display:none;margin-bottom:6px;">
           <div class="copyline"><div class="txt" id="dropboxFolderDisplay">/GBLP_Logs</div><button onclick="openDropboxFolderPicker()">Choose folder</button></div>
         </div>
@@ -598,8 +637,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
         </div>
 
-        
-<hr>
+        </div>
+
+        <hr>
         <details id="apiKeysDetails" style="margin-top:8px;">
           <summary style="font-size:12px;color:var(--text);cursor:pointer;font-weight:600;padding:4px 0;">API Keys &amp; Tokens</summary>
           <p style="font-size:10px;color:var(--muted);margin:6px 0 10px;">Every external service credential this app uses, gathered in one place. As with any client-side app, these are visible in the page source to anyone who views it. Changing anything here asks for confirmation first, since a mistyped key would otherwise silently break a working connection.</p>
@@ -954,19 +994,20 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
       </div>
 
-      <div id="sondeProfileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:5500;align-items:center;justify-content:center;">
-        <div id="sondeProfileBox" style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;width:min(92vw,380px);max-height:85vh;overflow-y:auto;position:relative;">
-          <button id="sondeProfileClose" onclick="closeSondeProfileModal()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);cursor:pointer;width:26px;height:26px;padding:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></button>
-          <h3 id="sondeProfileTitle" style="margin:0 0 10px;font-size:15px;padding-right:24px;">Sonde</h3>
-          <div id="sondeProfileKeyData" style="font-size:12px;color:var(--text);margin-bottom:10px;line-height:1.6;"></div>
-          <div id="sondeProfileWarning" style="display:none;font-size:11px;color:#e8a838;background:rgba(232,168,56,0.12);border:1px solid rgba(232,168,56,0.35);border-radius:6px;padding:6px 8px;margin-bottom:10px;"></div>
-          <div id="sondeProfileTableWrap" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
-            <table style="width:100%;border-collapse:collapse;font-size:11px;">
-              <thead><tr style="position:sticky;top:0;background:var(--panel);"><th style="text-align:right;padding:5px 8px;">Alt (m)</th><th style="text-align:right;padding:5px 8px;">Speed</th><th style="text-align:right;padding:5px 8px;">Dir</th><th style="text-align:right;padding:5px 8px;">Temp</th></tr></thead>
+      <div id="sondeProfileOverlay" style="display:none;position:fixed;inset:0;z-index:5500;pointer-events:none;">
+        <div id="sondeProfileBox" style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:10px;padding-top:32px;width:min(92vw,340px);max-height:80vh;overflow-y:auto;position:fixed;top:54px;right:10px;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);">
+          <button class="popover-close" onclick="closeSondeProfileModal()">✕</button>
+          <h3 id="sondeProfileTitle" style="margin:0 0 8px;font-size:14px;padding-right:20px;">Sonde</h3>
+          <div id="sondeProfileKeyData" style="font-size:11px;color:var(--text);margin-bottom:8px;line-height:1.45;"></div>
+          <div id="sondeProfileWarning" style="display:none;font-size:10.5px;color:#e8a838;background:rgba(232,168,56,0.12);border:1px solid rgba(232,168,56,0.35);border-radius:6px;padding:5px 7px;margin-bottom:8px;"></div>
+          <div id="sondeProfileTableWrap" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:10px;">
+              <thead><tr style="position:sticky;top:0;background:var(--panel);"><th style="text-align:right;padding:3px 6px;">Alt (m)</th><th style="text-align:right;padding:3px 6px;">Speed</th><th style="text-align:right;padding:3px 6px;">Dir</th><th style="text-align:right;padding:3px 6px;">Temp</th></tr></thead>
               <tbody id="sondeProfileTableBody"></tbody>
             </table>
           </div>
-          <div style="display:flex;gap:6px;margin-top:12px;">
+          <div id="sondeProfileStueveWrap" style="margin-top:8px;"></div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
             <button class="ghost" id="sondeProfileUseBtn" style="flex:1;background:var(--accent);color:#00201d;font-weight:600;" onclick="useSondeProfileAsSource()">Use as trajectory source</button>
             <button class="ghost" style="flex:1;" onclick="closeSondeProfileModal()">Close</button>
           </div>
@@ -1082,7 +1123,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.04';
+const APP_VERSION = 'v260805.10';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1325,12 +1366,35 @@ map.getPane('overlayTilesPane').style.pointerEvents = 'none';
 const baseLayers = {
   'Streets': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}),
   'Terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenTopoMap'}),
-  'Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})
+  'Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'}),
+  'Light': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'})
 };
 baseLayers['Streets'].addTo(map);
-L.control.layers(baseLayers, null, {position:'topright'}).addTo(map);
 let activeBaseLayerName = 'Streets';
-map.on('baselayerchange', (e)=>{ activeBaseLayerName = e.name; updateFineRoadsVisibility(); });
+// A custom always-visible set of radio buttons, replacing Leaflet's default
+// stacked-layers icon control (which hides the choice behind a click/hover
+// before it can even be seen).
+const BaseLayerRadioControl = L.Control.extend({
+  options: {position:'topright'},
+  onAdd: function(){
+    const div = L.DomUtil.create('div', 'base-layer-radio');
+    div.innerHTML = Object.keys(baseLayers).map(name=>
+      `<label><input type="radio" name="baseLayerRadio" value="${name}" ${name==='Streets'?'checked':''}><span>${name}</span></label>`
+    ).join('');
+    L.DomEvent.disableClickPropagation(div);
+    div.querySelectorAll('input').forEach(input=>{
+      input.addEventListener('change', ()=>{
+        if(!input.checked) return;
+        map.removeLayer(baseLayers[activeBaseLayerName]);
+        activeBaseLayerName = input.value;
+        baseLayers[activeBaseLayerName].addTo(map);
+        updateFineRoadsVisibility();
+      });
+    });
+    return div;
+  }
+});
+map.addControl(new BaseLayerRadioControl());
 
 // --- robustness: force Leaflet to recompute its size once the real layout
 // (flexbox) has settled. Without this, a map initialized before the
@@ -1536,6 +1600,12 @@ let placeLabelsAbortController = null;
 const PLACE_LABELS_MIN_ZOOM = 8;
 let landingLayerOn = true;
 let cacheRadiusKm = 75;
+// Every layer that queries an area around the balloon/map position should
+// respect this Settings value as its upper bound, rather than each having
+// its own independent hardcoded radius - Overpass-based layers still cap
+// at this technical limit regardless, since a very large query (some users
+// configure hundreds of km) reliably times out on that particular service.
+const OVERPASS_MAX_QUERY_KM = 50;
 document.getElementById('sCacheRadius').addEventListener('input', e=>{
   cacheRadiusKm = parseInt(e.target.value);
   updateCacheBoundaryCircle();
@@ -1702,7 +1772,7 @@ async function fetchNatureReserves(force){
   // trip a 504 Gateway Timeout on every mirror, not just rate-limit (429) on
   // the busiest one. A bounded query area keeps this fast and reliable.
   const center = map.getCenter();
-  const maxDeg = 0.35; // roughly 35-40km depending on latitude
+  const maxDeg = Math.min(cacheRadiusKm, OVERPASS_MAX_QUERY_KM)/111; // bounded by the Settings pre-cache radius, capped at a technical limit that keeps Overpass queries fast enough not to time out
   const b = map.getBounds();
   const south = Math.max(b.getSouth(), center.lat-maxDeg);
   const north = Math.min(b.getNorth(), center.lat+maxDeg);
@@ -1826,7 +1896,7 @@ async function fetchLandCover(force){
   const checked = [...document.querySelectorAll('[data-landcover]')].filter(cb=>cb.checked).map(cb=>cb.dataset.landcover);
   if(!checked.length){ landCoverLayer.clearLayers(); return; }
   const center = map.getCenter();
-  const maxDeg = 0.35; // matches the other Overpass-based layers (nature reserves, roads, place labels) - the previous smaller radius was cutting off partially-covered polygons (e.g. large forests) at its edge and made the layer look much more limited than the others
+  const maxDeg = Math.min(cacheRadiusKm, OVERPASS_MAX_QUERY_KM)/111; // matches the other Overpass-based layers, and now scales with the Settings pre-cache radius (capped for query performance) rather than being fixed regardless of what's configured
   const b = map.getBounds();
   const south = Math.max(b.getSouth(), center.lat-maxDeg);
   const north = Math.min(b.getNorth(), center.lat+maxDeg);
@@ -1898,8 +1968,10 @@ function scheduleRegionNamesFetch(){
 }
 async function fetchRegionNames(force){
   if((!regionNamesActive && !force) || map.getZoom()<7){ return; }
+  const center = map.getCenter();
+  const maxDeg = Math.min(cacheRadiusKm, OVERPASS_MAX_QUERY_KM)/111; // was the full viewport regardless of zoom - bounded to the Settings pre-cache radius like the other Overpass layers
   const b = map.getBounds();
-  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const bbox = `${Math.max(b.getSouth(),center.lat-maxDeg)},${Math.max(b.getWest(),center.lng-maxDeg)},${Math.min(b.getNorth(),center.lat+maxDeg)},${Math.min(b.getEast(),center.lng+maxDeg)}`;
   // place=region is an old, never-formally-standardized OSM tag for informal
   // cultural/geographic regions (mountain ranges, historic areas, etc.) -
   // coverage is genuinely inconsistent worldwide (good in some areas like
@@ -1964,12 +2036,12 @@ async function fetchSondeHubNearby(force){
   try{
     const r = await fetch('https://api.v2.sondehub.org/sondes');
     const data = await r.json();
-    const b = map.getBounds().pad(0.2);
+    const cacheRadiusM = cacheRadiusKm*1000; // was filtered by map viewport instead of the Settings pre-cache radius
     sondeHubLayer.clearLayers();
     Object.keys(data).forEach(serial=>{
       const s = data[serial];
       if(s.lat==null || s.lon==null) return;
-      if(!b.contains([s.lat, s.lon])) return;
+      if(haversine(state.lat,state.lon,s.lat,s.lon) > cacheRadiusM) return;
       const marker = L.marker([s.lat, s.lon], {icon: sondeHubIcon})
         .bindTooltip(`${serial}<br>${Math.round(s.alt||0)} m AMSL`, {sticky:true})
         .on('click', ()=>openSondeHubProfile(serial));
@@ -1990,8 +2062,66 @@ function useSondeProfileAsSource(){
   state.sondeProfile = pendingSondeProfile.profile;
   state.sondeLaunchTime = pendingSondeProfile.launchTime;
   state.sondeUploadedAt = Date.now();
+  state.sondeSerial = pendingSondeProfile.serial || null;
   activateSondeData();
   closeSondeProfileModal();
+}
+// A compact Stüve-style diagram: temperature against a pressure-power
+// vertical scale (P^0.286, the defining feature of a Stüve diagram - it's
+// what makes dry adiabats plot as straight lines, even though this small
+// version doesn't draw reference adiabat/isotherm lines, just the sonde's
+// own trace) with wind direction/speed shown as small arrows down the
+// right edge at a thinned-out subset of levels so it doesn't get crowded.
+function renderStueveDiagram(profile){
+  const withTemp = profile.filter(p=>p.temp_c!=null);
+  if(withTemp.length<2) return '<div style="font-size:10px;color:var(--muted);text-align:center;padding:8px;">Not enough temperature data for a profile chart</div>';
+  const toPressureHpa = altM => 1013.25*Math.pow(1-2.25577e-5*altM, 5.25588);
+  const stueveY = altM => Math.pow(toPressureHpa(altM), 0.286);
+  const w=300, h=200, mL=32, mR=48, mT=8;
+  const marginB=18;
+  const plotW = w-mL-mR, plotH = h-mT-marginB;
+  const stueveVals = profile.map(p=>stueveY(p.alt_m));
+  const stMin = Math.min(...stueveVals), stMax = Math.max(...stueveVals);
+  const tMin = Math.min(...withTemp.map(p=>p.temp_c))-2, tMax = Math.max(...withTemp.map(p=>p.temp_c))+2;
+  const xOf = t => mL + ((t-tMin)/(tMax-tMin||1))*plotW;
+  const yOf = altM => mT + (1-((stueveY(altM)-stMin)/((stMax-stMin)||1)))*plotH;
+  const linePts = withTemp.map(p=>`${xOf(p.temp_c).toFixed(1)},${yOf(p.alt_m).toFixed(1)}`).join(' ');
+  // Thin the wind column to at most ~7 evenly-spaced levels so arrows don't overlap
+  const windLevels = [];
+  const step = Math.max(1, Math.floor(profile.length/7));
+  for(let i=0;i<profile.length;i+=step) windLevels.push(profile[i]);
+  const altLabels = [profile[0], profile[Math.floor(profile.length/2)], profile[profile.length-1]];
+  let svg = `<svg width="100%" viewBox="0 0 ${w} ${h}" style="background:rgba(255,255,255,0.03);border-radius:6px;">`;
+  // Axes
+  svg += `<line x1="${mL}" y1="${mT}" x2="${mL}" y2="${h-marginB}" stroke="var(--border)" stroke-width="1"/>`;
+  svg += `<line x1="${mL}" y1="${h-marginB}" x2="${w-mR}" y2="${h-marginB}" stroke="var(--border)" stroke-width="1"/>`;
+  // Altitude tick labels (left)
+  altLabels.forEach(p=>{
+    const y = yOf(p.alt_m);
+    svg += `<line x1="${mL-3}" y1="${y}" x2="${mL}" y2="${y}" stroke="var(--muted)" stroke-width="1"/>`;
+    svg += `<text x="${mL-5}" y="${y+3}" font-size="7.5" fill="var(--muted)" text-anchor="end">${Math.round(p.alt_m)}m</text>`;
+  });
+  // Temperature tick labels (bottom)
+  [tMin+2, (tMin+tMax)/2, tMax-2].forEach(t=>{
+    const x = xOf(t);
+    svg += `<text x="${x}" y="${h-marginB+11}" font-size="7.5" fill="var(--muted)" text-anchor="middle">${Math.round(t)}°</text>`;
+  });
+  // Temperature trace
+  svg += `<polyline points="${linePts}" fill="none" stroke="#e0483f" stroke-width="1.6" stroke-linejoin="round"/>`;
+  withTemp.forEach(p=>svg += `<circle cx="${xOf(p.temp_c)}" cy="${yOf(p.alt_m)}" r="1.6" fill="#e0483f"/>`);
+  // Wind column
+  const windX = w-mR+22;
+  svg += `<line x1="${w-mR+4}" y1="${mT}" x2="${w-mR+4}" y2="${h-marginB}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,2"/>`;
+  windLevels.forEach(p=>{
+    const y = yOf(p.alt_m);
+    const col = groundWindSpeedColor(p.speed_ms);
+    const rot = (p.dir_deg+180)%360;
+    svg += `<g transform="translate(${windX},${y}) rotate(${rot})"><path d="M0,-5.5 L0,5.5 M-3,-2.2 L0,-5.5 L3,-2.2" stroke="${col}" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+    svg += `<text x="${windX+8}" y="${y+2.5}" font-size="7" fill="var(--muted)">${p.speed_ms.toFixed(0)}m/s</text>`;
+  });
+  svg += `<text x="${mL+plotW/2}" y="${h-2}" font-size="7.5" fill="var(--muted)" text-anchor="middle">Temperature (Stüve profile)</text>`;
+  svg += '</svg>';
+  return svg;
 }
 async function openSondeHubProfile(serial){
   // Show the modal immediately with a loading state, rather than doing the
@@ -2003,7 +2133,7 @@ async function openSondeHubProfile(serial){
   document.getElementById('sondeProfileWarning').style.display = 'none';
   document.getElementById('sondeProfileTableBody').innerHTML = '';
   document.getElementById('sondeProfileUseBtn').disabled = true;
-  overlay.style.display = 'flex';
+  overlay.style.display = 'block';
   try{
     // The correct endpoint takes the serial as a QUERY parameter on
     // /sondes/telemetry, not as a path segment on /sondes/{serial} (which
@@ -2048,15 +2178,19 @@ async function openSondeHubProfile(serial){
     const lastFix = sorted.length ? sorted[sorted.length-1] : null;
     pendingSondeProfile = {profile, launchTime, serial};
 
+    if(lastFix && state.lat!=null && state.lon!=null){
+      const brg = Math.round(bearingBetween(state.lat, state.lon, lastFix.lat, lastFix.lon));
+      const distKm = (haversine(state.lat, state.lon, lastFix.lat, lastFix.lon)/1000).toFixed(1);
+      document.getElementById('sondeProfileTitle').innerHTML = `Sonde ${serial} <span style="font-weight:400;font-size:11px;color:var(--muted);">(sonde: ${brg}° ${distKm} km)</span>`;
+    }
+
     const keyDataEl = document.getElementById('sondeProfileKeyData');
     if(!sorted.length){
       keyDataEl.textContent = 'No usable telemetry received yet for this sonde.';
     } else {
       keyDataEl.innerHTML = `
-        <b>Launched:</b> ${launchTime.toISOString().replace('T',' ').slice(0,16)} UTC<br>
-        <b>Last fix:</b> ${new Date(lastFix.datetime).toISOString().replace('T',' ').slice(11,16)} UTC, ${Math.round(lastFix.alt)} m AMSL<br>
-        <b>Position:</b> ${lastFix.lat.toFixed(3)}°, ${lastFix.lon.toFixed(3)}°<br>
-        <b>Telemetry points:</b> ${sorted.length} &nbsp;·&nbsp; <b>Derived wind levels:</b> ${profile.length}
+        <b>Launched:</b> ${launchTime.toISOString().replace('T',' ').slice(0,16)} UTC · <b>Last fix:</b> ${new Date(lastFix.datetime).toISOString().replace('T',' ').slice(11,16)} UTC, ${Math.round(lastFix.alt)} m AMSL<br>
+        <b>Position:</b> ${lastFix.lat.toFixed(3)}°, ${lastFix.lon.toFixed(3)}° · <b>Points:</b> ${sorted.length} · <b>Levels:</b> ${profile.length}
       `;
     }
     const warnEl = document.getElementById('sondeProfileWarning');
@@ -2071,6 +2205,7 @@ async function openSondeHubProfile(serial){
       `<tr><td style="text-align:right;padding:4px 8px;">${Math.round(p.alt_m)}</td><td style="text-align:right;padding:4px 8px;">${p.speed_ms.toFixed(1)} m/s</td><td style="text-align:right;padding:4px 8px;">${Math.round(p.dir_deg)}°</td><td style="text-align:right;padding:4px 8px;">${p.temp_c!=null?p.temp_c.toFixed(1)+'°C':'—'}</td></tr>`
     ).join('') || '<tr><td colspan="4" style="text-align:center;padding:10px;color:var(--muted);">No levels yet</td></tr>';
     document.getElementById('sondeProfileUseBtn').disabled = profile.length===0;
+    document.getElementById('sondeProfileStueveWrap').innerHTML = renderStueveDiagram(profile);
   }catch(e){
     document.getElementById('sondeProfileKeyData').textContent = 'Could not load telemetry for this sonde: '+e.message;
     document.getElementById('sondeProfileUseBtn').disabled = true;
@@ -2217,15 +2352,31 @@ function windArrowOutlined(windDir, color, hasWind){
 // area and to Switzerland/Austria).
 let meteogateStationsCache = null;
 let meteogateStationsFetchPromise = null;
-const GERMANY_QUERY_POINTS = [
-  ['Munich',48.1351,11.5820],['Augsburg',48.3705,10.8978],['Stuttgart',48.7758,9.1829],
-  ['Nuremberg',49.4521,11.0767],['Ulm',48.4011,9.9876],['Friedrichshafen',47.6547,9.4816],
-  ['Freiburg',47.9990,7.8421],['Karlsruhe',49.0069,8.4037],['Frankfurt',50.1109,8.6821],
-  ['Mannheim',49.4875,8.4660],['Cologne',50.9375,6.9603],['Saarbruecken',49.2401,6.9969],
-  ['Regensburg',49.0134,12.1016],['Wuerzburg',49.7913,9.9534],['Kassel',51.3127,9.4797],
-  ['Leipzig',51.3397,12.3731],['Dresden',51.0504,13.7373],['Berlin',52.5200,13.4050],
-  ['Hannover',52.3759,9.7320],['Hamburg',53.5511,9.9937],['Bremen',53.0793,8.8017]
-];
+// Generates query points spread across the full radius (centre + several
+// concentric rings out to the edge) - used for Germany (Bright Sky finds
+// the nearest real station per point queried, so coverage right out to
+// the edge of the cache radius matters, especially close to a border)
+// instead of a fixed list of city centres, which left gaps wherever the
+// balloon wasn't conveniently near one of the chosen cities (e.g. the
+// nearest fixed point to Zurich was ~77km away - just outside the 75km
+// default cache radius, so nothing showed at all despite Germany being
+// right there across the border). An earlier square-grid version of this
+// looked reasonable but had a real bug: after filtering to a circle, only
+// the innermost points survived, leaving the outer half of the radius
+// completely uncovered - concentric rings avoid that by construction.
+function generateGridPoints(centerLat, centerLon, radiusM, targetCount){
+  const points = [[centerLat, centerLon]];
+  const rings = 3;
+  const perRing = Math.max(4, Math.round((targetCount-1)/rings));
+  for(let r=1; r<=rings; r++){
+    const ringRadiusM = radiusM * r/rings;
+    for(let k=0;k<perRing;k++){
+      const bearing = (k/perRing)*360;
+      points.push(destPoint(centerLat, centerLon, bearing, ringRadiusM));
+    }
+  }
+  return points;
+}
 const SWISS_SMN_STATIONS = [
   ['ABO','Adelboden',46.491703,7.560703],['AEG','Oberägeri',47.133636,8.608206],['AIG','Aigle',46.326647,6.924472],['ALT','Altdorf',46.887069,8.621894],['AND','Andeer',46.610139,9.431981],['ANT','Andermatt',46.630914,8.580553],['ARH','Altenrhein',47.483631,9.56685],['ARO','Arosa',46.792661,9.679014],['ATT','Les Attelas',46.0991,7.26865],['BAN','Bantiger',46.977806,7.528667],['BAS','Basel',47.541142,7.583525],['BEH','Passo del Bernina',46.409158,10.019567],['BER','Bern',46.990744,7.464061],['BEZ','Beznau',47.557256,8.233325],['BIA','Biasca',46.336053,8.978197],['BIE','Bière',46.524908,6.342386],['BIN','Binn',46.367661,8.192306],['BIV','Bivio',46.462494,9.668639],['BIZ','Bischofszell',47.508828,9.266797],['BLA','Blatten',46.422261,7.825914],['BOL','Boltigen',46.623519,7.384206],['BOU','Bouveret',46.393447,6.857006],['BRL','La Brevine',46.983844,6.610297],['BRZ','Brienz',46.740719,8.060864],['BUF','Buffalora',46.648408,10.2672],['BUS','Buchs/Aarau',47.384381,8.07955],['CDF','La Chaux-de-Fonds',47.082947,6.792314],['CDM','Col des Mosses',46.391525,7.098239],['CEV','Cevio',46.320486,8.603161],['CGI','Nyon',46.401053,6.227722],['CHA','Chasseral',47.131761,7.054367],['CHB','Les Charbonnieres',46.67015,6.312428],['CHD','Chateau-dOex',46.479819,7.139656],['CHM','Chaumont',47.049169,6.978825],['CHU','Chur',46.870572,9.530761],['CHZ','Cham',47.188278,8.464642],['CIM','Cimetta',46.200467,8.79165],['CMA','Crap Masegn',46.842275,9.180042],['COM','Comprovasco',46.459517,8.935486],['COV','Piz Corvatsch',46.418039,9.821308],['COY','Courtelary',47.180811,7.090656],['CRM','Cressier',47.047581,7.059147],['DAV','Davos',46.812969,9.843558],['DEM','Delemont',47.351706,7.349567],['DIA','Les Diablerets',46.32675,7.203781],['DIS','Disentis',46.706569,8.853478],['DOL','La Dole',46.424794,6.099453],['EBK','Ebnat-Kappel',47.273389,9.108494],['EGH','Eggishorn',46.426528,8.092728],['EGO','Egolzwil',47.179428,8.004758],['EIN','Einsiedeln',47.133042,8.756556],['ELM','Elm',46.923742,9.175347],['ENG','Engelberg',46.821639,8.410514],['EVI','Evionnaz',46.182953,7.026747],['EVO','Evolene',46.112211,7.508631],['FAH','Fahy',47.423814,6.941194],['FLU','Fluhli',46.889436,8.020336],['FRE','La Fretaz',46.840622,6.576369],['FRU','Frutigen',46.599003,7.657542],['GEN','Monte Generoso',45.927592,9.017875],['GES','Gersau',46.996069,8.523442],['GIH','Giswil',46.849447,8.190225],['GLA','Glarus',47.034586,9.066961],['GOE','Gosgen',47.363147,7.973733],['GOR','Gornergrat',45.983644,7.785944],['GOS','Goschenen',46.692678,8.595364],['GRA','Fribourg/Grangeneuve',46.7714,7.113736],['GRC','Grachen',46.195314,7.836822],['GRE','Grenchen',47.179097,7.415144],['GRH','Grimsel Hospiz',46.571689,8.333256],['GRO','Grono',46.255075,9.163758],['GSB','Grand St-Bernard',45.869092,7.170683],['GUE','Gutsch/Andermatt',46.652475,8.615531],['GUT','Guttingen',47.601733,9.279428],['GVE','Geneve',46.247519,6.127742],['HAI','Salen-Reutenen',47.651242,9.023911],['HLL','Hallau',47.697278,8.470464],['HOE','Hornli',47.370864,8.941644],['ILZ','Ilanz',46.775039,9.215353],['INT','Interlaken',46.672033,7.87045],['JUN','Jungfraujoch',46.547556,7.985444],['KLO','Zurich/Kloten',47.479611,8.535961],['KOP','Koppigen',47.11885,7.605503],['LAC','Lachen',47.179197,8.858686],['LAE','Lagern',47.481933,8.397222],['LAG','Langnau',46.939633,7.806425],['LAT','Bergun/Latsch',46.627275,9.753706],['LEI','Leibstadt',47.597361,8.1882],['LUG','Lugano',46.004217,8.960322],['LUZ','Luzern',47.036439,8.301022],['MAG','Magadino',46.160025,8.933672],['MAH','Mathod',46.736978,6.567983],['MAR','Les Marecottes',46.118903,7.016597],['MAS','Marsens',46.656486,7.069669],['MER','Meiringen',46.732222,8.169247],['MLS','Le Moleson',46.546197,7.017753],['MOA','Mosen',47.243847,8.232831],['MOB','Montagnier',46.071019,7.225272],['MOE','Mohlin',47.572197,7.877911],['MRP','Monte Rosa-Plattje',45.956628,7.814575]
 ];
@@ -2323,7 +2474,7 @@ async function fetchMetarStations(force){
       .map(s=>({code:s[0], name:s[1], lat:s[2], lon:s[3], dist:haversine(state.lat,state.lon,s[2],s[3])}))
       .filter(s=>s.dist<=cacheRadiusM)
       .sort((x,y)=>x.dist-y.dist)
-      .slice(0, 20);
+      .slice(0, 40); // a single combined request regardless of count, so generous is cheap - matches the "all available in the cache radius" goal
     const stationCodes = nearbyStations.map(s=>s.code).join(',');
     const wxUrl = stationCodes ? `https://api.existenz.ch/apiv1/smn/latest?locations=${stationCodes}&parameters=dd,ff,tt,rh&app=gb.landing.planner&version=${APP_VERSION}` : null;
 
@@ -2349,23 +2500,29 @@ async function fetchMetarStations(force){
         .then(j=>{
           const feats = (j.features||[]).filter(f=>{
             const params = (f.properties && f.properties['parameter-name']) || [];
-            // Only keep stations that actually report wind (what this
-            // layer is primarily built around) - skip temperature-only
-            // stations to avoid wasting per-station fetches on them.
-            return params.some(p=>p.startsWith('wind_speed') || p.startsWith('wind_from_direction'));
+            // Keep any station reporting wind OR temperature - wind is
+            // what the display is built around, but a temperature-only
+            // station is still useful information to show (as "no wind
+            // data" plus the reading) rather than silently dropping it,
+            // now that the goal is maximum coverage within the cache
+            // radius rather than a curated subset.
+            return params.some(p=>p.startsWith('wind_speed') || p.startsWith('wind_from_direction') || p.startsWith('air_temperature'));
           });
-          console.log(`MeteoGate: ${feats.length} wind-reporting stations found (of ${(j.features||[]).length} total in the full European list).`);
+          console.log(`MeteoGate: ${feats.length} usable stations found (of ${(j.features||[]).length} total in the full European list).`);
           meteogateStationsCache = feats;
           return feats;
         })
         .catch(e=>{ console.error('MeteoGate station list fetch failed:', e); meteogateStationsCache = []; return []; });
       return meteogateStationsFetchPromise;
     }
-    const nearbyDePoints = GERMANY_QUERY_POINTS
-      .map(g=>({name:g[0], lat:g[1], lon:g[2], dist:haversine(state.lat,state.lon,g[1],g[2])}))
-      .filter(g=>g.dist<=cacheRadiusM)
-      .sort((x,y)=>x.dist-y.dist)
-      .slice(0, 10);
+    // Grid points covering the whole cache radius, not just wherever a
+    // fixed list of city centres happened to fall - points that land
+    // outside Germany simply get no result back from Bright Sky (cheap to
+    // ask, handled gracefully), but this guarantees no coverage gap right
+    // up to the border regardless of where the balloon actually is.
+    const nearbyDePoints = generateGridPoints(state.lat, state.lon, cacheRadiusM, 20)
+      .map(([lat,lon])=>({name:null, lat, lon}))
+      .slice(0, 18);
     async function fetchGermanStationsThrottled(points){
       const out = [];
       for(let i=0;i<points.length;i+=3){
@@ -2404,7 +2561,7 @@ async function fetchMetarStations(force){
         }))
         .filter(s=>s.dist<=cacheRadiusM && s.link)
         .sort((a,b)=>a.dist-b.dist)
-        .slice(0, 10); // modest count - each is its own request against a shared European service
+        .slice(0, 20); // each is its own request against a shared European service, but the goal is now covering everything available within the cache radius
       if(!nearbyMg.length) return [];
       const out = [];
       for(let i=0;i<nearbyMg.length;i+=3){
@@ -2727,8 +2884,12 @@ setInterval(()=>{ if(airTrafficActive) fetchAirTraffic(); }, 10000);
 // for the aircraft type they were tagged with). Field 6 (index 6) remains
 // unidentified and is deliberately not used for anything.
 async function fetchOgnTraffic(maxAltM){
-  const b = map.getBounds().pad(0.3);
-  const url = `https://live.glidernet.org/lxml.php?a=0&b=${b.getNorth().toFixed(3)}&c=${b.getSouth().toFixed(3)}&d=${b.getEast().toFixed(3)}&e=${b.getWest().toFixed(3)}&z=9`;
+  // Centred on the balloon's actual position and bounded by the Settings
+  // pre-cache radius, rather than wherever the map happens to be panned to.
+  const latDeg = cacheRadiusKm/111;
+  const lonDeg = latDeg/Math.cos(state.lat*Math.PI/180);
+  const north = state.lat+latDeg, south = state.lat-latDeg, east = state.lon+lonDeg, west = state.lon-lonDeg;
+  const url = `https://live.glidernet.org/lxml.php?a=0&b=${north.toFixed(3)}&c=${south.toFixed(3)}&d=${east.toFixed(3)}&e=${west.toFixed(3)}&z=9`;
   const r = await fetch(url);
   const text = await r.text();
   const xml = new DOMParser().parseFromString(text, 'text/xml');
@@ -2760,14 +2921,13 @@ async function fetchAirTraffic(force){
     const apiKey = (document.getElementById('sAdsbApiKey').value||'').trim();
     let adsbPromise = Promise.resolve(null);
     if(apiKey){
-      const center = map.getCenter();
-      // Distance covering the current viewport (roughly - the API takes a
-      // single radius around a center point, not a rectangular bbox), capped
-      // at the API's own 250 NM limit.
-      const b = map.getBounds();
-      const distKm = Math.min(463, haversine(center.lat,center.lng,b.getNorth(),b.getEast())/1000 + 20);
+      // Centred on the balloon's actual position and bounded by the
+      // Settings pre-cache radius (capped at the API's own 250 NM limit),
+      // rather than wherever the map happens to be panned to - matches
+      // every other layer's search area now.
+      const distKm = Math.min(463, cacheRadiusKm);
       const distNm = Math.round(distKm/1.852);
-      const url = `https://adsbexchange-com1.p.rapidapi.com/v2/lat/${center.lat}/lon/${center.lng}/dist/${distNm}/`;
+      const url = `https://adsbexchange-com1.p.rapidapi.com/v2/lat/${state.lat}/lon/${state.lon}/dist/${distNm}/`;
       adsbPromise = fetch(url, {headers: {
         'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com',
         'X-RapidAPI-Key': apiKey
@@ -2968,7 +3128,7 @@ async function fetchPlaceLabels(force){
   if(!roadsShown && !force) return;
   if(map.getZoom() < PLACE_LABELS_MIN_ZOOM){ placeLabelsLayer.clearLayers(); return; }
   const center = map.getCenter();
-  const maxDeg = 0.35;
+  const maxDeg = Math.min(cacheRadiusKm, OVERPASS_MAX_QUERY_KM)/111;
   const b = map.getBounds();
   const bbox = `${Math.max(b.getSouth(),center.lat-maxDeg)},${Math.max(b.getWest(),center.lng-maxDeg)},${Math.min(b.getNorth(),center.lat+maxDeg)},${Math.min(b.getEast(),center.lng+maxDeg)}`;
   const query = `[out:json][timeout:20];node["place"~"^(city|town|suburb|village|hamlet)$"](${bbox});out;`;
@@ -6993,6 +7153,7 @@ document.getElementById('sondeFileInput').addEventListener('change', async (e)=>
     state.sondeProfile = parsed.profile;
     state.sondeLaunchTime = parsed.launchTime;
     state.sondeUploadedAt = Date.now();
+    state.sondeSerial = file.name || null;
     const launchTxt = parsed.launchTime ? parsed.launchTime.toISOString().replace('T',' ').slice(0,16)+' UTC' : 'unknown time';
     statusEl.textContent = `Loaded ${parsed.profile.length} levels (launched ${launchTxt}). Applied automatically.`;
     activateSondeData();
@@ -7017,12 +7178,10 @@ function updateSondeHeaderUI(){
   const hasSonde = !!state.sondeProfile;
   const active = hasSonde && state.sondeActive;
   document.getElementById('sondeActiveChip').style.display = active ? 'flex' : 'none';
-  document.getElementById('btnCancelSonde').style.display = active ? 'inline-flex' : 'none';
   document.getElementById('btnUseSondeData').style.display = (hasSonde && !active) ? 'inline-flex' : 'none';
-  if(active && state.sondeLaunchTime){
-    document.getElementById('sondeActiveTime').textContent = state.sondeLaunchTime.toISOString().replace('T',' ').slice(0,16)+' UTC';
-  } else if(active){
-    document.getElementById('sondeActiveTime').textContent = 'launch time unknown';
+  if(active){
+    const timeTxt = state.sondeLaunchTime ? state.sondeLaunchTime.toISOString().replace('T',' ').slice(11,16)+' UTC' : 'launch time unknown';
+    document.getElementById('sondeActiveTime').textContent = state.sondeSerial ? `${timeTxt} · ${state.sondeSerial}` : timeTxt;
   }
 }
 document.getElementById('btnCancelSonde').addEventListener('click', deactivateSondeData);

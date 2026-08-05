@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.06.02</title>
+<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.06.04</title>
 <style>
   body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
   h1{font-size:18px;}
@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.06.02</span></h1>
+<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.06.04</span></h1>
 <p class="intro">
 Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie Gasballoon Cockpit sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
@@ -55,7 +55,8 @@ const TESTS = [
   { name: 'Bright Sky (DWD Deutschland) - echte Wetterstation nahe München, für weitere nationale Netze im Wetterstationen-Layer', url: 'https://api.brightsky.dev/current_weather?lat=48.14&lon=11.58&max_dist=50000' },
   { name: '★ MeteoGate/E-SOH (EUMETNET, 33 Länder) - Stationsliste, laut Doku-Beispiel OHNE Key', url: 'https://observations.meteogate.eu/collections/observations/locations' },
   { name: '★ MeteoGate/E-SOH - Landing Page (zeigt verfügbare Endpunkte inkl. /area)', url: 'https://observations.meteogate.eu/' },
-  { name: '★ MeteoGate Open Radar Data API - Übersicht (für den Regen-Layer, alternative/ergänzende Quelle zu RainViewer)', url: 'https://api.meteogate.eu/eu-eumetnet-weather-radar/docs' }
+  { name: '★ MeteoGate Open Radar Data API - Übersicht (für den Regen-Layer, alternative/ergänzende Quelle zu RainViewer)', url: 'https://api.meteogate.eu/eu-eumetnet-weather-radar/docs' },
+  { name: '★ MeteoGate/E-SOH - Zeitreihe einer echten Station (aus deinem letzten Testergebnis), jetzt in der App im Einsatz - Format noch nicht bestätigt', url: 'https://observations.meteogate.eu/collections/observations/items?platform=0-0-0-115&limit=20' }
 ];
 
 function render(){

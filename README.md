@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.06.02** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.06.04** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -246,6 +246,10 @@ METAR's airport symbol now rotates to point with the wind (same "blowing toward"
 Covering "as many European countries as possible" is a genuinely large undertaking - each country typically has its own separate national service with its own API. Switzerland and Germany are now in; further countries (France, Austria, Italy, UK, etc.) would each need the same kind of dedicated research before being added, rather than guessed at.
 
 Air Traffic refresh shortened from 15s to 10s, and aircraft now visibly move between fetches: each one is tracked by a stable ID across updates (marker moved/updated in place rather than deleted and recreated), and a 1-second dead-reckoning loop nudges every tracked aircraft along its course/speed vector using the same destination-point projection used elsewhere in the app - purely a visual extrapolation from the last real fix, corrected back to ground truth on every actual fetch.
+
+Weather station symbols redesigned once more: much lighter, more compact box (was too dark to read comfortably), with a dark outline on the wind arrow/airplane icon itself so it stays visible against the now-light background. METAR merged into the exact same single-marker design as the general weather stations - only the icon (airplane, rotating into the wind, coloured by flight category, instead of a plain wind arrow) and the addition of the station code as the first line differ; the blue tint from the previous round is gone, matching the request that METAR and general stations look practically the same.
+
+**Third weather network added: MeteoGate/E-SOH (EUMETNET, all 33 member countries at once)** - confirmed CORS-open, no key needed. Covers essentially every country asked about (Austria, Czechia, Slovakia, Hungary, Italy, Portugal, Poland, Sweden, Norway, Finland, France, and more) through one unified EU-funded gateway instead of 12 separate national integrations. The full station list (all of Europe) is slow to fetch (several seconds) and is therefore cached once per session rather than re-fetched on every toggle/pan; each nearby station's actual reading still needs a second, separate fetch to its own time-series link. The exact structure of an individual station's time-series response wasn't confirmed ahead of time, so parsing is defensive (checking a few plausible property-name variants) with the raw shape logged to console - added to `cors_test.html` (with a real station ID from your last test) for verification.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

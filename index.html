@@ -1185,7 +1185,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.20';
+const APP_VERSION = 'v260805.22';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -3694,6 +3694,93 @@ function computeReferenceTrajectory(){
 const plannedDescentPathOutline = L.polyline([], {color:'#000000', weight:5.5, lineCap:'round', interactive:false});
 const plannedDescentPathLayer = L.polyline([], {color:'#ffee00', weight:3, dashArray:'8,6', lineCap:'round'});
 
+// ---------- Extended trajectory preview (Function 1 / monitor mode only) ----------
+// Click anywhere within +/-60 degrees of the current trajectory direction to
+// see the trajectory extended out to whichever point on it passes closest to
+// that click - reaching beyond the cached area if the weather model still
+// has data that far out. Deliberately a frozen snapshot: computed once from
+// the balloon's position and the weather data available AT THE MOMENT OF
+// THE CLICK, then left alone (not recomputed as the balloon actually moves)
+// so it's useful for comparing the real flown track against what was
+// predicted from an earlier point in time.
+const extendedTrajectoryOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false});
+const extendedTrajectoryLine = L.polyline([], {color:'#00e676', weight:3.5, opacity:1, lineCap:'round'});
+let extendedTrajectoryCloseMarker = null;
+let extendedTrajectoryCloseMarkerStart = null;
+const extendedTrajectoryCloseIcon = L.divIcon({
+  html:'<div style="width:22px;height:22px;border-radius:50%;background:var(--bad);border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></div>',
+  className:'', iconSize:[22,22], iconAnchor:[11,11]
+});
+function clearExtendedTrajectory(){
+  extendedTrajectoryOutline.setLatLngs([]);
+  extendedTrajectoryLine.setLatLngs([]);
+  if(map.hasLayer(extendedTrajectoryOutline)) map.removeLayer(extendedTrajectoryOutline);
+  if(map.hasLayer(extendedTrajectoryLine)) map.removeLayer(extendedTrajectoryLine);
+  if(extendedTrajectoryCloseMarker){ map.removeLayer(extendedTrajectoryCloseMarker); extendedTrajectoryCloseMarker = null; }
+  if(extendedTrajectoryCloseMarkerStart){ map.removeLayer(extendedTrajectoryCloseMarkerStart); extendedTrajectoryCloseMarkerStart = null; }
+}
+// Standard closest-point-on-polyline: walks every segment, projects the
+// clicked point onto each (clamped to the segment itself, not the infinite
+// line through it), and keeps the closest. Flat local-plane approximation
+// (longitude scaled by cos(latitude)) - the same simplification used
+// elsewhere in this app, fine at the distances involved here.
+function closestPointOnPath(path, lat, lon){
+  let bestDistM = Infinity, best = null;
+  const cosLat = Math.cos(lat*Math.PI/180);
+  for(let i=0;i<path.length-1;i++){
+    const a = path[i], b = path[i+1];
+    const ax=a.lon*cosLat, ay=a.lat, bx=b.lon*cosLat, by=b.lat, px=lon*cosLat, py=lat;
+    const dx=bx-ax, dy=by-ay;
+    const lenSq = dx*dx+dy*dy;
+    let t = lenSq>0 ? ((px-ax)*dx+(py-ay)*dy)/lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    const projLat = ay+t*dy, projLon = (ax+t*dx)/cosLat;
+    const distM = haversine(lat, lon, projLat, projLon);
+    if(distM<bestDistM){ bestDistM = distM; best = {lat:projLat, lon:projLon, t:a.t+(b.t-a.t)*t, segIdx:i, segT:t}; }
+  }
+  return best ? {...best, distM:bestDistM} : null;
+}
+function handleExtendedTrajectoryClick(clickLat, clickLon){
+  const rate1 = parseFloat(document.getElementById('sRate').value);
+  const interceptAGL = parseFloat(document.getElementById('sIntH').value);
+  const rate2 = parseFloat(document.getElementById('sRate2').value);
+  // A long cruise-only horizon (48h) so this can reach well beyond the
+  // cached area - getActiveWindProfile() clamps to the last available
+  // forecast hour rather than erroring once the model horizon runs out, so
+  // this degrades gracefully to "coasting on the last known wind" instead
+  // of failing outright.
+  const HORIZON_MIN = 48*60;
+  const fullPath = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, HORIZON_MIN*60, rate1, interceptAGL, rate2, 0);
+  const cruiseOnly = fullPath.filter(p=>p.t <= HORIZON_MIN*60);
+  if(cruiseOnly.length<2) return;
+  // +/-60 degree check against the trajectory's own initial direction, same
+  // pattern used for the staged-descent marker placement elsewhere in the
+  // app, just a wider cone (60 vs 40 degrees) since this is a much coarser
+  // "point roughly this way" gesture rather than placing an exact marker.
+  const trajRef = cruiseOnly.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || cruiseOnly[cruiseOnly.length-1];
+  const trajBearing = bearingBetween(state.lat, state.lon, trajRef.lat, trajRef.lon);
+  const clickBearing = bearingBetween(state.lat, state.lon, clickLat, clickLon);
+  let diff = Math.abs(clickBearing-trajBearing); if(diff>180) diff = 360-diff;
+  if(diff>60) return; // outside the cone - not what this gesture is for, ignore silently
+  const closest = closestPointOnPath(cruiseOnly, clickLat, clickLon);
+  if(!closest) return;
+  const truncated = cruiseOnly.slice(0, closest.segIdx+1).concat([{lat:closest.lat, lon:closest.lon, t:closest.t}]);
+  const latlngs = truncated.map(p=>[p.lat,p.lon]);
+  extendedTrajectoryOutline.setLatLngs(latlngs);
+  extendedTrajectoryLine.setLatLngs(latlngs);
+  extendedTrajectoryOutline.addTo(map);
+  extendedTrajectoryLine.addTo(map);
+  if(extendedTrajectoryCloseMarker) map.removeLayer(extendedTrajectoryCloseMarker);
+  extendedTrajectoryCloseMarker = L.marker([closest.lat, closest.lon], {icon: extendedTrajectoryCloseIcon, interactive:true})
+    .on('click', clearExtendedTrajectory)
+    .addTo(map);
+  if(extendedTrajectoryCloseMarkerStart) map.removeLayer(extendedTrajectoryCloseMarkerStart);
+  extendedTrajectoryCloseMarkerStart = L.marker([truncated[0].lat, truncated[0].lon], {icon: extendedTrajectoryCloseIcon, interactive:true})
+    .on('click', clearExtendedTrajectory)
+    .addTo(map);
+}
+
+
 // ==================== STAGED DESCENT (subfunction 2 of Plan Descent) ====================
 let currentSubMode = 'quick'; // 'quick' | 'staged'
 let minStageSeparationM = 300;
@@ -6014,7 +6101,7 @@ map.on('click', async (e)=>{
     recomputeAll();
     return;
   }
-  if(state.appMode!=='plan') return; // in monitor mode, clicking the map does nothing special
+  if(state.appMode!=='plan'){ handleExtendedTrajectoryClick(e.latlng.lat, e.latlng.lng); return; }
   if(currentSubMode==='staged'){
     if(!state.stagedMarkerInitialized){
       // Placement phase: the marker doesn't exist on the map yet - a tap

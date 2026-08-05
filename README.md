@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.11** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.14** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -278,6 +278,16 @@ Base map switcher replaced: the stacked-layers icon (which hid the choice behind
 **APRS stations (aprs.fi)** - new button in the red pill, right of Air Traffic. Since aprs.fi's API only supports looking up specific callsigns (no area-wide search), Settings now has a callsign list (one per line, e.g. other balloons) plus class checkboxes (balloons/aircraft/ships/vehicles/other, derived from the APRS symbol code) that filter within that list. Your API key is pre-filled. Per aprs.fi's own usage policy: fetched only while the layer is switched on (no background pre-caching), polled conservatively (3 minutes), and credited visibly at the bottom of the screen (next to the version number) whenever the layer is active. One real limitation flagged in the code: their policy also asks for a custom User-Agent header, which browsers block JavaScript from setting on fetch() requests - no workaround exists for a pure client-side app.
 
 **Lightning (Xweather), shown as part of the Rain layer** - deliberately not always-on. A background check every 15 minutes samples points within 300km via Open-Meteo; if rain is found, a dismissable on-screen prompt (not a native browser dialog) asks whether to start monitoring, with "Start monitoring" as the visually-emphasised default option. Once accepted, polls every 10 minutes. Covers the configured radius (Settings, default 200km) using 3 queries in a triangle around the current position, since Xweather's own limit is 100km per query - coverage is solid toward each of the 3 points but geometrically thinner in the gaps between them, an inherent trade-off flagged in the code rather than hidden. The exact Xweather auth (client_id/client_secret as query params) and response shape weren't confirmed live before building this, so parsing is defensive with console logging for the next round of verification.
+
+**Real fix attempted for the recurring METAR issue**: added a genuine client-side cache (15 min TTL) for individual airport METAR lookups, rather than just detecting/logging rate limits as before. Real METARs only change every 30-60 minutes anyway, so this cuts the actual number of requests drastically across a session (repeated toggles, map pans, page reloads no longer each trigger a fresh fetch for every airport) - and if a request does still fail (rate-limited or otherwise), it now falls back to the last known good data instead of showing nothing.
+
+Layer button tooltips shortened to just the layer name, dropping the data-source detail that used to be in parentheses.
+
+APRS icon switched to option A (concentric tracking rings) as chosen.
+
+Rain layer icon switched to option A (rounder cloud, diagonal rain streaks); when lightning monitoring is active, a small yellow bolt now appears in addition to the rain streaks, not instead of them.
+
+Also found and fixed a real gap while wiring this up: there was no way to actually stop lightning monitoring once started - `stopLightningPolling()` was defined but never called from anywhere. Added a "Stop monitoring" button under the status text in Settings.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

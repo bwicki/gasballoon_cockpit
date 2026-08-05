@@ -368,6 +368,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div class="ltbtn-group cat-red">
         <button class="ltbtn" id="tgAirspace" title="Airspace (below balloon)"><span class="layer-load-dot" id="dotTgAirspace"></span><svg width="18" height="18" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="5" stroke="currentColor" stroke-width="2.4"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2.4"/><line x1="1" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2.4"/><line x1="19" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7.5 A4.5 4.5 0 0 1 12 16.5 Z" fill="currentColor"/></svg></button>
         <button class="ltbtn" id="tgAirTraffic" title="Air traffic (ADSBExchange, requires your own RapidAPI key in Settings)"><span class="layer-load-dot" id="dotTgAirTraffic"></span><svg width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M23.24,0.48 L21.24,0.00 L19.86,0.62 L15.72,4.28 L4.41,1.03 L1.86,3.03 L1.93,4.14 L10.97,8.90 L6.34,13.66 L2.41,13.79 L0.00,16.07 L0.21,16.83 L5.10,18.90 L7.31,23.93 L10.14,21.59 L10.28,17.66 L14.90,13.03 L20.00,22.21 L22.83,20.07 L19.72,8.21 L23.66,3.45 L23.93,1.52 Z M22.28,1.45 L22.55,2.48 L21.86,3.93 L18.21,7.93 L21.45,19.59 L20.34,20.21 L15.72,11.38 L14.97,11.10 L9.03,16.97 L8.83,21.03 L7.79,21.86 L6.14,17.93 L2.07,15.93 L2.97,15.10 L7.03,14.90 L12.83,8.55 L3.59,3.31 L4.55,2.48 L16.00,5.72 L19.86,2.21 Z"/></svg></button>
+        <button class="ltbtn" id="tgAprs" title="APRS stations (aprs.fi - your configured callsigns/classes)"><span class="layer-load-dot" id="dotTgAprs"></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.2"/><path d="M12 12.2 V21 M8.5 21 H15.5"/><path d="M7.5 6 A7 7 0 0 1 16.5 6 M5.3 3.8 A10.2 10.2 0 0 1 18.7 3.8"/></svg></button>
       </div>
     </div>
     <select id="altUnitSelect" style="display:none;">
@@ -470,8 +471,15 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Shows the nearest known airports (from a built-in list) individually, since MetarCentral's bulk endpoint turned out to be CORS-blocked even though the single-airport one isn't - confirmed via a live browser test. No API key needed for this.</p>
 
-        
-        
+        <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <div class="subhead" style="margin-top:0;">Lightning (part of Rain layer)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Via Xweather - client ID/secret go in "API Keys &amp; Tokens" at the bottom of Settings. To conserve API quota, this only starts polling when rain is detected within 300km AND you accept the on-screen prompt when that happens - it's not on by default. Covers the configured radius using 3 overlapping queries (Xweather's own per-query limit is 100km), arranged in a triangle around your position - coverage is good toward each of the 3 points but somewhat thinner in between, an unavoidable trade-off of covering more ground than a single query allows.</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Monitoring radius</span>
+          <input type="number" id="sLightningRadius" min="50" max="300" step="10" value="200" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">km</span>
+        </div>
+        <div id="lightningPollingStatus" style="font-size:10px;color:var(--muted);margin-top:4px;">Not monitoring - waiting for rain to be detected nearby.</div>
+
         </div>
         <div class="settings-group" style="border-left:3px solid #e0483f;padding:2px 0 2px 10px;margin:14px 0;">
           <div style="display:flex;align-items:center;gap:6px;color:#e0483f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
@@ -483,6 +491,19 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <input type="number" id="sAdsbAbove" min="0" max="20000" step="100" value="6000" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">ft</span>
         </div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">All traffic below the balloon is always shown (a balloon can descend into it); only traffic above this altitude band is filtered out.</p>
+
+        <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <div class="subhead" style="margin-top:0;">APRS Stations (aprs.fi)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Looks up the specific callsigns below (e.g. other balloons) via aprs.fi - not a general area search, since their API only supports looking up callsigns you already know. The API key goes in "API Keys &amp; Tokens" at the bottom of Settings. Only queried while this layer is switched on, per aprs.fi's own usage policy (no background pre-caching).</p>
+        <textarea id="sAprsCallsigns" placeholder="One callsign per line, e.g.&#10;OE1XYZ-11&#10;DL2ABC-9" rows="3" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;font-family:var(--mono);resize:vertical;"></textarea>
+        <p style="font-size:10px;color:var(--muted);margin:6px 0 4px;">Show which classes (by APRS symbol):</p>
+        <div class="checkgrid">
+          <label><input type="checkbox" checked data-aprs-class="balloon">Balloons</label>
+          <label><input type="checkbox" checked data-aprs-class="aircraft">Aircraft</label>
+          <label><input type="checkbox" checked data-aprs-class="ship">Ships</label>
+          <label><input type="checkbox" checked data-aprs-class="vehicle">Vehicles</label>
+          <label><input type="checkbox" checked data-aprs-class="person">People/other</label>
+        </div>
 
         
         
@@ -637,6 +658,29 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
         </div>
 
+        <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <div class="subhead" style="margin-top:0;">Settings Profile</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Every setting, key, and emergency contact detail in one shareable file - send it to yourself or a co-pilot (e.g. via WhatsApp) and load it on another device instead of re-entering everything by hand.</p>
+        <div style="display:flex;gap:6px;">
+          <button class="ghost" style="flex:1;" onclick="exportProfile()">Export profile</button>
+          <label class="ghost" style="flex:1;text-align:center;cursor:pointer;">
+            Import profile
+            <input type="file" id="profileFileInput" accept=".json" style="display:none;">
+          </label>
+        </div>
+        <div id="profileActionStatus" style="font-size:10px;color:var(--muted);margin-top:6px;"></div>
+
+        <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
+        <div class="subhead" style="margin-top:0;">GitHub Backup (encrypted)</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Stores the same profile as an encrypted GitHub Gist - readable only with the password below, even though the Gist itself may be visible to anyone with the link. Requires a GitHub Personal Access Token with "gist" scope (set in API Keys &amp; Tokens below).</p>
+        <input type="password" id="profileGithubPassword" placeholder="Password (used to encrypt/decrypt)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button class="ghost" style="flex:1;" onclick="handleSaveProfileToGithub()">Save to GitHub</button>
+          <button class="ghost" style="flex:1;" onclick="handleLoadProfileFromGithub()">Load from GitHub</button>
+        </div>
+        <input type="text" id="profileGithubGistId" placeholder="Gist ID (auto-filled after first save)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);">
+        <div id="profileGithubStatus" style="font-size:10px;color:var(--muted);margin-top:6px;"></div>
+
         </div>
 
         <hr>
@@ -650,6 +694,17 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <input type="text" id="sAdsbApiKey" class="api-key-input" placeholder="RapidAPI key" value="7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
           </div>
 
+          <div class="subhead">APRS (aprs.fi)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:12.5px;flex:1;">aprs.fi API key</span>
+            <input type="text" id="sAprsApiKey" class="api-key-input" placeholder="aprs.fi API key" value="167195.j9YO5rPCFfnS4y" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
+          </div>
+
+          <div class="subhead">Lightning (Xweather)</div>
+          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Free account at xweather.com - client ID and secret both needed.</p>
+          <input type="text" id="sXweatherClientId" class="api-key-input" placeholder="Xweather Client ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+          <input type="text" id="sXweatherClientSecret" class="api-key-input" placeholder="Xweather Client Secret" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+
           <div class="subhead">Silent Emergency Email (EmailJS)</div>
           <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the 🆘 panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key).</p>
           <input type="text" id="cfgEmailJsServiceId" class="api-key-input" placeholder="EmailJS Service ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
@@ -661,6 +716,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled. Needed once before first connecting Dropbox above.</p>
           <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
           <input type="text" id="dropboxAppKey" class="api-key-input" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+
+          <div class="subhead">GitHub Backup</div>
+          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">A Personal Access Token with just the "gist" scope, from github.com/settings/tokens - used only to save/load your encrypted settings profile as a Gist, nothing else.</p>
+          <input type="password" id="sGithubPat" class="api-key-input" placeholder="GitHub Personal Access Token" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);">
         </details>
 
         <hr>
@@ -718,6 +777,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="main">
     <div id="mapwrap">
       <div id="versionChip" class="leaflet-control-attribution version-badge"></div>
+      <a id="aprsCreditFooter" href="https://aprs.fi" target="_blank" rel="noopener" style="display:none;position:absolute;left:6px;bottom:2px;margin-left:110px;z-index:5000;font-size:9px;color:#dfe6ea;background:rgba(30,35,41,0.75);padding:1px 5px;border-radius:4px;text-decoration:underline;">APRS data: aprs.fi</a>
       <div id="map"></div>
       <div id="topAlertStack">
         <div id="regionNamesWarnBar" class="blue-warn">
@@ -1123,7 +1183,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.10';
+const APP_VERSION = 'v260805.11';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2873,6 +2933,232 @@ map.on('moveend zoomend', ()=>{ if(airTrafficActive) scheduleAirTrafficFetch(); 
 // seconds - refresh on a timer too, not just when the map itself is
 // panned/zoomed, so the traffic display actually shows movement over time.
 setInterval(()=>{ if(airTrafficActive) fetchAirTraffic(); }, 10000);
+
+// ---------- APRS stations (aprs.fi) ----------
+// aprs.fi's API only supports looking up specific callsigns you already
+// know (there's no "everything in this area" query), so this layer works
+// from the list configured in Settings rather than discovering new
+// stations. Per aprs.fi's own usage policy: fetch only while the layer is
+// actively shown (no background pre-caching/archival use), credit aprs.fi
+// visibly whenever data from it is displayed, and don't poll aggressively
+// (their guidance: most small sites shouldn't update more than once every
+// few hours - 3 minutes here is a compromise for an active flight-tracking
+// use case, still far more conservative than the other traffic layers).
+// One real technical limitation: their policy also asks for a custom
+// User-Agent header identifying the app, but browsers block JavaScript
+// from setting that header on fetch() requests for security reasons -
+// there's no way around this from a pure client-side app.
+const aprsLayer = L.layerGroup();
+let aprsActive = false;
+let aprsFetchTimer = null;
+let aprsFailCount = 0;
+// A reasonable subset of the APRS primary symbol table, enough to bucket
+// stations into the categories this app's Settings offers - not an
+// exhaustive mapping of all 94+94 symbols.
+const APRS_SYMBOL_CLASS = {
+  'O':'balloon', "'":'aircraft', '^':'aircraft', 'g':'aircraft',
+  's':'ship', 'Y':'ship', 'C':'ship',
+  '>':'vehicle', 'k':'vehicle', 'v':'vehicle', 'U':'vehicle', 'b':'vehicle',
+};
+function aprsSymbolToClass(symbol){
+  if(!symbol) return 'person';
+  const ch = symbol.trim().slice(-1); // symbol code is typically table+code, e.g. "/O" - the code is the last character
+  return APRS_SYMBOL_CLASS[ch] || 'person';
+}
+function aprsClassIcon(cls, symbol){
+  const shapeMap = {balloon:'balloon', aircraft:'plane', ship:'glider', vehicle:'heli', person:'plane'};
+  const shape = shapeMap[cls] || 'plane';
+  return aircraftIcon(0, null, null, null, null, shape);
+}
+document.getElementById('tgAprs').addEventListener('click', function(){
+  aprsActive = this.classList.toggle('active');
+  document.getElementById('aprsCreditFooter').style.display = aprsActive ? 'inline' : 'none';
+  if(aprsActive){
+    setLayerLoadDot('tgAprs', aprsLayer.getLayers().length ? 'ready' : 'loading');
+    aprsLayer.addTo(map);
+    fetchAprsStations();
+  } else {
+    map.removeLayer(aprsLayer);
+    setLayerLoadDot('tgAprs', null);
+    clearTimeout(aprsFetchTimer);
+  }
+});
+async function fetchAprsStations(){
+  if(!aprsActive) return;
+  clearTimeout(aprsFetchTimer);
+  try{
+    const apiKey = (document.getElementById('sAprsApiKey').value||'').trim();
+    const callsigns = (document.getElementById('sAprsCallsigns').value||'')
+      .split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
+    if(!apiKey || !callsigns.length){
+      aprsLayer.clearLayers();
+      setLayerLoadDot('tgAprs', callsigns.length ? 'error' : null);
+      if(!callsigns.length) console.warn('APRS: no callsigns configured in Settings.');
+      else console.error('APRS: no aprs.fi API key set in Settings (API Keys & Tokens).');
+      aprsFetchTimer = setTimeout(fetchAprsStations, 60000);
+      return;
+    }
+    const enabledClasses = new Set([...document.querySelectorAll('[data-aprs-class]')].filter(cb=>cb.checked).map(cb=>cb.dataset.aprsClass));
+    // Max 20 targets per aprs.fi query - chunk if the user configured more.
+    const chunks = [];
+    for(let i=0;i<callsigns.length;i+=20) chunks.push(callsigns.slice(i,i+20));
+    const results = await Promise.all(chunks.map(chunk=>
+      fetch(`https://api.aprs.fi/api/get?name=${encodeURIComponent(chunk.join(','))}&what=loc&apikey=${encodeURIComponent(apiKey)}&format=json`)
+        .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    ));
+    aprsLayer.clearLayers();
+    let shown = 0;
+    results.forEach(j=>{
+      if(j.result!=='ok'){ console.warn('APRS: request did not succeed:', j.result, j.description); return; }
+      (j.entries||[]).forEach(e=>{
+        if(e.lat==null || e.lng==null) return;
+        const cls = aprsSymbolToClass(e.symbol);
+        if(!enabledClasses.has(cls)) return;
+        shown++;
+        const ageMin = e.lasttime ? Math.round((Date.now()/1000 - e.lasttime)/60) : null;
+        L.marker([parseFloat(e.lat), parseFloat(e.lng)], {icon: aprsClassIcon(cls, e.symbol), pane:'airTrafficPane'})
+          .bindTooltip(`<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${e.name}</b>${e.comment?' · '+e.comment:''}${ageMin!=null?' · '+ageMin+'min ago':''}</div><div style="font-size:7.5px;color:var(--muted);">via aprs.fi</div>`, {sticky:true})
+          .addTo(aprsLayer);
+      });
+    });
+    console.log(`APRS: ${shown} station(s) shown (of ${callsigns.length} callsigns configured).`);
+    if(aprsActive) setLayerLoadDot('tgAprs', 'ready');
+    aprsFailCount = 0;
+  }catch(e){
+    console.error('APRS fetch failed:', e);
+    if(aprsActive){
+      aprsFailCount = (aprsFailCount||0)+1;
+      setLayerLoadDot('tgAprs', aprsFailCount>=3 ? 'error' : 'loading');
+    }
+  }
+  aprsFetchTimer = setTimeout(fetchAprsStations, 180000); // 3 minutes - conservative per aprs.fi's own guidance against frequent polling
+}
+
+// ---------- Lightning (Xweather), shown as part of the Rain layer ----------
+// Deliberately not always-on: to conserve the free-tier quota, this only
+// starts polling once rain has actually been detected within 300km AND the
+// person has accepted the on-screen prompt - never silently in the
+// background. Xweather's standard-tier radius cap is 100km per query, so
+// covering the configured monitoring radius (up to 300km) uses 3 queries
+// arranged in a triangle around the current position - full coverage
+// directly toward each of the 3 sample points, somewhat thinner in the
+// gaps between them (an unavoidable geometric trade-off of 3 circles of a
+// fixed radius trying to cover a much larger disc - not fixable by
+// choosing a "better" triangle, just an inherent limit of this approach).
+let lightningPollingActive = false;
+let lightningPollingTimer = null;
+let lightningWarningShownThisSession = false;
+const lightningMarkers = L.layerGroup();
+
+function lightningBoltIcon(){
+  return L.divIcon({
+    html:`<svg width="26" height="26" viewBox="0 0 24 24" style="overflow:visible;filter:drop-shadow(0 1px 3px rgba(0,0,0,.7));"><path d="M13 2 L4 14 H11 L9 22 L20 9 H12 Z" fill="#fdd835" stroke="#7a5c00" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+    className:'', iconSize:[26,26], iconAnchor:[13,13]
+  });
+}
+
+// Periodically samples a few points within 300km via Open-Meteo (separate
+// from the RainViewer radar tiles used for the visual Rain layer, which
+// are images rather than queryable point data) to decide whether it's
+// worth prompting about lightning monitoring at all.
+async function checkRainNearbyForLightningPrompt(){
+  if(lightningPollingActive || lightningWarningShownThisSession) return; // already monitoring, or already asked this session
+  try{
+    const ringPts = generateGridPoints(state.lat, state.lon, 300000, 8).slice(1); // skip the centre point itself, just the ring
+    const latStr = ringPts.map(p=>p[0].toFixed(2)).join(',');
+    const lonStr = ringPts.map(p=>p[1].toFixed(2)).join(',');
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&current=precipitation&timezone=UTC`);
+    const j = await r.json();
+    const list = Array.isArray(j) ? j : [j];
+    const rainFound = list.some(entry=>entry.current && entry.current.precipitation!=null && entry.current.precipitation>0.1);
+    if(rainFound) showLightningPrompt();
+  }catch(e){ console.error('Lightning: rain-nearby check failed:', e); }
+}
+
+function showLightningPrompt(){
+  if(document.getElementById('lightningPromptBanner')) return; // already showing
+  lightningWarningShownThisSession = true;
+  const banner = document.createElement('div');
+  banner.id = 'lightningPromptBanner';
+  banner.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:6000;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:280px;font-size:12px;color:var(--text);';
+  banner.innerHTML = `
+    <div style="font-weight:700;margin-bottom:4px;">⚡ Rain detected nearby</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Rain was found within 300km. Start monitoring for lightning activity in that area?</div>
+    <div style="display:flex;gap:6px;">
+      <button class="ghost" style="flex:1;background:var(--accent);color:#00201d;font-weight:600;" id="btnLightningStart">Start monitoring</button>
+      <button class="ghost" style="flex:1;" id="btnLightningDismiss">Not now</button>
+    </div>`;
+  document.body.appendChild(banner);
+  document.getElementById('btnLightningStart').addEventListener('click', ()=>{ banner.remove(); startLightningPolling(); });
+  document.getElementById('btnLightningDismiss').addEventListener('click', ()=>{ banner.remove(); });
+}
+
+function startLightningPolling(){
+  lightningPollingActive = true;
+  lightningMarkers.addTo(map);
+  document.getElementById('lightningPollingStatus').textContent = 'Monitoring active - polling every 10 minutes.';
+  fetchLightningData();
+}
+function stopLightningPolling(){
+  lightningPollingActive = false;
+  clearTimeout(lightningPollingTimer);
+  map.removeLayer(lightningMarkers);
+  document.getElementById('lightningPollingStatus').textContent = 'Not monitoring - waiting for rain to be detected nearby.';
+}
+
+async function fetchLightningData(){
+  if(!lightningPollingActive) return;
+  clearTimeout(lightningPollingTimer);
+  try{
+    const clientId = (document.getElementById('sXweatherClientId').value||'').trim();
+    const clientSecret = (document.getElementById('sXweatherClientSecret').value||'').trim();
+    if(!clientId || !clientSecret){
+      console.error('Lightning: no Xweather client ID/secret set in Settings (API Keys & Tokens).');
+      document.getElementById('lightningPollingStatus').textContent = 'Monitoring paused - no Xweather credentials set in Settings.';
+      lightningPollingTimer = setTimeout(fetchLightningData, 600000);
+      return;
+    }
+    // Three points in a triangle around the current position, offset so
+    // that offset+100km (Xweather's own per-query maximum) reaches the
+    // configured monitoring radius in each of the 3 point-facing directions.
+    const targetRadiusKm = parseFloat(document.getElementById('sLightningRadius').value) || 200;
+    const offsetKm = Math.max(0, targetRadiusKm - 100);
+    const bearings = [0, 120, 240];
+    const points = bearings.map(b=>destPoint(state.lat, state.lon, b, offsetKm*1000));
+    const results = await Promise.allSettled(points.map(([lat,lon])=>
+      fetch(`https://api.xweather.com/lightning/${lat.toFixed(3)},${lon.toFixed(3)}?radius=100km&from=-10minutes&to=now&limit=200&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`)
+        .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    ));
+    lightningMarkers.clearLayers();
+    let shown = 0;
+    const seenIds = new Set();
+    results.forEach((res,i)=>{
+      if(res.status!=='fulfilled'){ console.warn('Lightning: query', i, 'failed:', res.reason); return; }
+      const j = res.value;
+      if(i===0) console.log('Lightning: raw response from first query point (for format verification):', JSON.stringify(j).slice(0,500));
+      const strikes = (j.response && j.response[0] && j.response[0].periods) || j.data || [];
+      strikes.forEach(s=>{
+        const lat = s.loc ? s.loc.lat : s.lat;
+        const lon = s.loc ? s.loc.long : s.lon;
+        const id = s.id || `${lat},${lon},${s.timestamp}`;
+        if(lat==null || lon==null || seenIds.has(id)) return;
+        seenIds.add(id);
+        shown++;
+        L.marker([lat, lon], {icon: lightningBoltIcon(), pane:'airTrafficPane'})
+          .bindTooltip(`<div style="font-size:10px;">⚡ Lightning strike</div><div style="font-size:7.5px;color:var(--muted);">via Xweather</div>`, {sticky:true})
+          .addTo(lightningMarkers);
+      });
+    });
+    console.log(`Lightning: ${shown} strike(s) shown from 3 query points.`);
+    document.getElementById('lightningPollingStatus').textContent = `Monitoring active - ${shown} strike(s) in the last check, polling every 10 minutes.`;
+  }catch(e){
+    console.error('Lightning fetch failed:', e);
+  }
+  lightningPollingTimer = setTimeout(fetchLightningData, 600000); // 10 minutes
+}
+setInterval(checkRainNearbyForLightningPrompt, 900000); // check every 15 min whether it's worth prompting
+setTimeout(checkRainNearbyForLightningPrompt, 30000); // and once shortly after load
+
 // OGN/glidernet.org (FLARM/FANET - gliders, paragliders, helicopters and
 // other light aircraft, especially relevant in the Alps) - this endpoint
 // is NOT officially documented (confirmed via third-party developer docs
@@ -6914,9 +7200,52 @@ function randomString(len){
 try{
   document.getElementById('dropboxAppKey').value = localStorage.getItem('gblp_dropbox_appkey') || 'wujo04yixt2tfxq';
   document.getElementById('dropboxFolder').value = localStorage.getItem('gblp_dropbox_folder') || '/GBLP_Logs';
+  document.getElementById('sGithubPat').value = localStorage.getItem('gblp_github_pat') || '';
+  document.getElementById('profileGithubGistId').value = localStorage.getItem('gblp_github_gist_id') || '';
 }catch(e){}
 document.getElementById('dropboxAppKey').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_dropbox_appkey', e.target.value); }catch(err){} });
 document.getElementById('dropboxFolder').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_dropbox_folder', e.target.value); }catch(err){} });
+document.getElementById('sGithubPat').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_github_pat', e.target.value); }catch(err){} });
+document.getElementById('profileFileInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('profileActionStatus');
+  statusEl.textContent = 'Importing…';
+  try{
+    await importProfileFromFile(file);
+    statusEl.textContent = 'Profile imported - reload the page for every field to pick up the new values.';
+  }catch(err){
+    statusEl.textContent = 'Could not import this file: '+err.message;
+  }
+  e.target.value = '';
+});
+async function handleSaveProfileToGithub(){
+  const statusEl = document.getElementById('profileGithubStatus');
+  const password = document.getElementById('profileGithubPassword').value;
+  if(!password){ statusEl.textContent = 'Enter a password first - it encrypts the backup.'; return; }
+  statusEl.textContent = 'Saving…';
+  try{
+    const gistId = await saveProfileToGithub(password);
+    document.getElementById('profileGithubGistId').value = gistId;
+    statusEl.textContent = `Saved. Gist ID: ${gistId} (kept locally, and needed - together with the password - to load this backup on another device).`;
+  }catch(err){
+    statusEl.textContent = 'Save failed: '+err.message;
+  }
+}
+async function handleLoadProfileFromGithub(){
+  const statusEl = document.getElementById('profileGithubStatus');
+  const password = document.getElementById('profileGithubPassword').value;
+  const gistId = document.getElementById('profileGithubGistId').value.trim();
+  if(!gistId){ statusEl.textContent = 'Enter the Gist ID from the device that saved this backup.'; return; }
+  if(!password){ statusEl.textContent = 'Enter the password used when this backup was saved.'; return; }
+  statusEl.textContent = 'Loading…';
+  try{
+    await loadProfileFromGithub(gistId, password);
+    statusEl.textContent = 'Profile loaded - reload the page for every field to pick up the new values.';
+  }catch(err){
+    statusEl.textContent = 'Load failed: '+err.message+' (wrong password decrypts to garbage rather than a clear error, so double-check that too).';
+  }
+}
 document.getElementById('btnDropboxConnect').addEventListener('click', async ()=>{
   const appKey = document.getElementById('dropboxAppKey').value.trim();
   if(!appKey){ alert('Enter your Dropbox App Key first (see note above).'); return; }
@@ -7248,9 +7577,132 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sAdsbApiKey','sAdsbAbove'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
+// ---------- profile export/import (all settings, keys, emergency contact
+// info - shareable via file/WhatsApp/GitHub Gist so a new device can pick
+// up the same configuration instead of re-entering everything by hand) ----------
+const PROFILE_LOCALSTORAGE_KEYS = [
+  'gblp_config_v1', 'gblp_language', 'gblp_dropbox_appkey', 'gblp_dropbox_folder',
+  'gblp_pilot_name', 'gblp_aircraft_reg', 'gblp_pilot_mobile', 'gblp_pilot_second_number',
+  'gblp_emergency_email', 'gblp_sms_recipient_1', 'gblp_sms_recipient_2', 'gblp_sms_recipient_3',
+  'gblp_sms_recipient_4', 'gblp_sms_recipient_5', 'gblp_emailjs_service_id',
+  'gblp_emailjs_template_id', 'gblp_emailjs_public_key', 'gblp_github_pat'
+];
+// Deliberately NOT included: gblp_dropbox_token/refresh_token/pkce_verifier
+// (active OAuth session state, not a portable "setting" - reconnect Dropbox
+// on the new device instead) and gblp_flightlog_v1 (flight history, not
+// configuration - out of scope for a settings profile).
+function collectProfileData(){
+  saveConfig(); // make sure gblp_config_v1 reflects the current on-screen state first
+  const data = {};
+  PROFILE_LOCALSTORAGE_KEYS.forEach(k=>{
+    const v = localStorage.getItem(k);
+    if(v!=null) data[k] = v;
+  });
+  return {app:'Gasballoon Cockpit', profileVersion:1, exportedAt:new Date().toISOString(), data};
+}
+function applyProfileData(profile){
+  if(!profile || !profile.data) throw new Error('Not a recognizable profile file');
+  Object.entries(profile.data).forEach(([k,v])=>{
+    if(PROFILE_LOCALSTORAGE_KEYS.includes(k)) localStorage.setItem(k, v);
+  });
+}
+async function exportProfile(){
+  const profile = collectProfileData();
+  const json = JSON.stringify(profile, null, 2);
+  const filename = `gasballoon-cockpit-profile-${new Date().toISOString().slice(0,10)}.json`;
+  const file = new File([json], filename, {type:'application/json'});
+  // On a phone, the native share sheet lets the person pick WhatsApp (or
+  // anything else) directly; fall back to a plain download where sharing
+  // files isn't available (most desktop browsers).
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:'Gasballoon Cockpit profile'}); return; }
+    catch(e){ if(e.name==='AbortError') return; /* otherwise fall through to download */ }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+async function importProfileFromFile(file){
+  const text = await file.text();
+  const profile = JSON.parse(text);
+  applyProfileData(profile);
+}
+
+// AES-GCM encryption with a password-derived key (PBKDF2), used for the
+// GitHub Gist backup - the Gist itself may be public, so the profile
+// content (API keys, emergency contacts) must not be readable without the
+// password.
+async function encryptWithPassword(plaintext, password){
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'}, baseKey,
+    {name:'AES-GCM', length:256}, false, ['encrypt']
+  );
+  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plaintext));
+  const toB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return {salt:toB64(salt), iv:toB64(iv), ciphertext:toB64(ciphertext)};
+}
+async function decryptWithPassword(encObj, password){
+  const fromB64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:fromB64(encObj.salt), iterations:150000, hash:'SHA-256'}, baseKey,
+    {name:'AES-GCM', length:256}, false, ['decrypt']
+  );
+  const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv:fromB64(encObj.iv)}, key, fromB64(encObj.ciphertext));
+  return new TextDecoder().decode(plainBuf);
+}
+
+// GitHub Gist backup - requires the user's own Personal Access Token with
+// "gist" scope (entered in API Keys & Tokens below). The Gist stores only
+// the AES-GCM-encrypted blob, never the plaintext profile.
+async function saveProfileToGithub(password){
+  const token = (document.getElementById('sGithubPat').value||'').trim();
+  if(!token) throw new Error('No GitHub Personal Access Token set in Settings (API Keys & Tokens).');
+  const profile = collectProfileData();
+  const encrypted = await encryptWithPassword(JSON.stringify(profile), password);
+  const gistExisting = (localStorage.getItem('gblp_github_gist_id')||'').trim();
+  const body = {
+    description: 'Gasballoon Cockpit encrypted profile backup',
+    public: false,
+    files: {'gbcockpit-profile.json.enc': {content: JSON.stringify(encrypted)}}
+  };
+  const url = gistExisting ? `https://api.github.com/gists/${gistExisting}` : 'https://api.github.com/gists';
+  const r = await fetch(url, {
+    method: gistExisting ? 'PATCH' : 'POST',
+    headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'},
+    body: JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error('GitHub request failed: HTTP '+r.status);
+  const j = await r.json();
+  localStorage.setItem('gblp_github_gist_id', j.id);
+  return j.id;
+}
+async function loadProfileFromGithub(gistId, password){
+  const token = (document.getElementById('sGithubPat').value||'').trim();
+  const headers = {'Accept':'application/vnd.github+json'};
+  if(token) headers['Authorization'] = 'Bearer '+token; // needed for secret gists; public ones work without it too
+  const r = await fetch(`https://api.github.com/gists/${gistId}`, {headers});
+  if(!r.ok) throw new Error('GitHub request failed: HTTP '+r.status);
+  const j = await r.json();
+  const file = j.files && j.files['gbcockpit-profile.json.enc'];
+  if(!file) throw new Error('This Gist does not contain a recognizable profile backup.');
+  const encrypted = JSON.parse(file.content);
+  const plaintext = await decryptWithPassword(encrypted, password);
+  const profile = JSON.parse(plaintext);
+  applyProfileData(profile);
+  localStorage.setItem('gblp_github_gist_id', gistId);
+}
+
 function saveConfig(){
   try{
     const cfg = {};
@@ -7258,6 +7710,8 @@ function saveConfig(){
     CONFIG_CHECKBOX_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.checked; });
     CONFIG_TOGGLE_BTN_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.classList.contains('active'); });
     cfg.powerCat = {...powerCatVisible};
+    cfg.aprsClasses = {};
+    document.querySelectorAll('[data-aprs-class]').forEach(cb=>{ cfg.aprsClasses[cb.dataset.aprsClass] = cb.checked; });
     cfg.nightMode = state.night;
     localStorage.setItem('gblp_config_v1', JSON.stringify(cfg));
   }catch(e){ /* localStorage unavailable/full - config just won't persist */ }
@@ -7280,6 +7734,9 @@ function loadConfig(){
       Object.assign(powerCatVisible, cfg.powerCat);
       Object.keys(cfg.powerCat).forEach(k=>{ const cb=document.querySelector(`[data-powercat="${k}"]`); if(cb) cb.checked=cfg.powerCat[k]; });
       if(map.hasLayer(powerLayer)) powerLayer.redraw();
+    }
+    if(cfg.aprsClasses){
+      Object.keys(cfg.aprsClasses).forEach(k=>{ const cb=document.querySelector(`[data-aprs-class="${k}"]`); if(cb) cb.checked=cfg.aprsClasses[k]; });
     }
     if(cfg.nightMode && !state.night){ document.getElementById('btnDayNight').click(); }
   }catch(e){ /* corrupt/old config - ignore and keep defaults */ }

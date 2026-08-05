@@ -1186,7 +1186,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.24';
+const APP_VERSION = 'v260805.25';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -5694,6 +5694,7 @@ async function checkAirspaceIntrusion(path, signal){
 
 // ---------- ground wind particle flow layer (0-200m AGL) ----------
 let lastWindWarnInitMin = null;
+let descentWindWarnAutoHideTimer = null; // must be declared early - hideYellowWarning() (which reads this) can be called during initial page setup, well before the code near its own logic runs, and referencing a `let` before its declaration line throws a temporal-dead-zone error
 const groundWindLayer = {canvas:null, ctx:null, particles:[], animId:null, active:false};
 function initGroundWindCanvas(){
   const canvas = document.createElement('canvas');
@@ -6714,7 +6715,6 @@ document.getElementById('sInit').addEventListener('input', checkDescentTimeWindW
 
 // ---- yellow notice: ground wind is shown for the PLANNED descent time,
 // not right now, whenever that time isn't "immediate" ----
-let descentWindWarnAutoHideTimer = null;
 function checkDescentTimeWindWarning(){
   const initMin = parseFloat(document.getElementById('sInit').value);
   const shouldShow = groundWindLayer.active && initMin > 30 && state.appMode!=='plan';

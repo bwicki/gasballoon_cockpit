@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.05.31</title>
+<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v1.05.34</title>
 <style>
   body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
   h1{font-size:18px;}
@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.05.31</span></h1>
+<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v1.05.34</span></h1>
 <p class="intro">
 Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie Gasballoon Cockpit sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
@@ -47,7 +47,7 @@ const TESTS = [
   { name: 'SondeHub - aktive Sonden-Liste', url: 'https://api.v2.sondehub.org/sondes' },
   { name: 'api.existenz.ch SwissMetNet - echte Wetterstationen (bereits bestätigt funktionierend, im Einsatz)', url: 'https://api.existenz.ch/apiv1/smn/latest?locations=KLO,BER,GVE&parameters=dd,ff,tt&app=gb.landing.planner.test' },
   { name: 'ADSBExchange via RapidAPI (bereits bestätigt funktionierend, im Einsatz)', url: 'https://adsbexchange-com1.p.rapidapi.com/v2/lat/47.3769/lon/8.5417/dist/100/', headers: {'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com','X-RapidAPI-Key':'7f65c7997dmshfb6965d9d01c11bp166af9jsn724691adb0b5'} },
-  { name: '★ OGN/glidernet.org (FLARM/FANET) - INOFFIZIELLER, nicht dokumentierter Endpunkt (laut Drittentwickler-Doku "nicht offiziell standardisiert, jederzeit änderbar"), noch nie getestet', url: 'https://live.glidernet.org/lxml.php?a=0&b=47.6&c=47.2&d=8.8&e=8.3&z=9' },
+  { name: 'OGN/glidernet.org (FLARM/FANET) - inoffizieller Endpunkt, bestätigt CORS-offen, jetzt im Air-Traffic-Layer im Einsatz (Feldbedeutung best-effort rekonstruiert, nicht offiziell dokumentiert)', url: 'https://live.glidernet.org/lxml.php?a=0&b=47.6&c=47.2&d=8.8&e=8.3&z=9' },
   { name: 'Open-Meteo - Windprognose (wie für den Windlayer/die Berechnungen genutzt)', url: 'https://api.open-meteo.com/v1/forecast?latitude=47.3769&longitude=8.5417&hourly=wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa&models=icon_eu&forecast_hours=3&timezone=UTC' },
   { name: 'Open-Meteo - Höhenabfrage (Geländehöhe)', url: 'https://api.open-meteo.com/v1/elevation?latitude=47.3769&longitude=8.5417' },
   { name: 'Nominatim - Reverse-Geocoding (Ortsnamen für Landeplatz)', url: 'https://nominatim.openstreetmap.org/reverse?lat=47.3769&lon=8.5417&zoom=12&format=json' },

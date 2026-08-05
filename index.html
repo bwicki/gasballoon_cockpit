@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.05.32';
+const APP_VERSION = 'v1.05.34';
 const APP_DATE = '04.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2192,6 +2192,14 @@ document.getElementById('tgMetar').addEventListener('click', function(){
     map.removeLayer(metarLayer);
     setLayerLoadDot('tgMetar', null);
   }
+  // The weather station wind arrows use the same colour scale as the wind
+  // particle layer, so that legend needs to stay visible whenever EITHER
+  // this layer or the particle layer is on, not just get dismissed the
+  // moment the particle layer itself is switched off.
+  if(typeof groundWindLayer!=='undefined' && typeof reopenBanner==='function'){
+    if(metarActive || groundWindLayer.active) reopenBanner('groundWindLegendBar','groundWindLegendIcon');
+    else if(!groundWindLayer.active) dismissBanner('groundWindLegendBar','groundWindLegendIcon');
+  }
 });
 function scheduleMetarFetch(){
   if(!metarActive) return;
@@ -2238,11 +2246,15 @@ async function fetchMetarStations(force){
   if(!metarActive && !force) return;
   const myGeneration = ++metarFetchGeneration;
   try{
-    const b = map.getBounds().pad(0.3);
-    const center = map.getCenter();
+    // Filtered by the same cache radius configured in Settings (around the
+    // balloon's actual current position, not just whatever the map happens
+    // to be showing) - so panning the map away doesn't lose stations that
+    // are still relevant to the flight, and so this matches the same area
+    // every other pre-cached layer covers.
+    const cacheRadiusM = cacheRadiusKm*1000;
     const nearby = EUROPE_AIRPORTS
-      .filter(a=>b.contains([a[2],a[3]]))
-      .map(a=>({icao:a[0], name:a[1], lat:a[2], lon:a[3], dist:haversine(center.lat,center.lng,a[2],a[3])}))
+      .map(a=>({icao:a[0], name:a[1], lat:a[2], lon:a[3], dist:haversine(state.lat,state.lon,a[2],a[3])}))
+      .filter(a=>a.dist<=cacheRadiusM)
       .sort((x,y)=>x.dist-y.dist)
       .slice(0, 15); // keep it modest - each one is its own request, and the anonymous quota is limited
 
@@ -2251,15 +2263,30 @@ async function fetchMetarStations(force){
     // point approach, which fabricated arbitrary coordinates and looked
     // like real stations without being any. Switzerland only for now.
     const nearbyStations = SWISS_SMN_STATIONS
-      .filter(s=>b.contains([s[2],s[3]]))
-      .map(s=>({code:s[0], name:s[1], lat:s[2], lon:s[3], dist:haversine(center.lat,center.lng,s[2],s[3])}))
+      .map(s=>({code:s[0], name:s[1], lat:s[2], lon:s[3], dist:haversine(state.lat,state.lon,s[2],s[3])}))
+      .filter(s=>s.dist<=cacheRadiusM)
       .sort((x,y)=>x.dist-y.dist)
       .slice(0, 20);
     const stationCodes = nearbyStations.map(s=>s.code).join(',');
     const wxUrl = stationCodes ? `https://api.existenz.ch/apiv1/smn/latest?locations=${stationCodes}&parameters=dd,ff,tt&app=gb.landing.planner&version=${APP_VERSION}` : null;
 
+    // Fetching all airports at once (up to 15 simultaneous requests) may
+    // have been tripping a per-second rate limit independent of any daily
+    // quota - MetarCentral's docs don't specify one, but this is a common
+    // pattern for small APIs and costs little to guard against. 3 at a
+    // time, with a short gap between batches, instead of all-at-once.
+    async function fetchMetarsThrottled(list){
+      const out = [];
+      for(let i=0;i<list.length;i+=3){
+        const batch = list.slice(i,i+3);
+        const results = await Promise.allSettled(batch.map(a=>fetchSingleMetar(a.icao)));
+        out.push(...results);
+        if(i+3<list.length) await new Promise(res=>setTimeout(res, 350));
+      }
+      return out;
+    }
     const [metarResults, wxResp] = await Promise.all([
-      Promise.allSettled(nearby.map(a=>fetchSingleMetar(a.icao))),
+      fetchMetarsThrottled(nearby),
       wxUrl ? fetch(wxUrl).then(r=>r.json()).catch(e=>{ console.error('Swiss weather stations fetch failed:', e); return null; }) : Promise.resolve(null)
     ]);
     if(myGeneration !== metarFetchGeneration) return;
@@ -2393,8 +2420,24 @@ updateAirTrafficTooltip();
 const AIRCRAFT_SHAPES = {
   heli: '<circle cx="12" cy="6" r="1.6"/><path d="M12 6 L3 4.5 M12 6 L21 4.5" stroke-width="2" stroke-linecap="round"/><path d="M12 7.5 L12 17 M8 20 L16 20 M8.5 17 L15.5 17 L16.5 20 L7.5 20 Z" fill="currentColor" stroke="none"/><path d="M15.5 19 L20 19.7" stroke-width="1.6" stroke-linecap="round"/>',
   glider: '<path d="M12 3 L11 9 L1 10.5 L1 12 L11 11.5 L11 18 L8 20 L8 21.3 L12 20.3 L16 21.3 L16 20 L13 18 L13 11.5 L23 12 L23 10.5 L13 9 Z" fill="currentColor" stroke="none"/>',
-  plane: '<path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="currentColor" stroke="#fff" stroke-width="1.3"/>'
+  plane: '<path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="currentColor" stroke="#fff" stroke-width="1.3"/>',
+  paraglider: '<path d="M2 8 A10 6 0 0 1 22 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8.5 L11 16 M20 8.5 L13 16 M12 8.5 L12 16" stroke="currentColor" stroke-width="1.1"/><circle cx="12" cy="18" r="1.6" fill="currentColor" stroke="none"/>',
+  balloon: '<circle cx="12" cy="9" r="7" fill="currentColor" stroke="none"/><path d="M9 15.5 L8.3 19.5 L15.7 19.5 L15 15.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9.3 19.5 L14.7 19.5" stroke="currentColor" stroke-width="1.4"/>'
 };
+// The FLARM/OGN aircraft-category hex code (0-F), per the official FLARM
+// APRS protocol spec published on OGN's own wiki - cross-checked against
+// real sample data (course/speed/climb-rate values that only make sense
+// for the type they were tagged with) before use here, since this whole
+// data source is built on an admittedly undocumented endpoint.
+function ognTypeToShape(hexCode){
+  switch((hexCode||'').toUpperCase()){
+    case '3': return 'heli';
+    case '1': case '6': return 'glider';
+    case '7': return 'paraglider';
+    case 'B': return 'balloon';
+    default: return 'plane'; // 2,4,5,8,9,A,C,D and anything unrecognised
+  }
+}
 function aircraftCategoryFromCode(category, typeDesignator){
   // ADS-B "emitter category": A7 = rotorcraft, B2 = glider/sailplane,
   // B1/B4 = balloon/ultralight (shown as glider shape - closer to correct
@@ -2408,10 +2451,10 @@ function aircraftCategoryFromCode(category, typeDesignator){
   if(/^(EC|AS|R22|R44|R66|B06|B407|B429|H125|H130|H145|AW1|A109|A139|S76|S92|MD5|AS35|AS50)/.test(t)) return 'heli';
   return 'plane';
 }
-function aircraftIcon(headingDeg, category, typeDesignator, flAlt, baroRateFtMin){
+function aircraftIcon(headingDeg, category, typeDesignator, flAlt, baroRateFtMin, explicitShape){
   const rot = headingDeg||0;
-  const shapeKind = aircraftCategoryFromCode(category, typeDesignator);
-  const color = shapeKind==='heli' ? '#e8a838' : (shapeKind==='glider' ? '#3fa9ff' : '#e0483f');
+  const shapeKind = explicitShape || aircraftCategoryFromCode(category, typeDesignator);
+  const color = shapeKind==='heli' ? '#e8a838' : (shapeKind==='glider'||shapeKind==='paraglider' ? '#3fa9ff' : (shapeKind==='balloon' ? '#a63fff' : '#e0483f'));
   const shape = AIRCRAFT_SHAPES[shapeKind];
   let rateArrow = '', rateColor = '#c9d3db';
   if(baroRateFtMin!=null && Math.abs(baroRateFtMin)>=100){
@@ -2450,55 +2493,103 @@ function scheduleAirTrafficFetch(){
   airTrafficFetchTimer = setTimeout(fetchAirTraffic, 600);
 }
 map.on('moveend zoomend', ()=>{ if(airTrafficActive) scheduleAirTrafficFetch(); });
+// OGN/glidernet.org (FLARM/FANET - gliders, paragliders, helicopters and
+// other light aircraft, especially relevant in the Alps) - this endpoint
+// is NOT officially documented (confirmed via third-party developer docs
+// that call it "not officially standardized, subject to change"), so the
+// field mapping below was reconstructed from the official FLARM aircraft-
+// category table (published on OGN's own wiki) and column names visible
+// in OGN's own open-source ogn-live repository, then cross-checked against
+// live sample data (course/speed/climb-rate values that only made sense
+// for the aircraft type they were tagged with). Field 6 (index 6) remains
+// unidentified and is deliberately not used for anything.
+async function fetchOgnTraffic(maxAltM){
+  const b = map.getBounds().pad(0.3);
+  const url = `https://live.glidernet.org/lxml.php?a=0&b=${b.getNorth().toFixed(3)}&c=${b.getSouth().toFixed(3)}&d=${b.getEast().toFixed(3)}&e=${b.getWest().toFixed(3)}&z=9`;
+  const r = await fetch(url);
+  const text = await r.text();
+  const xml = new DOMParser().parseFromString(text, 'text/xml');
+  const out = [];
+  xml.querySelectorAll('m').forEach(m=>{
+    const raw = m.getAttribute('a');
+    if(!raw || raw.indexOf(',')===-1) return; // skip airport/place markers (a="EHTL" b=".." c="..") and the a="0" flag marker - only want actual aircraft position lines here
+    const p = raw.split(',');
+    if(p.length<14) return;
+    const lat = parseFloat(p[0]), lon = parseFloat(p[1]), altM = parseFloat(p[4]);
+    const course = parseFloat(p[7]), speedKmh = parseFloat(p[8]), climbMs = parseFloat(p[9]);
+    if(isNaN(lat) || isNaN(lon) || isNaN(altM)) return;
+    if(altM > maxAltM) return;
+    out.push({
+      lat, lon, altM, course: isNaN(course)?null:course, speedKmh: isNaN(speedKmh)?null:speedKmh,
+      climbMs: isNaN(climbMs)?null:climbMs, typeCode: p[10], name: p[11] || p[2] || '?',
+      reg: p[2], anonymous: (p[2]||'').startsWith('_')
+    });
+  });
+  return out;
+}
 async function fetchAirTraffic(force){
   if(!airTrafficActive && !force) return;
-  const apiKey = (document.getElementById('sAdsbApiKey').value||'').trim();
-  if(!apiKey){
-    console.error('Air traffic: no RapidAPI key set in Settings.');
-    if(airTrafficActive) setLayerLoadDot('tgAirTraffic','error');
-    return;
-  }
   const myGeneration = ++airTrafficFetchGeneration;
   try{
-    const center = map.getCenter();
-    // Distance covering the current viewport (roughly - the API takes a
-    // single radius around a center point, not a rectangular bbox), capped
-    // at the API's own 250 NM limit.
-    const b = map.getBounds();
-    const distKm = Math.min(463, haversine(center.lat,center.lng,b.getNorth(),b.getEast())/1000 + 20);
-    const distNm = Math.round(distKm/1.852);
-    const url = `https://adsbexchange-com1.p.rapidapi.com/v2/lat/${center.lat}/lon/${center.lng}/dist/${distNm}/`;
-    const r = await fetch(url, {headers: {
-      'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com',
-      'X-RapidAPI-Key': apiKey
-    }});
-    if(!r.ok){
-      const errText = await r.text().catch(()=>'(no body)');
-      console.error('Air traffic request failed:', r.status, errText);
-      throw new Error('HTTP '+r.status);
-    }
-    const j = await r.json();
-    if(myGeneration !== airTrafficFetchGeneration) return;
-    console.log('Air traffic: raw response top-level keys:', Object.keys(j));
-    const list = j.ac || j.aircraft || [];
     const aboveFt = parseFloat(document.getElementById('sAdsbAbove').value) || 0;
     const maxAlt = state.altAMSL + aboveFt*0.3048; // all traffic below the balloon is always shown - it could descend into it
+
+    const apiKey = (document.getElementById('sAdsbApiKey').value||'').trim();
+    let adsbPromise = Promise.resolve(null);
+    if(apiKey){
+      const center = map.getCenter();
+      // Distance covering the current viewport (roughly - the API takes a
+      // single radius around a center point, not a rectangular bbox), capped
+      // at the API's own 250 NM limit.
+      const b = map.getBounds();
+      const distKm = Math.min(463, haversine(center.lat,center.lng,b.getNorth(),b.getEast())/1000 + 20);
+      const distNm = Math.round(distKm/1.852);
+      const url = `https://adsbexchange-com1.p.rapidapi.com/v2/lat/${center.lat}/lon/${center.lng}/dist/${distNm}/`;
+      adsbPromise = fetch(url, {headers: {
+        'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com',
+        'X-RapidAPI-Key': apiKey
+      }}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+        .catch(e=>{ console.error('ADSBExchange request failed:', e); return null; });
+    } else {
+      console.warn('Air traffic: no RapidAPI key set - showing OGN/FLARM data only, no ADS-B.');
+    }
+    const ognPromise = fetchOgnTraffic(maxAlt).catch(e=>{ console.error('OGN/FLARM request failed:', e); return []; });
+
+    const [j, ognList] = await Promise.all([adsbPromise, ognPromise]);
+    if(myGeneration !== airTrafficFetchGeneration) return;
     airTrafficLayer.clearLayers();
     let shownCount = 0;
-    list.forEach(a=>{
-      if(a.lat==null || a.lon==null) return;
-      const altFt = (typeof a.alt_baro==='number') ? a.alt_baro : (typeof a.alt_geom==='number' ? a.alt_geom : null);
-      if(altFt==null) return; // on the ground / no altitude - not relevant for balloon separation
-      const altM = altFt*0.3048;
-      if(altM>maxAlt) return;
+
+    if(j){
+      console.log('Air traffic: ADSBExchange raw response top-level keys:', Object.keys(j));
+      const list = j.ac || j.aircraft || [];
+      list.forEach(a=>{
+        if(a.lat==null || a.lon==null) return;
+        const altFt = (typeof a.alt_baro==='number') ? a.alt_baro : (typeof a.alt_geom==='number' ? a.alt_geom : null);
+        if(altFt==null) return; // on the ground / no altitude - not relevant for balloon separation
+        const altM = altFt*0.3048;
+        if(altM>maxAlt) return;
+        shownCount++;
+        const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
+        const typeInfo = a.t ? ` (${a.t})` : '';
+        L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, a.category, a.t, altFt, a.baro_rate), pane:'airTrafficPane'})
+          .bindTooltip(`<b>${label}</b>${typeInfo}<br>${Math.round(altM)} m AMSL (FL${Math.round(altFt/100)})<br>${a.gs!=null?Math.round(a.gs*1.852)+' km/h':''}<br><span style="font-size:9px;color:var(--muted);">via ADSBExchange</span>`, {sticky:true})
+          .addTo(airTrafficLayer);
+      });
+    }
+
+    console.log(`Air traffic: OGN/FLARM raw response - ${ognList.length} aircraft within altitude band.`);
+    ognList.forEach(a=>{
       shownCount++;
-      const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
-      const typeInfo = a.t ? ` (${a.t})` : '';
-      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.track, a.category, a.t, altFt, a.baro_rate), pane:'airTrafficPane'})
-        .bindTooltip(`<b>${label}</b>${typeInfo}<br>${Math.round(altM)} m AMSL (FL${Math.round(altFt/100)})<br>${a.gs!=null?Math.round(a.gs*1.852)+' km/h':''}`, {sticky:true})
+      const shape = ognTypeToShape(a.typeCode);
+      const climbFtMin = a.climbMs!=null ? a.climbMs*196.85 : null;
+      const label = a.anonymous ? '(anonymous)' : (a.name || a.reg || '?');
+      L.marker([a.lat, a.lon], {icon: aircraftIcon(a.course, null, null, a.altM/0.3048, climbFtMin, shape), pane:'airTrafficPane'})
+        .bindTooltip(`<b>${label}</b><br>${Math.round(a.altM)} m AMSL<br>${a.speedKmh!=null?Math.round(a.speedKmh)+' km/h':''}<br><span style="font-size:9px;color:var(--muted);">via OGN/FLARM - unofficial data source, field mapping best-effort</span>`, {sticky:true})
         .addTo(airTrafficLayer);
     });
-    console.log(`Air traffic: ${shownCount} aircraft shown within the configured altitude band (of ${list.length} received).`);
+
+    console.log(`Air traffic: ${shownCount} aircraft shown total within the configured altitude band.`);
     if(airTrafficActive) setLayerLoadDot('tgAirTraffic','ready');
     airTrafficFailCount = 0;
   }catch(e){
@@ -4752,9 +4843,13 @@ function stopGroundWindLayer(){
   if(groundWindLayer.animId) cancelAnimationFrame(groundWindLayer.animId);
   if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
   setLayerLoadDot('tgGroundWind', null);
-  dismissBanner('groundWindLegendBar','groundWindLegendIcon');
-  legendActiveButDismissed.groundWindLegendBar = false;
-  updateAllLegendsReopenBtn();
+  // The weather stations layer uses the same colour-coded legend - only
+  // actually dismiss it if that layer isn't also currently showing it.
+  if(!metarActive){
+    dismissBanner('groundWindLegendBar','groundWindLegendIcon');
+    legendActiveButDismissed.groundWindLegendBar = false;
+    updateAllLegendsReopenBtn();
+  }
   document.getElementById('particleHeightSliderWrap').classList.remove('show');
   hideYellowWarning();
 }

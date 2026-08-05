@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.32** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.05.34** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -220,6 +220,14 @@ OGN/FLARM researched again, properly this time: confirmed via a third-party deve
 `cors_test.html` also cleaned up: removed the MetarCentral bulk-endpoint tests (confirmed broken multiple times now, no further value in re-testing every round) and the SwissMetNet/ADSBExchange entries' "unverified" labels (both now confirmed working and in active use) - added a RainViewer metadata check for the new radar layer.
 
 Spelling corrected to "Gasballoon Cockpit" (double-o) everywhere.
+
+METAR: switched from firing all ~15 airport requests simultaneously to 3-at-a-time batches with a short pause between - a per-second rate limit (separate from any daily quota) could plausibly have been tripping on the burst of parallel requests.
+
+Weather stations (both airports and Swiss SwissMetNet) now filtered by the same cache radius configured in Settings, centred on the balloon's actual position - not just whatever the map view happens to show, matching how every other pre-cached layer works.
+
+The wind-particle legend now stays visible whenever either the particle layer or the weather-stations layer is active (since the station wind arrows use its exact colour scale), instead of disappearing the moment the particle layer itself is switched off.
+
+**OGN/FLARM integrated into Air Traffic** - confirmed CORS-open via your test. Since the endpoint itself is undocumented, the field mapping was reconstructed from two independent official sources (the FLARM aircraft-category table published on OGN's own wiki, and column names visible in OGN's open-source `ogn-live` repository) and cross-checked against live sample data before use - gliders, helicopters, paragliders, and even other balloons now get their own distinct icon shape, separate from powered aircraft. Air Traffic no longer requires a RapidAPI key at all - OGN data shows regardless, ADS-B data is added on top if a key is configured. Every OGN-sourced marker's tooltip explicitly says "unofficial data source, field mapping best-effort," since a couple of live samples showed implausibly high speed/climb values that don't fully resolve without official documentation - shown as-is rather than silently filtered, so you can apply your own judgement.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

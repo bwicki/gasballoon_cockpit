@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.06.04** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v260805.04** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -250,6 +250,14 @@ Air Traffic refresh shortened from 15s to 10s, and aircraft now visibly move bet
 Weather station symbols redesigned once more: much lighter, more compact box (was too dark to read comfortably), with a dark outline on the wind arrow/airplane icon itself so it stays visible against the now-light background. METAR merged into the exact same single-marker design as the general weather stations - only the icon (airplane, rotating into the wind, coloured by flight category, instead of a plain wind arrow) and the addition of the station code as the first line differ; the blue tint from the previous round is gone, matching the request that METAR and general stations look practically the same.
 
 **Third weather network added: MeteoGate/E-SOH (EUMETNET, all 33 member countries at once)** - confirmed CORS-open, no key needed. Covers essentially every country asked about (Austria, Czechia, Slovakia, Hungary, Italy, Portugal, Poland, Sweden, Norway, Finland, France, and more) through one unified EU-funded gateway instead of 12 separate national integrations. The full station list (all of Europe) is slow to fetch (several seconds) and is therefore cached once per session rather than re-fetched on every toggle/pan; each nearby station's actual reading still needs a second, separate fetch to its own time-series link. The exact structure of an individual station's time-series response wasn't confirmed ahead of time, so parsing is defensive (checking a few plausible property-name variants) with the raw shape logged to console - added to `cors_test.html` (with a real station ID from your last test) for verification.
+
+METAR hover tooltip made more compact: line 1 is now "ICAO name CATEGORY" (colour-coded), line 2 is the raw METAR text with the leading "METAR " word stripped so it starts directly with the station code, matching real METAR shorthand notation. The separate "TAF not available" note was dropped to keep it tight.
+
+Balloon icon switched to variant C (basket + lines) as chosen.
+
+**ADSBExchange/OGN duplicate suppression**: the same physical aircraft (any FLARM-equipped plane with an ICAO address can appear on both networks) no longer shows twice. ADS-B is treated as authoritative; an OGN report gets suppressed only when it's close in position (<1.2km), altitude (<150m), AND speed (<35km/h) all at once to an already-shown ADS-B aircraft - checking all three together avoids wrongly hiding two genuinely different aircraft that just happen to be near each other, like a tow plane and glider close together.
+
+Weather station hover tooltip: temperature and dewpoint combined into one compact "18°/DP 16°" item instead of two separate "18°C · dewpoint 16°C" entries.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

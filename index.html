@@ -1082,7 +1082,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v1.06.04';
+const APP_VERSION = 'v260805.04';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2175,10 +2175,9 @@ function calcDewPointC(tempC, rhPct){
 // display rules stay consistent across all of them.
 function buildWeatherStationTooltip(code, name, windDir, windKmh, tempC, dewC, rhPct, networkLabel){
   const windText = (windDir!=null && windKmh!=null) ? `${Math.round(windDir).toString().padStart(3,'0')}° ${Math.round(windKmh)}km/h` : 'no wind data';
-  const tempText = tempC!=null ? `${Math.round(tempC)}°C` : '';
-  const dewText = dewC!=null ? `dewpoint ${Math.round(dewC)}°C` : '';
+  const tempText = tempC!=null ? `${Math.round(tempC)}°${dewC!=null?'/DP '+Math.round(dewC)+'°':''}` : '';
   const rhText = rhPct!=null ? `${Math.round(rhPct)}% RH` : '';
-  const detailParts = [windText, tempText, dewText, rhText].filter(Boolean);
+  const detailParts = [windText, tempText, rhText].filter(Boolean);
   return `<b>${code}</b> ${name?'('+name+')':''}<br>${detailParts.join(' · ')}<br><span style="font-size:8.5px;color:var(--muted);">${networkLabel}</span>`;
 }
 function weatherStationCombinedIcon(windDir, windKmh, tempC, dewC, rhPct){
@@ -2444,7 +2443,8 @@ async function fetchMetarStations(force){
       const parsed = parseMetarRaw(raw);
       shownCount++;
       const catColor = METAR_CATEGORY_COLORS[category] || '#8b98a5';
-      const fullTooltip = `<b>${a.icao}</b> ${a.name}<br><span style="color:${catColor};font-weight:700;">${category}</span><div style="font-family:monospace;font-size:10.5px;background:rgba(0,0,0,0.06);border-radius:4px;padding:4px 6px;margin-top:4px;word-break:break-all;">${raw}</div><div style="font-size:9.5px;color:var(--muted);margin-top:3px;">TAF not available from this data source</div>`;
+      const rawNoPrefix = raw.replace(/^METAR\s+(COR\s+)?/i, '');
+      const fullTooltip = `<div style="font-size:10px;"><b>${a.icao}</b> ${a.name} <span style="color:${catColor};font-weight:700;">${category}</span></div><div style="font-family:monospace;font-size:9.5px;color:#333;background:rgba(0,0,0,0.06);border-radius:4px;padding:3px 5px;margin-top:2px;word-break:break-all;">${rawNoPrefix}</div>`;
       L.marker([a.lat, a.lon], {icon: metarCombinedIcon(a.icao, category, parsed, metarSummaryLine(parsed)), pane:'metarPane'})
         .bindTooltip(fullTooltip, {sticky:true})
         .addTo(metarLayer);
@@ -2619,7 +2619,7 @@ const AIRCRAFT_SHAPES = {
   glider: '<path d="M12 3 L11 9 L1 10.5 L1 12 L11 11.5 L11 18 L8 20 L8 21.3 L12 20.3 L16 21.3 L16 20 L13 18 L13 11.5 L23 12 L23 10.5 L13 9 Z" fill="currentColor" stroke="none"/>',
   plane: '<path d="M22 16.5v-2l-8-5V4.5c0-1.1-.9-2-2-2s-2 .9-2 2V9.5l-8 5v2l8-2.5v5l-2.5 2v1.5l4.5-1 4.5 1v-1.5l-2.5-2v-5z" fill="currentColor" stroke="#fff" stroke-width="1.3"/>',
   paraglider: '<path d="M2 8 A10 6 0 0 1 22 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8.5 L11 16 M20 8.5 L13 16 M12 8.5 L12 16" stroke="currentColor" stroke-width="1.1"/><circle cx="12" cy="18" r="1.6" fill="currentColor" stroke="none"/>',
-  balloon: '<circle cx="12" cy="9" r="7" fill="currentColor" stroke="none"/><path d="M9 15.5 L8.3 19.5 L15.7 19.5 L15 15.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9.3 19.5 L14.7 19.5" stroke="currentColor" stroke-width="1.4"/>'
+  balloon: '<circle cx="12" cy="9.5" r="6.5" fill="currentColor" stroke="none"/><rect x="10" y="17" width="4" height="3.5" rx="0.6" fill="currentColor"/><line x1="7.3" y1="13.8" x2="10.2" y2="17.3" stroke="currentColor" stroke-width="1.2"/><line x1="16.7" y1="13.8" x2="13.8" y2="17.3" stroke="currentColor" stroke-width="1.2"/>'
 };
 // The FLARM/OGN aircraft-category hex code (0-F), per the official FLARM
 // APRS protocol spec published on OGN's own wiki - cross-checked against
@@ -2781,6 +2781,7 @@ async function fetchAirTraffic(force){
     const [j, ognList] = await Promise.all([adsbPromise, ognPromise]);
     if(myGeneration !== airTrafficFetchGeneration) return;
     let shownCount = 0;
+    const adsbSeenPositions = [];
     const seenIds = new Set();
     const fixTime = Date.now();
 
@@ -2818,14 +2819,37 @@ async function fetchAirTraffic(force){
         shownCount++;
         const label = a.flight ? a.flight.trim() : (a.r || a.hex || '?');
         const typeInfo = a.t ? ` (${a.t})` : '';
-        const tooltip = `<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${label}</b>${typeInfo} · ${Math.round(altM)}m AMSL (FL${Math.round(altFt/100)})${a.gs!=null?' · '+Math.round(a.gs*1.852)+'km/h':''}</div><div style="font-size:7.5px;color:var(--muted);">via ADSBExchange</div>`;
-        upsertAircraft('adsb_'+(a.hex||label), a.lat, a.lon, a.track, a.gs!=null?a.gs*1.852:null,
+        const gsKmh = a.gs!=null ? a.gs*1.852 : null;
+        const tooltip = `<div style="font-size:10px;max-width:170px;white-space:normal;"><b>${label}</b>${typeInfo} · ${Math.round(altM)}m AMSL (FL${Math.round(altFt/100)})${gsKmh!=null?' · '+Math.round(gsKmh)+'km/h':''}</div><div style="font-size:7.5px;color:var(--muted);">via ADSBExchange</div>`;
+        upsertAircraft('adsb_'+(a.hex||label), a.lat, a.lon, a.track, gsKmh,
           ()=>aircraftIcon(a.track, a.category, a.t, altFt, a.baro_rate), tooltip);
+        adsbSeenPositions.push({lat:a.lat, lon:a.lon, altM, speedKmh:gsKmh});
+      });
+    }
+
+    // OGN and ADSBExchange both often pick up the SAME physical aircraft
+    // (any FLARM-equipped plane with an ICAO 24-bit address can show up on
+    // both networks) - showing it twice would look like two aircraft
+    // instead of one. ADS-B is treated as the more authoritative of the
+    // two, so an OGN report gets suppressed whenever it's close enough in
+    // position, altitude, AND speed to an already-shown ADS-B aircraft to
+    // very plausibly be the same one - checking all three together avoids
+    // wrongly suppressing two genuinely different aircraft that just
+    // happen to be near each other (e.g. a tow plane and glider close
+    // together, or crossing traffic).
+    function matchesExistingAdsb(lat, lon, altM, speedKmh){
+      return adsbSeenPositions.some(p=>{
+        const distM = haversine(lat, lon, p.lat, p.lon);
+        const altDiffM = (altM!=null && p.altM!=null) ? Math.abs(altM-p.altM) : 0;
+        const speedDiffKmh = (speedKmh!=null && p.speedKmh!=null) ? Math.abs(speedKmh-p.speedKmh) : 0;
+        return distM<1200 && altDiffM<150 && speedDiffKmh<35;
       });
     }
 
     console.log(`Air traffic: OGN/FLARM raw response - ${ognList.length} aircraft within altitude band.`);
+    let ognDedupedCount = 0;
     ognList.forEach(a=>{
+      if(matchesExistingAdsb(a.lat, a.lon, a.altM, a.speedKmh)){ ognDedupedCount++; return; }
       shownCount++;
       const shape = ognTypeToShape(a.typeCode);
       const climbFtMin = a.climbMs!=null ? a.climbMs*196.85 : null;
@@ -2834,6 +2858,7 @@ async function fetchAirTraffic(force){
       upsertAircraft('ogn_'+(a.reg||a.name||(a.lat+','+a.lon)), a.lat, a.lon, a.course, a.speedKmh,
         ()=>aircraftIcon(a.course, null, null, a.altM/0.3048, climbFtMin, shape), tooltip);
     });
+    if(ognDedupedCount>0) console.log(`Air traffic: ${ognDedupedCount} OGN report(s) suppressed as likely duplicates of an already-shown ADSBExchange aircraft.`);
 
     // Remove markers for aircraft that vanished from this fetch (landed,
     // out of range, out of the altitude band, etc.)

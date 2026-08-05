@@ -51,7 +51,8 @@ const TESTS = [
   { name: 'Open-Meteo - Windprognose (wie für den Windlayer/die Berechnungen genutzt)', url: 'https://api.open-meteo.com/v1/forecast?latitude=47.3769&longitude=8.5417&hourly=wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa&models=icon_eu&forecast_hours=3&timezone=UTC' },
   { name: 'Open-Meteo - Höhenabfrage (Geländehöhe)', url: 'https://api.open-meteo.com/v1/elevation?latitude=47.3769&longitude=8.5417' },
   { name: 'Nominatim - Reverse-Geocoding (Ortsnamen für Landeplatz)', url: 'https://nominatim.openstreetmap.org/reverse?lat=47.3769&lon=8.5417&zoom=12&format=json' },
-  { name: 'RainViewer - Radar-Metadaten (liefert die Kachel-URL für den Regen-Layer)', url: 'https://api.rainviewer.com/public/weather-maps.json' }
+  { name: 'RainViewer - Radar-Metadaten (liefert die Kachel-URL für den Regen-Layer)', url: 'https://api.rainviewer.com/public/weather-maps.json' },
+  { name: 'Bright Sky (DWD Deutschland) - echte Wetterstation nahe München, für weitere nationale Netze im Wetterstationen-Layer', url: 'https://api.brightsky.dev/current_weather?lat=48.14&lon=11.58&max_dist=50000' }
 ];
 
 function render(){

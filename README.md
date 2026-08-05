@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v1.05.34** (04.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
+**Current version: v1.06.01** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed to `v1.0X.YY` (X = working day, YY = iteration within that day). The version chip itself lives at the bottom-left of the map now, next to the Leaflet/OSM attribution.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -228,6 +228,22 @@ Weather stations (both airports and Swiss SwissMetNet) now filtered by the same 
 The wind-particle legend now stays visible whenever either the particle layer or the weather-stations layer is active (since the station wind arrows use its exact colour scale), instead of disappearing the moment the particle layer itself is switched off.
 
 **OGN/FLARM integrated into Air Traffic** - confirmed CORS-open via your test. Since the endpoint itself is undocumented, the field mapping was reconstructed from two independent official sources (the FLARM aircraft-category table published on OGN's own wiki, and column names visible in OGN's open-source `ogn-live` repository) and cross-checked against live sample data before use - gliders, helicopters, paragliders, and even other balloons now get their own distinct icon shape, separate from powered aircraft. Air Traffic no longer requires a RapidAPI key at all - OGN data shows regardless, ADS-B data is added on top if a key is configured. Every OGN-sourced marker's tooltip explicitly says "unofficial data source, field mapping best-effort," since a couple of live samples showed implausibly high speed/climb values that don't fully resolve without official documentation - shown as-is rather than silently filtered, so you can apply your own judgement.
+
+Weather station markers merged into one icon (was two): a muted grey box (deliberately toned down, not a bold colour fill) containing the wind arrow at its original size - still coloured on the wind-particle scale - with direction/speed on one line and temperature/dewpoint/humidity smaller below. No station name in the box itself; the full reading appears on hover, with the network name (e.g. "MeteoSwiss SwissMetNet") last and in the smallest text, as the least important part. Dewpoint is calculated from temperature + humidity (Magnus-Tetens approximation), since SwissMetNet doesn't report it directly. Built as one shared function so any additional national network added later automatically follows the same display rules.
+
+**Real bug fixed: aircraft/weather-station tooltips could render behind their own markers.** Both custom map panes were set to z-index 650 - exactly tied with Leaflet's own built-in tooltip pane - and being created later in the DOM meant they actually won that tie and rendered on top of tooltips despite the "equal" value. Lowered to 625, clearly below tooltips.
+
+Aircraft tooltips redesigned: much smaller, all data on one wrapping line instead of stacked `<br>` lines, with the source ("via ADSBExchange" / "via OGN/FLARM") on its own even-smaller line below.
+
+Air Traffic now refreshes on a 15s timer whenever the layer is on, not just when the map is panned or zoomed - aircraft move fast enough that a static snapshot looked wrong within seconds.
+
+**New day, new version scheme count (day 6).**
+
+METAR's airport symbol now rotates to point with the wind (same "blowing toward" convention as elsewhere in the app), and its info box is tinted blue instead of grey, so it's visually distinct from the general weather stations.
+
+**Second national weather network added: Germany, via Bright Sky (api.brightsky.dev)** - an open-source, CORS-confirmed wrapper around DWD's official open data ("CORS requests are now allowed from all origins" per their own changelog). Unlike Switzerland, this doesn't need a fixed station list - `/current_weather?lat=..&lon=..` returns whichever real DWD station is nearest, with its real name, and includes dewpoint directly (no need to calculate it, unlike SwissMetNet). ~20 query points spread across Germany, weighted toward the south. Duplicate stations (multiple query points resolving to the same physical station) are filtered out before rendering.
+
+Covering "as many European countries as possible" is a genuinely large undertaking - each country typically has its own separate national service with its own API. Switzerland and Germany are now in; further countries (France, Austria, Italy, UK, etc.) would each need the same kind of dedicated research before being added, rather than guessed at.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

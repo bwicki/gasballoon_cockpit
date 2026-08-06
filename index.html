@@ -1187,7 +1187,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.28';
+const APP_VERSION = 'v260805.30';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -2459,7 +2459,7 @@ function calcDewPointC(tempC, rhPct){
 // display rules stay consistent across all of them.
 function buildWeatherStationTooltip(code, name, windDir, windKmh, tempC, dewC, rhPct, networkLabel){
   const windText = (windDir!=null && windKmh!=null) ? `${Math.round(windDir).toString().padStart(3,'0')}° ${Math.round(windKmh)}km/h` : 'no wind data';
-  const tempText = tempC!=null ? `${Math.round(tempC)}°${dewC!=null?'/DP '+Math.round(dewC)+'°':''}` : '';
+  const tempText = tempC!=null ? `${Math.round(tempC)}°${dewC!=null?' ('+Math.round(dewC)+'°)':''}` : '';
   const rhText = rhPct!=null ? `${Math.round(rhPct)}% RH` : '';
   const detailParts = [windText, tempText, rhText].filter(Boolean);
   return `<b>${code}</b> ${name?'('+name+')':''}<br>${detailParts.join(' · ')}<br><span style="font-size:8.5px;color:var(--muted);">${networkLabel}</span>`;
@@ -3788,21 +3788,56 @@ const plannedDescentPathLayer = L.polyline([], {color:'#ffee00', weight:3, dashA
 // THE CLICK, then left alone (not recomputed as the balloon actually moves)
 // so it's useful for comparing the real flown track against what was
 // predicted from an earlier point in time.
+//
+// Split into two segments rather than one continuous line: an "overlap"
+// portion, covering the same time range as Function 1's own normal
+// cruise+descent display and the Monte Carlo landing area, kept nearly
+// transparent so it sits invisibly behind those without competing with
+// them - and an "extension" portion beyond that, in solid blue, showing
+// the genuinely new part. Both are pushed to the back of the map's
+// rendering order on every update as an extra safeguard, so even the
+// transparent segment can never visually sit on top of another layer's
+// own markers/symbols by accident.
+const extendedTrajectoryOverlapOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, opacity:0.05});
+const extendedTrajectoryOverlapLine = L.polyline([], {color:'#3fa9ff', weight:3.5, lineCap:'round', opacity:0.08, interactive:false});
 const extendedTrajectoryOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false});
-const extendedTrajectoryLine = L.polyline([], {color:'#00e676', weight:3.5, opacity:1, lineCap:'round'});
+const extendedTrajectoryLine = L.polyline([], {color:'#3fa9ff', weight:3.5, opacity:1, lineCap:'round'});
 let extendedTrajectoryCloseMarker = null;
 let extendedTrajectoryCloseMarkerStart = null;
+let extendedTrajectoryStartPoint = null; // the frozen actual start (lat/lon) - the start button eventually settles here
 const extendedTrajectoryCloseIcon = L.divIcon({
   html:'<div style="width:22px;height:22px;border-radius:50%;background:var(--bad);border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></div>',
   className:'', iconSize:[22,22], iconAnchor:[11,11]
 });
 function clearExtendedTrajectory(){
-  extendedTrajectoryOutline.setLatLngs([]);
-  extendedTrajectoryLine.setLatLngs([]);
-  if(map.hasLayer(extendedTrajectoryOutline)) map.removeLayer(extendedTrajectoryOutline);
-  if(map.hasLayer(extendedTrajectoryLine)) map.removeLayer(extendedTrajectoryLine);
+  [extendedTrajectoryOverlapOutline, extendedTrajectoryOverlapLine, extendedTrajectoryOutline, extendedTrajectoryLine].forEach(l=>{
+    l.setLatLngs([]);
+    if(map.hasLayer(l)) map.removeLayer(l);
+  });
   if(extendedTrajectoryCloseMarker){ map.removeLayer(extendedTrajectoryCloseMarker); extendedTrajectoryCloseMarker = null; }
   if(extendedTrajectoryCloseMarkerStart){ map.removeLayer(extendedTrajectoryCloseMarkerStart); extendedTrajectoryCloseMarkerStart = null; }
+  extendedTrajectoryStartPoint = null;
+}
+// Keeps the start-side close button clear of the live position symbol: while
+// the balloon is still close to the trajectory's own (frozen) starting
+// point, the button sits offset to the side rather than right on top of
+// it; once the balloon has moved far enough away that there's no risk of
+// overlap, the button settles back exactly onto that frozen starting
+// point instead of continuing to trail the (moving) balloon around.
+function repositionExtendedTrajectoryStartButton(){
+  if(!extendedTrajectoryCloseMarkerStart || !extendedTrajectoryStartPoint) return;
+  const distM = haversine(state.lat, state.lon, extendedTrajectoryStartPoint.lat, extendedTrajectoryStartPoint.lon);
+  const COLLISION_RADIUS_M = 400; // roughly matches the position marker's own on-screen footprint at typical zooms
+  if(distM > COLLISION_RADIUS_M){
+    extendedTrajectoryCloseMarkerStart.setLatLng([extendedTrajectoryStartPoint.lat, extendedTrajectoryStartPoint.lon]);
+  } else {
+    // Offset perpendicular to the trajectory's own initial bearing so the
+    // button reads as "belonging to" the line rather than floating
+    // randomly - reuses the same bearing the onboarding hint offsets by.
+    const bearing = bearingBetween(extendedTrajectoryStartPoint.lat, extendedTrajectoryStartPoint.lon, state.lat, state.lon);
+    const [offLat, offLon] = destPoint(state.lat, state.lon, bearing+90, COLLISION_RADIUS_M*1.3);
+    extendedTrajectoryCloseMarkerStart.setLatLng([offLat, offLon]);
+  }
 }
 // Standard closest-point-on-polyline: walks every segment, projects the
 // clicked point onto each (clamped to the segment itself, not the infinite
@@ -3829,6 +3864,7 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const rate2 = parseFloat(document.getElementById('sRate2').value);
+  const initDelayMin = parseFloat(document.getElementById('sInit').value);
   // A long cruise-only horizon (48h) so this can reach well beyond the
   // cached area - getActiveWindProfile() clamps to the last available
   // forecast hour rather than erroring once the model horizon runs out, so
@@ -3850,11 +3886,26 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   const closest = closestPointOnPath(cruiseOnly, clickLat, clickLon);
   if(!closest) return;
   const truncated = cruiseOnly.slice(0, closest.segIdx+1).concat([{lat:closest.lat, lon:closest.lon, t:closest.t}]);
-  const latlngs = truncated.map(p=>[p.lat,p.lon]);
-  extendedTrajectoryOutline.setLatLngs(latlngs);
-  extendedTrajectoryLine.setLatLngs(latlngs);
-  extendedTrajectoryOutline.addTo(map);
-  extendedTrajectoryLine.addTo(map);
+  // Boundary between "overlap" and "extension": the full length (cruise +
+  // descent, down to the ground) of Function 1's own normal live
+  // projection, computed fresh with today's settings - everything up to
+  // that time is already shown by the normal trajectory/descent
+  // path/landing area, so it's the near-transparent segment here.
+  const normalFullPath = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
+  const overlapEndT = normalFullPath.length ? normalFullPath[normalFullPath.length-1].t : 0;
+  const overlapPts = truncated.filter(p=>p.t<=overlapEndT);
+  const extensionPts = truncated.filter(p=>p.t>=overlapEndT); // >= so the two segments share a point and connect with no visible gap
+  const overlapLatlngs = overlapPts.map(p=>[p.lat,p.lon]);
+  const extensionLatlngs = extensionPts.length>=2 ? extensionPts.map(p=>[p.lat,p.lon]) : truncated.map(p=>[p.lat,p.lon]);
+  extendedTrajectoryOverlapOutline.setLatLngs(overlapLatlngs);
+  extendedTrajectoryOverlapLine.setLatLngs(overlapLatlngs);
+  extendedTrajectoryOutline.setLatLngs(extensionLatlngs);
+  extendedTrajectoryLine.setLatLngs(extensionLatlngs);
+  [extendedTrajectoryOverlapOutline, extendedTrajectoryOverlapLine, extendedTrajectoryOutline, extendedTrajectoryLine].forEach(l=>{
+    l.addTo(map);
+    l.bringToBack(); // stays behind Function 1's own trajectory/descent/landing-area layers regardless of add order
+  });
+  extendedTrajectoryStartPoint = {lat: truncated[0].lat, lon: truncated[0].lon};
   if(extendedTrajectoryCloseMarker) map.removeLayer(extendedTrajectoryCloseMarker);
   extendedTrajectoryCloseMarker = L.marker([closest.lat, closest.lon], {icon: extendedTrajectoryCloseIcon, interactive:true})
     .on('click', clearExtendedTrajectory)
@@ -3863,6 +3914,7 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   extendedTrajectoryCloseMarkerStart = L.marker([truncated[0].lat, truncated[0].lon], {icon: extendedTrajectoryCloseIcon, interactive:true})
     .on('click', clearExtendedTrajectory)
     .addTo(map);
+  repositionExtendedTrajectoryStartButton();
 }
 
 
@@ -4867,6 +4919,7 @@ function updatePosition(lat, lon, altAMSL, deviceCourse, deviceSpeedKn, computeF
   breadcrumbLine.setLatLngs(state.breadcrumb.map(p=>[p.lat,p.lon]));
   renderSidebarPosition();
   recomputeAll();
+  repositionExtendedTrajectoryStartButton();
 }
 
 function formatAltAMSL(altM){
@@ -6235,8 +6288,18 @@ map.on('click', async (e)=>{
     // stale or simply not finished yet, which was the real cause of the
     // area only "sometimes" appearing to work.
     clearTimeout(stagedAreaFetchTimer);
+    try{
     await computeStagedReachableArea();
-    if(!state.stagedReachableHull){ return; }
+    if(!state.stagedReachableHull){
+      // Was a silent no-op before - almost certainly the real explanation
+      // for "the side panel just doesn't open": nothing was ever wrong
+      // with the panel itself, this click simply never reached it because
+      // the reachable area couldn't be computed (most often missing wind
+      // data) and returned here with no feedback at all.
+      showMapHint(e.latlng, "reachable area unavailable - check wind data (see warning banner) and try again");
+      console.error('Staged descent: state.stagedReachableHull is empty/missing after computeStagedReachableArea() - likely no wind profile available.');
+      return;
+    }
     // Clicking outside the reachable area isn't a meaningful action - that
     // point genuinely isn't achievable, so there's nothing to search for.
     if(!pointInPolygon([e.latlng.lng, e.latlng.lat], state.stagedReachableHull)){
@@ -6248,6 +6311,10 @@ map.on('click', async (e)=>{
     stagedTargetMarker = L.marker([e.latlng.lat,e.latlng.lng], {icon: crossIcon}).addTo(map);
     const result = searchStagedDescentToTarget(e.latlng.lat, e.latlng.lng);
     showStagedDescentPlan(result);
+    }catch(err){
+      console.error('Staged descent: click handling failed:', err);
+      showMapHint(e.latlng, "couldn't compute a plan for this point - see console for details");
+    }
     return;
   }
   // Any point can be an "Intended Landing Point" now - the app extends the

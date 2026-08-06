@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260805.28** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260805.30** (05.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -348,6 +348,18 @@ Extended trajectory preview: added a second close (X) button at the start of the
 **Good news from your latest log: no reference errors at all** - the two rounds of temporal-dead-zone fixes held up, the script runs cleanly through startup now. The actual blocker in that log was Open-Meteo returning 429 ("too many requests") on essentially every single call - elevation, main wind forecast, the wind grid, and the lightning rain-check all failed the same way, confirming the daily quota exhaustion found earlier. Since `doRecompute()` bails out immediately with no wind profile to work from, that alone fully explains "Function 1/2 and the extended trajectory don't work" this time - not a code bug, just literally no data to compute anything from.
 
 **Added a visible warning for this**: previously this failure was silent (nothing on screen, only visible in the console) - now a banner reads "No wind data available - the weather model request failed (e.g. daily quota, network). Trajectory and landing area can't be calculated until it succeeds again." whenever `doRecompute()` has no wind profile to work with, and clears itself automatically the moment fresh data comes through. Re-ran the temporal-dead-zone scanner from last version afterwards to confirm this change introduced nothing new - same 9 already-verified-safe results as before.
+
+Weather station hover: dewpoint format changed to "22° (12°)" - just parentheses, no "DP" label.
+
+**Likely the real, root explanation for "Staged Descent's side panel doesn't open" - found by tracing every step of the click handler instead of the panel itself again.** The panel was never the problem. The map click handler that's supposed to lead to it had two silent failure points: (1) `if(!state.stagedReachableHull){ return; }` - if the reachable area couldn't be computed (most often because of exactly the missing-wind-data situation from last version), this quietly did nothing at all, no error, no message, so `showStagedDescentPlan` was simply never reached; (2) the whole block had no error handling, so any other exception along the way (e.g. from the underlying simulation) would also fail silently. Both are now fixed: a clear on-map hint plus a console error when the reachable area is unavailable, and the entire click-to-plan sequence wrapped in a try/catch that shows a hint instead of failing invisibly for any other reason. Verified afterwards that brace balance and the temporal-dead-zone scan are both still clean.
+
+**Extended trajectory redesigned per feedback (glad it's working well!):**
+
+- Now blue instead of green.
+- Split into two segments: an "overlap" portion (same time range as Function 1's own normal cruise+descent display and Monte Carlo landing area) kept nearly transparent so it sits invisibly behind them, and an "extension" portion beyond that in solid blue - the genuinely new part. The boundary is computed from a fresh run of Function 1's own normal prediction at click time, so it lines up with whatever's actually on screen.
+- Both segments are pushed to the back of the map's rendering order (`bringToBack()`) every time they're drawn, so neither can ever visually sit on top of another layer's markers/symbols.
+- The start-side close button now tracks the live position while it's close enough to risk overlapping the balloon symbol, offset to the side rather than sitting on top of it - and settles back onto the trajectory's own fixed starting point once the balloon has moved far enough away that there's no more collision risk, rather than continuing to trail it around indefinitely.
+- Confirmed it already persisted across switching to Function 2 (nothing in the mode-switch code touches these layers) - no change needed there, just verified.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

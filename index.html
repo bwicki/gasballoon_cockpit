@@ -194,6 +194,14 @@ body.day #map{background:#dfe6ea;}
 .slider-row.onboarding-highlight{outline:2px solid var(--good);outline-offset:3px;border-radius:6px;background:rgba(61,220,111,0.1);transition:outline-color .3s ease, background-color .3s ease;}
 .slider-row.onboarding-highlight-orange{outline:2px solid #c96a1f;outline-offset:3px;border-radius:6px;background:rgba(201,106,31,0.12);transition:outline-color .3s ease, background-color .3s ease;}
 .onboarding-highlight-blue{outline:2px solid #4d80ff;outline-offset:3px;border-radius:6px;background:rgba(77,128,255,0.12);transition:outline-color .3s ease, background-color .3s ease;}
+#flightDataBox{display:flex;position:fixed;z-index:900;background:#ffffff;border:1px solid #d3dae0;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.14);overflow:visible;cursor:grab;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;user-select:none;}
+#flightDataBox:active{cursor:grabbing;}
+#flightDataBox .fdb-sq{width:88px;height:88px;flex-shrink:0;box-sizing:border-box;}
+#flightDataBox .fdb-half{height:44px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:0 8px;}
+#flightDataBox .fdb-unit{font-size:8.5px;font-weight:400;color:#5c6b78;white-space:nowrap;}
+#flightDataBox .fdb-num{font-size:12px;font-weight:600;color:#16202a;white-space:nowrap;}
+#flightDataBox .fdb-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+#flightDataBoxClose{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;background:#b8342b;border:1.6px solid #eef1f3;color:#fff;font-size:9px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
 .slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
@@ -431,6 +439,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <button class="ghost" id="btnRefreshCacheNow" style="margin-top:6px;">↻ Refresh current cache now</button>
         <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Re-downloads map tiles AND all currently-enabled data layers (airspace, roads, nature reserves, non-landable terrain, region names) around the current position right away, instead of waiting for the automatic re-check.</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Transition altitude</span>
+          <input type="number" id="sTransitionAlt" min="0" max="20000" step="100" value="5000" style="width:80px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;"> <span style="color:var(--muted);font-size:11px;">ft</span>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin:4px 0 0;">Above this altitude, the flight data box shows a flight level (FL) instead of the AGL figure below it - standard aviation convention, not a real ATC-assigned transition altitude for your specific airspace.</p>
 
         <hr>
         
@@ -600,9 +613,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <span style="font-size:12px;color:var(--muted);">kg</span>
         </div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Envelope + basket + payload + ballast - needed so the ballast-equivalent from adiabatic heating is expressed as a properly scaled fraction of your actual system weight, not a fixed percentage.</p>
-        <div class="slider-row">
-          <div class="lbl"><span>Empirical variance factor</span><b id="lblAdiaVariance" style="color:var(--accent2);">100 %</b></div>
-          <input type="range" id="sAdiaVariance" min="30" max="200" step="5" value="100">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12.5px;flex:1;">Empirical variance factor</span>
+          <input type="number" id="sAdiaVariance" min="30" max="200" step="5" value="100" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
+          <span style="font-size:12px;color:var(--muted);">%</span>
         </div>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">Scales the computed adiabatic lift bonus up or down to match your own empirical flight data (100% = model as-is).</p>
 
@@ -778,6 +792,34 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="main">
     <div id="mapwrap">
       <div id="versionChip" class="leaflet-control-attribution version-badge"></div>
+      <div id="flightDataBox" style="display:none;">
+        <div id="flightDataBoxClose">✕</div>
+        <div class="fdb-sq" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:1px solid #e5e9ec;">
+          <svg id="fdbVArrow" width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="#1c8a49" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4M6 10l6-6 6 6"/></svg>
+          <div id="fdbVSpeed" class="fdb-num" style="font-size:15px;color:#1c8a49;">+0.0</div>
+          <div class="fdb-unit">m/s</div>
+        </div>
+        <div class="fdb-sq" style="display:flex;flex-direction:column;border-right:1px solid #e5e9ec;">
+          <div class="fdb-half" style="align-items:center;flex-direction:row;justify-content:center;gap:5px;border-bottom:1px solid #e5e9ec;">
+            <svg id="fdbCourseArrow" width="17" height="17" viewBox="-6 -6 36 36" style="flex-shrink:0;"><path d="M12 0 L20 20 L12 15 L4 20 Z" fill="#1a6fd4"/></svg>
+            <span id="fdbCourse" class="fdb-num" style="font-size:14px;">---°</span>
+          </div>
+          <div class="fdb-half">
+            <div class="fdb-row"><span class="fdb-unit">km/h</span><span id="fdbSpeedKmh" class="fdb-num">0.0</span></div>
+            <div class="fdb-row"><span class="fdb-unit">kn</span><span id="fdbSpeedKn" class="fdb-num" style="font-weight:400;color:#5c6b78;">0.0</span></div>
+          </div>
+        </div>
+        <div class="fdb-sq" style="display:flex;flex-direction:column;">
+          <div class="fdb-half" style="border-bottom:1px solid #e5e9ec;">
+            <div class="fdb-row"><span class="fdb-unit">m AMSL</span><span id="fdbAmsl" class="fdb-num">0</span></div>
+            <div class="fdb-row"><span class="fdb-unit">ft</span><span id="fdbFt" class="fdb-num" style="font-weight:400;color:#5c6b78;">0</span></div>
+          </div>
+          <div class="fdb-half">
+            <div style="text-align:right;font-size:10px;font-weight:600;color:#5c6b78;white-space:nowrap;margin-bottom:2px;" id="fdbFL">FL --</div>
+            <div class="fdb-row"><span class="fdb-unit">m AGL</span><span id="fdbAgl" class="fdb-num" style="font-weight:400;color:#5c6b78;">0</span></div>
+          </div>
+        </div>
+      </div>
       <a id="aprsCreditFooter" href="https://aprs.fi" target="_blank" rel="noopener" style="display:none;position:absolute;left:6px;bottom:2px;margin-left:110px;z-index:5000;font-size:9px;color:#dfe6ea;background:rgba(30,35,41,0.75);padding:1px 5px;border-radius:4px;text-decoration:underline;">APRS data: aprs.fi</a>
       <div id="map"></div>
       <div id="topAlertStack">
@@ -1196,14 +1238,14 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.15';
+const APP_VERSION = 'v260806.17';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
 // ---------- state ----------
 const state = {
   lat: 47.3769, lon: 8.5417, altAMSL: 3000, groundElev: 450,
-  course: 90, speedKn: 15,
+  course: 90, speedKn: 15, climbRateMs: 0,
   breadcrumb: [], // {lat,lon,t}
   testMode: false,
   windProfile: null, // array of {alt_m, dir_deg, speed_ms}
@@ -1229,6 +1271,8 @@ const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
 const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
 let balloonVolumeM3 = 1050; // configurable in Settings
 let currentSubMode = 'quick'; // 'quick' | 'staged' - Plan Descent's two subfunctions
+let flightDataBoxManuallyPositioned = false;
+let flightDataBoxClosed = false;
 let balloonMassKg = 300; // total system mass EXCLUDING lifting gas (envelope+basket+payload+ballast), configurable in Settings
 let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
 
@@ -3844,7 +3888,7 @@ function violetTickIcon(bearingDeg){
   });
 }
 let plannedDescentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0, '#ff8a00'), opacity:0, draggable:false});
-let descentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0), opacity:0}).addTo(map);
+let descentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0), opacity:0, draggable:true}).addTo(map);
 let initPointMarker = null;
 const crossIcon = L.divIcon({
   html:'<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#ff5a3c" stroke-width="2.5"/><circle cx="12" cy="12" r="2.5" fill="#ff5a3c"/></svg>',
@@ -3986,6 +4030,27 @@ function closestPointOnPath(path, lat, lon){
   }
   return best ? {...best, distM:bestDistM} : null;
 }
+// Function 1's descent point can now be set two ways: the "Initiate
+// descent in" slider (as before), or dragging this cross marker directly
+// on the trajectory - forward or backward. Dragging snaps to the long
+// cruise-only reference path (state.function1LongCruisePath, refreshed
+// every recompute) and converts the snapped point's own time back into
+// minutes for the slider, so both controls stay in sync and either one
+// can be used interchangeably. Setting sInit and calling recomputeAll()
+// (rather than just moving the marker) is what keeps this dynamic exactly
+// like the slider already was - the point keeps recalculating from the
+// balloon's actual current position/altitude as those change, rather than
+// freezing wherever it was dropped.
+descentInitMarker.on('dragend', (e)=>{
+  const raw = e.target.getLatLng();
+  const path = state.function1LongCruisePath;
+  if(!path || path.length<2) return;
+  const snapped = closestPointOnPath(path, raw.lat, raw.lng);
+  if(!snapped) return;
+  const minutes = Math.round(snapped.t/60);
+  document.getElementById('sInit').value = minutes;
+  document.getElementById('sInit').dispatchEvent(new Event('input', {bubbles:true}));
+});
 function handleExtendedTrajectoryClick(clickLat, clickLon){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
@@ -5110,11 +5175,15 @@ function updatePosition(lat, lon, altAMSL, deviceCourse, deviceSpeedKn, computeF
         state.speedKn = (dist/dt) * KN_PER_MS;
       }
       // else: keep previous course/speed (too little movement to derive a reliable value)
+      // Vertical rate uses its own threshold (just elapsed time, not
+      // horizontal distance) - the balloon can genuinely climb or sink
+      // while sitting still horizontally in dead air.
+      if(dt >= 1) state.climbRateMs = (altAMSL - state.lastFix.alt) / dt;
     } else if(deviceCourse!=null || deviceSpeedKn!=null){
       state.course = deviceCourse!=null ? deviceCourse : state.course;
       state.speedKn = deviceSpeedKn!=null ? deviceSpeedKn : state.speedKn;
     }
-    state.lastFix = {lat, lon, t: now};
+    state.lastFix = {lat, lon, alt: altAMSL, t: now};
   } else {
     // Manual/test-mode position set: course & speed come from the Test Mode
     // panel inputs directly (already applied to state before this call).
@@ -5129,6 +5198,7 @@ function updatePosition(lat, lon, altAMSL, deviceCourse, deviceSpeedKn, computeF
   renderSidebarPosition();
   recomputeAll();
   repositionExtendedTrajectoryStartButton();
+  updateFlightDataBox();
 }
 
 function formatAltAMSL(altM){
@@ -5484,8 +5554,8 @@ document.getElementById('sBalloonMass').addEventListener('input', e=>{
   recomputeAll();
 });
 document.getElementById('sAdiaVariance').addEventListener('input', e=>{
-  adiaVarianceFactor = parseInt(e.target.value)/100;
-  document.getElementById('lblAdiaVariance').textContent = e.target.value + ' %';
+  const v = parseInt(e.target.value);
+  if(!isNaN(v)) adiaVarianceFactor = v/100;
   recomputeAll();
 });
 function adiabaticVolumeAndLift(volumeM3, startAltM, interceptAltM, descRateMs){
@@ -5684,6 +5754,13 @@ function doRecompute(){
   // deterministic (no scatter) path for warning-collision checks / hodograph reference
   const refPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
   state.secondsToLanding = refPath.length ? refPath[refPath.length-1].t : 0;
+  // A separate, longer cruise-only path (out to 250min, just past the
+  // "Initiate descent in" slider's own 240min max) kept fresh here purely
+  // so the descent-point marker can be dragged forward past whatever the
+  // CURRENT sInit value happens to be - refPath above always transitions
+  // into descent right at the current sInit time by construction, so it
+  // can't be used as a snap target beyond that point.
+  state.function1LongCruisePath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, 250*60, rate1, interceptAGL, rate2, 0).filter(p=>p.t<=250*60);
   checkObstacleWarnings(refPath);
   updateAdiabaticReadout(rate1, interceptAGL);
   drawHodograph(refPath);
@@ -6391,6 +6468,12 @@ function setAppMode(mode){
   state.appMode = mode;
   document.getElementById('modeMonitor').classList.toggle('active', mode==='monitor');
   document.getElementById('modePlan').classList.toggle('active', mode==='plan');
+  // The flight data box persists across Landing Area <-> Plan Descent and
+  // is only ever dismissed for the current view - every switch between
+  // the two main functions reopens it (at wherever it last was, whether
+  // that's the default offset or a manually dragged spot), per spec.
+  flightDataBoxClosed = false;
+  showFlightDataBox();
   if(mode==='plan'){
     // Hide the live (monitor-mode) landing area AND the live yellow
     // projection (cruise/descent segments + init-point triangle) while
@@ -7150,6 +7233,83 @@ document.getElementById('iconMoon').style.display = 'none';
 // screenshot showed. Reading the true getBoundingClientRect() cannot
 // drift out of sync like that, regardless of what the button's own
 // content looks like.
+// ---------- Flight data box (course/speed/climb-sink, next to the balloon
+// marker) ----------
+// Tracks the balloon's own on-screen position with a fixed pixel offset
+// (so it never sits on top of the marker) until the user drags it
+// somewhere else, at which point it stays exactly there regardless of
+// where the balloon moves to next - a deliberate manual placement, not
+// something that should keep resetting itself. Closing it only lasts
+// until the next switch between Landing Area and Plan Descent - per the
+// spec, it reopens (at whatever position it was last at) on every such
+// switch, rather than staying dismissed for the rest of the session.
+// flightDataBoxManuallyPositioned/flightDataBoxClosed declared much earlier now (precautionary)
+function updateFlightDataBoxPosition(){
+  const box = document.getElementById('flightDataBox');
+  if(flightDataBoxManuallyPositioned || box.style.display==='none') return;
+  const mapEl = document.getElementById('map');
+  const mapRect = mapEl.getBoundingClientRect();
+  const pt = map.latLngToContainerPoint([state.lat, state.lon]);
+  // Offset up and to the right of the marker - clear of its own icon at
+  // typical sizes, and clear of the "N" compass/base-layer controls in
+  // the top-right corner at typical zoom levels.
+  box.style.left = Math.round(mapRect.left + pt.x + 26) + 'px';
+  box.style.top = Math.round(mapRect.top + pt.y - 110) + 'px';
+}
+function updateFlightDataBoxContent(){
+  const box = document.getElementById('flightDataBox');
+  if(box.style.display==='none') return;
+  const vRate = state.climbRateMs||0;
+  document.getElementById('fdbVSpeed').textContent = (vRate>=0?'+':'')+vRate.toFixed(1);
+  document.getElementById('fdbVSpeed').style.color = vRate>=0 ? '#1c8a49' : '#e0483f';
+  document.getElementById('fdbVArrow').setAttribute('stroke', vRate>=0 ? '#1c8a49' : '#e0483f');
+  document.getElementById('fdbVArrow').innerHTML = vRate>=0
+    ? '<path d="M12 20V4M6 10l6-6 6 6"/>'
+    : '<path d="M12 4V20M6 14l6 6 6-6"/>';
+  document.getElementById('fdbCourse').textContent = Math.round(state.course)+'°';
+  document.getElementById('fdbCourseArrow').style.transform = `rotate(${state.course}deg)`;
+  const kmh = state.speedKn*1.852;
+  document.getElementById('fdbSpeedKmh').textContent = kmh.toFixed(1);
+  document.getElementById('fdbSpeedKn').textContent = state.speedKn.toFixed(1);
+  const ft = state.altAMSL*3.28084;
+  document.getElementById('fdbAmsl').textContent = Math.round(state.altAMSL);
+  document.getElementById('fdbFt').textContent = Math.round(ft);
+  const aglM = state.altAMSL - state.groundElev;
+  document.getElementById('fdbAgl').textContent = Math.round(aglM);
+  const transitionFt = parseFloat(document.getElementById('sTransitionAlt').value) || 5000;
+  document.getElementById('fdbFL').textContent = ft>transitionFt
+    ? 'FL '+String(Math.round(ft/100)).padStart(3,'0')
+    : 'FL --';
+}
+function updateFlightDataBox(){ updateFlightDataBoxPosition(); updateFlightDataBoxContent(); }
+function showFlightDataBox(){
+  document.getElementById('flightDataBox').style.display = 'flex';
+  updateFlightDataBox();
+}
+(function setupFlightDataBoxDrag(){
+  const box = document.getElementById('flightDataBox');
+  const closeBtn = document.getElementById('flightDataBoxClose');
+  let dragging = false, offX = 0, offY = 0;
+  box.addEventListener('pointerdown', (e)=>{
+    if(e.target===closeBtn) return;
+    dragging = true;
+    box.setPointerCapture(e.pointerId);
+    const rect = box.getBoundingClientRect();
+    offX = e.clientX-rect.left; offY = e.clientY-rect.top;
+  });
+  box.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    flightDataBoxManuallyPositioned = true;
+    box.style.left = (e.clientX-offX)+'px';
+    box.style.top = (e.clientY-offY)+'px';
+  });
+  box.addEventListener('pointerup', ()=>{ dragging = false; });
+  closeBtn.addEventListener('click', ()=>{
+    box.style.display = 'none';
+    flightDataBoxClosed = true;
+  });
+})();
+map.on('move zoom', updateFlightDataBoxPosition);
 function positionSubModeToggle(){
   const btn = document.getElementById('modePlan');
   const toggle = document.getElementById('subModeToggle');
@@ -8259,7 +8419,7 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret','sTransitionAlt'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 // ---------- profile export/import (all settings, keys, emergency contact
@@ -8503,6 +8663,7 @@ try{
   recomputeAll();
   precacheAreaTiles(state.lat, state.lon, cacheRadiusKm);
   setTimeout(showFunction1OnboardingHint, 500); // short delay so the trajectory itself has settled before the hint positions itself off of it
+  showFlightDataBox();
 })();
 // Belt-and-suspenders: the landing area/descent point already recompute on
 // every position update and every wind-model refresh, but this guarantees

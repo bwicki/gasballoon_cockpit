@@ -470,7 +470,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         
         
           <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
-        <p style="font-size:10px;color:var(--bad);margin:0 0 8px;">⚠ Currently not working: MetarCentral now blocks both the bulk AND the single-airport endpoint via CORS (confirmed via a live browser test - this changed since an earlier test where the single-airport one worked). Switzerland, Germany, and the rest-of-Europe sources below are unaffected and still work.</p>
+        <p style="font-size:10px;color:var(--bad);margin:0 0 8px;">⚠ Currently not working: MetarCentral blocks both endpoints via CORS (confirmed live). CheckWX, researched as a replacement, also failed a live CORS test the same way despite documentation suggesting browser use should work - aviation-weather providers seem to consistently not enable this for direct client-side access. Switzerland, Germany, and the rest-of-Europe sources below are unaffected and still work.</p>
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">Lightning (part of Rain layer)</div>
@@ -793,6 +793,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <div id="warnbar"><button class="banner-close" onclick="dismissBanner('warnbar','warnbarIcon')">✕</button><span id="warnbarText"></span></div>
         <div id="descentWindWarnBar" class="yellow-warn"><button class="banner-close" onclick="dismissBanner('descentWindWarnBar','descentWindWarnIcon')">✕</button><span id="descentWindWarnText"></span></div>
+        <div id="noWindDataWarnBar" class="yellow-warn"><button class="banner-close" onclick="dismissBanner('noWindDataWarnBar','noWindDataWarnIcon')">✕</button><span>⚠ No wind data available - the weather model request failed (e.g. daily quota, network). Trajectory and landing area can't be calculated until it succeeds again.</span></div>
         <div id="gpsWarnBar" class="gps-warn">
           <button class="banner-close" onclick="dismissBanner('gpsWarnBar','gpsWarnIcon')">✕</button>
           <span id="gpsWarnText">⚠ GPS data not available</span>
@@ -1186,7 +1187,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.25';
+const APP_VERSION = 'v260805.28';
 const APP_DATE = '05.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1208,6 +1209,18 @@ const state = {
 const G = 9.80665;
 const KMH_PER_MS = 3.6;
 const KN_PER_MS = 1.94384;
+// Moved here from much later in the file (near where they're mainly used)
+// after finding the exact same temporal-dead-zone bug pattern that broke
+// the ground-wind-warning timer: these are referenced by functions that
+// could in principle be reached from early, synchronous top-level setup
+// code, so declaring them this early removes any risk of it regardless of
+// which exact call chain gets there first - rather than tracing every
+// possible path individually under time pressure.
+const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
+const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
+let balloonVolumeM3 = 1050; // configurable in Settings
+let balloonMassKg = 300; // total system mass EXCLUDING lifting gas (envelope+basket+payload+ballast), configurable in Settings
+let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
 
 // ---------- utils ----------
 function toDMS(deg, isLat){
@@ -1572,10 +1585,11 @@ const BOTTOM_LEGEND_IDS = ['groundWindLegendBar','powerLegendBar'];
 const TOP_WARNING_BANNERS = [
   {bannerId:'warnbar', iconId:'warnbarIcon'},
   {bannerId:'descentWindWarnBar', iconId:'descentWindWarnIcon'},
+  {bannerId:'noWindDataWarnBar', iconId:'noWindDataWarnIcon'},
   {bannerId:'gpsWarnBar', iconId:'gpsWarnIcon'},
   {bannerId:'testCautionBar', iconId:'testCautionIcon'}
 ];
-let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, gpsWarnBar:false, testCautionBar:false};
+let bannerActiveButDismissed = {warnbar:false, descentWindWarnBar:false, noWindDataWarnBar:false, gpsWarnBar:false, testCautionBar:false};
 let legendActiveButDismissed = {groundWindLegendBar:false, powerLegendBar:false, regionNamesWarnBar:false};
 function updateAllLegendsReopenBtn(){
   const any = Object.values(legendActiveButDismissed).some(Boolean);
@@ -3174,7 +3188,7 @@ function lightningBoltIcon(){
 async function checkRainNearbyForLightningPrompt(){
   if(lightningPollingActive || lightningWarningShownThisSession) return; // already monitoring, or already asked this session
   try{
-    const ringPts = generateGridPoints(state.lat, state.lon, 300000, 8).slice(1); // skip the centre point itself, just the ring
+    const ringPts = generateGridPoints(state.lat, state.lon, 300000, 8).slice(1, 6); // 5 points, not the full ring - this is a background safety check, not the main forecast, so a coarser sample is an acceptable trade-off against Open-Meteo's daily quota
     const latStr = ringPts.map(p=>p[0].toFixed(2)).join(',');
     const lonStr = ringPts.map(p=>p[1].toFixed(2)).join(',');
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&current=precipitation&timezone=UTC`);
@@ -3270,7 +3284,7 @@ async function fetchLightningData(){
   }
   lightningPollingTimer = setTimeout(fetchLightningData, 600000); // 10 minutes
 }
-setInterval(checkRainNearbyForLightningPrompt, 900000); // check every 15 min whether it's worth prompting
+setInterval(checkRainNearbyForLightningPrompt, 1800000); // 30 min (was 15) - Open-Meteo's daily quota was found exhausted during testing, so this background check is now more conservative with it
 setTimeout(checkRainNearbyForLightningPrompt, 30000); // and once shortly after load
 
 // OGN/glidernet.org (FLARM/FANET - gliders, paragliders, helicopters and
@@ -4901,8 +4915,6 @@ function detectInversionOrIsothermal(profile, belowAltM){
 // Wind shear: a large speed and/or direction change between two adjacent
 // levels in the descent path below the current position - relevant because
 // it can mean rough, oscillating handling right before landing.
-const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
-const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
 function detectWindShear(profile, belowAltM){
   if(!profile) return [];
   const levels = profile.filter(p=>p.speed_ms!=null && p.alt_m<=belowAltM).sort((a,b)=>b.alt_m-a.alt_m);
@@ -5199,9 +5211,6 @@ function simulateAdiabaticDescentThermal(volumeM3, startAltM, interceptAltM, des
   const adiabaticness = Math.max(0, Math.min(1, (Tgas-TambAtIntercept)/Math.max(0.01, TfullyAdiabatic-TambAtIntercept)));
   return { liftBonusKg: Math.max(0, liftBonusKg)*adiaVarianceFactor, adiabaticness, finalGasTempC: Tgas-273.15 };
 }
-let balloonVolumeM3 = 1050; // configurable in Settings
-let balloonMassKg = 300; // total system mass EXCLUDING lifting gas (envelope+basket+payload+ballast), configurable in Settings
-let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
 document.getElementById('sBalloonVolume').addEventListener('input', e=>{
   const v = parseInt(e.target.value);
   if(!isNaN(v) && v>0) balloonVolumeM3 = v;
@@ -5343,7 +5352,17 @@ function convexHull(points){
 }
 
 function doRecompute(){
-  if(!getActiveWindProfile()){ return; }
+  if(!getActiveWindProfile()){
+    document.getElementById('noWindDataWarnBar').classList.add('show');
+    bannerActiveButDismissed.noWindDataWarnBar = false;
+    updateAllWarningsReopenBtn();
+    return;
+  }
+  if(document.getElementById('noWindDataWarnBar').classList.contains('show')){
+    document.getElementById('noWindDataWarnBar').classList.remove('show');
+    bannerActiveButDismissed.noWindDataWarnBar = false;
+    updateAllWarningsReopenBtn();
+  }
   // Function 2's reference trajectory (and therefore the staged-descent
   // marker's snap target) was previously only computed once, right when
   // Plan Descent was first opened - switching sounding data source (sonde

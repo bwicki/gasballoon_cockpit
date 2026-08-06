@@ -191,6 +191,7 @@ body.day #map{background:#dfe6ea;}
 
 .slider-row{margin-bottom:3px;}
 .slider-row.onboarding-highlight{outline:2px solid var(--good);outline-offset:3px;border-radius:6px;background:rgba(61,220,111,0.1);transition:outline-color .3s ease, background-color .3s ease;}
+.slider-row.onboarding-highlight-orange{outline:2px solid #c96a1f;outline-offset:3px;border-radius:6px;background:rgba(201,106,31,0.12);transition:outline-color .3s ease, background-color .3s ease;}
 .slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
@@ -1190,7 +1191,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.09';
+const APP_VERSION = 'v260806.11';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1222,6 +1223,7 @@ const KN_PER_MS = 1.94384;
 const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
 const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
 let balloonVolumeM3 = 1050; // configurable in Settings
+let currentSubMode = 'quick'; // 'quick' | 'staged' - Plan Descent's two subfunctions
 let balloonMassKg = 300; // total system mass EXCLUDING lifting gas (envelope+basket+payload+ballast), configurable in Settings
 let adiaVarianceFactor = 1.0; // configurable empirical scaling of the adiabatic lift bonus
 
@@ -1676,6 +1678,53 @@ function showFunction1OnboardingHint(){
     document.getElementById(id).addEventListener('input', dismissFunction1OnboardingHint);
   });
   onboardingHintTimer = setTimeout(dismissFunction1OnboardingHint, 5000);
+}
+// ---------- Quick Descent onboarding hint (shown once, first time this
+// submode is entered) ----------
+// Same idea as Function 1's hint, but orange (matching the sub-mode
+// button's own color) and dismissed by a map click too, since that's the
+// actual first action this function expects.
+let quickOnboardingShown = false;
+let quickOnboardingHintMarker = null;
+let quickOnboardingHintTimer = null;
+function dismissQuickOnboardingHint(){
+  if(quickOnboardingHintMarker){ map.removeLayer(quickOnboardingHintMarker); quickOnboardingHintMarker = null; }
+  clearTimeout(quickOnboardingHintTimer);
+  ONBOARDING_HIGHLIGHT_SLIDER_IDS.forEach(id=>{
+    const row = document.getElementById(id+'Row');
+    if(row) row.classList.remove('onboarding-highlight-orange');
+    document.getElementById(id).removeEventListener('input', dismissQuickOnboardingHint);
+  });
+  map.off('click', dismissQuickOnboardingHint);
+}
+function showQuickDescentOnboardingHint(){
+  if(quickOnboardingShown) return; // once per session, like Function 1's own hint
+  if(!(state.appMode==='plan' && currentSubMode==='quick')) return;
+  quickOnboardingShown = true;
+  const path = state.referenceTrajectoryPath;
+  if(!path || path.length<2) return; // nothing to anchor the hint to yet
+  const ref = path.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || path[path.length-1];
+  const bearing = bearingBetween(state.lat, state.lon, ref.lat, ref.lon);
+  const [offLat, offLon] = destPoint(state.lat, state.lon, bearing+90, 1500);
+  const html = `<div style="background:#fdfdfb;color:#1a1a1a;border:1px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 10px;width:210px;font-size:11.5px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.35);position:relative;">
+    <button id="quickOnboardingHintClose" style="position:absolute;top:4px;right:4px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;">✕</button>
+    <div style="padding-right:16px;">Adjust highlighted sliders, and click into a desired landing area: the closest reachable landing area and descent path will be calculated</div>
+  </div>`;
+  quickOnboardingHintMarker = L.marker([offLat, offLon], {
+    icon: L.divIcon({html, className:'', iconSize:null, iconAnchor:[105,25]}),
+    interactive:true, zIndexOffset:2000
+  }).addTo(map);
+  quickOnboardingHintMarker.on('add', ()=>{
+    const btn = document.getElementById('quickOnboardingHintClose');
+    if(btn) btn.addEventListener('click', dismissQuickOnboardingHint);
+  });
+  ONBOARDING_HIGHLIGHT_SLIDER_IDS.forEach(id=>{
+    const row = document.getElementById(id+'Row');
+    if(row) row.classList.add('onboarding-highlight-orange');
+    document.getElementById(id).addEventListener('input', dismissQuickOnboardingHint);
+  });
+  map.on('click', dismissQuickOnboardingHint); // the actual first expected action - clicking a landing point - also dismisses it
+  quickOnboardingHintTimer = setTimeout(dismissQuickOnboardingHint, 5000);
 }
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
@@ -3716,10 +3765,11 @@ const blueDotIcon = L.divIcon({
 // meaning wasn't obvious at a glance. Real black outline strokes (not a
 // CSS filter) for the same cross-platform-reliability reason as the
 // trajectory lines above.
-function descentCrossIcon(bearingDeg){
+function descentCrossIcon(bearingDeg, color){
+  const c = color || '#ffee00';
   const rot = ((bearingDeg||0)+45)%360;
   return L.divIcon({
-    html:`<svg width="24" height="24" viewBox="0 0 24 24"><g transform="rotate(${rot},12,12)"><line x1="12" y1="3" x2="12" y2="21" stroke="#000" stroke-width="5.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#000" stroke-width="5.5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="#ffee00" stroke-width="3" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#ffee00" stroke-width="3" stroke-linecap="round"/></g></svg>`,
+    html:`<svg width="24" height="24" viewBox="0 0 24 24"><g transform="rotate(${rot},12,12)"><line x1="12" y1="3" x2="12" y2="21" stroke="#000" stroke-width="5.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#000" stroke-width="5.5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="${c}" stroke-width="3" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="${c}" stroke-width="3" stroke-linecap="round"/></g></svg>`,
     className:'', iconSize:[24,24], iconAnchor:[12,12]
   });
 }
@@ -3743,7 +3793,7 @@ function violetTickIcon(bearingDeg){
     className:'', iconSize:[26,24], iconAnchor:[13,12]
   });
 }
-let plannedDescentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0), opacity:0, draggable:true});
+let plannedDescentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0, '#ff8a00'), opacity:0, draggable:false});
 let descentInitMarker = L.marker([0,0], {icon: descentCrossIcon(0), opacity:0}).addTo(map);
 let initPointMarker = null;
 const crossIcon = L.divIcon({
@@ -3777,9 +3827,25 @@ function computeReferenceTrajectory(){
   const REFERENCE_MINUTES = 360;
   const path = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, REFERENCE_MINUTES*60, rate1, interceptAGL, rate2, 0);
   const cruiseOnly = path.filter(p=>p.t <= REFERENCE_MINUTES*60);
-  referenceTrajectoryOutline.setLatLngs(cruiseOnly.map(p=>[p.lat,p.lon]));
-  referenceTrajectoryLayer.setLatLngs(cruiseOnly.map(p=>[p.lat,p.lon]));
-  state.referenceTrajectoryPath = cruiseOnly; // kept WITH its time values, for the staged-descent draggable marker to snap to
+  state.referenceTrajectoryPath = cruiseOnly; // kept WITH its time values, for the staged-descent AND quick-descent draggable markers to snap to - always the FULL length, regardless of what's currently shown
+  updateReferenceTrajectoryDisplay();
+}
+// The reference trajectory line itself, as actually drawn on the map, is
+// separate from state.referenceTrajectoryPath (always the full 6h) - once
+// a Quick Descent plan is active, the part of the trajectory beyond the
+// descent point is exactly where the (yellow) descent path takes over
+// instead, so showing the reference line there too would be showing two
+// different, competing predictions for the same stretch. Called both
+// whenever the reference trajectory itself is recomputed and whenever the
+// descent point moves (a new click or a drag).
+function updateReferenceTrajectoryDisplay(){
+  const full = state.referenceTrajectoryPath;
+  if(!full || !full.length) return;
+  const cutT = (currentSubMode==='quick' && state.plannedLandingActive && state.plannedInitDelayMin!=null)
+    ? state.plannedInitDelayMin*60 : Infinity;
+  const shown = cutT===Infinity ? full : full.filter(p=>p.t<=cutT);
+  referenceTrajectoryOutline.setLatLngs(shown.map(p=>[p.lat,p.lon]));
+  referenceTrajectoryLayer.setLatLngs(shown.map(p=>[p.lat,p.lon]));
 }
 const plannedDescentPathOutline = L.polyline([], {color:'#000000', weight:5.5, lineCap:'round', interactive:false});
 const plannedDescentPathLayer = L.polyline([], {color:'#ffee00', weight:3, dashArray:'8,6', lineCap:'round'});
@@ -3939,7 +4005,7 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
 
 
 // ==================== STAGED DESCENT (subfunction 2 of Plan Descent) ====================
-let currentSubMode = 'quick'; // 'quick' | 'staged'
+// currentSubMode declared much earlier now (precautionary, after finding the exact same late-declaration pattern break several other things today)
 let minStageSeparationM = 300;
 let stagedTotalTimeMin = 60;
 let stagedDescentRateMs = 1.5;
@@ -5778,14 +5844,22 @@ function setWarnbarContent(text){
 // exactly where the warning banners also appear - push it down below
 // whichever banners are currently visible so it's never covered.
 function repositionModeToggle(){
-  // #modeToggle/#subModeToggle themselves sit inside #topAlertStack's own
-  // CSS flex column and need no JS positioning. #stagedPlanPanel is a
-  // SEPARATE element with its own top offset - if that were a fixed pixel
-  // value, several stacked warnings plus the subfunction toggle could
-  // easily push the real stack taller than that fixed value, causing a
-  // visible overlap. Position it dynamically, just below whatever is
-  // actually rendered above it right now. (Its reopen button now lives in
-  // the header instead of floating on the map, so it needs no such fix.)
+  // #modeToggle sits inside #topAlertStack's own CSS flex column and needs
+  // no JS positioning. #subModeToggle is NOT part of that flow though -
+  // it's position:fixed (so it can align exactly with #modePlan's real
+  // rendered position/width rather than approximating it) - which means it
+  // does NOT automatically follow #modePlan when the stack above it
+  // grows/shrinks (e.g. a warning banner opening or closing), unlike
+  // ordinary flex children. It needs to be told to reposition every time
+  // this function runs, for the same reasons anything else here does.
+  // #stagedPlanPanel is a separate element with its own top offset - if
+  // that were a fixed pixel value, several stacked warnings plus the
+  // subfunction toggle could easily push the real stack taller than that
+  // fixed value, causing a visible overlap. Position it dynamically, just
+  // below whatever is actually rendered above it right now. (Its reopen
+  // button now lives in the header instead of floating on the map, so it
+  // needs no such fix.)
+  if(state.appMode==='plan') positionSubModeToggle();
   const stack = document.getElementById('topAlertStack');
   const mapwrap = document.getElementById('mapwrap');
   if(!stack || !mapwrap) return;
@@ -6266,6 +6340,7 @@ function setAppMode(mode){
     positionSubModeToggle();
     setTimeout(repositionModeToggle, 0);
     setSubMode(currentSubMode); // re-apply current subfunction's map layers
+    setTimeout(showQuickDescentOnboardingHint, 400); // short delay so the reference trajectory has settled before the hint positions itself off of it
   } else {
     // Back to monitor mode: restore the live landing area + live yellow
     // projection, and go back to showing LIVE data in the "Projected
@@ -6546,9 +6621,18 @@ async function planDescentToTarget(lat, lon){
   if(plannedCruiseSeg.length>=2){
     const p1 = plannedCruiseSeg[plannedCruiseSeg.length-2], p2 = plannedCruiseSeg[plannedCruiseSeg.length-1];
     const bearing = (Math.atan2((p2.lon-p1.lon)*Math.cos(p1.lat*Math.PI/180), p2.lat-p1.lat)*180/Math.PI+360)%360;
-    plannedDescentInitMarker.setIcon(descentCrossIcon(bearing));
+    plannedDescentInitMarker.setIcon(descentCrossIcon(bearing, '#ff8a00'));
   }
   if(!map.hasLayer(plannedDescentInitMarker)) plannedDescentInitMarker.addTo(map);
+  // Dragging is only meaningful once a first plan actually exists - before
+  // that, the marker sits invisible at [0,0], and enabling drag on it from
+  // the very start meant it could technically be moved (with no visible
+  // effect, since recomputeFromManualDescentPoint's own guard blocked
+  // anything from happening) before the intended first step - clicking a
+  // desired landing point - had ever been done. Enabling it only here
+  // makes that intended order the only possible one, not just the
+  // documented one.
+  plannedDescentInitMarker.dragging.enable();
 
   const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
   const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
@@ -6565,6 +6649,7 @@ async function planDescentToTarget(lat, lon){
   if(!map.hasLayer(plannedDescentPathLayer)) plannedDescentPathLayer.addTo(map);
 
   state.plannedLandingActive = true;
+  updateReferenceTrajectoryDisplay();
   document.getElementById('btnClearPlannedArea').style.display = 'block';
   document.getElementById('plannedBadgeWord').style.display = 'inline';
   document.getElementById('btnCenterPlanned').style.display = 'block';
@@ -6597,6 +6682,8 @@ async function planDescentToTarget(lat, lon){
 }
 function clearPlannedLandingArea(){
   state.plannedLandingActive = false;
+  state.plannedInitDelayMin = null;
+  updateReferenceTrajectoryDisplay(); // restores the full reference line now that no plan is truncating it
   state.plannedLandingPolygon = null;
   plannedLandingPolyLayer.setLatLngs([]);
   plannedCruiseSegmentOutline.setLatLngs([]);
@@ -6611,6 +6698,7 @@ function clearPlannedLandingArea(){
   if(plannedLandingCenterMarker){ map.removeLayer(plannedLandingCenterMarker); plannedLandingCenterMarker=null; }
   if(intendedLandingMarker){ map.removeLayer(intendedLandingMarker); intendedLandingMarker=null; }
   if(map.hasLayer(plannedDescentInitMarker)) map.removeLayer(plannedDescentInitMarker);
+  plannedDescentInitMarker.dragging.disable();
   plannedDescentInitMarker.setOpacity(0);
   document.getElementById('btnClearPlannedArea').style.display = 'none';
   document.getElementById('btnCenterPlanned').style.display = 'none';
@@ -6625,17 +6713,32 @@ document.getElementById('btnClearPlannedArea').addEventListener('click', clearPl
 // descent begins (bypassing the search), and re-derives the resulting
 // landing area/descent path/charts from that manually-chosen point.
 plannedDescentInitMarker.on('dragend', (e)=>{
-  const pos = e.target.getLatLng();
-  recomputeFromManualDescentPoint(pos.lat, pos.lng);
+  // Snap to the reference trajectory itself (closest point, in either
+  // direction) rather than using wherever it was physically dropped - the
+  // point can only ever BE somewhere on that line, forward into the
+  // currently-hidden continuation or back within the visible part, never
+  // off to the side of it.
+  const raw = e.target.getLatLng();
+  const path = state.referenceTrajectoryPath;
+  if(!path || path.length<2) return;
+  const snapped = closestPointOnPath(path, raw.lat, raw.lng);
+  if(!snapped) return;
+  plannedDescentInitMarker.setLatLng([snapped.lat, snapped.lon]);
+  recomputeFromManualDescentPoint(snapped.lat, snapped.lon, snapped.t);
 });
-async function recomputeFromManualDescentPoint(lat, lon){
+async function recomputeFromManualDescentPoint(lat, lon, snappedT){
   if(!state.plannedLandingActive) return;
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const rate2 = parseFloat(document.getElementById('sRate2').value);
   const scatter = parseFloat(document.getElementById('sScatter').value)/100;
+  // Use the snapped point's own time from the reference trajectory when
+  // available (exact - it's the same simulation this point came from) -
+  // the rough distance/cruise-speed estimate stays only as a fallback for
+  // any caller that doesn't have a snapped time.
   const cruiseSpeedMs = Math.max(0.1, state.speedKn/KN_PER_MS);
-  const initSec = haversine(state.lat,state.lon,lat,lon) / cruiseSpeedMs; // rough elapsed-time estimate for the dragged distance
+  const initSec = snappedT!=null ? snappedT : haversine(state.lat,state.lon,lat,lon) / cruiseSpeedMs;
+  state.plannedInitDelayMin = initSec/60;
   const arrivalHourIdxGuess = Math.round(initSec/3600);
   const startOverride = {lat, lon, t: initSec};
 
@@ -6659,10 +6762,17 @@ async function recomputeFromManualDescentPoint(lat, lon){
   const hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
   state.plannedLandingPolygon = hull;
   plannedLandingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
-  plannedCruiseSegmentOutline.setLatLngs([[state.lat,state.lon],[lat,lon]]);
-  plannedCruiseSegmentLayer.setLatLngs([[state.lat,state.lon],[lat,lon]]);
+  // The actual (curved, wind-following) reference trajectory up to this
+  // point, not a straight line between start and drop point - matches how
+  // the click-based path already looks, rather than a cruder approximation
+  // just because this came from a drag instead.
+  const cruiseSeg = (state.referenceTrajectoryPath||[]).filter(p=>p.t<=initSec);
+  const cruiseLatLngs = cruiseSeg.length>=2 ? cruiseSeg.map(p=>[p.lat,p.lon]) : [[state.lat,state.lon],[lat,lon]];
+  plannedCruiseSegmentOutline.setLatLngs(cruiseLatLngs);
+  plannedCruiseSegmentLayer.setLatLngs(cruiseLatLngs);
   plannedDescentPathOutline.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
   plannedDescentPathLayer.setLatLngs(bestPath.map(p=>[p.lat,p.lon]));
+  updateReferenceTrajectoryDisplay();
 
   const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
   const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
@@ -6984,7 +7094,7 @@ function positionSubModeToggle(){
   toggle.style.top = Math.round(rect.bottom + 3) + 'px';
   toggle.style.width = Math.round(rect.width) + 'px';
 }
-window.addEventListener('resize', ()=>{ if(state.appMode==='plan') positionSubModeToggle(); });
+// resize handling for subModeToggle now lives inside repositionModeToggle() itself, alongside every other trigger that can shift #modePlan's position
 function alignPanelToPositionCard(panelEl){
   // Reads the SIDEBAR's own position, not the "Current Position" card's -
   // the card lives inside the sidebar's scrollable content, so if the

@@ -1188,7 +1188,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.04';
+const APP_VERSION = 'v260806.05';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -3801,13 +3801,14 @@ const plannedDescentPathLayer = L.polyline([], {color:'#ffee00', weight:3, dashA
 // rendering order on every update as an extra safeguard, so even the
 // transparent segment can never visually sit on top of another layer's
 // own markers/symbols by accident.
-const extendedTrajectoryOverlapOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, opacity:0.05, pane:'extendedTrajectoryPane'});
-const extendedTrajectoryOverlapLine = L.polyline([], {color:'#3fa9ff', weight:3.5, lineCap:'round', opacity:0.08, interactive:false, pane:'extendedTrajectoryPane'});
+const extendedTrajectoryOverlapOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, opacity:0.12, pane:'extendedTrajectoryPane'});
+const extendedTrajectoryOverlapLine = L.polyline([], {color:'#3fa9ff', weight:3.5, lineCap:'round', opacity:0.2, interactive:false, pane:'extendedTrajectoryPane'});
 const extendedTrajectoryOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, pane:'extendedTrajectoryPane'});
 const extendedTrajectoryLine = L.polyline([], {color:'#3fa9ff', weight:3.5, opacity:1, lineCap:'round', pane:'extendedTrajectoryPane'});
 let extendedTrajectoryCloseMarker = null;
 let extendedTrajectoryCloseMarkerStart = null;
 let extendedTrajectoryStartPoint = null; // the frozen actual start (lat/lon) - the start button eventually settles here
+let extendedTrajectoryInitialBearing = 0; // stored once at creation - used for a stable offset direction regardless of how close start/balloon currently are to each other
 const extendedTrajectoryCloseIcon = L.divIcon({
   html:'<div style="width:22px;height:22px;border-radius:50%;background:var(--bad);border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></div>',
   className:'', iconSize:[22,22], iconAnchor:[11,11]
@@ -3834,11 +3835,15 @@ function repositionExtendedTrajectoryStartButton(){
   if(distM > COLLISION_RADIUS_M){
     extendedTrajectoryCloseMarkerStart.setLatLng([extendedTrajectoryStartPoint.lat, extendedTrajectoryStartPoint.lon]);
   } else {
-    // Offset perpendicular to the trajectory's own initial bearing so the
-    // button reads as "belonging to" the line rather than floating
-    // randomly - reuses the same bearing the onboarding hint offsets by.
-    const bearing = bearingBetween(extendedTrajectoryStartPoint.lat, extendedTrajectoryStartPoint.lon, state.lat, state.lon);
-    const [offLat, offLon] = destPoint(state.lat, state.lon, bearing+90, COLLISION_RADIUS_M*1.3);
+    // Offset perpendicular to the trajectory's own initial bearing (stored
+    // once at creation time) rather than the bearing from the frozen start
+    // point to the live balloon position - that bearing becomes unstable
+    // (near-arbitrary) exactly when the balloon is close to the start
+    // point, which is precisely the situation this branch handles, so it
+    // was a bad choice of reference direction for a button whose whole
+    // job is staying predictably beside the balloon rather than on top of
+    // it.
+    const [offLat, offLon] = destPoint(state.lat, state.lon, extendedTrajectoryInitialBearing+90, COLLISION_RADIUS_M*1.8);
     extendedTrajectoryCloseMarkerStart.setLatLng([offLat, offLon]);
   }
 }
@@ -3889,13 +3894,16 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   const closest = closestPointOnPath(cruiseOnly, clickLat, clickLon);
   if(!closest) return;
   const truncated = cruiseOnly.slice(0, closest.segIdx+1).concat([{lat:closest.lat, lon:closest.lon, t:closest.t}]);
-  // Boundary between "overlap" and "extension": the full length (cruise +
-  // descent, down to the ground) of Function 1's own normal live
-  // projection, computed fresh with today's settings - everything up to
-  // that time is already shown by the normal trajectory/descent
-  // path/landing area, so it's the near-transparent segment here.
-  const normalFullPath = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
-  const overlapEndT = normalFullPath.length ? normalFullPath[normalFullPath.length-1].t : 0;
+  // Boundary between "overlap" and "extension": where Function 1's own
+  // normal cruise segment ends (sInit) - NOT the full descent-to-ground
+  // time. Past that point the normal trajectory actually descends
+  // (different altitude, different wind) while this one deliberately
+  // keeps flying level, so the two paths genuinely diverge - using the
+  // full descent time here made the "blue starts here" point end up much
+  // further from the visible cluster of symbols than it needed to,
+  // since it was measuring against a spatially different path for a
+  // stretch that was never really "the same line" to begin with.
+  const overlapEndT = initDelayMin*60;
   const overlapPts = truncated.filter(p=>p.t<=overlapEndT);
   const extensionPts = truncated.filter(p=>p.t>=overlapEndT); // >= so the two segments share a point and connect with no visible gap
   const overlapLatlngs = overlapPts.map(p=>[p.lat,p.lon]);
@@ -3915,6 +3923,7 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
     l.bringToBack();
   });
   extendedTrajectoryStartPoint = {lat: truncated[0].lat, lon: truncated[0].lon};
+  extendedTrajectoryInitialBearing = trajBearing;
   if(extendedTrajectoryCloseMarker) map.removeLayer(extendedTrajectoryCloseMarker);
   extendedTrajectoryCloseMarker = L.marker([closest.lat, closest.lon], {icon: extendedTrajectoryCloseIcon, interactive:true})
     .on('click', clearExtendedTrajectory)
@@ -4495,6 +4504,8 @@ function drawStagedPlanChart(result){
   const W=340, H=310, ML=80, plotW=55, MT=14, MB=40;
   const plotH = H-MT-MB;
   const infoX = ML+plotW+12;
+  const windX = infoX+44;
+  const windTextX = windX+14; // the one shared column every wind readout (per-stage, mid-segment, descent-rate label) aligns to
   const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
   const xFor = tt => ML + (tt/totalT)*plotW;
 
@@ -4520,11 +4531,11 @@ function drawStagedPlanChart(result){
           const midX = xFor(midT), midY = yFor(midAlt);
           const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
           const speedKmh = Math.hypot(w.u,w.v)*3.6;
-          midSegmentReadouts += `<line x1="${ML-14}" y1="${midY}" x2="${midX}" y2="${midY}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="1,2"/>`;
-          midSegmentReadouts += `<text x="${ML-16}" y="${midY+3}" text-anchor="end" font-size="8.5" fill="var(--muted)">${midAlt} m AMSL</text>`;
+          midSegmentReadouts += `<line x1="${ML-6}" y1="${midY}" x2="${midX}" y2="${midY}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="1,2"/>`;
+          midSegmentReadouts += `<text x="${ML-6}" y="${midY+3}" text-anchor="end" font-size="8.5" fill="var(--muted)">${midAlt} m AMSL</text>`;
           const arrowRot = (dirFrom+180)%360;
-          midSegmentReadouts += `<g transform="translate(${infoX+1},${midY-7}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="var(--muted)"/></g>`+
-            `<text x="${infoX+14}" y="${midY-2}" font-size="9.5" fill="var(--muted)">${Math.round(dirFrom)}° ${Math.round(speedKmh)} km/h</text>`;
+          midSegmentReadouts += `<g transform="translate(${windX+1},${midY-7}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="var(--muted)"/></g>`+
+            `<text x="${windTextX}" y="${midY-2}" font-size="8.5" font-weight="400" fill="var(--muted)">${Math.round(dirFrom)}° ${Math.round(speedKmh)} km/h</text>`;
         }
       }
     }
@@ -4569,9 +4580,16 @@ function drawStagedPlanChart(result){
       const isGroundLine = s.isGround;
       gridlines += `<line x1="${ML}" y1="${y}" x2="${W-6}" y2="${y}" stroke="${isGroundLine?'#1a9850':(s.isIntercept?'#BA7517':'var(--muted)')}" stroke-width="${isGroundLine?2:0.5}" opacity="${isGroundLine?0.9:0.3}"/>`;
       if(isGroundLine){
-        yLabels += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="11.5" font-weight="600" fill="#1a9850">Ground</text>`;
+        // Same treatment as every other level now: the altitude number
+        // sits in the left column too (green, matching the ground line
+        // itself), and "Ground" moves to sit above the line on the right
+        // of the axis - the same position/pattern "Intercept" uses -
+        // instead of replacing the altitude number as an axis label.
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="#1a9850">${Math.round(s.altM)}<tspan font-size="9" fill="#1a9850"> m AMSL</tspan></text>`;
+        yLabels += `<rect x="${ML+3}" y="${y-13}" width="48" height="13" fill="var(--panel2)"/>`;
+        yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" font-weight="600" fill="#1a9850">Ground</text>`;
       } else {
-        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="var(--muted)"> m AMSL</tspan></text>`;
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="${s.isIntercept?col:'var(--muted)'}"> m AMSL</tspan></text>`;
         // "Intercept" sits to the RIGHT of the axis (not appended to the
         // right-aligned AMSL text, which was what pushed it past the left
         // edge) - directly above the shaded final-descent band, with an
@@ -4592,22 +4610,27 @@ function drawStagedPlanChart(result){
     // Duration (left) and wind (right of it) sit ABOVE the gridline, on
     // ONE line, in the info column to the right of the small staircase
     // icon - never overlapping the curve, which stays confined to the
-    // narrow plot column on the left.
+    // narrow plot column on the left. windTextX is the one fixed column
+    // every wind readout aligns to - the main per-stage one, the
+    // mid-segment (large-drop) one, and the descent-rate label below the
+    // start level all share this exact x now, instead of each drifting to
+    // its own slightly different position.
     const rowY = y - 6;
     const durMin = Math.round(s.lingerS/60);
     if(!s.isGround){
       if(i>0){
-        infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="var(--muted)">${durMin} min</text>`;
+        infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="${s.isIntercept?col:'var(--muted)'}">${durMin} min</text>`;
       }
       const arrowRot = (s.dirFrom+180)%360;
-      const windX = infoX+44;
       infoRows += `<g transform="translate(${windX+1},${rowY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
-        `<text x="${windX+14}" y="${rowY}" font-size="10.5" fill="var(--text)">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
+        `<text x="${windTextX}" y="${rowY}" font-size="10.5" font-weight="400" fill="${s.isIntercept?col:'var(--text)'}">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
       if(i===0){
         // The configured descent rate (from the slider) applies starting
-        // right at this top level - shown fairly prominently since it's a
-        // key input, not a computed result.
-        infoRows += `<text x="${infoX}" y="${rowY+16}" font-size="11" font-weight="700" fill="#ff6a00">↓ ${stagedDescentRateMs.toFixed(1)} m/s descent rate</text>`;
+        // right at this top level - shown as a supporting note (lighter
+        // weight, more breathing room below the start line) rather than
+        // competing with it, and aligned to the same column as every
+        // other wind readout instead of sitting further left.
+        infoRows += `<text x="${windTextX}" y="${rowY+26}" font-size="10.5" font-weight="400" fill="#ff6a00">↓ ${stagedDescentRateMs.toFixed(1)} m/s descent rate</text>`;
       }
     }
     // Braking ballast: for every intermediate/intercept stage (arresting
@@ -4642,15 +4665,23 @@ function drawStagedPlanChart(result){
     const y = yFor(altM);
     bandsMarkup += `<rect x="${ML}" y="${y-1.5}" width="${W-6-ML}" height="3" fill="${color}" opacity="0.55"/>`;
     const aglTxt = altM<interceptAltForBands ? ` (${Math.round(altM-groundAlt)} m AGL)` : '';
-    bandsMarkup += `<text x="${infoX}" y="${y+3}" font-size="8" fill="${color}">${Math.round(altM)} m AMSL${aglTxt}</text>`;
+    if(label==='shear'){
+      // Wind shear's altitude moves into the left column, aligned with
+      // every other altitude label there, rather than sitting on the
+      // right with the inversion/isothermal ones - orange rather than
+      // red, since it's marking a level to be aware of, not a fault.
+      bandsMarkup += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="9" fill="${color}">${Math.round(altM)}<tspan font-size="7.5"> m AMSL${aglTxt}</tspan></text>`;
+    } else {
+      bandsMarkup += `<text x="${infoX}" y="${y+3}" font-size="8" fill="${color}">${Math.round(altM)} m AMSL${aglTxt}</text>`;
+    }
   }
   foundLayers.forEach(f=>drawBand(f.altM, f.type==='inversion'?'#3ddc6f':'#3fa9ff', f.type));
-  foundShear.forEach(altM=>drawBand(altM, '#e0483f', 'shear'));
+  foundShear.forEach(altM=>drawBand(altM, '#BA7517', 'shear'));
   let legendMarkup = '';
   const legendItems = [];
   if(usedColors.has('#3ddc6f')) legendItems.push({color:'#3ddc6f', label:'Inversion'});
   if(usedColors.has('#3fa9ff')) legendItems.push({color:'#3fa9ff', label:'Isothermal'});
-  if(usedColors.has('#e0483f')) legendItems.push({color:'#e0483f', label:'Wind Shear'});
+  if(usedColors.has('#BA7517')) legendItems.push({color:'#BA7517', label:'Wind Shear'});
   legendItems.forEach((it,idx)=>{
     const lx = ML + idx*90;
     legendMarkup += `<rect x="${lx}" y="${H-16}" width="10" height="3" fill="${it.color}" opacity="0.7"/>`;

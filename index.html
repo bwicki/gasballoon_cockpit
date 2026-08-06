@@ -216,7 +216,7 @@ input:checked + .slider-tog:before{transform:translateX(18px);}
 
 select, .textbtn{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12.5px;}
 button.primary{background:var(--accent);color:#00201d;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:13px;width:100%;cursor:pointer;}
-button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;width:100%;cursor:pointer;}
+.ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;width:100%;cursor:pointer;box-sizing:border-box;}
 
 #warnbar{background:rgba(224,72,63,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;gap:10px;}
 #warnbar.show{display:flex;}
@@ -1191,7 +1191,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.13';
+const APP_VERSION = 'v260806.14';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -3961,6 +3961,14 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   if(diff>60) return; // outside the cone - not what this gesture is for, ignore silently
   const closest = closestPointOnPath(cruiseOnly, clickLat, clickLon);
   if(!closest) return;
+  // Only meaningful beyond where the existing signatures (the normal
+  // trajectory, the descent cross, the landing area) already reach -
+  // clicking closer than that would just redraw something already fully
+  // visible, which isn't what this gesture is for. initDelayMin*60 is the
+  // same boundary already used below for the overlap/extension split, so
+  // this is really just gating on "would there even BE an extension
+  // segment" rather than a separate, newly-invented threshold.
+  if(closest.t <= initDelayMin*60) return;
   const truncated = cruiseOnly.slice(0, closest.segIdx+1).concat([{lat:closest.lat, lon:closest.lon, t:closest.t}]);
   // Boundary between "overlap" and "extension": where Function 1's own
   // normal cruise segment ends (sInit) - NOT the full descent-to-ground

@@ -1020,13 +1020,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
         </div>
       </div>
-      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
-        <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
-        <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
-        <div id="stagedPlanSvgWrap" style="width:100%;"></div>
-        <div id="stagedPlanLandingInfo" style="font-size:10.5px;color:var(--muted);margin-top:6px;text-align:center;">—</div>
-      </div>
+
       <div id="chartExpandOverlay">
         <div id="chartExpandBox">
           <button id="chartExpandClose" onclick="closeExpandedChart()">✕</button>
@@ -1080,6 +1074,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
 
     </div>
+      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
+        <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
+        <div id="stagedPlanSvgWrap" style="width:100%;"></div>
+        <div id="stagedPlanLandingInfo" style="font-size:10.5px;color:var(--muted);margin-top:6px;text-align:center;">—</div>
+      </div>
   </div>
 </div>
 
@@ -1187,8 +1188,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260805.30';
-const APP_DATE = '05.08.2026';
+const APP_VERSION = 'v260806.04';
+const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
 // ---------- state ----------
@@ -1433,6 +1434,8 @@ map.createPane('overlayTilesPane');
 map.getPane('overlayTilesPane').style.zIndex = 350;
 map.createPane('regionNamesPane');
 map.getPane('regionNamesPane').style.zIndex = 360; // above place labels/roads (both in overlayTilesPane), so region names always win when both are shown
+map.createPane('extendedTrajectoryPane');
+map.getPane('extendedTrajectoryPane').style.zIndex = 390; // below Leaflet's default overlayPane (400), where Function 1/2's own trajectory/descent/landing-area layers all render - a PANE guarantees this permanently, unlike bringToBack() which only fixes the stacking order at the moment it's called and gets silently undone whenever another layer is added/re-added afterwards (e.g. switching to Plan Descent, which was very likely why this trajectory seemed to vanish behind its layers rather than actually being removed)
 map.createPane('metarPane');
 map.getPane('metarPane').style.zIndex = 625; // above the default marker pane (600) but explicitly BELOW Leaflet's built-in tooltipPane (650) - it was tied with tooltipPane before, and being created later in the DOM meant it actually rendered on top of tooltips despite the "equal" z-index
 map.createPane('airTrafficPane');
@@ -3798,10 +3801,10 @@ const plannedDescentPathLayer = L.polyline([], {color:'#ffee00', weight:3, dashA
 // rendering order on every update as an extra safeguard, so even the
 // transparent segment can never visually sit on top of another layer's
 // own markers/symbols by accident.
-const extendedTrajectoryOverlapOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, opacity:0.05});
-const extendedTrajectoryOverlapLine = L.polyline([], {color:'#3fa9ff', weight:3.5, lineCap:'round', opacity:0.08, interactive:false});
-const extendedTrajectoryOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false});
-const extendedTrajectoryLine = L.polyline([], {color:'#3fa9ff', weight:3.5, opacity:1, lineCap:'round'});
+const extendedTrajectoryOverlapOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, opacity:0.05, pane:'extendedTrajectoryPane'});
+const extendedTrajectoryOverlapLine = L.polyline([], {color:'#3fa9ff', weight:3.5, lineCap:'round', opacity:0.08, interactive:false, pane:'extendedTrajectoryPane'});
+const extendedTrajectoryOutline = L.polyline([], {color:'#000000', weight:6, lineCap:'round', interactive:false, pane:'extendedTrajectoryPane'});
+const extendedTrajectoryLine = L.polyline([], {color:'#3fa9ff', weight:3.5, opacity:1, lineCap:'round', pane:'extendedTrajectoryPane'});
 let extendedTrajectoryCloseMarker = null;
 let extendedTrajectoryCloseMarkerStart = null;
 let extendedTrajectoryStartPoint = null; // the frozen actual start (lat/lon) - the start button eventually settles here
@@ -3901,9 +3904,15 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   extendedTrajectoryOverlapLine.setLatLngs(overlapLatlngs);
   extendedTrajectoryOutline.setLatLngs(extensionLatlngs);
   extendedTrajectoryLine.setLatLngs(extensionLatlngs);
-  [extendedTrajectoryOverlapOutline, extendedTrajectoryOverlapLine, extendedTrajectoryOutline, extendedTrajectoryLine].forEach(l=>{
+  // Reversed order: bringToBack() pushes whichever layer it's called on
+  // LAST to the very back, so calling it in this (reverse of desired
+  // final stacking) order is what actually leaves extendedTrajectoryLine
+  // (the blue one) on top of its own black outline at the end - calling
+  // it in the "natural" order the other way round was what made the
+  // whole thing look solid black, the outline ending up on top instead.
+  [extendedTrajectoryLine, extendedTrajectoryOutline, extendedTrajectoryOverlapLine, extendedTrajectoryOverlapOutline].forEach(l=>{
     l.addTo(map);
-    l.bringToBack(); // stays behind Function 1's own trajectory/descent/landing-area layers regardless of add order
+    l.bringToBack();
   });
   extendedTrajectoryStartPoint = {lat: truncated[0].lat, lon: truncated[0].lon};
   if(extendedTrajectoryCloseMarker) map.removeLayer(extendedTrajectoryCloseMarker);
@@ -4343,11 +4352,13 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   return {...best, altitudes, landingHull};
 }
 function showStagedDescentPlan(result){
+  console.log('showStagedDescentPlan() called - setting panel display to block now.', {resultReceived: !!result});
   // Make the panel visible FIRST, before anything else in this function
   // runs - guarantees it's never left invisible because of an exception
   // somewhere in the (fairly involved) work below, which is very likely
   // what caused the repeatedly-reported "the side graphic doesn't open".
   document.getElementById('stagedPlanPanel').style.display = 'block';
+  console.log('showStagedDescentPlan() panel display is now:', document.getElementById('stagedPlanPanel').style.display);
   try{ alignPanelToPositionCard(document.getElementById('stagedPlanPanel')); }catch(e){ console.error('Staged plan panel: alignment failed (panel still opened):', e); }
   try{
   ensureStagedLayers();
@@ -6255,7 +6266,18 @@ map.on('click', async (e)=>{
       // function, since the marker always snaps onto that trajectory
       // anyway.
       const path = state.referenceTrajectoryPath;
-      if(!path || path.length<2) return;
+      console.log('Staged descent: placement click received. referenceTrajectoryPath length:', path ? path.length : 'MISSING (null/undefined)');
+      if(!path || path.length<2){
+        // This was a silent no-op before. If this is what's actually
+        // happening, it would explain every single "the panel never
+        // opens" report at once: the very first click (placing the
+        // marker) fails here, state.stagedMarkerInitialized never
+        // becomes true, and every subsequent click keeps hitting this
+        // same branch forever, no matter how many times it's tried.
+        showMapHint(e.latlng, "reference trajectory not ready yet - check wind data (see warning banner) and try again");
+        console.error('Staged descent: cannot place marker - state.referenceTrajectoryPath is missing or too short.', {path});
+        return;
+      }
       const trajRef = path.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || path[path.length-1];
       const trajBearing = (Math.atan2(
         (trajRef.lon-state.lon)*Math.cos(state.lat*Math.PI/180), (trajRef.lat-state.lat)
@@ -6279,7 +6301,9 @@ map.on('click', async (e)=>{
       state.stagedMarkerInitialized = true;
       stagedMarker.addTo(map);
       if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
+      console.log('Staged descent: marker placed at', snapped.lat, snapped.lon, '- now computing reachable area...');
       await computeStagedReachableArea();
+      console.log('Staged descent: reachable area computed. state.stagedReachableHull length:', state.stagedReachableHull ? state.stagedReachableHull.length : 'MISSING');
       return;
     }
     // Force a FRESH reachable-area computation right now, rather than
@@ -6289,7 +6313,9 @@ map.on('click', async (e)=>{
     // area only "sometimes" appearing to work.
     clearTimeout(stagedAreaFetchTimer);
     try{
+    console.log('Staged descent: target click received at', e.latlng.lat, e.latlng.lng, '- recomputing reachable area before searching...');
     await computeStagedReachableArea();
+    console.log('Staged descent: state.stagedReachableHull length after recompute:', state.stagedReachableHull ? state.stagedReachableHull.length : 'MISSING');
     if(!state.stagedReachableHull){
       // Was a silent no-op before - almost certainly the real explanation
       // for "the side panel just doesn't open": nothing was ever wrong
@@ -6303,13 +6329,16 @@ map.on('click', async (e)=>{
     // Clicking outside the reachable area isn't a meaningful action - that
     // point genuinely isn't achievable, so there's nothing to search for.
     if(!pointInPolygon([e.latlng.lng, e.latlng.lat], state.stagedReachableHull)){
+      console.log('Staged descent: click was outside the reachable-area polygon - showing hint instead of searching.');
       showMapHint(e.latlng, "select point within potential landing area");
       return;
     }
     if(stagedTargetMarker) map.removeLayer(stagedTargetMarker);
     if(stagedTargetFadeTimer) clearTimeout(stagedTargetFadeTimer);
     stagedTargetMarker = L.marker([e.latlng.lat,e.latlng.lng], {icon: crossIcon}).addTo(map);
+    console.log('Staged descent: click was inside the reachable area - searching for a plan...');
     const result = searchStagedDescentToTarget(e.latlng.lat, e.latlng.lng);
+    console.log('Staged descent: search result:', result ? 'got a result, calling showStagedDescentPlan()' : 'MISSING/falsy result');
     showStagedDescentPlan(result);
     }catch(err){
       console.error('Staged descent: click handling failed:', err);

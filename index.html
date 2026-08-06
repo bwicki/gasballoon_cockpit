@@ -115,6 +115,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #subModeToggle button{background:transparent;border:none;border-top:1px solid var(--border);color:var(--muted);padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;}
 #subModeToggle button:first-child{border-top:none;}
 #subModeToggle button.active{background:#c96a1f;color:#fff;}
+#subModeToggle button#subModeStaged.active{background:#4d80ff;color:#fff;}
 
 /* ---- center-on-position button ---- */
 .map-controls-stack{position:absolute;right:10px;bottom:104px;z-index:1100;display:flex;flex-direction:column;align-items:stretch;width:56px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:hidden;}
@@ -192,6 +193,7 @@ body.day #map{background:#dfe6ea;}
 .slider-row{margin-bottom:3px;}
 .slider-row.onboarding-highlight{outline:2px solid var(--good);outline-offset:3px;border-radius:6px;background:rgba(61,220,111,0.1);transition:outline-color .3s ease, background-color .3s ease;}
 .slider-row.onboarding-highlight-orange{outline:2px solid #c96a1f;outline-offset:3px;border-radius:6px;background:rgba(201,106,31,0.12);transition:outline-color .3s ease, background-color .3s ease;}
+.onboarding-highlight-blue{outline:2px solid #4d80ff;outline-offset:3px;border-radius:6px;background:rgba(77,128,255,0.12);transition:outline-color .3s ease, background-color .3s ease;}
 .slider-row:last-child{margin-bottom:0;}
 .slider-row .lbl{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-bottom:4px;}
 .dist-badge{color:#4a5560;background:rgba(74,85,96,0.12);border:1px solid #4a5560;border-radius:5px;padding:1px 6px;margin-right:8px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
@@ -579,17 +581,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;align-items:center;gap:6px;color:#c78bf0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg><span>Descent Planning</span>
           </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:12.5px;flex:1;">Minimum stage separation</span>
-          <input type="number" id="sMinStageSeparation" min="50" max="2000" step="10" value="300" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
-          <span style="font-size:12px;color:var(--muted);">m</span>
-        </div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Default 300m (≈1000ft) - the minimum altitude gap a candidate intermediate stage must have from the cruise altitude, the intercept height, and any other chosen stage.</p>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:12.5px;flex:1;">Max. worthwhile intermediate stages</span>
-          <input type="number" id="sMaxIntermediateStages" min="0" max="5" step="1" value="2" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
-        </div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Default 2 - stages are only worth stopping at if the wind there genuinely differs (direction/speed) from the surrounding levels; the biggest such shear points below cruise altitude are picked automatically, up to this many, rather than descending in many small fixed steps.</p>
+        <!-- Minimum stage separation and Max. worthwhile intermediate
+             stages moved into the Staged Descent Parameters panel itself
+             (right below its other sliders) - specific to that
+             sub-function rather than general app configuration. -->
 
         
         
@@ -992,13 +987,23 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div class="card" id="stagedDescentSliders" style="display:none;">
         <h3>Staged Descent Parameters</h3>
         <div class="cardbody">
-          <div class="slider-row">
+          <div class="slider-row" id="sStagedTotalTimeRow">
             <div class="lbl"><span>Maximum descent time budget</span><b id="lblStagedTotalTime">60 min</b></div>
             <input type="range" id="sStagedTotalTime" min="15" max="180" step="5" value="60">
           </div>
-          <div class="slider-row">
+          <div class="slider-row" id="sStagedRateRow">
             <div class="lbl"><span>Inter-stage descent rate</span><b id="lblStagedRate">1.5 m/s</b></div>
             <input type="range" id="sStagedRate" min="0.5" max="4" step="0.1" value="1.5">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <div id="sMinStageSeparationRow" style="flex:1;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Min. stage separation (m)</div>
+              <input type="number" id="sMinStageSeparation" min="50" max="2000" step="10" value="300" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:12.5px;text-align:right;box-sizing:border-box;">
+            </div>
+            <div id="sMaxIntermediateStagesRow" style="flex:1;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Max. intermediate stages</div>
+              <input type="number" id="sMaxIntermediateStages" min="0" max="5" step="1" value="2" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:12.5px;text-align:right;box-sizing:border-box;">
+            </div>
           </div>
         </div>
       </div>
@@ -1191,7 +1196,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.14';
+const APP_VERSION = 'v260806.15';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -1725,6 +1730,51 @@ function showQuickDescentOnboardingHint(){
   });
   map.on('click', dismissQuickOnboardingHint); // the actual first expected action - clicking a landing point - also dismisses it
   quickOnboardingHintTimer = setTimeout(dismissQuickOnboardingHint, 5000);
+}
+// ---------- Staged Descent onboarding hint (shown once, first time this
+// submode is entered) ----------
+const STAGED_ONBOARDING_HIGHLIGHT_IDS = ['sStagedTotalTime','sStagedRate','sMinStageSeparation','sMaxIntermediateStages'];
+let stagedOnboardingShown = false;
+let stagedOnboardingHintMarker = null;
+let stagedOnboardingHintTimer = null;
+function dismissStagedOnboardingHint(){
+  if(stagedOnboardingHintMarker){ map.removeLayer(stagedOnboardingHintMarker); stagedOnboardingHintMarker = null; }
+  clearTimeout(stagedOnboardingHintTimer);
+  STAGED_ONBOARDING_HIGHLIGHT_IDS.forEach(id=>{
+    const row = document.getElementById(id+'Row');
+    if(row) row.classList.remove('onboarding-highlight-blue');
+    document.getElementById(id).removeEventListener('input', dismissStagedOnboardingHint);
+  });
+  map.off('click', dismissStagedOnboardingHint);
+}
+function showStagedDescentOnboardingHint(){
+  if(stagedOnboardingShown) return; // once per session
+  if(!(state.appMode==='plan' && currentSubMode==='staged')) return;
+  stagedOnboardingShown = true;
+  const path = state.referenceTrajectoryPath;
+  if(!path || path.length<2) return; // nothing to anchor the hint to yet
+  const ref = path.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || path[path.length-1];
+  const bearing = bearingBetween(state.lat, state.lon, ref.lat, ref.lon);
+  const [offLat, offLon] = destPoint(state.lat, state.lon, bearing+90, 1500);
+  const html = `<div style="background:#fdfdfb;color:#1a1a1a;border:1px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 10px;width:220px;font-size:11.5px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.35);position:relative;">
+    <button id="stagedOnboardingHintClose" style="position:absolute;top:4px;right:4px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;">✕</button>
+    <div style="padding-right:16px;">Adjust highlighted sliders, click and drag the intended descent point on trajectory and click into the potential landing area. The best staged descent will be displayed</div>
+  </div>`;
+  stagedOnboardingHintMarker = L.marker([offLat, offLon], {
+    icon: L.divIcon({html, className:'', iconSize:null, iconAnchor:[110,25]}),
+    interactive:true, zIndexOffset:2000
+  }).addTo(map);
+  stagedOnboardingHintMarker.on('add', ()=>{
+    const btn = document.getElementById('stagedOnboardingHintClose');
+    if(btn) btn.addEventListener('click', dismissStagedOnboardingHint);
+  });
+  STAGED_ONBOARDING_HIGHLIGHT_IDS.forEach(id=>{
+    const row = document.getElementById(id+'Row');
+    if(row) row.classList.add('onboarding-highlight-blue');
+    document.getElementById(id).addEventListener('input', dismissStagedOnboardingHint);
+  });
+  map.on('click', dismissStagedOnboardingHint);
+  stagedOnboardingHintTimer = setTimeout(dismissStagedOnboardingHint, 5000);
 }
 function bindLayerToggle(btnId, initiallyOn, onToggle){
   const btn = document.getElementById(btnId);
@@ -3818,13 +3868,13 @@ const plannedCruiseSegmentLayer = L.polyline([], {color:'#00e676', weight:4.5, d
 // shown only in Plan Descent - helps judge which areas are even reachable
 // before committing to a specific target point. Purely informational: it
 // does NOT trigger any auto-zoom, unlike the actual planned-area result.
-const referenceTrajectoryOutline = L.polyline([], {color:'#000000', weight:7.5, opacity:0.95, interactive:false});
-const referenceTrajectoryLayer = L.polyline([], {color:'#00e676', weight:4.5, dashArray:'9,5', opacity:0.95, interactive:false});
+const referenceTrajectoryOutline = L.polyline([], {color:'#000000', weight:7.5, opacity:1, lineCap:'round', interactive:false});
+const referenceTrajectoryLayer = L.polyline([], {color:'#00e676', weight:4.5, opacity:1, dashArray:'4,7', lineCap:'round', interactive:false});
 function computeReferenceTrajectory(){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const rate2 = parseFloat(document.getElementById('sRate2').value);
-  const REFERENCE_MINUTES = 360;
+  const REFERENCE_MINUTES = 120; // ~2h, matches Function 1's own typical horizon
   const path = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, REFERENCE_MINUTES*60, rate1, interceptAGL, rate2, 0);
   const cruiseOnly = path.filter(p=>p.t <= REFERENCE_MINUTES*60);
   state.referenceTrajectoryPath = cruiseOnly; // kept WITH its time values, for the staged-descent AND quick-descent draggable markers to snap to - always the FULL length, regardless of what's currently shown
@@ -4216,10 +4266,7 @@ function ensureStagedLayers(){
     stagedDescentPathLayer2 = L.polyline([], {color:'#ff6a00', weight:3, dashArray:'6,4', lineCap:'round', interactive:false});
   }
   if(!stagedMarker){
-    stagedMarker = L.marker([state.lat,state.lon], {icon: L.divIcon({
-      html:'<div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:grab;"><div style="width:18px;height:18px;border-radius:50%;background:#ff6a00;border:3px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5);"></div></div>',
-      className:'', iconSize:[34,34], iconAnchor:[17,17]
-    }), draggable:true, zIndexOffset:1000});
+    stagedMarker = L.marker([state.lat,state.lon], {icon: descentCrossIcon(0, '#4d80ff'), draggable:true, zIndexOffset:1000});
     // Snapping only happens on dragend, never mid-drag: calling setLatLng()
     // WHILE a marker is being actively dragged confuses Leaflet's internal
     // Draggable state machine (it tracks the pointer offset relative to
@@ -4815,12 +4862,17 @@ function drawStagedPlanChart(result){
   </svg>`;
 }
 document.getElementById('subModeQuick').addEventListener('click', ()=>setSubMode('quick'));
-document.getElementById('subModeStaged').addEventListener('click', ()=>setSubMode('staged'));
+document.getElementById('subModeStaged').addEventListener('click', ()=>{
+  setSubMode('staged');
+  setTimeout(showStagedDescentOnboardingHint, 300);
+});
 const QUICK_DESCENT_LAYERS = [
   {layer: ()=>intendedLandingMarker, name:'intendedLandingMarker'},
   {layer: ()=>plannedLandingPolyLayer, name:'plannedLandingPolyLayer'},
   {layer: ()=>plannedLandingCenterMarker, name:'plannedLandingCenterMarker'},
+  {layer: ()=>plannedCruiseSegmentOutline, name:'plannedCruiseSegmentOutline'},
   {layer: ()=>plannedCruiseSegmentLayer, name:'plannedCruiseSegmentLayer'},
+  {layer: ()=>plannedDescentPathOutline, name:'plannedDescentPathOutline'},
   {layer: ()=>plannedDescentPathLayer, name:'plannedDescentPathLayer'},
   {layer: ()=>plannedDescentInitMarker, name:'plannedDescentInitMarker'}
 ];
@@ -4831,7 +4883,7 @@ function setSubMode(mode){
   document.getElementById('subModeStaged').classList.toggle('active', mode==='staged');
   const stagedCard = document.getElementById('stagedDescentSliders');
   stagedCard.style.display = mode==='staged' ? 'block' : 'none';
-  stagedCard.style.border = mode==='staged' ? '2px solid var(--bad)' : '';
+  stagedCard.style.border = mode==='staged' ? '2px solid #4d80ff' : '';
   if(mode==='staged'){
     // Quick Descent's own results (violet path, orange landing area, etc.)
     // would otherwise sit on the map at the same time as the staged-descent
@@ -6435,13 +6487,10 @@ map.on('click', async (e)=>{
         return;
       }
       const trajRef = path.find(p=>haversine(state.lat,state.lon,p.lat,p.lon)>200) || path[path.length-1];
-      const trajBearing = (Math.atan2(
-        (trajRef.lon-state.lon)*Math.cos(state.lat*Math.PI/180), (trajRef.lat-state.lat)
-      )*180/Math.PI+360)%360;
-      const clickBearing = (Math.atan2(
-        (e.latlng.lng-state.lon)*Math.cos(state.lat*Math.PI/180), (e.latlng.lat-state.lat)
-      )*180/Math.PI+360)%360;
+      const trajBearing = bearingBetween(state.lat, state.lon, trajRef.lat, trajRef.lon);
+      const clickBearing = bearingBetween(state.lat, state.lon, e.latlng.lat, e.latlng.lng);
       let diff = Math.abs(clickBearing-trajBearing); if(diff>180) diff = 360-diff;
+      console.log('Staged descent: trajectory bearing', trajBearing.toFixed(1), '° click bearing', clickBearing.toFixed(1), '° diff', diff.toFixed(1), '°');
       if(diff>40){
         showMapHint(e.latlng, "click +/- 40° of projected trajectory");
         return;

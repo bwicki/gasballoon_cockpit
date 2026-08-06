@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260806.14** (06.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260806.15** (06.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -484,3 +484,14 @@ Gas compressed adiabatically during a fast descent stays warmer (and less dense)
 - **If a newly-generated version doesn't seem to show up**: this is a static file with no server of its own - after downloading it, it must actually be re-uploaded/committed to wherever it's hosted (e.g. the GitHub Pages repository) before the live site reflects it, and the browser/PWA may also be showing a cached copy of the page itself (try a hard reload, or fully close and reopen the app if it's installed to the home screen).
 - **Adiabatic braking and Monte-Carlo scatter are approximations**, not calibrated against real flight data — treat as a planning aid, not a certified instrument.
 - **Cloud file pickers** (Dropbox, Google Drive, etc.) shown when uploading a file are controlled entirely by iOS/the browser, based on which provider apps are installed — not something this page can add to or configure.
+
+## v260806.15 - Staged Descent (Plan Descent's sub-function 2) - substantial rework
+
+- **Real bug fixed: switching from Quick to Staged left a black line behind.** `QUICK_DESCENT_LAYERS` (the list of layers hidden when entering Staged) listed the colored cruise/descent lines but not their black outline layers underneath - those stayed on the map the whole time. Both outlines added to the list.
+- **"Staged Descent" button recoloured** to a light royal blue (`#4d80ff`), specific to that one button (Quick stays orange). The "Staged Descent Parameters" panel's border now matches.
+- **Min. stage separation and Max. intermediate stages moved out of Settings**, into the Staged Descent Parameters panel itself, side by side as numeric fields right below the two sliders - specific to this sub-function, not general configuration.
+- **The descent-point marker is now the same royal blue cross style used elsewhere** (was a plain orange dot).
+- **Reference trajectory now matches Function 1's own styling exactly** (opacity and dash pattern were both very slightly different before) and shortened from 6h to ~2h as requested. Worth noting: the descent-initiation slider (sInit) in Function 1 still goes up to 4h - if it's set beyond ~2h there while a plan is active, the reference trajectory may not reach quite that far anymore. Flagging this rather than leaving it undiscovered.
+- **Onboarding hint added**, shown once on first entering Staged Descent: light callout, blue highlight on the four staged-specific fields (the two sliders plus the two newly-added numeric ones), text as specified, same dismiss triggers as Quick Descent's own hint (5s, map click, close button, any highlighted field changing).
+- **The ±40° trajectory-direction check**: replaced its own hand-rolled bearing math with the same `bearingBetween()` helper used everywhere else in the app (was a slightly different, flat-approximation formula that could very plausibly explain it seeming "attached to a fixed direction" under some conditions) - couldn't fully reproduce the exact symptom to confirm it was the whole story, so also added console logging of both bearings and the difference for every attempt, to pin down anything still off next time it's tested.
+- Checked the royal-blue draggable cross → reachable area → red target → Monte Carlo area → red-dot-fadeout workflow against the code: all of it was already implemented and wired up correctly - no changes needed there beyond the marker icon and button colors above.

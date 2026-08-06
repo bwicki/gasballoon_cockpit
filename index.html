@@ -110,8 +110,10 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #modeToggle{z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);align-self:flex-start;}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
-#subModeToggle{z-index:549;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:9px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25);align-self:flex-start;}
-#subModeToggle button{background:transparent;border:none;color:var(--muted);padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
+#modeToggle button#modePlan.active{background:#6b7680;color:#fff;}
+#subModeToggle{z-index:549;display:flex;flex-direction:column;background:var(--panel2);box-shadow:0 2px 6px rgba(0,0,0,.25);}
+#subModeToggle button{background:transparent;border:none;border-top:1px solid var(--border);color:var(--muted);padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;}
+#subModeToggle button:first-child{border-top:none;}
 #subModeToggle button.active{background:#c96a1f;color:#fff;}
 
 /* ---- center-on-position button ---- */
@@ -811,11 +813,23 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
           <button id="btnClearStagedFromMonitor" onclick="clearStagedResults(true); document.getElementById('btnClearStagedFromMonitor').style.display='none';" title="Clear staged descent results from the map" style="display:none;background:transparent;border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear staged descent area</button>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;margin-top:6px;">
-          <div id="subModeToggle" style="display:none;">
-            <button id="subModeQuick" class="active" title="Click a target point for a direct descent">⚡ Quick Descent</button>
-            <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options">⬇⬇ Staged Descent</button>
+        <div style="display:flex;">
+          <!-- Invisible copy of "Landing Area" pushes subModeToggle to start
+               exactly where "Plan Descent" starts - and inside that, an
+               invisible copy of "Plan Descent" itself (collapsed to zero
+               height) forces subModeToggle's width to match it exactly,
+               both without any guessed pixel value that would drift out of
+               sync if either button's text/icon ever changes. -->
+          <div style="padding:9px 12px;font-size:12px;font-weight:600;visibility:hidden;white-space:nowrap;" aria-hidden="true">● Landing Area</div>
+          <div style="display:inline-flex;flex-direction:column;">
+            <div style="padding:9px 12px;font-size:12px;font-weight:600;visibility:hidden;height:0;overflow:hidden;white-space:nowrap;" aria-hidden="true">+ Plan Descent</div>
+            <div id="subModeToggle" style="display:none;border:1px solid var(--border);border-radius:0 9px 9px 0;overflow:hidden;">
+              <button id="subModeQuick" class="active" title="Click a target point for a direct descent"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5 L19 19 M19 19 L10 19 M19 19 L19 10"/></svg> Quick</button>
+              <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3 L9 3 L9 9 L15 9 L15 15 L21 15 L21 21"/></svg> Staged</button>
+            </div>
           </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
           <button id="btnClearStagedResults" onclick="clearStagedResults(true)" title="Clear staged descent results from the map" style="display:none;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
         </div>
       </div>
@@ -1188,7 +1202,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.05';
+const APP_VERSION = 'v260806.08';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -3945,6 +3959,7 @@ document.getElementById('sMinStageSeparation').addEventListener('input', e=>{
   const v = parseInt(e.target.value);
   if(!isNaN(v) && v>0) minStageSeparationM = v;
   scheduleStagedAreaRecompute();
+  scheduleStagedChartOnlyUpdate();
   scheduleStagedRetarget();
 });
 let stagedRetargetTimer = null;
@@ -3958,23 +3973,46 @@ function scheduleStagedRetarget(){
     showStagedDescentPlan(result);
   }, 500);
 }
+// For sliders that only affect the descent PLAN itself (total time budget,
+// inter-stage rate) rather than the shape of the reachable area - these
+// don't need a fresh area computation first, and going through
+// scheduleStagedRetarget for them meant two separate debounced timers
+// (this one and scheduleStagedAreaRecompute's, 400ms vs 500ms) both ending
+// up calling the same reentrancy-guarded, hundreds-of-simulations-expensive
+// computeStagedReachableArea() from the same slider event - if the first
+// was still running when the second's timer fired, the guard silently
+// skipped it, and state.stagedReachableHull could end up subtly stale
+// right when the chart redraw needed it. This updates the chart directly
+// against the target already on the map, without touching the reachable
+// area at all.
+let stagedChartOnlyTimer = null;
+function scheduleStagedChartOnlyUpdate(){
+  if(!stagedTargetMarker) return;
+  clearTimeout(stagedChartOnlyTimer);
+  stagedChartOnlyTimer = setTimeout(()=>{
+    const pos = stagedTargetMarker.getLatLng();
+    const result = searchStagedDescentToTarget(pos.lat, pos.lng);
+    showStagedDescentPlan(result);
+  }, 200);
+}
 document.getElementById('sStagedTotalTime').addEventListener('input', e=>{
   stagedTotalTimeMin = parseInt(e.target.value);
   document.getElementById('lblStagedTotalTime').textContent = stagedTotalTimeMin+' min';
   scheduleStagedAreaRecompute();
-  scheduleStagedRetarget();
+  scheduleStagedChartOnlyUpdate();
 });
 document.getElementById('sStagedRate').addEventListener('input', e=>{
   stagedDescentRateMs = parseFloat(e.target.value);
   document.getElementById('lblStagedRate').textContent = stagedDescentRateMs.toFixed(1)+' m/s';
   scheduleStagedAreaRecompute();
-  scheduleStagedRetarget();
+  scheduleStagedChartOnlyUpdate();
 });
 let maxIntermediateStages = 2;
 document.getElementById('sMaxIntermediateStages').addEventListener('input', e=>{
   const v = parseInt(e.target.value);
   if(!isNaN(v) && v>=0) maxIntermediateStages = v;
   scheduleStagedAreaRecompute();
+  scheduleStagedChartOnlyUpdate();
   scheduleStagedRetarget();
 });
 
@@ -4622,15 +4660,21 @@ function drawStagedPlanChart(result){
         infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="${s.isIntercept?col:'var(--muted)'}">${durMin} min</text>`;
       }
       const arrowRot = (s.dirFrom+180)%360;
+      const windLabel = `${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h`;
+      const windBoxW = windLabel.length*5.8+4;
+      infoRows += `<rect x="${windX-3}" y="${rowY-10}" width="${windBoxW+6}" height="13" fill="var(--panel2)"/>`;
       infoRows += `<g transform="translate(${windX+1},${rowY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
-        `<text x="${windTextX}" y="${rowY}" font-size="10.5" font-weight="400" fill="${s.isIntercept?col:'var(--text)'}">${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h</text>`;
+        `<text x="${windTextX}" y="${rowY}" font-size="10.5" font-weight="400" fill="${s.isIntercept?col:'var(--text)'}">${windLabel}</text>`;
       if(i===0){
         // The configured descent rate (from the slider) applies starting
         // right at this top level - shown as a supporting note (lighter
         // weight, more breathing room below the start line) rather than
         // competing with it, and aligned to the same column as every
         // other wind readout instead of sitting further left.
+        const firstDropSeg = segs.find(seg=>seg.kind==='drop' && seg.altFrom===stages[0].altM);
+        const descentMin = firstDropSeg ? (firstDropSeg.t1-firstDropSeg.t0)/60 : 0;
         infoRows += `<text x="${windTextX}" y="${rowY+26}" font-size="10.5" font-weight="400" fill="#ff6a00">↓ ${stagedDescentRateMs.toFixed(1)} m/s descent rate</text>`;
+        infoRows += `<text x="${windTextX}" y="${rowY+40}" font-size="10.5" font-weight="400" fill="#ff6a00">(${descentMin.toFixed(1)} min descent)</text>`;
       }
     }
     // Braking ballast: for every intermediate/intercept stage (arresting
@@ -4676,12 +4720,12 @@ function drawStagedPlanChart(result){
     }
   }
   foundLayers.forEach(f=>drawBand(f.altM, f.type==='inversion'?'#3ddc6f':'#3fa9ff', f.type));
-  foundShear.forEach(altM=>drawBand(altM, '#BA7517', 'shear'));
+  foundShear.forEach(altM=>drawBand(altM, '#C1440E', 'shear'));
   let legendMarkup = '';
   const legendItems = [];
   if(usedColors.has('#3ddc6f')) legendItems.push({color:'#3ddc6f', label:'Inversion'});
   if(usedColors.has('#3fa9ff')) legendItems.push({color:'#3fa9ff', label:'Isothermal'});
-  if(usedColors.has('#BA7517')) legendItems.push({color:'#BA7517', label:'Wind Shear'});
+  if(usedColors.has('#C1440E')) legendItems.push({color:'#C1440E', label:'Wind Shear'});
   legendItems.forEach((it,idx)=>{
     const lx = ML + idx*90;
     legendMarkup += `<rect x="${lx}" y="${H-16}" width="10" height="3" fill="${it.color}" opacity="0.7"/>`;

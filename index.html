@@ -111,7 +111,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 #modeToggle button#modePlan.active{background:#6b7680;color:#fff;}
-#subModeToggle{z-index:549;display:flex;flex-direction:column;background:var(--panel2);box-shadow:0 2px 6px rgba(0,0,0,.25);}
+#subModeToggle{display:flex;flex-direction:column;background:var(--panel2);}
 #subModeToggle button{background:transparent;border:none;border-top:1px solid var(--border);color:var(--muted);padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;}
 #subModeToggle button:first-child{border-top:none;}
 #subModeToggle button.active{background:#c96a1f;color:#fff;}
@@ -813,21 +813,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
           <button id="btnClearStagedFromMonitor" onclick="clearStagedResults(true); document.getElementById('btnClearStagedFromMonitor').style.display='none';" title="Clear staged descent results from the map" style="display:none;background:transparent;border:1px solid var(--bad);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear staged descent area</button>
         </div>
-        <div style="display:flex;">
-          <!-- Invisible copy of "Landing Area" pushes subModeToggle to start
-               exactly where "Plan Descent" starts - and inside that, an
-               invisible copy of "Plan Descent" itself (collapsed to zero
-               height) forces subModeToggle's width to match it exactly,
-               both without any guessed pixel value that would drift out of
-               sync if either button's text/icon ever changes. -->
-          <div style="padding:9px 12px;font-size:12px;font-weight:600;visibility:hidden;white-space:nowrap;" aria-hidden="true">● Landing Area</div>
-          <div style="display:inline-flex;flex-direction:column;">
-            <div style="padding:9px 12px;font-size:12px;font-weight:600;visibility:hidden;height:0;overflow:hidden;white-space:nowrap;" aria-hidden="true">+ Plan Descent</div>
-            <div id="subModeToggle" style="display:none;border:1px solid var(--border);border-radius:0 9px 9px 0;overflow:hidden;">
-              <button id="subModeQuick" class="active" title="Click a target point for a direct descent"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5 L19 19 M19 19 L10 19 M19 19 L19 10"/></svg> Quick</button>
-              <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3 L9 3 L9 9 L15 9 L15 15 L21 15 L21 21"/></svg> Staged</button>
-            </div>
-          </div>
+        <div id="subModeToggle" style="display:none;position:fixed;border:1px solid var(--border);border-radius:0 9px 9px 0;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25);z-index:549;">
+          <button id="subModeQuick" class="active" title="Click a target point for a direct descent"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5 L19 19 M19 19 L10 19 M19 19 L19 10"/></svg> Quick</button>
+          <button id="subModeStaged" title="Drag a marker on the trajectory to explore staged-descent options"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3 L9 3 L9 9 L15 9 L15 15 L21 15 L21 21"/></svg> Staged</button>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
           <button id="btnClearStagedResults" onclick="clearStagedResults(true)" title="Clear staged descent results from the map" style="display:none;background:var(--panel2);border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Clear results</button>
@@ -1202,7 +1190,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.08';
+const APP_VERSION = 'v260806.09';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -6275,6 +6263,7 @@ function setAppMode(mode){
     referenceTrajectoryOutline.addTo(map);
     referenceTrajectoryLayer.addTo(map);
     document.getElementById('subModeToggle').style.display = 'flex';
+    positionSubModeToggle();
     setTimeout(repositionModeToggle, 0);
     setSubMode(currentSubMode); // re-apply current subfunction's map layers
   } else {
@@ -6976,6 +6965,26 @@ document.getElementById('iconMoon').style.display = 'none';
 // (25% of viewport, clamped between 280-420px), so a fixed pixel offset
 // can't reliably match its edge; reading the card's actual rendered
 // position instead works regardless of viewport size or sidebar state.
+// Positions subModeToggle directly below "Plan Descent", reading that
+// button's own actual rendered position and width rather than trying to
+// approximate it with an invisible CSS spacer - the spacer approach (an
+// earlier attempt) used a text bullet "●" standing in for the real SVG
+// icon, which rendered at a slightly different width than the icon
+// itself, throwing the alignment off exactly like the reported
+// screenshot showed. Reading the true getBoundingClientRect() cannot
+// drift out of sync like that, regardless of what the button's own
+// content looks like.
+function positionSubModeToggle(){
+  const btn = document.getElementById('modePlan');
+  const toggle = document.getElementById('subModeToggle');
+  if(!btn || !toggle) return;
+  const rect = btn.getBoundingClientRect();
+  if(rect.width===0 && rect.height===0) return; // not rendered/visible right now - leave it as is rather than snapping to (0,0)
+  toggle.style.left = Math.round(rect.left) + 'px';
+  toggle.style.top = Math.round(rect.bottom + 3) + 'px';
+  toggle.style.width = Math.round(rect.width) + 'px';
+}
+window.addEventListener('resize', ()=>{ if(state.appMode==='plan') positionSubModeToggle(); });
 function alignPanelToPositionCard(panelEl){
   // Reads the SIDEBAR's own position, not the "Current Position" card's -
   // the card lives inside the sidebar's scrollable content, so if the

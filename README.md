@@ -2,7 +2,7 @@
 
 A single-page web app for long-distance gas balloon flights. It helps plan a safe descent and landing area — including at night or above a closed cloud layer — based on current position, live wind forecasts, and configurable descent parameters.
 
-**Current version: v260806.08** (06.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
+**Current version: v260806.09** (06.08.2026) — this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme changed again to `vYYMMDD.zz` (date the work was done + a 2-digit counter that resets to 01 each new day) - `cors_test.html`'s version marker is kept in sync with this too.
 
 No installation needed: open `index.html` in a browser (works as a home-screen PWA on iPad/iPhone via "Add to Home Screen"). No backend or server of any kind — everything runs entirely in the browser, using free public APIs (Open-Meteo for weather, OpenStreetMap/Overpass for map data, openAIP for airspace, Nominatim for place names).
 
@@ -381,6 +381,8 @@ Wind readout on each descent-stage row now sits on a small neutral background bo
 "Plan Descent" button now turns medium grey when active, instead of the same teal accent color "Landing Area" uses - makes the two main-function buttons visually distinct at a glance. Proposed two variants in chat for nesting the Quick/Staged sub-mode toggle more clearly under the Plan Descent button specifically, pending your choice.
 
 **Quick/Staged sub-mode toggle rebuilt as approved after several rounds of mockup iteration**: now a genuinely separate element below "Plan Descent" (not sharing its outer background/wrapper, so "Landing Area" stays exactly as compact as before), aligned and width-matched to "Plan Descent" precisely via two invisible spacer copies of the real button text rather than any guessed pixel value - stays correct even if that button's own label or icon ever changes. Stacked vertically (Quick above Staged) rather than side-by-side, about 15% shorter than before to read clearly as a sub-choice rather than a peer of the main buttons. New icons: a diagonal arrow for Quick, a plain three-step staircase line (no arrowhead) for Staged.
+
+**Sub-mode toggle alignment - real cause found from your screenshot.** The invisible-spacer approach used a text bullet "●" as a stand-in for "Landing Area"'s real SVG icon, which rendered at a slightly different width than the actual icon - the same kind of CSS-approximation problem that caused several other alignment issues earlier today, now fixed the same reliable way: replaced the whole spacer technique with JavaScript reading `#modePlan`'s actual `getBoundingClientRect()` and positioning `#subModeToggle` (now `position:fixed`) to match its left edge and width exactly, on show and on window resize. Can't drift out of sync with the real button's content anymore, since it's not approximating it at all.
 
 Switching back to Landing Area leaves the last planned area visible on the map (with a delete button) until you plan a new one or clear it.
 

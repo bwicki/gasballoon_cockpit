@@ -1081,8 +1081,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
+        <div style="font-size:9px;color:var(--muted);margin-bottom:8px;">Expected landing location<br><span id="stagedPlanLandingInfo" style="color:var(--text);">—</span></div>
         <div id="stagedPlanSvgWrap" style="width:100%;"></div>
-        <div id="stagedPlanLandingInfo" style="font-size:10.5px;color:var(--muted);margin-top:6px;text-align:center;">—</div>
       </div>
   </div>
 </div>
@@ -1191,7 +1191,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 
 // ---------- version ----------
 // Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.11';
+const APP_VERSION = 'v260806.13';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -4593,7 +4593,7 @@ function drawStagedPlanChart(result){
   // shape on the left, not a full-width precise plot - the actual numbers
   // live in the label column to its right, which is where collision with
   // the curve is avoided entirely (nothing is drawn ON TOP of the line).
-  const W=340, H=310, ML=80, plotW=55, MT=14, MB=40;
+  const W=340, H=350, ML=80, plotW=55, MT=14, MB=40;
   const plotH = H-MT-MB;
   const infoX = ML+plotW+12;
   const windX = infoX+44;
@@ -4624,10 +4624,10 @@ function drawStagedPlanChart(result){
           const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
           const speedKmh = Math.hypot(w.u,w.v)*3.6;
           midSegmentReadouts += `<line x1="${ML-6}" y1="${midY}" x2="${midX}" y2="${midY}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="1,2"/>`;
-          midSegmentReadouts += `<text x="${ML-6}" y="${midY+3}" text-anchor="end" font-size="8.5" fill="var(--muted)">${midAlt} m AMSL</text>`;
+          midSegmentReadouts += `<text x="${ML-6}" y="${midY+3}" text-anchor="end" font-size="9" fill="var(--muted)">${midAlt} m AMSL</text>`;
           const arrowRot = (dirFrom+180)%360;
           midSegmentReadouts += `<g transform="translate(${windX+1},${midY-7}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="var(--muted)"/></g>`+
-            `<text x="${windTextX}" y="${midY-2}" font-size="8.5" font-weight="400" fill="var(--muted)">${Math.round(dirFrom)}° ${Math.round(speedKmh)} km/h</text>`;
+            `<text x="${windTextX}" y="${midY-2}" font-size="9" fill="var(--muted)">${Math.round(dirFrom)}° ${Math.round(speedKmh)} km/h</text>`;
         }
       }
     }
@@ -4677,25 +4677,27 @@ function drawStagedPlanChart(result){
         // itself), and "Ground" moves to sit above the line on the right
         // of the axis - the same position/pattern "Intercept" uses -
         // instead of replacing the altitude number as an axis label.
-        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="#1a9850">${Math.round(s.altM)}<tspan font-size="9" fill="#1a9850"> m AMSL</tspan></text>`;
-        yLabels += `<rect x="${ML+3}" y="${y-13}" width="48" height="13" fill="var(--panel2)"/>`;
-        yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" font-weight="600" fill="#1a9850">Ground</text>`;
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="9" fill="#1a9850">${Math.round(s.altM)} m AMSL</text>`;
+        yLabels += `<rect x="${ML+3}" y="${y-13}" width="48" height="12" fill="var(--panel2)"/>`;
+        yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" fill="#1a9850">Ground</text>`;
       } else {
-        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="11.5" font-weight="400" fill="${col}">${Math.round(s.altM)}<tspan font-size="9" fill="${s.isIntercept?col:'var(--muted)'}"> m AMSL</tspan></text>`;
+        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="9" fill="${col}">${Math.round(s.altM)} m AMSL</text>`;
         // "Intercept" sits to the RIGHT of the axis (not appended to the
         // right-aligned AMSL text, which was what pushed it past the left
         // edge) - directly above the shaded final-descent band, with an
         // opaque background so the descent line passing behind it doesn't
         // visually collide with the text.
         if(s.isIntercept){
-          yLabels += `<rect x="${ML+3}" y="${y-13}" width="52" height="13" fill="var(--panel2)"/>`;
-          yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" font-weight="600" fill="#BA7517">Intercept</text>`;
+          yLabels += `<rect x="${ML+3}" y="${y-13}" width="52" height="12" fill="var(--panel2)"/>`;
+          yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" fill="#BA7517">Intercept</text>`;
         }
         // Only the start (cruise) and intercept levels show AGL too - the
         // intermediate plateaus are identified by AMSL alone, keeping the
-        // axis less cluttered.
+        // axis less cluttered. Always directly below its own AMSL line,
+        // same font size, same column - not offset further down where it
+        // could read as unrelated to the number above it.
         if(i===0 || s.isIntercept){
-          yLabels += `<text x="${ML-6}" y="${y+11}" text-anchor="end" font-size="9.5" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL</text>`;
+          yLabels += `<text x="${ML-6}" y="${y+9}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(s.altM-groundAlt)} m AGL</text>`;
         }
       }
     }
@@ -4711,14 +4713,14 @@ function drawStagedPlanChart(result){
     const durMin = Math.round(s.lingerS/60);
     if(!s.isGround){
       if(i>0){
-        infoRows += `<text x="${infoX}" y="${rowY}" font-size="11.5" font-weight="400" fill="${s.isIntercept?col:'var(--muted)'}">${durMin} min</text>`;
+        infoRows += `<text x="${infoX}" y="${rowY}" font-size="9" fill="${s.isIntercept?col:'var(--muted)'}">${durMin} min</text>`;
       }
       const arrowRot = (s.dirFrom+180)%360;
       const windLabel = `${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h`;
-      const windBoxW = windLabel.length*5.8+4;
-      infoRows += `<rect x="${windX-3}" y="${rowY-10}" width="${windBoxW+6}" height="13" fill="var(--panel2)"/>`;
+      const windBoxW = windLabel.length*5+4;
+      infoRows += `<rect x="${windX-3}" y="${rowY-10}" width="${windBoxW+6}" height="12" fill="var(--panel2)"/>`;
       infoRows += `<g transform="translate(${windX+1},${rowY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
-        `<text x="${windTextX}" y="${rowY}" font-size="10.5" font-weight="400" fill="${s.isIntercept?col:'var(--text)'}">${windLabel}</text>`;
+        `<text x="${windTextX}" y="${rowY}" font-size="9" fill="${s.isIntercept?col:'var(--text)'}">${windLabel}</text>`;
       if(i===0){
         // The configured descent rate (from the slider) applies starting
         // right at this top level - shown as a supporting note (lighter
@@ -4727,8 +4729,8 @@ function drawStagedPlanChart(result){
         // other wind readout instead of sitting further left.
         const firstDropSeg = segs.find(seg=>seg.kind==='drop' && seg.altFrom===stages[0].altM);
         const descentMin = firstDropSeg ? (firstDropSeg.t1-firstDropSeg.t0)/60 : 0;
-        infoRows += `<text x="${windTextX}" y="${rowY+26}" font-size="10.5" font-weight="400" fill="#ff6a00">↓ ${stagedDescentRateMs.toFixed(1)} m/s descent rate</text>`;
-        infoRows += `<text x="${windTextX}" y="${rowY+40}" font-size="10.5" font-weight="400" fill="#ff6a00">(${descentMin.toFixed(1)} min descent)</text>`;
+        infoRows += `<text x="${windTextX}" y="${rowY+26}" font-size="9" fill="#ff6a00">↓ ${stagedDescentRateMs.toFixed(1)} m/s descent rate</text>`;
+        infoRows += `<text x="${windTextX}" y="${rowY+38}" font-size="9" fill="#ff6a00">(${descentMin.toFixed(1)} min descent)</text>`;
       }
     }
     // Braking ballast: for every intermediate/intercept stage (arresting
@@ -4741,7 +4743,7 @@ function drawStagedPlanChart(result){
       totalBallastKg += ballastKg;
       const bw=48;
       infoRows += `<rect x="${W-6-bw}" y="${y-19}" width="${bw}" height="14" rx="3" fill="var(--panel)" stroke="var(--border)" stroke-width="0.5"/>`;
-      infoRows += `<text x="${W-6-bw/2}" y="${y-12}" text-anchor="middle" dominant-baseline="central" font-size="9.5" fill="var(--muted)">${Math.round(ballastKg)} kg</text>`;
+      infoRows += `<text x="${W-6-bw/2}" y="${y-12}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="var(--muted)">${Math.round(ballastKg)} kg</text>`;
     }
   });
 
@@ -4762,15 +4764,22 @@ function drawStagedPlanChart(result){
     usedColors.add(color);
     const y = yFor(altM);
     bandsMarkup += `<rect x="${ML}" y="${y-1.5}" width="${W-6-ML}" height="3" fill="${color}" opacity="0.55"/>`;
-    const aglTxt = altM<interceptAltForBands ? ` (${Math.round(altM-groundAlt)} m AGL)` : '';
+    const showAgl = altM<interceptAltForBands;
     if(label==='shear'){
       // Wind shear's altitude moves into the left column, aligned with
       // every other altitude label there, rather than sitting on the
       // right with the inversion/isothermal ones - orange rather than
-      // red, since it's marking a level to be aware of, not a fault.
-      bandsMarkup += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="9" fill="${color}">${Math.round(altM)}<tspan font-size="7.5"> m AMSL${aglTxt}</tspan></text>`;
+      // red, since it's marking a level to be aware of, not a fault. AGL
+      // (once below intercept) is its own line directly underneath, same
+      // as every other level's AMSL/AGL pair, not appended inline onto
+      // the same line - that read as one crowded value instead of two
+      // clearly related ones stacked the same way everything else is.
+      bandsMarkup += `<text x="${ML-6}" y="${y+3}" text-anchor="end" font-size="9" fill="${color}">${Math.round(altM)} m AMSL</text>`;
+      if(showAgl){
+        bandsMarkup += `<text x="${ML-6}" y="${y+14}" text-anchor="end" font-size="9" fill="${color}">${Math.round(altM-groundAlt)} m AGL</text>`;
+      }
     } else {
-      bandsMarkup += `<text x="${infoX}" y="${y+3}" font-size="8" fill="${color}">${Math.round(altM)} m AMSL${aglTxt}</text>`;
+      bandsMarkup += `<text x="${infoX}" y="${y+3}" font-size="9" fill="${color}">${Math.round(altM)} m AMSL${showAgl?` (${Math.round(altM-groundAlt)} m AGL)`:''}</text>`;
     }
   }
   foundLayers.forEach(f=>drawBand(f.altM, f.type==='inversion'?'#3ddc6f':'#3fa9ff', f.type));
@@ -7094,7 +7103,17 @@ function positionSubModeToggle(){
   toggle.style.top = Math.round(rect.bottom + 3) + 'px';
   toggle.style.width = Math.round(rect.width) + 'px';
 }
-// resize handling for subModeToggle now lives inside repositionModeToggle() itself, alongside every other trigger that can shift #modePlan's position
+// Belt-and-suspenders on top of positionSubModeToggle() being called from
+// repositionModeToggle(): rather than continuing to individually track
+// every code path that can change #topAlertStack's height (a banner
+// reopening turned out to be yet another one not already covered), watch
+// the stack itself directly - ANY size change to it, from ANY cause,
+// fires this automatically. This is what actually makes the fix durable
+// instead of just moving the same kind of gap somewhere else.
+const topAlertStackEl = document.getElementById('topAlertStack');
+if(topAlertStackEl && typeof ResizeObserver!=='undefined'){
+  new ResizeObserver(()=>{ if(state.appMode==='plan') positionSubModeToggle(); }).observe(topAlertStackEl);
+}
 function alignPanelToPositionCard(panelEl){
   // Reads the SIDEBAR's own position, not the "Current Position" card's -
   // the card lives inside the sidebar's scrollable content, so if the

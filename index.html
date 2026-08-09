@@ -1001,6 +1001,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 <span id="landingWindTrend" style="font-size:12px;flex-shrink:0;" title="Trend vs. 1h earlier"></span>
               </div>
             </div>
+            <div class="datacell wide" id="landingSunCell" style="display:none;">
+              <label>Sun at estimated landing</label>
+              <div class="val small" id="landingSunText" style="display:flex;align-items:center;gap:5px;font-weight:400;overflow:visible;">
+                <svg id="landingSunArrow" width="15" height="15" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#eecb6b"/></svg>
+                <span id="landingSunElevText" style="flex-shrink:0;font-size:12px;">—</span>
+                <span id="landingSunDaylightText" style="font-size:10.5px;color:var(--muted);flex-shrink:0;">—</span>
+              </div>
+            </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
               <label data-i18n="fieldEstimatedDescentPoint"><svg width="11" height="10" viewBox="0 0 26 24" style="vertical-align:-1px;margin-right:3px;"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>Estimated Descent Point</label>
               <div class="val small" id="estimatedDescentPointText">—</div>
@@ -1264,7 +1272,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.11-0100';
+const APP_VERSION = 'v260809.12-0140';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1362,6 +1370,28 @@ function computeSunEventsUTC(lat, lon, dateUTC){
     sunset: eventMinutes(90.833, false),
     civilDusk: eventMinutes(96, false)
   };
+}
+// Sun azimuth/elevation at an exact instant (not just the rise/set/twilight
+// EVENTS computeSunEventsUTC gives) - reuses the same declination/equation
+// of time approximation, just evaluated at the actual clock time instead
+// of solved for a target zenith angle. Used for a shadow-direction preview
+// at the estimated landing time/place, not for anything safety-critical.
+function computeSunPosition(lat, lon, dateUTC){
+  const rad = Math.PI/180;
+  const start = Date.UTC(dateUTC.getUTCFullYear(),0,0);
+  const dayOfYear = Math.floor((dateUTC.getTime()-start)/86400000);
+  const gamma = 2*Math.PI/365*(dayOfYear-1+0.5);
+  const eqTime = 229.18*(0.000075+0.001868*Math.cos(gamma)-0.032077*Math.sin(gamma)-0.014615*Math.cos(2*gamma)-0.040849*Math.sin(2*gamma));
+  const decl = 0.006918-0.399912*Math.cos(gamma)+0.070257*Math.sin(gamma)-0.006758*Math.cos(2*gamma)+0.000907*Math.sin(2*gamma)-0.002697*Math.cos(3*gamma)+0.00148*Math.sin(3*gamma);
+  const utcMin = dateUTC.getUTCHours()*60 + dateUTC.getUTCMinutes() + dateUTC.getUTCSeconds()/60;
+  const trueSolarMin = utcMin + eqTime + 4*lon;
+  const hourAngleDeg = (trueSolarMin/4) - 180; // degrees from solar noon
+  const haR = hourAngleDeg*rad, latR = lat*rad;
+  const elevR = Math.asin(Math.sin(latR)*Math.sin(decl)+Math.cos(latR)*Math.cos(decl)*Math.cos(haR));
+  let azR = Math.atan2(Math.sin(haR), Math.cos(haR)*Math.sin(latR)-Math.tan(decl)*Math.cos(latR));
+  let azDeg = (azR/rad + 180)%360; // convert to compass bearing (0=N, from-the-north convention)
+  if(azDeg<0) azDeg += 360;
+  return {azimuthDeg: azDeg, elevationDeg: elevR/rad};
 }
 function formatUTCFromMinutes(dateUTC, minutesPastMidnight){
   if(minutesPastMidnight==null) return null;
@@ -5998,6 +6028,37 @@ function doRecompute(){
   // deterministic (no scatter) path for warning-collision checks / hodograph reference
   const refPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, 0, null, null, null, null, null, true);
   state.secondsToLanding = refPath.length ? refPath[refPath.length-1].t : 0;
+  // Sun position (and derived shadow direction) at the estimated landing
+  // point AND time - not "now", but "whenever the balloon will actually be
+  // there" - useful for judging remaining daylight/terrain shadow before
+  // committing to a late-day landing. Purely informational, not a safety
+  // computation, so it's fine that it silently skips if there's no
+  // landing-area estimate yet (state.appMode==='plan' with nothing planned,
+  // or landingLayerOn off).
+  if(liveLandingCenterMarker){
+    const ll = liveLandingCenterMarker.getLatLng();
+    const landingTime = new Date(Date.now() + state.secondsToLanding*1000);
+    const sunPos = computeSunPosition(ll.lat, ll.lng, landingTime);
+    document.getElementById('landingSunCell').style.display = 'block';
+    document.getElementById('landingSunArrow').style.transform = `rotate(${sunPos.azimuthDeg}deg)`;
+    const shadowDeg = (sunPos.azimuthDeg+180)%360;
+    if(sunPos.elevationDeg > 0){
+      document.getElementById('landingSunElevText').textContent = `${sunPos.elevationDeg.toFixed(0)}° elev · shadow ${shadowDeg.toFixed(0)}°`;
+      const todaySun = computeSunEventsUTC(ll.lat, ll.lng, landingTime);
+      if(todaySun.sunset!=null){
+        const sunsetDate = formatUTCFromMinutes(landingTime, todaySun.sunset);
+        const minToSunset = Math.round((sunsetDate - landingTime)/60000);
+        document.getElementById('landingSunDaylightText').textContent = minToSunset>0 ? `${minToSunset}min daylight left` : 'after sunset';
+      } else {
+        document.getElementById('landingSunDaylightText').textContent = '';
+      }
+    } else {
+      document.getElementById('landingSunElevText').textContent = 'below horizon (dark)';
+      document.getElementById('landingSunDaylightText').textContent = '';
+    }
+  } else {
+    document.getElementById('landingSunCell').style.display = 'none';
+  }
   // A separate, longer cruise-only path (out to 250min, just past the
   // "Initiate descent in" slider's own 240min max) kept fresh here purely
   // so the descent-point marker can be dragged forward past whatever the
@@ -8285,22 +8346,40 @@ function buildGpx(){
   const points = state.flightLog.map(e=>
     `      <trkpt lat="${e.lat.toFixed(6)}" lon="${e.lon.toFixed(6)}"><ele>${e.altAMSL.toFixed(1)}</ele><time>${new Date(e.t).toISOString()}</time></trkpt>`
   ).join('\n');
+  // Predicted landing point wasn't previously included at all - just the
+  // flown track. liveLandingCenterMarker already holds the latest computed
+  // centre (recomputed continuously in doRecompute), so this is simply
+  // reading its current position rather than tracking a separate history -
+  // a single best-current-estimate waypoint, refreshed on every export.
+  let landingWpt = '';
+  if(liveLandingCenterMarker){
+    const ll = liveLandingCenterMarker.getLatLng();
+    landingWpt = `\n  <wpt lat="${ll.lat.toFixed(6)}" lon="${ll.lng.toFixed(6)}"><name>Predicted landing point</name><time>${new Date().toISOString()}</time></wpt>`;
+  }
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Gasballoon Cockpit" xmlns="http://www.topografix.com/GPX/1/1">
   <trk><name>Gasballoon Cockpit Flight Log</name><trkseg>
 ${points}
-  </trkseg></trk>
+  </trkseg></trk>${landingWpt}
 </gpx>`;
 }
 function buildKml(){
   const coords = state.flightLog.map(e=>`${e.lon.toFixed(6)},${e.lat.toFixed(6)},${e.altAMSL.toFixed(1)}`).join(' ');
+  let landingPlacemark = '';
+  if(liveLandingCenterMarker){
+    const ll = liveLandingCenterMarker.getLatLng();
+    landingPlacemark = `\n  <Placemark>
+    <name>Predicted landing point</name>
+    <Point><coordinates>${ll.lng.toFixed(6)},${ll.lat.toFixed(6)},0</coordinates></Point>
+  </Placemark>`;
+  }
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document>
   <name>Gasballoon Cockpit Flight Log</name>
   <Placemark>
     <name>Flight track</name>
     <LineString><altitudeMode>absolute</altitudeMode><coordinates>${coords}</coordinates></LineString>
-  </Placemark>
+  </Placemark>${landingPlacemark}
 </Document></kml>`;
 }
 document.getElementById('btnExportGpx').addEventListener('click', ()=>{

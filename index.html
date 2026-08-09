@@ -1242,14 +1242,14 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.20-1740';
+const APP_VERSION = 'v260806.23-1930';
 const APP_DATE = '06.08.2026';
-document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
+document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
 const state = {
   lat: 47.3769, lon: 8.5417, altAMSL: 3000, groundElev: 450,
-  course: 90, speedKn: 15, climbRateMs: 0,
+  course: 90, speedKn: 15, climbRateMs: 0, courseKnown: false, // courseKnown stays false until real movement is observed - 90° is just an arbitrary starting default, not a real reading, so it shouldn't display as one
   breadcrumb: [], // {lat,lon,t}
   testMode: false,
   windProfile: null, // array of {alt_m, dir_deg, speed_ms}
@@ -4066,8 +4066,10 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   // this degrades gracefully to "coasting on the last known wind" instead
   // of failing outright.
   const HORIZON_MIN = 48*60;
-  const fullPath = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, HORIZON_MIN*60, rate1, interceptAGL, rate2, 0);
+  console.log('Extended trajectory: click received. Model in use:', state.modelUsed, '- wind profiles available:', (state.windProfilesByHour||[]).length);
+  const fullPath = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, HORIZON_MIN*60, rate1, interceptAGL, rate2, 0, null, null, null, null, null, true);
   const cruiseOnly = fullPath.filter(p=>p.t <= HORIZON_MIN*60);
+  console.log('Extended trajectory: simulated path length:', cruiseOnly.length, cruiseOnly.length>=2 ? '' : '- ABORTING: too short to use');
   if(cruiseOnly.length<2) return;
   // +/-60 degree check against the trajectory's own initial direction, same
   // pattern used for the staged-descent marker placement elsewhere in the
@@ -4077,8 +4079,10 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   const trajBearing = bearingBetween(state.lat, state.lon, trajRef.lat, trajRef.lon);
   const clickBearing = bearingBetween(state.lat, state.lon, clickLat, clickLon);
   let diff = Math.abs(clickBearing-trajBearing); if(diff>180) diff = 360-diff;
+  console.log('Extended trajectory: trajectory bearing', trajBearing.toFixed(1), '° click bearing', clickBearing.toFixed(1), '° diff', diff.toFixed(1), '°', diff>60 ? '- ABORTING: outside +/-60° cone' : '');
   if(diff>60) return; // outside the cone - not what this gesture is for, ignore silently
   const closest = closestPointOnPath(cruiseOnly, clickLat, clickLon);
+  console.log('Extended trajectory: closest point on path:', closest, closest ? '' : '- ABORTING: no closest point found');
   if(!closest) return;
   // Only meaningful beyond where the existing signatures (the normal
   // trajectory, the descent cross, the landing area) already reach -
@@ -4087,6 +4091,7 @@ function handleExtendedTrajectoryClick(clickLat, clickLon){
   // same boundary already used below for the overlap/extension split, so
   // this is really just gating on "would there even BE an extension
   // segment" rather than a separate, newly-invented threshold.
+  console.log('Extended trajectory: closest.t =', closest.t.toFixed(0), 's, gate boundary (initDelayMin*60) =', (initDelayMin*60).toFixed(0), 's', closest.t <= initDelayMin*60 ? '- ABORTING: click resolves within already-visible range' : '');
   if(closest.t <= initDelayMin*60) return;
   const truncated = cruiseOnly.slice(0, closest.segIdx+1).concat([{lat:closest.lat, lon:closest.lon, t:closest.t}]);
   // Boundary between "overlap" and "extension": where Function 1's own
@@ -5025,6 +5030,12 @@ function startGPS(){
   gpsWatchId = navigator.geolocation.watchPosition(pos=>{
     if(state.testMode) return;
     setGpsStatus(true, `±${Math.round(pos.coords.accuracy)} m`);
+    console.log('GPS fix received:', {
+      lat: pos.coords.latitude, lon: pos.coords.longitude,
+      rawAltitude: pos.coords.altitude, // null on many devices, especially indoors - if null, altAMSL below falls back to whatever state.altAMSL already was
+      accuracy: pos.coords.accuracy, altitudeAccuracy: pos.coords.altitudeAccuracy,
+      'state.altAMSL before update': state.altAMSL, 'state.groundElev before update': state.groundElev
+    });
     updatePosition(pos.coords.latitude, pos.coords.longitude,
       pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
       null, null, true);
@@ -5036,8 +5047,16 @@ function startGPS(){
     // elevation from wherever the app last fetched it, potentially a
     // completely different location. Distance-debounced (500m) rather
     // than on every single GPS tick, to avoid hammering the elevation API.
-    if(!state.groundElevFetchedAt || haversine(state.groundElevFetchedAt.lat, state.groundElevFetchedAt.lon, pos.coords.latitude, pos.coords.longitude) > 500){
-      fetchGroundElevation();
+    const distFromLastElevFetch = state.groundElevFetchedAt
+      ? haversine(state.groundElevFetchedAt.lat, state.groundElevFetchedAt.lon, pos.coords.latitude, pos.coords.longitude)
+      : null;
+    console.log('Ground elevation refresh check:', {
+      'state.groundElevFetchedAt': state.groundElevFetchedAt,
+      'distance from that point (m)': distFromLastElevFetch,
+      'will refresh now': !state.groundElevFetchedAt || distFromLastElevFetch > 500
+    });
+    if(!state.groundElevFetchedAt || distFromLastElevFetch > 500){
+      fetchGroundElevation().then(()=>console.log('Ground elevation refreshed. New state.groundElev:', state.groundElev));
     }
   }, err=>{
     setGpsStatus(false, err.message);
@@ -5198,9 +5217,21 @@ function updatePosition(lat, lon, altAMSL, deviceCourse, deviceSpeedKn, computeF
       const MAX_PLAUSIBLE_SPEED_KN = 110; // ~200 km/h
       if(dt >= 1 && dist > 2 && impliedSpeedKn <= MAX_PLAUSIBLE_SPEED_KN){ // ignore GPS jitter at near-zero movement
         state.course = bearingBetween(state.lastFix.lat, state.lastFix.lon, lat, lon);
+        state.courseKnown = true;
         state.speedKn = impliedSpeedKn;
+      } else if(dt >= 1 && dist <= 2){
+        // Genuinely no meaningful movement - explicitly bring speed toward
+        // zero rather than leaving it untouched. The "if dist>2" branch
+        // above was the ONLY place speed ever got updated, so a balloon
+        // (or this test) sitting still from app start never had a path
+        // that set it to anything but state's own initial default
+        // (15kn/27.8km/h) - which is exactly the stale value being
+        // reported. Course is left alone here (not reset), since there's
+        // no reliable direction to derive from near-zero movement, but
+        // speed has no such ambiguity: no movement means no speed.
+        state.speedKn = 0;
       }
-      // else: keep previous course/speed (too little movement, or an implausible jump, to derive a reliable value)
+      // else (implausible jump): keep previous course/speed - likely GPS noise, not a real reading
       // Vertical rate uses its own threshold (just elapsed time, not
       // horizontal distance) - the balloon can genuinely climb or sink
       // while sitting still horizontally in dead air. GPS altitude is
@@ -5342,11 +5373,13 @@ async function fetchNearestTownForCurrentPosition(){
 // ---------- ground elevation (Open-Meteo elevation API, best effort) ----------
 async function fetchGroundElevation(){
   try{
+    console.log('fetchGroundElevation: requesting for', state.lat, state.lon);
     const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${state.lat}&longitude=${state.lon}`);
     const j = await r.json();
     if(j.elevation && j.elevation.length) state.groundElev = j.elevation[0];
     state.groundElevFetchedAt = {lat: state.lat, lon: state.lon};
-  }catch(e){ /* keep previous */ }
+    console.log('fetchGroundElevation: response', j, '-> state.groundElev is now', state.groundElev);
+  }catch(e){ console.error('fetchGroundElevation failed (kept previous groundElev):', e); }
 }
 
 // ---------- wind model (Open-Meteo pressure levels) ----------
@@ -5369,6 +5402,19 @@ function pickAutoModel(lat, lon){
   if(lat>=29.5  && lat<=70.5  && lon>=-23.5 && lon<=45)    return 'icon_eu';   // wider Europe, 7km
   return 'gfs_global';                                                        // global fallback
 }
+// A manually-selected (non-auto) model can be left over from testing
+// somewhere else entirely and never get reconsidered as the balloon (or
+// this app) moves to a genuinely different region - ICON-D2 in particular
+// only covers DACH/Central Europe, and silently continuing to request it
+// somewhere it doesn't cover would be actively misleading for a landing
+// prediction. Checked against the same coverage boxes pickAutoModel uses,
+// generalized to "does this specific model actually cover here" rather
+// than just picking the best one.
+function isModelValidForLocation(model, lat, lon){
+  if(model==='icon_d2') return lat>=43.18 && lat<=58.08 && lon>=-3.94 && lon<=20.34;
+  if(model==='icon_eu') return lat>=29.5  && lat<=70.5  && lon>=-23.5 && lon<=45;
+  return true; // gfs_global, ecmwf_ifs04, best_match are all effectively global
+}
 function estimateModelRunAgeHours(modelKey){
   const meta = MODEL_META[modelKey] || MODEL_META.best_match;
   const now = new Date();
@@ -5385,7 +5431,7 @@ function estimateModelRunAgeHours(modelKey){
 // than always showing the current position's profile.
 async function fetchWindProfileAtLocation(lat, lon, hourIdx){
   const modelSel = document.getElementById('wxModelSelect').value;
-  const resolvedModel = modelSel==='auto' ? pickAutoModel(lat, lon) : modelSel;
+  const resolvedModel = (modelSel==='auto' || !isModelValidForLocation(modelSel, lat, lon)) ? pickAutoModel(lat, lon) : modelSel;
   const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
   const forecastHours = Math.max(hourIdx+1, 3);
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${forecastHours}&timezone=UTC`;
@@ -5404,7 +5450,17 @@ async function fetchWindProfileAtLocation(lat, lon, hourIdx){
 async function fetchWind(force){
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
-    const resolvedModel = modelSel==='auto' ? pickAutoModel(state.lat, state.lon) : modelSel;
+    let resolvedModel = modelSel==='auto' ? pickAutoModel(state.lat, state.lon) : modelSel;
+    let modelOverridden = false;
+    if(modelSel!=='auto' && !isModelValidForLocation(modelSel, state.lat, state.lon)){
+      // A manually-picked model left over from testing/flying somewhere
+      // else doesn't cover the current position - falling back to auto
+      // rather than silently requesting it anyway (which could return an
+      // error, or data for the wrong area, without making that obvious).
+      resolvedModel = pickAutoModel(state.lat, state.lon);
+      modelOverridden = true;
+      console.warn(`Weather model: "${modelSel}" doesn't cover the current position (${state.lat.toFixed(2)}, ${state.lon.toFixed(2)}) - falling back to auto (${resolvedModel}) instead of silently using it anyway.`);
+    }
     const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
     const FORECAST_HOURS = 12; // enough headroom to cover a multi-hour descent
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
@@ -5433,9 +5489,12 @@ async function fetchWind(force){
     document.getElementById('wxModelName').title = state.modelUsed;
     document.getElementById('wxModelFetchAge').textContent = '0min';
     document.getElementById('wxModelRunAge').textContent = `${state.modelRunAgeH.toFixed(1)}h`;
-    document.getElementById('wxModelSettingsStatus').textContent = modelSel==='auto'
-      ? `Using: ${meta.label} · run ~${state.modelRunAgeH.toFixed(1)} h old`
-      : `Run age: ~${state.modelRunAgeH.toFixed(1)} h old`;
+    document.getElementById('wxModelSettingsStatus').textContent = modelOverridden
+      ? `⚠ "${MODEL_META[modelSel]?.label||modelSel}" doesn't cover this location - using ${meta.label} instead`
+      : (modelSel==='auto'
+        ? `Using: ${meta.label} · run ~${state.modelRunAgeH.toFixed(1)} h old`
+        : `Run age: ~${state.modelRunAgeH.toFixed(1)} h old`);
+    document.getElementById('wxModelSettingsStatus').style.color = modelOverridden ? 'var(--bad)' : 'var(--muted)';
     drawWindProfileChart();
     recomputeAll();
   }catch(e){
@@ -5617,7 +5676,7 @@ function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1M
 }
 
 // ---------- Monte-Carlo landing footprint ----------
-function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride, startOverride){
+function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride, startOverride, debugWindProgression){
   // Phase 0: continue toward the descent-initiation point. For the first
   // few minutes we're still extrapolating the OBSERVED GPS course/speed
   // (the most reliable data we have for what's happening right now), but for
@@ -5639,6 +5698,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   // two different target points - even ones lying along the same obvious
   // wind line - landing on unrelated, seemingly illogical solutions.
   const BLEND_START_S = 60, BLEND_END_S = 180;
+  let lastLoggedHourIdx = -1;
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
   let t=0;
@@ -5657,6 +5717,11 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
     const step=Math.min(dt, initDelayS-t);
     const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
     const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
+    if(debugWindProgression && hourIdxAtT!==lastLoggedHourIdx){
+      const p = getActiveWindProfile(hourIdxAtT);
+      console.log(`Wind progression: hour ${hourIdxAtT} (t=${(t/60).toFixed(0)}min) - profile has ${p?p.length:0} levels, wind at cruise alt ${alt.toFixed(0)}m: ${Math.hypot(w.u,w.v).toFixed(1)} m/s, source profile length available: ${(state.windProfilesByHour||[]).length} hours total`);
+      lastLoggedHourIdx = hourIdxAtT;
+    }
     const blendFrac = Math.max(0, Math.min(1, (t-BLEND_START_S)/(BLEND_END_S-BLEND_START_S)));
     const u = observedU + (w.u-observedU)*blendFrac;
     const v = observedV + (w.v-observedV)*blendFrac;
@@ -5785,7 +5850,7 @@ function doRecompute(){
   }
 
   // deterministic (no scatter) path for warning-collision checks / hodograph reference
-  const refPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, 0);
+  const refPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, 0, null, null, null, null, null, true);
   state.secondsToLanding = refPath.length ? refPath[refPath.length-1].t : 0;
   // A separate, longer cruise-only path (out to 250min, just past the
   // "Initiate descent in" slider's own 240min max) kept fresh here purely
@@ -7299,7 +7364,8 @@ function updateFlightDataBoxContent(){
   document.getElementById('fdbVArrow').innerHTML = vRate>=0
     ? '<path d="M12 20V4M6 10l6-6 6 6"/>'
     : '<path d="M12 4V20M6 14l6 6 6-6"/>';
-  document.getElementById('fdbCourse').textContent = Math.round(state.course)+'°';
+  document.getElementById('fdbCourse').textContent = state.courseKnown ? Math.round(state.course)+'°' : '---°';
+  document.getElementById('fdbCourseArrow').style.visibility = state.courseKnown ? 'visible' : 'hidden';
   document.getElementById('fdbCourseArrow').style.transform = `rotate(${state.course}deg)`;
   const kmh = state.speedKn*1.852;
   document.getElementById('fdbSpeedKmh').textContent = kmh.toFixed(1);

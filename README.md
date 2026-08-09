@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260806.18** (06.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz` (date of the last change + a 2-digit counter that resets to 01 each new day). `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260806.20-1740** (06.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -70,3 +70,5 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - This is a static file with no server: after any change, it has to be re-uploaded to wherever it's hosted (e.g. GitHub Pages) before the live site reflects it, and GitHub Pages deployments can occasionally fail/time out on GitHub's own infrastructure - worth checking the Actions tab if a new version doesn't appear after uploading.
 - Cloud file pickers (Dropbox, Google Drive, etc.) shown when uploading a file are controlled by iOS/the browser based on installed provider apps, not by this page.
 - When installed as a home-screen web app on iOS, the layout respects the device's safe area (status bar, home indicator) via `env(safe-area-inset-*)`, so it shouldn't sit underneath the system status bar.
+- Course, speed, and climb/sink rate are all derived from consecutive GPS fixes and include a plausibility cap (rejecting implied speeds above ~200km/h or vertical rates above ~20m/s) to filter out indoor/poor-signal GPS jitter, which can otherwise report large position or altitude jumps between fixes even while genuinely stationary.
+- Ground elevation (used for the AGL figure) refreshes automatically as GPS position changes by more than 500m, not just at app start - a real position more than 500m from wherever it was last fetched will briefly show an AGL based on the previous location's elevation until the next fix triggers a refresh.

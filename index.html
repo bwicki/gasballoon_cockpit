@@ -1237,8 +1237,12 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 }
 
 // ---------- version ----------
-// Increment APP_VERSION on every revision and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.18';
+// Format: vYYMMDD.zz-HHMM - date + a same-day counter (resets to 01 each
+// new day) + the build time, so multiple same-day builds are unambiguous
+// at a glance (helpful for confirming a deployment actually picked up the
+// latest one, not a stale cached build). Increment the .zz counter on
+// every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
+const APP_VERSION = 'v260806.20-1740';
 const APP_DATE = '06.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION + ' · ' + APP_DATE;
 
@@ -5024,6 +5028,17 @@ function startGPS(){
     updatePosition(pos.coords.latitude, pos.coords.longitude,
       pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
       null, null, true);
+    // Ground elevation was previously only ever fetched at boot (whatever
+    // position was active then) and on a manual test-mode click - never
+    // when real GPS actually moved to a genuinely different place. That's
+    // very likely the direct cause of a wildly wrong (even negative) AGL
+    // reading: comparing the current altitude against leftover ground
+    // elevation from wherever the app last fetched it, potentially a
+    // completely different location. Distance-debounced (500m) rather
+    // than on every single GPS tick, to avoid hammering the elevation API.
+    if(!state.groundElevFetchedAt || haversine(state.groundElevFetchedAt.lat, state.groundElevFetchedAt.lon, pos.coords.latitude, pos.coords.longitude) > 500){
+      fetchGroundElevation();
+    }
   }, err=>{
     setGpsStatus(false, err.message);
   }, {enableHighAccuracy:true, maximumAge:2000, timeout:10000});
@@ -5170,15 +5185,32 @@ function updatePosition(lat, lon, altAMSL, deviceCourse, deviceSpeedKn, computeF
     if(state.lastFix){
       const dt = (now - state.lastFix.t)/1000;
       const dist = haversine(state.lastFix.lat, state.lastFix.lon, lat, lon);
-      if(dt >= 1 && dist > 2){ // ignore GPS jitter at near-zero movement
+      const impliedSpeedKn = dt>0 ? (dist/dt) * KN_PER_MS : 0;
+      // Indoor/poor-signal GPS (e.g. inside a building) can report jumps of
+      // tens of meters between consecutive fixes even while genuinely
+      // stationary - with a short enough dt, that alone divides out to an
+      // absurd speed (a real report: 278 km/h while sitting still in a
+      // hotel). MAX_PLAUSIBLE_SPEED_KN is well above anything a gas
+      // balloon actually reaches even in a strong jet stream, so a
+      // computed value above it is far more likely GPS noise than a real
+      // reading - treated the same as too-little-movement below: keep the
+      // previous course/speed rather than accept an implausible spike.
+      const MAX_PLAUSIBLE_SPEED_KN = 110; // ~200 km/h
+      if(dt >= 1 && dist > 2 && impliedSpeedKn <= MAX_PLAUSIBLE_SPEED_KN){ // ignore GPS jitter at near-zero movement
         state.course = bearingBetween(state.lastFix.lat, state.lastFix.lon, lat, lon);
-        state.speedKn = (dist/dt) * KN_PER_MS;
+        state.speedKn = impliedSpeedKn;
       }
-      // else: keep previous course/speed (too little movement to derive a reliable value)
+      // else: keep previous course/speed (too little movement, or an implausible jump, to derive a reliable value)
       // Vertical rate uses its own threshold (just elapsed time, not
       // horizontal distance) - the balloon can genuinely climb or sink
-      // while sitting still horizontally in dead air.
-      if(dt >= 1) state.climbRateMs = (altAMSL - state.lastFix.alt) / dt;
+      // while sitting still horizontally in dead air. GPS altitude is
+      // typically even less reliable than horizontal position indoors, so
+      // this gets the same kind of plausibility cap for the same reason.
+      if(dt >= 1){
+        const impliedClimbMs = (altAMSL - state.lastFix.alt) / dt;
+        const MAX_PLAUSIBLE_CLIMB_MS = 20; // generous even for active venting/ballasting
+        if(Math.abs(impliedClimbMs) <= MAX_PLAUSIBLE_CLIMB_MS) state.climbRateMs = impliedClimbMs;
+      }
     } else if(deviceCourse!=null || deviceSpeedKn!=null){
       state.course = deviceCourse!=null ? deviceCourse : state.course;
       state.speedKn = deviceSpeedKn!=null ? deviceSpeedKn : state.speedKn;
@@ -5313,6 +5345,7 @@ async function fetchGroundElevation(){
     const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${state.lat}&longitude=${state.lon}`);
     const j = await r.json();
     if(j.elevation && j.elevation.length) state.groundElev = j.elevation[0];
+    state.groundElevFetchedAt = {lat: state.lat, lon: state.lon};
   }catch(e){ /* keep previous */ }
 }
 

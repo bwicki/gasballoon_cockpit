@@ -1285,7 +1285,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.17-0415';
+const APP_VERSION = 'v260809.18-0440';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -6471,6 +6471,7 @@ function repositionModeToggle(){
   const bottom = stack.getBoundingClientRect().bottom - mapwrap.getBoundingClientRect().top + 8;
   const panel = document.getElementById('stagedPlanPanel');
   if(panel) panel.style.top = bottom + 'px';
+  if(typeof applyFlightDataBoxSnap==='function') applyFlightDataBoxSnap();
 }
 window.addEventListener('resize', repositionModeToggle);
 
@@ -7782,6 +7783,38 @@ document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
   row.style.opacity = '0.5';
   fetchGroundElevation().then(()=>{ row.style.opacity = '1'; updateFlightDataBoxContent(); });
 });
+// Module-level (not inside the drag IIFE below, to avoid a naming clash
+// with an unrelated pre-existing "dragging" variable elsewhere) so
+// repositionModeToggle() and the topAlertStack ResizeObserver can both
+// call this whenever the banner/warning stack's height changes - a
+// top-snapped box must never sit UNDER the header/warning messages or the
+// Landing Area | Plan Descent buttons (both live inside #topAlertStack's
+// own flex column), so its effective "top" boundary is that stack's
+// actual bottom edge, not the map's raw top edge, and has to be
+// recalculated every time that stack grows or shrinks.
+let flightDataBoxSnappedEdge = null; // {side:'left'|'right'|null, vSide:'top'|'bottom'|null}
+function getEffectiveMapRectForFlightBox(){
+  const mapRect = document.getElementById('map').getBoundingClientRect();
+  const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
+  const stackRect = document.getElementById('topAlertStack').getBoundingClientRect();
+  return {
+    top: Math.max(mapRect.top, stackRect.bottom),
+    bottom: mapRect.bottom,
+    left: mapRect.left,
+    right: Math.min(mapRect.right, sidebarRect.left)
+  };
+}
+function applyFlightDataBoxSnap(){
+  const box = document.getElementById('flightDataBox');
+  if(!flightDataBoxSnappedEdge || box.dataset.dragging==='1') return;
+  const mapRect = getEffectiveMapRectForFlightBox();
+  const boxRect = box.getBoundingClientRect();
+  const margin = 6;
+  if(flightDataBoxSnappedEdge.side==='right') box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
+  else if(flightDataBoxSnappedEdge.side==='left') box.style.left = Math.round(mapRect.left + margin) + 'px';
+  if(flightDataBoxSnappedEdge.vSide==='bottom') box.style.top = Math.round(mapRect.bottom - boxRect.height - margin) + 'px';
+  else if(flightDataBoxSnappedEdge.vSide==='top') box.style.top = Math.round(mapRect.top + margin) + 'px';
+}
 (function setupFlightDataBoxDrag(){
   const box = document.getElementById('flightDataBox');
   const closeBtn = document.getElementById('flightDataBoxClose');
@@ -7789,6 +7822,7 @@ document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
   box.addEventListener('pointerdown', (e)=>{
     if(e.target===closeBtn) return;
     dragging = true;
+    box.dataset.dragging = '1';
     box.setPointerCapture(e.pointerId);
     const rect = box.getBoundingClientRect();
     offX = e.clientX-rect.left; offY = e.clientY-rect.top;
@@ -7799,52 +7833,33 @@ document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
     box.style.left = (e.clientX-offX)+'px';
     box.style.top = (e.clientY-offY)+'px';
   });
-  let snappedEdge = null; // {side:'left'|'right'|'top'|'bottom'} - re-applied when the sidebar opens/closes, since that changes where the map's own visible edge actually is
-  function getEffectiveMapRect(){
-    const mapRect = document.getElementById('map').getBoundingClientRect();
-    const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
-    // The sidebar overlays on top of the map rather than the map shrinking
-    // to make room for it, so #map's own bounding rect always spans the
-    // full width underneath it - the sidebar's own left edge is the
-    // actually-visible right boundary of the map whenever it's open.
-    return {top: mapRect.top, bottom: mapRect.bottom, left: mapRect.left, right: Math.min(mapRect.right, sidebarRect.left)};
-  }
-  function applySnap(){
-    if(!snappedEdge || dragging) return;
-    const mapRect = getEffectiveMapRect();
-    const boxRect = box.getBoundingClientRect();
-    const margin = 6;
-    if(snappedEdge.side==='right') box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
-    else if(snappedEdge.side==='left') box.style.left = Math.round(mapRect.left + margin) + 'px';
-    if(snappedEdge.vSide==='bottom') box.style.top = Math.round(mapRect.bottom - boxRect.height - margin) + 'px';
-    else if(snappedEdge.vSide==='top') box.style.top = Math.round(mapRect.top + margin) + 'px';
-  }
-  document.getElementById('sidebarHandle').addEventListener('click', ()=>setTimeout(applySnap, 260)); // after the sidebar's own .25s slide transition finishes
+  document.getElementById('sidebarHandle').addEventListener('click', ()=>setTimeout(applyFlightDataBoxSnap, 260)); // after the sidebar's own .25s slide transition finishes
   box.addEventListener('pointerup', ()=>{
     dragging = false;
+    box.dataset.dragging = '0';
     // Dragged past any of the map's own (actually visible) edges - snap to
     // sit flush against whichever one(s) it crossed, instead of leaving it
     // partially overlapping the header/sidebar/edge of the screen, which
     // is otherwise trivial to end up with with plain free-form dragging.
-    const mapRect = getEffectiveMapRect();
+    const mapRect = getEffectiveMapRectForFlightBox();
     const boxRect = box.getBoundingClientRect();
     const margin = 6;
-    snappedEdge = {side:null, vSide:null};
+    flightDataBoxSnappedEdge = {side:null, vSide:null};
     if(boxRect.top < mapRect.top){
       box.style.top = Math.round(mapRect.top + margin) + 'px';
-      snappedEdge.vSide = 'top';
+      flightDataBoxSnappedEdge.vSide = 'top';
     } else if(boxRect.bottom > mapRect.bottom){
       box.style.top = Math.round(mapRect.bottom - boxRect.height - margin) + 'px';
-      snappedEdge.vSide = 'bottom';
+      flightDataBoxSnappedEdge.vSide = 'bottom';
     }
     if(boxRect.left < mapRect.left){
       box.style.left = Math.round(mapRect.left + margin) + 'px';
-      snappedEdge.side = 'left';
+      flightDataBoxSnappedEdge.side = 'left';
     } else if(boxRect.right > mapRect.right){
       box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
-      snappedEdge.side = 'right';
+      flightDataBoxSnappedEdge.side = 'right';
     }
-    if(!snappedEdge.side && !snappedEdge.vSide) snappedEdge = null; // dropped somewhere in the open middle - not snapped to anything
+    if(!flightDataBoxSnappedEdge.side && !flightDataBoxSnappedEdge.vSide) flightDataBoxSnappedEdge = null; // dropped somewhere in the open middle - not snapped to anything
   });
   closeBtn.addEventListener('click', ()=>{
     box.style.display = 'none';
@@ -7871,7 +7886,10 @@ function positionSubModeToggle(){
 // instead of just moving the same kind of gap somewhere else.
 const topAlertStackEl = document.getElementById('topAlertStack');
 if(topAlertStackEl && typeof ResizeObserver!=='undefined'){
-  new ResizeObserver(()=>{ if(state.appMode==='plan') positionSubModeToggle(); }).observe(topAlertStackEl);
+  new ResizeObserver(()=>{
+    if(state.appMode==='plan') positionSubModeToggle();
+    applyFlightDataBoxSnap();
+  }).observe(topAlertStackEl);
 }
 function alignPanelToPositionCard(panelEl){
   // Reads the SIDEBAR's own position, not the "Current Position" card's -

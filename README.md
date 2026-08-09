@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260809.17-0415** (09.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260809.18-0440** (09.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -80,4 +80,5 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - The staged descent plan panel and the flight data box could previously end up positioned at the exact same spot (the sidebar's own left edge) - the panel now shifts below the box if they'd overlap.
 - Quick Descent's map zoom, after computing a landing area, now focuses on the landing area itself rather than the full span from the balloon's current position to it (which effectively zoomed out to show the whole trajectory instead).
 - The moon phase icon now renders as a filled SVG silhouette (matching the sun icon's style) instead of an emoji, alongside its illumination percentage - more consistent and legible across devices at small size than emoji rendering.
+- The flight data box, when snapped to the top, now dynamically tracks the actual bottom edge of the header/warning-message stack (which also contains the Landing Area | Plan Descent buttons) rather than the map's raw top edge - it moves up or down automatically as banners appear or disappear, so it never ends up underneath them.
 - Ground elevation (used for the AGL figure) refreshes automatically as GPS position changes by more than 500m, not just at app start - a real position more than 500m from wherever it was last fetched will briefly show an AGL based on the previous location's elevation until the next fix triggers a refresh.

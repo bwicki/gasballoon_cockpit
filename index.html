@@ -29,7 +29,7 @@ body.day{
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y;background:var(--bg);color:var(--text);font-family:var(--sans);position:fixed;inset:0;}
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100vw;overscroll-behavior:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100vw;overscroll-behavior:none;padding-top:env(safe-area-inset-top,0px);box-sizing:border-box;}
 
 /* ---- header ---- */
 #topbar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;flex-wrap:nowrap;position:sticky;top:0;left:0;right:0;z-index:1000;min-height:44px;overflow-x:auto;overflow-y:hidden;}
@@ -108,6 +108,8 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 
 /* ---- floating mode toggle (now docked in header) ---- */
 #modeToggle{z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);align-self:flex-start;}
+.no-wind-data-hatched{background-image:repeating-linear-gradient(45deg, rgba(224,72,63,0.4) 0 6px, rgba(224,72,63,0.15) 6px 12px) !important;pointer-events:none;position:relative;}
+.no-wind-data-hatched::after{content:'';position:absolute;inset:0;border:1px solid var(--bad);border-radius:inherit;pointer-events:none;}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 #modeToggle button#modePlan.active{background:#6b7680;color:#fff;}
@@ -128,6 +130,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #particleWindPreview::after{content:'';position:absolute;top:50%;right:-7px;transform:translateY(-50%);border-style:solid;border-width:6px 0 6px 7px;border-color:transparent transparent transparent var(--border);}
 #particleWindPreview::before{content:'';position:absolute;top:50%;right:-5.5px;transform:translateY(-50%);border-style:solid;border-width:5px 0 5px 6px;border-color:transparent transparent transparent color-mix(in srgb, var(--panel2) 90%, transparent);z-index:1;}
 #particleHeightSliderWrap.show{display:flex;}
+#particleHeightSliderWrap.wind-data-unavailable{opacity:0.35;pointer-events:none;}
 #particleHeightSliderTrack{position:relative;width:4px;height:100px;background:var(--border);border-radius:2px;margin:0 auto;touch-action:none;}
 #particleHeightSliderFill{position:absolute;bottom:0;left:0;width:100%;background:var(--accent);border-radius:2px;}
 #particleHeightSliderThumb{position:absolute;left:50%;margin-left:-9px;width:18px;height:18px;box-sizing:border-box;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);box-shadow:0 1px 3px rgba(0,0,0,.4);transform:translateY(50%);cursor:pointer;touch-action:none;}
@@ -191,8 +194,8 @@ body.day #map{background:#dfe6ea;}
 .datacell.wide{grid-column:1/3;}
 
 .slider-row{margin-bottom:3px;}
-.slider-row.onboarding-highlight{outline:2px solid var(--good);outline-offset:3px;border-radius:6px;background:rgba(61,220,111,0.1);transition:outline-color .3s ease, background-color .3s ease;}
-.slider-row.onboarding-highlight-orange{outline:2px solid #c96a1f;outline-offset:3px;border-radius:6px;background:rgba(201,106,31,0.12);transition:outline-color .3s ease, background-color .3s ease;}
+.onboarding-highlight{outline:2px solid var(--good);outline-offset:3px;border-radius:6px;background:rgba(61,220,111,0.1);transition:outline-color .3s ease, background-color .3s ease;}
+.onboarding-highlight-orange{outline:2px solid #c96a1f;outline-offset:3px;border-radius:6px;background:rgba(201,106,31,0.12);transition:outline-color .3s ease, background-color .3s ease;}
 .onboarding-highlight-blue{outline:2px solid #4d80ff;outline-offset:3px;border-radius:6px;background:rgba(77,128,255,0.12);transition:outline-color .3s ease, background-color .3s ease;}
 #flightDataBox{display:flex;position:fixed;z-index:900;background:#ffffff;border:1px solid #d3dae0;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.14);overflow:visible;cursor:grab;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;user-select:none;}
 #flightDataBox:active{cursor:grabbing;}
@@ -327,7 +330,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <span id="gpsAcc" style="font-size:10px;">—</span>
     </div>
     <div class="sep"></div>
-    <div class="wx-chip" style="align-items:flex-start;gap:1px;">
+    <div class="wx-chip" id="wxModelChip" style="align-items:flex-start;gap:1px;cursor:pointer;" title="Tap to refresh the weather model now">
       <div style="display:flex;align-items:center;gap:4px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         <b id="wxModelName" style="font-size:12px;">Loading…</b>
@@ -455,7 +458,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
         <select id="wxModelSelect">
           <option value="auto">Auto (finest available grid)</option>
-          <option value="best_match">Best match</option>
           <option value="icon_d2">ICON-D2 (2 km, DE/EU only)</option>
           <option value="icon_eu">ICON-EU (7 km)</option>
           <option value="gfs_global">GFS Global (25 km)</option>
@@ -488,7 +490,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         
         
           <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
-        <p style="font-size:10px;color:var(--bad);margin:0 0 8px;">⚠ Currently not working: MetarCentral blocks both endpoints via CORS (confirmed live). CheckWX, researched as a replacement, also failed a live CORS test the same way despite documentation suggesting browser use should work - aviation-weather providers seem to consistently not enable this for direct client-side access. Switzerland, Germany, and the rest-of-Europe sources below are unaffected and still work.</p>
+        <p style="font-size:10px;color:var(--good);margin:0 0 8px;">✓ Working again as of 09.08.2026 (confirmed live: 3/3 airport stations loaded successfully) - was CORS-blocked for most of this app's development; something changed on MetarCentral's side. Kept as a note in case it becomes intermittent again.</p>
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">Lightning (part of Rain layer)</div>
@@ -1008,17 +1010,22 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div class="lbl"><span><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate">4.0 m/s</b></span><span id="lblAdiaRateBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
             <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
           </div>
-          <div class="slider-row" id="sIntHRow">
-            <div class="lbl"><span><span data-i18n="sliderInterceptHeight">Intercept height AGL</span> <b id="lblIntH">400 m</b></span><span id="lblInterceptTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
-            <input type="range" id="sIntH" min="100" max="1000" step="10" value="400">
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <div id="sIntHRow" style="flex:1;">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Intercept AGL (m)</div>
+              <input type="number" id="sIntH" min="100" max="1000" step="10" value="400" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
+            </div>
+            <div id="sRate2Row" style="flex:1;">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Rate below (m/s)</div>
+              <input type="number" id="sRate2" min="0.5" max="4" step="0.1" value="1.5" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
+            </div>
+            <div id="sScatterRow" style="flex:1;">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Scatter (%)</div>
+              <input type="number" id="sScatter" min="0" max="40" step="1" value="15" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
+            </div>
           </div>
-          <div class="slider-row" id="sRate2Row">
-            <div class="lbl"><span><span data-i18n="sliderRate2">Descent rate below intercept</span> <b id="lblRate2">1.5 m/s</b></span><span id="lblGroundTimeBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
-            <input type="range" id="sRate2" min="0.5" max="4" step="0.1" value="1.5">
-          </div>
-          <div class="slider-row" id="sScatterRow">
-            <div class="lbl"><span data-i18n="sliderScatter">Rate scatter (σ, probability cone)</span><b id="lblScatter">15 %</b></div>
-            <input type="range" id="sScatter" min="0" max="40" step="1" value="15">
+          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-align:right;">
+            <span id="lblInterceptTimeBadge">—</span> <span style="opacity:0.5;">·</span> <span id="lblGroundTimeBadge">—</span>
           </div>
         </div>
       </div>
@@ -1242,8 +1249,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260806.23-1930';
-const APP_DATE = '06.08.2026';
+const APP_VERSION = 'v260809.06-2245';
+const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -5024,6 +5031,7 @@ function clearStagedResults(resetPlacement){
 
 // ---------- GPS ----------
 let gpsWatchId = null;
+let hasHadRealGpsFix = false; // forces an unconditional ground-elevation refresh on the very first real fix of a session, since boot's own fetch used whatever default/leftover position was active then, not a real one
 let activationReason = null; // 'test' (user opened Test Mode manually) | 'manual' (auto-triggered by GPS loss)
 function startGPS(){
   if(!navigator.geolocation){ setGpsStatus(false,'No geolocation API'); return; }
@@ -5055,7 +5063,8 @@ function startGPS(){
       'distance from that point (m)': distFromLastElevFetch,
       'will refresh now': !state.groundElevFetchedAt || distFromLastElevFetch > 500
     });
-    if(!state.groundElevFetchedAt || distFromLastElevFetch > 500){
+    if(!hasHadRealGpsFix || !state.groundElevFetchedAt || distFromLastElevFetch > 500){
+      hasHadRealGpsFix = true;
       fetchGroundElevation().then(()=>console.log('Ground elevation refreshed. New state.groundElev:', state.groundElev));
     }
   }, err=>{
@@ -5146,6 +5155,16 @@ function setTestMode(enable, reason){
         updatePosition(pos.coords.latitude, pos.coords.longitude,
           pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
           null, null, true);
+        // This code path (returning to live GPS from test mode) never had
+        // the ground-elevation refresh the main watchPosition callback
+        // got - meaning switching test mode off after testing somewhere
+        // else entirely could leave AGL comparing against a completely
+        // wrong location's elevation indefinitely, with nothing to ever
+        // correct it afterwards. Same unconditional-on-first-real-fix
+        // approach as below, not just distance-debounced, since this is
+        // specifically the "we don't know if the last fetch is anywhere
+        // near relevant anymore" moment.
+        fetchGroundElevation();
       }, err=>{ setGpsStatus(false, err.message); }, {enableHighAccuracy:true, maximumAge:0, timeout:10000});
     }
   }
@@ -5783,16 +5802,38 @@ function convexHull(points){
 
 function doRecompute(){
   if(!getActiveWindProfile()){
-    document.getElementById('noWindDataWarnBar').classList.add('show');
-    bannerActiveButDismissed.noWindDataWarnBar = false;
+    if(!bannerActiveButDismissed.noWindDataWarnBar){
+      document.getElementById('noWindDataWarnBar').classList.add('show');
+    }
     updateAllWarningsReopenBtn();
+    // Ground wind particles have nothing real to draw from without wind
+    // data either - pausing the canvas (not toggling the layer itself
+    // off, so it resumes automatically once data is back) rather than
+    // leaving particles animating from stale/nonexistent data. The height
+    // slider is greyed out the same way, since adjusting it wouldn't mean
+    // anything right now.
+    if(groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'none';
+    document.getElementById('particleHeightSliderWrap').classList.add('wind-data-unavailable');
+    // Without wind data, neither main function can compute anything
+    // meaningful - hatching them red and disabling their clicks makes
+    // that visually obvious and prevents switching into a mode that would
+    // just sit there showing nothing, rather than only being explained by
+    // the (dismissable, easy to miss) banner text.
+    document.getElementById('wxModelChip').classList.add('no-wind-data-hatched');
+    document.getElementById('modeMonitor').classList.add('no-wind-data-hatched');
+    document.getElementById('modePlan').classList.add('no-wind-data-hatched');
     return;
   }
-  if(document.getElementById('noWindDataWarnBar').classList.contains('show')){
+  if(document.getElementById('noWindDataWarnBar').classList.contains('show') || bannerActiveButDismissed.noWindDataWarnBar){
     document.getElementById('noWindDataWarnBar').classList.remove('show');
-    bannerActiveButDismissed.noWindDataWarnBar = false;
+    bannerActiveButDismissed.noWindDataWarnBar = false; // wind data is back - clear the dismissed flag too, so a FUTURE genuine loss of wind data shows the banner again rather than staying silently suppressed forever
     updateAllWarningsReopenBtn();
   }
+  document.getElementById('particleHeightSliderWrap').classList.remove('wind-data-unavailable');
+  if(groundWindLayer.active && groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'block';
+  document.getElementById('wxModelChip').classList.remove('no-wind-data-hatched');
+  document.getElementById('modeMonitor').classList.remove('no-wind-data-hatched');
+  document.getElementById('modePlan').classList.remove('no-wind-data-hatched');
   // Function 2's reference trajectory (and therefore the staged-descent
   // marker's snap target) was previously only computed once, right when
   // Plan Descent was first opened - switching sounding data source (sonde
@@ -6479,7 +6520,7 @@ startGroundWindLayer();
   const settingsWrap = document.getElementById('btnSettings').closest('div');
   const logbookWrap = document.getElementById('btnLogbook').closest('div');
   const testModeBtn = document.getElementById('btnTestMode');
-  [flightChartsBtn, dayNightBtn, captureWrap, logbookWrap, testModeBtn, settingsWrap].forEach(el=>{
+  [flightChartsBtn, dayNightBtn, captureWrap, logbookWrap, settingsWrap, testModeBtn].forEach(el=>{
     if(el){ el.style.width='100%'; menu.appendChild(el); }
   });
   document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{
@@ -7280,11 +7321,9 @@ function hideYellowWarning(){
   repositionModeToggle();
 }
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
-bindSlider('sIntH','lblIntH', v=> v+' m');
-bindSlider('sRate2','lblRate2', v=> parseFloat(v).toFixed(1)+' m/s');
-document.getElementById('sIntH').addEventListener('input', ()=>{ scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
-document.getElementById('sRate2').addEventListener('input', ()=>{ scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
-bindSlider('sScatter','lblScatter', v=> v+' %');
+document.getElementById('sIntH').addEventListener('input', ()=>{ recomputeAll(); scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
+document.getElementById('sRate2').addEventListener('input', ()=>{ recomputeAll(); scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
+document.getElementById('sScatter').addEventListener('input', recomputeAll);
 // Re-run the active plan whenever a descent parameter that actually affects
 // it changes (rate, intercept height, post-intercept rate, or scatter) -
 // "Initiate descent in" deliberately excluded, since Plan Descent finds its
@@ -7402,7 +7441,26 @@ function showFlightDataBox(){
     box.style.left = (e.clientX-offX)+'px';
     box.style.top = (e.clientY-offY)+'px';
   });
-  box.addEventListener('pointerup', ()=>{ dragging = false; });
+  box.addEventListener('pointerup', ()=>{
+    dragging = false;
+    // Dragged past any of the map's own edges - snap to sit flush against
+    // whichever one(s) it crossed, instead of leaving it partially
+    // overlapping the header/sidebar/edge of the screen, which is
+    // otherwise trivial to end up with with plain free-form dragging.
+    const mapRect = document.getElementById('map').getBoundingClientRect();
+    const boxRect = box.getBoundingClientRect();
+    const margin = 6;
+    if(boxRect.top < mapRect.top){
+      box.style.top = Math.round(mapRect.top + margin) + 'px';
+    } else if(boxRect.bottom > mapRect.bottom){
+      box.style.top = Math.round(mapRect.bottom - boxRect.height - margin) + 'px';
+    }
+    if(boxRect.left < mapRect.left){
+      box.style.left = Math.round(mapRect.left + margin) + 'px';
+    } else if(boxRect.right > mapRect.right){
+      box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
+    }
+  });
   closeBtn.addEventListener('click', ()=>{
     box.style.display = 'none';
     flightDataBoxClosed = true;
@@ -8771,6 +8829,11 @@ try{
 // fixes to trigger a recompute on their own.
 setInterval(()=>{ if(state.appMode==='monitor') recomputeAll(); }, 30000);
 let wxRefreshTimer = null;
+document.getElementById('wxModelChip').addEventListener('click', ()=>{
+  const el = document.getElementById('wxModelChip');
+  el.style.opacity = '0.5';
+  fetchWind(true).finally(()=>{ el.style.opacity = '1'; });
+});
 function restartWxRefreshTimer(){
   clearInterval(wxRefreshTimer);
   const minutes = parseInt(document.getElementById('wxRefreshInterval').value) || 15;

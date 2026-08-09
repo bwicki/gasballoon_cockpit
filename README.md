@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260806.23-1930** (06.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260809.06-2245** (09.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -51,7 +51,7 @@ A small draggable panel next to the balloon marker showing course, speed (km/h a
 | RainViewer | Rain radar | Working |
 | Overpass API | Airspace, terrain, roads, region names (multiple mirror fallbacks) | Working, occasionally rate-limited under load (a fallback mirror usually picks up the slack) |
 | Nominatim | Reverse geocoding for landing-area place names | Working |
-| MetarCentral | Airport METARs | **CORS-blocked from the browser, confirmed.** CheckWX was researched as a replacement and failed the same way. No working alternative found yet. |
+| MetarCentral | Airport METARs | **Working again as of 09.08.2026** (confirmed live). Was CORS-blocked for most of this app's development - something changed on their side; kept as a note in case it becomes intermittent again. |
 | aprs.fi | APRS station tracking | **CORS-blocked from the browser, confirmed with a live key.** Settings clearly label this as non-functional. |
 | Xweather | Lightning (only polls when rain is detected nearby) | Implemented but not yet confirmed against real credentials |
 
@@ -71,5 +71,7 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - Cloud file pickers (Dropbox, Google Drive, etc.) shown when uploading a file are controlled by iOS/the browser based on installed provider apps, not by this page.
 - When installed as a home-screen web app on iOS, the layout respects the device's safe area (status bar, home indicator) via `env(safe-area-inset-*)`, so it shouldn't sit underneath the system status bar.
 - Course, speed, and climb/sink rate are all derived from consecutive GPS fixes and include a plausibility cap (rejecting implied speeds above ~200km/h or vertical rates above ~20m/s) to filter out indoor/poor-signal GPS jitter, which can otherwise report large position or altitude jumps between fixes even while genuinely stationary. Speed is explicitly zeroed (not just left unchanged) when consecutive fixes show no meaningful movement; course shows "---°" until real movement has ever been observed, rather than an arbitrary default heading.
-- If a specific weather model is manually selected but doesn't actually cover the current position (e.g. ICON-D2 outside its DACH/Central Europe coverage), the app falls back to auto-selection and shows a clear warning rather than silently requesting an inappropriate model.
+- If a specific weather model is manually selected but doesn't actually cover the current position (e.g. ICON-D2 outside its DACH/Central Europe coverage), the app falls back to auto-selection and shows a clear warning rather than silently requesting an inappropriate model. Tap the model name in the header to refresh it on demand.
+- Ground elevation (for AGL) is refreshed on the very first real GPS fix of a session unconditionally, not just distance-debounced afterwards - covers both the main GPS watch loop and the separate one-time fix used when returning to live GPS from Test Mode, which previously had no refresh logic of its own at all.
+- The flight data box snaps flush against the top of the map if dragged above it, rather than being left free to overlap the header/banner area.
 - Ground elevation (used for the AGL figure) refreshes automatically as GPS position changes by more than 500m, not just at app start - a real position more than 500m from wherever it was last fetched will briefly show an AGL based on the previous location's elevation until the next fix triggers a refresh.

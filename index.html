@@ -372,7 +372,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <div style="width:1px;align-self:stretch;background:var(--border);"></div>
         <div style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;">
-          <span id="moonIcon" style="font-size:14px;line-height:1;">—</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+            <svg id="moonIcon" width="11" height="11" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="var(--muted)" stroke-width="1.5"/></svg>
+            <span id="moonIllumPct" style="color:var(--muted);font-size:7.5px;font-weight:600;">—</span>
+          </div>
           <span id="moonRiseTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
           <span id="moonSetTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
         </div>
@@ -834,7 +837,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
           <div class="fdb-half">
             <div style="text-align:right;font-size:10px;font-weight:600;color:#5c6b78;white-space:nowrap;margin-bottom:2px;" id="fdbFL">FL --</div>
-            <div class="fdb-row"><span class="fdb-unit">m AGL</span><span id="fdbAgl" class="fdb-num" style="font-weight:400;color:#5c6b78;">0</span></div>
+            <div class="fdb-row" id="fdbAglRow" style="cursor:pointer;" title="Tap to refresh ground elevation"><span class="fdb-unit">m AGL</span><span id="fdbAgl" class="fdb-num" style="font-weight:400;color:#5c6b78;">0</span></div>
           </div>
         </div>
       </div>
@@ -973,6 +976,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 </div>
               </div>
             </div>
+            <div class="datacell wide" id="capeCell" style="display:none;">
+              <label>CAPE (convective instability)</label>
+              <div class="val small" id="capeVal" style="font-weight:600;">—</div>
+            </div>
           </div>
           <div id="positionManualNote" style="display:none;color:var(--bad);font-size:11px;font-weight:600;margin-top:8px;">Tap the map to set position. Altitude, course and speed above are directly editable.</div>
         </div>
@@ -1009,13 +1016,19 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 <span id="landingSunDaylightText" style="font-size:10.5px;color:var(--muted);flex-shrink:0;">—</span>
               </div>
             </div>
+            <div class="datacell wide" id="landingTerrainCell" style="display:none;">
+              <label title="Approximate: elevation sampled in a ring around the point, plus nearby OSM buildings/forest tags - not a true obstacle-height line-of-sight">Terrain near landing point</label>
+              <div class="val small" id="landingTerrainVal" style="font-weight:400;font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">—</div>
+            </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
               <label data-i18n="fieldEstimatedDescentPoint"><svg width="11" height="10" viewBox="0 0 26 24" style="vertical-align:-1px;margin-right:3px;"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>Estimated Descent Point</label>
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
-              <label><span id="titleInversions">Inversions</span>, <span id="titleIsothermal">Isothermal Layers</span>, <span id="titleWindShear">Wind Shear</span></label>
-              <div class="val small" id="inversionNoteText" style="font-weight:400;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">(none)</div>
+              <label data-i18n="fieldAtmosphere">Atmosphere</label>
+              <div id="inversionLine" style="display:none;color:#3ddc6f;font-size:11.5px;font-weight:400;line-height:1.5;"><b>Inversions:</b> <span id="inversionValues"></span></div>
+              <div id="isoLine" style="display:none;color:#3fa9ff;font-size:11.5px;font-weight:400;line-height:1.5;"><b>Iso Layers:</b> <span id="isoValues"></span></div>
+              <div id="shearLine" style="display:none;color:var(--bad);font-size:11.5px;font-weight:400;line-height:1.5;"><b>Wind Shear:</b> <span id="shearValues"></span></div>
             </div>
           </div>
           <button class="ghost" id="btnClearPlannedArea" style="display:none;margin-top:6px;color:var(--bad);">Clear planned landing area</button>
@@ -1154,7 +1167,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
 
     </div>
-      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:900;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
+      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
@@ -1272,7 +1285,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.12-0140';
+const APP_VERSION = 'v260809.17-0415';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1529,13 +1542,32 @@ function moonPhaseInfo(dateUTC){
   else { phaseName='New moon'; emoji='🌑'; }
   return {age, illumFrac, phaseName, emoji};
 }
+// Filled-silhouette moon phase icon (two-arc SVG technique). For
+// illumFrac >= 0.5 (gibbous to full) the second arc must use the SAME
+// sweep direction as the first, ADDING area past the half-circle - using
+// the opposite (subtracting) direction here was an earlier bug that made
+// gibbous phases render as a thin crescent instead. Below 0.5, the second
+// arc correctly SUBTRACTS from the half-circle to narrow it into a
+// crescent, so it uses the opposite sweep direction from the first arc.
+function moonPhaseSvgPath(illumFrac){
+  const R = 10;
+  if(illumFrac >= 0.5){
+    const k = Math.max(0.05, (2*illumFrac-1)*R);
+    return `M12 2 A${R} ${R} 0 0 1 12 22 A${k.toFixed(2)} ${R} 0 0 1 12 2 Z`;
+  } else {
+    const k = Math.max(0.05, (1-2*illumFrac)*R);
+    return `M12 2 A${R} ${R} 0 0 1 12 22 A${k.toFixed(2)} ${R} 0 0 0 12 2 Z`;
+  }
+}
 function updateMoonChip(){
   if(!isFinite(state.lat) || !isFinite(state.lon)) return;
   const now = new Date();
   const {rise, set} = computeMoonRiseSetUTC(state.lat, state.lon, now);
   const phase = moonPhaseInfo(now);
-  document.getElementById('moonIcon').textContent = phase.emoji;
-  document.getElementById('moonIcon').title = `${phase.phaseName} (${Math.round(phase.illumFrac*100)}% illuminated)`;
+  const icon = document.getElementById('moonIcon');
+  icon.innerHTML = `<circle cx="12" cy="12" r="10" fill="none" stroke="var(--muted)" stroke-width="1.5"/><path d="${moonPhaseSvgPath(phase.illumFrac)}" fill="#e8a838"/>`;
+  icon.setAttribute('title', `${phase.phaseName} (${Math.round(phase.illumFrac*100)}% illuminated)`);
+  document.getElementById('moonIllumPct').textContent = Math.round(phase.illumFrac*100)+'%';
   document.getElementById('moonRiseTime').textContent = rise ? fmtHHMM(rise)+'↑' : '—';
   document.getElementById('moonSetTime').textContent = set ? fmtHHMM(set)+'↓' : '—';
 }
@@ -2910,6 +2942,24 @@ async function fetchSingleMetar(icao){
     throw e;
   }
 }
+// Global fallback for airport lookup, used whenever EUROPE_AIRPORTS has no
+// entries within range (outside its curated coverage - most of the world,
+// and even parts of Europe it doesn't list) - queries OpenStreetMap via the
+// same Overpass infrastructure/mirrors already used for airspace/terrain,
+// for any aerodrome tagged with a real ICAO code near the given position.
+// Works anywhere OSM has airport data, which is essentially global,
+// without needing a massive embedded worldwide airport database.
+async function fetchNearbyIcaoAirportsOverpass(lat, lon, radiusM){
+  const query = `[out:json][timeout:20];(node["aeroway"="aerodrome"]["icao"](around:${radiusM},${lat},${lon});way["aeroway"="aerodrome"]["icao"](around:${radiusM},${lat},${lon}););out center tags 20;`;
+  try{
+    const data = await fetchOverpassThrottled(query);
+    return (data.elements||[]).map(el=>{
+      const elLat = el.lat ?? el.center?.lat, elLon = el.lon ?? el.center?.lon;
+      if(elLat==null || elLon==null || !el.tags?.icao) return null;
+      return {icao: el.tags.icao, name: el.tags.name || el.tags.icao, lat: elLat, lon: elLon, dist: haversine(lat,lon,elLat,elLon)};
+    }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
+  }catch(e){ console.warn('Global airport fallback (Overpass) failed:', e); return []; }
+}
 async function fetchMetarStations(force){
   if(!metarActive && !force) return;
   const myGeneration = ++metarFetchGeneration;
@@ -2920,11 +2970,18 @@ async function fetchMetarStations(force){
     // are still relevant to the flight, and so this matches the same area
     // every other pre-cached layer covers.
     const cacheRadiusM = cacheRadiusKm*1000;
-    const nearby = EUROPE_AIRPORTS
+    let nearby = EUROPE_AIRPORTS
       .map(a=>({icao:a[0], name:a[1], lat:a[2], lon:a[3], dist:haversine(state.lat,state.lon,a[2],a[3])}))
       .filter(a=>a.dist<=cacheRadiusM)
       .sort((x,y)=>x.dist-y.dist)
       .slice(0, 15); // keep it modest - each one is its own request, and the anonymous quota is limited
+    if(nearby.length===0){
+      // Outside the curated European list's coverage entirely (most of the
+      // world, and some parts of Europe it simply doesn't include) - fall
+      // back to a live global lookup rather than silently showing nothing.
+      const globalAirports = await fetchNearbyIcaoAirportsOverpass(state.lat, state.lon, cacheRadiusM);
+      nearby = globalAirports.slice(0, 15);
+    }
 
     // Real, named Swiss weather stations (MeteoSwiss SwissMetNet, via
     // api.existenz.ch - confirmed CORS-open) - replaces the earlier grid-
@@ -5487,20 +5544,22 @@ function updateInversionNote(){
   const inversionAlts = found.filter(f=>f.type==='inversion').map(f=>f.altM);
   const isothermalAlts = found.filter(f=>f.type==='isothermal').map(f=>f.altM);
   const fmt = altM => `${Math.round(altM)} m AMSL (${Math.round(altM-state.groundElev)} m AGL)`;
-  const parts = [];
-  if(inversionAlts.length || isothermalAlts.length){
-    parts.push([...inversionAlts, ...isothermalAlts].sort((a,b)=>b-a).map(fmt).join(', '));
-  }
+  const inversionLine = document.getElementById('inversionLine');
+  const isoLine = document.getElementById('isoLine');
+  const shearLine = document.getElementById('shearLine');
+  if(inversionAlts.length){
+    document.getElementById('inversionValues').textContent = inversionAlts.sort((a,b)=>b-a).map(fmt).join(', ');
+    inversionLine.style.display = 'block';
+  } else { inversionLine.style.display = 'none'; }
+  if(isothermalAlts.length){
+    document.getElementById('isoValues').textContent = isothermalAlts.sort((a,b)=>b-a).map(fmt).join(', ');
+    isoLine.style.display = 'block';
+  } else { isoLine.style.display = 'none'; }
   if(shearAlts.length){
-    parts.push(`Wind Shear ${shearAlts.map(fmt).join(', ')}`);
-  }
-  document.getElementById('inversionNoteText').textContent = parts.length ? parts.join(' — ') : '(none)';
-  // Colour each word in the title only when that category actually has
-  // something to show, rather than always colouring all three.
-  document.getElementById('titleInversions').style.color = inversionAlts.length ? '#3ddc6f' : '';
-  document.getElementById('titleIsothermal').style.color = isothermalAlts.length ? '#3fa9ff' : '';
-  document.getElementById('titleWindShear').style.color = shearAlts.length ? 'var(--bad)' : '';
-  el.style.display = 'block';
+    document.getElementById('shearValues').textContent = shearAlts.sort((a,b)=>b-a).map(fmt).join(', ');
+    shearLine.style.display = 'block';
+  } else { shearLine.style.display = 'none'; }
+  el.style.display = (inversionAlts.length || isothermalAlts.length || shearAlts.length) ? 'block' : 'none';
 }
 
 // ---------- nearest town for the CURRENT position (always shown, throttled) ----------
@@ -5525,6 +5584,52 @@ async function fetchNearestTownForCurrentPosition(){
 }
 
 // ---------- ground elevation (Open-Meteo elevation API, best effort) ----------
+// Landing-point terrain check - an approximation, not a true 3D
+// line-of-sight calculation (that would need actual obstacle heights,
+// which aren't available from any free source used here). What this
+// DOES give: terrain roughness around the point (elevation sampled in a
+// ring, not just the single center point Open-Meteo's elevation API
+// normally gives), and whether OSM has any buildings or forest tagged
+// nearby - "is the immediate area flat and clear" rather than "here is
+// the exact obstacle clearance angle".
+let terrainCheckFetchedAt = null; // {lat, lon} - debounces re-checking on every recompute
+async function checkLandingTerrain(lat, lon){
+  const RADIUS_M = 150;
+  try{
+    const points = [{lat, lon}];
+    for(let i=0; i<8; i++){
+      const [plat, plon] = destPoint(lat, lon, i*45, RADIUS_M);
+      points.push({lat: plat, lon: plon});
+    }
+    const latsStr = points.map(p=>p.lat.toFixed(6)).join(',');
+    const lonsStr = points.map(p=>p.lon.toFixed(6)).join(',');
+    const elevResp = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}`);
+    const elevJson = await elevResp.json();
+    const elevations = elevJson.elevation || [];
+    const centerElev = elevations[0];
+    const maxDiff = elevations.length>1 ? Math.max(...elevations.slice(1).map(e=>Math.abs(e-centerElev))) : 0;
+    const obsQuery = `[out:json][timeout:15];(way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 10;`;
+    const obsData = await fetchOverpassThrottled(obsQuery);
+    const elements = obsData.elements || [];
+    const hasBuildings = elements.some(e=>e.tags?.building);
+    const hasForest = elements.some(e=>e.tags?.landuse==='forest' || e.tags?.natural==='wood');
+    return {maxTerrainDiffM: maxDiff, hasBuildings, hasForest};
+  }catch(e){ console.warn('Landing terrain check failed:', e); return null; }
+}
+function updateLandingTerrainDisplay(result){
+  const cell = document.getElementById('landingTerrainCell');
+  if(!result){ cell.style.display = 'none'; return; }
+  cell.style.display = 'block';
+  const el = document.getElementById('landingTerrainVal');
+  const parts = [];
+  if(result.maxTerrainDiffM < 8) parts.push({text:'Flat terrain', color:'var(--good)'});
+  else if(result.maxTerrainDiffM < 25) parts.push({text:`Moderate slope (±${Math.round(result.maxTerrainDiffM)}m)`, color:'#e8a838'});
+  else parts.push({text:`Steep/uneven (±${Math.round(result.maxTerrainDiffM)}m)`, color:'var(--bad)'});
+  if(result.hasBuildings) parts.push({text:'buildings nearby', color:'var(--bad)'});
+  if(result.hasForest) parts.push({text:'forest nearby', color:'#e8a838'});
+  if(!result.hasBuildings && !result.hasForest) parts.push({text:'no obstacles tagged nearby', color:'var(--good)'});
+  el.innerHTML = parts.map(p=>`<span style="color:${p.color};">${p.text}</span>`).join(' · ');
+}
 async function fetchGroundElevation(){
   try{
     console.log('fetchGroundElevation: requesting for', state.lat, state.lon);
@@ -5601,6 +5706,24 @@ async function fetchWindProfileAtLocation(lat, lon, hourIdx){
     return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir, temp_c: temp };
   }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
 }
+// CAPE (Convective Available Potential Energy) - thermal/convective
+// turbulence risk indicator, standard meteorological thresholds (J/kg).
+// Relevant for gas balloons especially near mountainous terrain, where
+// strong daytime heating can trigger significant thermal activity.
+function updateCapeDisplay(){
+  const cape = (state.capeByHour && state.capeByHour.length) ? state.capeByHour[0] : null;
+  const cell = document.getElementById('capeCell');
+  if(cape==null){ cell.style.display = 'none'; return; }
+  cell.style.display = 'block';
+  const el = document.getElementById('capeVal');
+  let label, color;
+  if(cape<300){ label='Low'; color='var(--good)'; }
+  else if(cape<1000){ label='Moderate'; color='#e8a838'; }
+  else if(cape<2500){ label='Strong'; color='var(--warn)'; }
+  else { label='Extreme'; color='var(--bad)'; }
+  el.textContent = `${Math.round(cape)} J/kg — ${label}`;
+  el.style.color = color;
+}
 async function fetchWind(force){
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
@@ -5615,12 +5738,25 @@ async function fetchWind(force){
       modelOverridden = true;
       console.warn(`Weather model: "${modelSel}" doesn't cover the current position (${state.lat.toFixed(2)}, ${state.lon.toFixed(2)}) - falling back to auto (${resolvedModel}) instead of silently using it anyway.`);
     }
-    const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
+    const windVars = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
     const FORECAST_HOURS = 12; // enough headroom to cover a multi-hour descent
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
-    const r = await fetch(url);
-    const j = await r.json();
-    const h = j.hourly;
+    // Not every model supports the 'cape' variable - if the combined
+    // request fails, retry without it rather than letting the WHOLE wind
+    // fetch fail (and misleadingly show "offline") just because CAPE
+    // specifically isn't available for this particular model.
+    let h, capeAvailable = true;
+    let url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars},cape&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
+    let r = await fetch(url);
+    let j = await r.json();
+    if(j.error || !j.hourly){
+      capeAvailable = false;
+      console.warn(`Weather fetch: CAPE not available for model "${resolvedModel}" (${j.reason||'unknown reason'}) - retrying without it.`);
+      url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
+      r = await fetch(url);
+      j = await r.json();
+    }
+    if(j.error || !j.hourly) throw new Error(j.reason || 'Open-Meteo returned no hourly data');
+    h = j.hourly;
     const nHours = (h.time||[]).length || FORECAST_HOURS;
     const profilesByHour = [];
     for(let hourIdx=0; hourIdx<nHours; hourIdx++){
@@ -5635,6 +5771,8 @@ async function fetchWind(force){
     }
     state.windProfilesByHour = profilesByHour;
     state.windProfile = profilesByHour[0]; // "now" - kept for existing code that expects this
+    state.capeByHour = capeAvailable ? (h.cape || []) : [];
+    try{ updateCapeDisplay(); }catch(e){ console.warn('CAPE display update failed (non-critical):', e); }
     const meta = MODEL_META[resolvedModel] || MODEL_META.best_match;
     state.modelUsed = modelSel==='auto' ? (meta.label+' · auto') : meta.label;
     state.modelRunAgeH = estimateModelRunAgeHours(resolvedModel);
@@ -6059,6 +6197,16 @@ function doRecompute(){
   } else {
     document.getElementById('landingSunCell').style.display = 'none';
   }
+  if(liveLandingCenterMarker){
+    const ll = liveLandingCenterMarker.getLatLng();
+    if(!terrainCheckFetchedAt || haversine(terrainCheckFetchedAt.lat, terrainCheckFetchedAt.lon, ll.lat, ll.lng) > 200){
+      terrainCheckFetchedAt = {lat: ll.lat, lon: ll.lng};
+      checkLandingTerrain(ll.lat, ll.lng).then(updateLandingTerrainDisplay);
+    }
+  } else {
+    document.getElementById('landingTerrainCell').style.display = 'none';
+    terrainCheckFetchedAt = null;
+  }
   // A separate, longer cruise-only path (out to 250min, just past the
   // "Initiate descent in" slider's own 240min max) kept fresh here purely
   // so the descent-point marker can be dragged forward past whatever the
@@ -6150,11 +6298,17 @@ function updateLandingPositionCard(){
   // Throttled: reverse-geocode + elevation lookups only when the landing
   // center has moved meaningfully, to avoid hammering free APIs every tick.
   if(lastLandingPosFetchCenter && haversine(lastLandingPosFetchCenter.lat, lastLandingPosFetchCenter.lon, cLat, cLon) < 500) return;
+  // Mark this as "handled" immediately, not just when the timer actually
+  // fires - updateLandingPositionCard() can easily be called again well
+  // within the 800ms delay (every recompute cycle), and without this the
+  // clearTimeout+setTimeout below would keep resetting on each call,
+  // potentially never actually firing if recomputes happen more often
+  // than the delay itself.
+  lastLandingPosFetchCenter = {lat: cLat, lon: cLon};
   clearTimeout(landingPosFetchTimer);
   landingPosFetchTimer = setTimeout(()=>fetchLandingPositionDetails(cLat, cLon), 800);
 }
 async function fetchLandingPositionDetails(lat, lon){
-  lastLandingPosFetchCenter = {lat, lon};
   try{
     const [geoR, elevR] = await Promise.all([
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
@@ -6810,6 +6964,13 @@ function setAppMode(mode){
     document.getElementById('stagedDescentSliders').style.display = 'none';
     document.getElementById('btnClearStagedFromMonitor').style.display =
       (state.stagedReachableHull || state.lastStagedPlanResult) ? 'inline-block' : 'none';
+    // Same idea as the staged-descent button above, just for Quick Descent -
+    // this was previously only ever shown WHILE the plan was being made
+    // (inside planDescentToTarget), with nothing re-asserting it one way
+    // or the other when coming back from monitor mode, so it stayed
+    // whatever it last happened to be rather than reliably reflecting
+    // "is a planned area still on the map right now".
+    document.getElementById('btnClearPlannedArea').style.display = state.plannedLandingActive ? 'block' : 'none';
     setTimeout(repositionModeToggle, 0);
     if(landingLayerOn) landingPolyLayer.addTo(map);
     if(liveLandingCenterMarker) liveLandingCenterMarker.addTo(map);
@@ -7128,11 +7289,17 @@ async function planDescentToTarget(lat, lon){
     drawHodograph(plannedDescentSeg, 'hodographChart', state.plannedWindProfile);
   }catch(e){ /* keep showing whatever was last drawn if this fails */ }
 
-  // Make sure the result is actually visible - the intended point, the
-  // extended path, and the resulting area could easily be outside the
-  // current view, especially for a distant/long-delay target.
-  const allPts = [[state.lat,state.lon],[lat,lon], ...hull.map(p=>[p[1],p[0]])];
-  map.fitBounds(allPts, {padding:[40,40]});
+  // Make sure the resulting landing area is actually visible - it could
+  // easily be outside the current view, especially for a distant/long-
+  // delay target. Zooms to the landing area (hull) itself, not the span
+  // from the balloon's current position to it - including the current
+  // position here previously meant this effectively zoomed out to show
+  // the whole trajectory instead of focusing on the actual result.
+  if(hull.length){
+    map.fitBounds(hull.map(p=>[p[1],p[0]]), {padding:[40,40]});
+  } else {
+    map.fitBounds([[state.lat,state.lon],[lat,lon]], {padding:[40,40]});
+  }
 }
 function clearPlannedLandingArea(){
   state.plannedLandingActive = false;
@@ -7609,6 +7776,12 @@ function showFlightDataBox(){
   document.getElementById('flightDataBox').style.display = 'flex';
   updateFlightDataBox();
 }
+document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
+  e.stopPropagation(); // don't let this also start a drag on the box
+  const row = document.getElementById('fdbAglRow');
+  row.style.opacity = '0.5';
+  fetchGroundElevation().then(()=>{ row.style.opacity = '1'; updateFlightDataBoxContent(); });
+});
 (function setupFlightDataBoxDrag(){
   const box = document.getElementById('flightDataBox');
   const closeBtn = document.getElementById('flightDataBoxClose');
@@ -7724,7 +7897,23 @@ function alignPanelToPositionCard(panelEl){
     return;
   }
   const sidebarPaddingPx = 6; // matches #sidebar's own CSS padding, where its first card's top-left corner actually sits
-  panelEl.style.top = Math.round(rect.top + sidebarPaddingPx) + 'px';
+  let topPx = rect.top + sidebarPaddingPx;
+  // The flight data box positions itself independently (draggable, can be
+  // snapped to any edge including this exact spot - the sidebar's own left
+  // edge) and previously ended up sitting directly on top of this panel
+  // whenever it happened to be there. Nudging this panel below it when
+  // they'd overlap keeps both visible and usable instead of one hiding
+  // the other.
+  const fdb = document.getElementById('flightDataBox');
+  if(fdb && fdb.style.display!=='none'){
+    const fdbRect = fdb.getBoundingClientRect();
+    const horizontalOverlap = fdbRect.right > (rect.left+sidebarPaddingPx) && fdbRect.left < (rect.left+sidebarPaddingPx+350);
+    const verticalOverlap = fdbRect.bottom > topPx && fdbRect.top < topPx+200; // 200px: enough of the panel's own height to count as "in the way"
+    if(horizontalOverlap && verticalOverlap){
+      topPx = fdbRect.bottom + 8;
+    }
+  }
+  panelEl.style.top = Math.round(topPx) + 'px';
   panelEl.style.left = Math.round(rect.left + sidebarPaddingPx) + 'px';
 }
 function toggleCard(h3){

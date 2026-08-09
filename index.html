@@ -110,6 +110,8 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #modeToggle{z-index:550;display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);align-self:flex-start;}
 .no-wind-data-hatched{background-image:repeating-linear-gradient(45deg, rgba(224,72,63,0.4) 0 6px, rgba(224,72,63,0.15) 6px 12px) !important;pointer-events:none;position:relative;}
 .no-wind-data-hatched::after{content:'';position:absolute;inset:0;border:1px solid var(--bad);border-radius:inherit;pointer-events:none;}
+.no-wind-data-hatched-clickable{background-image:repeating-linear-gradient(45deg, rgba(224,72,63,0.4) 0 6px, rgba(224,72,63,0.15) 6px 12px) !important;position:relative;}
+.no-wind-data-hatched-clickable::after{content:'';position:absolute;inset:0;border:1px solid var(--bad);border-radius:inherit;pointer-events:none;}
 #modeToggle button{background:transparent;border:none;color:var(--muted);padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 #modeToggle button.active{background:var(--accent);color:#00201d;}
 #modeToggle button#modePlan.active{background:#6b7680;color:#fff;}
@@ -330,7 +332,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <span id="gpsAcc" style="font-size:10px;">—</span>
     </div>
     <div class="sep"></div>
-    <div class="wx-chip" id="wxModelChip" style="align-items:flex-start;gap:1px;cursor:pointer;" title="Tap to refresh the weather model now">
+    <div class="wx-chip" id="wxModelChip" style="align-items:flex-start;gap:1px;cursor:pointer;" title="Tap to choose a weather model or refresh">
       <div style="display:flex;align-items:center;gap:4px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         <b id="wxModelName" style="font-size:12px;">Loading…</b>
@@ -343,6 +345,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <span id="wxModelRunAge">—</span>
       </div>
     </div>
+    <div id="wxModelPopover" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px 0;z-index:5000;flex-direction:column;min-width:190px;overflow:hidden;"></div>
     <button id="btnUseSondeData" class="iconbtn" style="display:none;background:var(--accent);color:#00201d;font-size:11px;padding:6px 8px;" title="Switch to loaded sonde data">Use sonde data</button>
     <div id="sondeActiveChip" style="display:none;align-items:center;gap:7px;padding:4px 6px 4px 9px;background:rgba(224,72,63,0.12);border:1px solid rgba(224,72,63,0.4);border-radius:6px;">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
@@ -353,15 +356,28 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <button id="btnCancelSonde" title="Switch back to weather model" style="width:16px;height:16px;border-radius:50%;background:rgba(224,72,63,0.25);border:none;color:var(--bad);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></button>
     </div>
     <div style="width:1px;align-self:stretch;background:var(--border);margin:0 8px;"></div>
-    <div class="wx-chip" id="twilightChip" style="display:grid;grid-template-columns:auto auto auto auto;column-gap:4px;row-gap:2px;align-items:end;" title="Next twilight/sunrise/sunset events (UTC) at the current position">
-      <span id="twilightIcon1" style="flex-shrink:0;">—</span>
-      <span id="twilightLabel1" style="color:var(--muted);font-size:9px;white-space:nowrap;">—</span>
-      <span id="twilightTime1" style="color:var(--text);font-size:11px;font-weight:600;text-align:right;white-space:nowrap;">—</span>
-      <span style="color:var(--muted);font-size:7px;text-align:right;white-space:nowrap;">UTC</span>
-      <span id="twilightIcon2" style="flex-shrink:0;">—</span>
-      <span id="twilightLabel2" style="color:var(--muted);font-size:9px;white-space:nowrap;">—</span>
-      <span id="twilightTime2" style="color:var(--text);font-size:11px;font-weight:600;text-align:right;white-space:nowrap;">—</span>
-      <span style="color:var(--muted);font-size:7px;text-align:right;white-space:nowrap;">UTC</span>
+    <div class="wx-chip" id="twilightChip" style="display:flex;flex-direction:column;" title="Next twilight/sunrise/sunset events and moon rise/set (UTC) at the current position">
+      <div style="display:flex;align-items:stretch;gap:8px;">
+        <div style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span id="twilightIcon1" style="flex-shrink:0;">—</span>
+            <span id="twilightLabel1" style="color:var(--muted);font-size:9px;white-space:nowrap;">—</span>
+            <span id="twilightTime1" style="color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;">—</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span id="twilightIcon2" style="flex-shrink:0;">—</span>
+            <span id="twilightLabel2" style="color:var(--muted);font-size:9px;white-space:nowrap;">—</span>
+            <span id="twilightTime2" style="color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;">—</span>
+          </div>
+        </div>
+        <div style="width:1px;align-self:stretch;background:var(--border);"></div>
+        <div style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;">
+          <span id="moonIcon" style="font-size:14px;line-height:1;">—</span>
+          <span id="moonRiseTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
+          <span id="moonSetTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
+        </div>
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:7px;margin-top:3px;">all times UTC</div>
     </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;color:var(--bad);border:1.5px solid var(--bad);border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;opacity:0.85;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg></button>
@@ -916,10 +932,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div class="datacell wide" id="posDisplayWrap">
               <div style="display:flex;justify-content:space-between;gap:8px;">
                 <div>
-                  <div class="val small" id="posDMS" style="font-weight:400;">—</div>
-                  <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
+                  <div class="val small" id="posDMS" style="font-weight:400;font-size:10.5px;">—</div>
+                  <div class="val small" id="posCompact" style="margin-top:2px;color:var(--muted);font-weight:400;font-size:10.5px;">—</div>
                 </div>
-                <div class="val small" id="posNearestTown" style="color:var(--muted);font-size:11px;text-align:right;">—</div>
+                <div class="val small" id="posNearestTown" style="color:var(--muted);font-size:11px;text-align:left;max-width:52%;white-space:normal;overflow:visible;text-overflow:clip;">—</div>
               </div>
               <div class="val small" id="posManualHint" style="display:none;color:var(--warn);margin-top:2px;">📍 Click on Position</div>
             </div>
@@ -970,10 +986,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div class="datacell wide" id="landingPosDisplayWrap">
               <div style="display:flex;justify-content:space-between;gap:8px;">
                 <div>
-                  <div class="val small" id="landingPosDMS" style="font-weight:400;">—</div>
-                  <div class="val small" id="landingPosCoords" style="margin-top:2px;color:var(--muted);font-weight:400;">—</div>
+                  <div class="val small" id="landingPosDMS" style="font-weight:400;font-size:10.5px;">—</div>
+                  <div class="val small" id="landingPosCoords" style="margin-top:2px;color:var(--muted);font-weight:400;font-size:10.5px;">—</div>
                 </div>
-                <div class="val small" id="landingPosTown" style="color:var(--muted);text-align:right;">—</div>
+                <div class="val small" id="landingPosTown" style="color:var(--muted);text-align:left;max-width:52%;white-space:normal;overflow:visible;text-overflow:clip;">—</div>
               </div>
             </div>
             <div class="datacell"><label data-i18n="fieldApproxAltitude">Approx Altitude</label><div class="val small" id="landingPosAlt" style="font-weight:400;">—</div></div>
@@ -1014,18 +1030,17 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div id="sIntHRow" style="flex:1;">
               <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Intercept AGL (m)</div>
               <input type="number" id="sIntH" min="100" max="1000" step="10" value="400" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
+              <div id="lblInterceptTimeBadge" style="font-size:8.5px;font-weight:700;color:var(--text);margin-top:2px;text-align:right;">—</div>
             </div>
             <div id="sRate2Row" style="flex:1;">
               <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Rate below (m/s)</div>
-              <input type="number" id="sRate2" min="0.5" max="4" step="0.1" value="1.5" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
+              <input type="text" inputmode="decimal" id="sRate2" value="1.5" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
+              <div id="lblGroundTimeBadge" style="font-size:8.5px;font-weight:700;color:var(--text);margin-top:2px;text-align:right;">—</div>
             </div>
             <div id="sScatterRow" style="flex:1;">
               <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Scatter (%)</div>
               <input type="number" id="sScatter" min="0" max="40" step="1" value="15" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
             </div>
-          </div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-align:right;">
-            <span id="lblInterceptTimeBadge">—</span> <span style="opacity:0.5;">·</span> <span id="lblGroundTimeBadge">—</span>
           </div>
         </div>
       </div>
@@ -1249,7 +1264,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.06-2245';
+const APP_VERSION = 'v260809.11-0100';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1406,6 +1421,95 @@ function updateTwilightChip(){
   if(upcoming[1]){ i2.innerHTML = twilightIconSvg(upcoming[1].label); lb2.textContent = upcoming[1].label; t2.textContent = fmtHHMM(upcoming[1].date); } else { i2.textContent=''; lb2.textContent='—'; t2.textContent=''; }
 }
 setInterval(updateTwilightChip, 60000);
+
+// ---------- moon phase / moonrise / moonset (Meeus low-precision lunar
+// position, same general approach as the sun calculation above but with
+// altitude sampled at intervals and interpolated for the horizon crossing,
+// since the moon's declination moves too fast for a single hour-angle
+// solve the way the sun's can - a reasonable approximation, not
+// arc-second-precise, which is what a cockpit display actually needs) ----
+function moonEquatorialPosition(dateUTC){
+  const rad = Math.PI/180;
+  const T = (dateUTC.getTime()/86400000 + 2440587.5 - 2451545.0)/36525; // Julian centuries since J2000
+  const Lp = (218.316 + 481267.8813*T) % 360;
+  const M = (134.963 + 477198.8676*T) % 360;
+  const F = (93.272 + 483202.0175*T) % 360;
+  const lambda = Lp + 6.289*Math.sin(M*rad);
+  const beta = 5.128*Math.sin(F*rad);
+  const eps = 23.439 - 0.0000004*T;
+  const lamR = lambda*rad, betR = beta*rad, epsR = eps*rad;
+  const ra = Math.atan2(Math.sin(lamR)*Math.cos(epsR)-Math.tan(betR)*Math.sin(epsR), Math.cos(lamR))/rad;
+  const dec = Math.asin(Math.sin(betR)*Math.cos(epsR)+Math.cos(betR)*Math.sin(epsR)*Math.sin(lamR))/rad;
+  return {ra: (ra+360)%360, dec, phaseAngleInput: M};
+}
+function moonAltitudeDeg(dateUTC, lat, lon){
+  const rad = Math.PI/180;
+  const pos = moonEquatorialPosition(dateUTC);
+  const JD = dateUTC.getTime()/86400000 + 2440587.5;
+  const T = (JD-2451545.0)/36525;
+  let gst = (280.46061837 + 360.98564736629*(JD-2451545.0) + 0.000387933*T*T)%360;
+  if(gst<0) gst += 360;
+  const lst = (gst + lon)%360;
+  let ha = lst - pos.ra; if(ha<-180) ha+=360; if(ha>180) ha-=360;
+  const haR = ha*rad, latR = lat*rad, decR = pos.dec*rad;
+  return Math.asin(Math.sin(latR)*Math.sin(decR)+Math.cos(latR)*Math.cos(decR)*Math.cos(haR))/rad;
+}
+function computeMoonRiseSetUTC(lat, lon, dateUTC){
+  // Samples altitude every 10 minutes across the next 48h and linearly
+  // interpolates the first rise and first set crossing found -
+  // h0=0.125deg (not exactly 0) accounts for the moon's own parallax,
+  // the standard approximation used for horizon-crossing tables.
+  const h0 = 0.125;
+  const startMs = Date.UTC(dateUTC.getUTCFullYear(),dateUTC.getUTCMonth(),dateUTC.getUTCDate());
+  let prevAlt = moonAltitudeDeg(new Date(startMs), lat, lon);
+  let rise = null, set = null;
+  for(let m=10; m<=48*60 && (!rise||!set); m+=10){
+    const t = new Date(startMs+m*60000);
+    const alt = moonAltitudeDeg(t, lat, lon);
+    if(!rise && prevAlt<h0 && alt>=h0){
+      const frac = (h0-prevAlt)/(alt-prevAlt);
+      rise = new Date(startMs+(m-10+10*frac)*60000);
+    }
+    if(!set && prevAlt>=h0 && alt<h0){
+      const frac = (prevAlt-h0)/(prevAlt-alt);
+      set = new Date(startMs+(m-10+10*frac)*60000);
+    }
+    prevAlt = alt;
+  }
+  return {rise, set};
+}
+function moonPhaseInfo(dateUTC){
+  // Age in days since a known reference new moon, wrapped to the ~29.53
+  // day synodic month - simple and accurate enough for an icon/percentage,
+  // not a precision ephemeris.
+  const synodic = 29.530588861;
+  const knownNewMoon = Date.UTC(2000,0,6,18,14); // 2000-01-06 18:14 UTC
+  const daysSince = (dateUTC.getTime()-knownNewMoon)/86400000;
+  const age = ((daysSince % synodic) + synodic) % synodic;
+  const illumFrac = (1-Math.cos(2*Math.PI*age/synodic))/2;
+  let phaseName, emoji;
+  if(age<1.84){ phaseName='New moon'; emoji='🌑'; }
+  else if(age<5.53){ phaseName='Waxing crescent'; emoji='🌒'; }
+  else if(age<9.22){ phaseName='First quarter'; emoji='🌓'; }
+  else if(age<12.91){ phaseName='Waxing gibbous'; emoji='🌔'; }
+  else if(age<16.61){ phaseName='Full moon'; emoji='🌕'; }
+  else if(age<20.30){ phaseName='Waning gibbous'; emoji='🌖'; }
+  else if(age<23.99){ phaseName='Last quarter'; emoji='🌗'; }
+  else if(age<27.68){ phaseName='Waning crescent'; emoji='🌘'; }
+  else { phaseName='New moon'; emoji='🌑'; }
+  return {age, illumFrac, phaseName, emoji};
+}
+function updateMoonChip(){
+  if(!isFinite(state.lat) || !isFinite(state.lon)) return;
+  const now = new Date();
+  const {rise, set} = computeMoonRiseSetUTC(state.lat, state.lon, now);
+  const phase = moonPhaseInfo(now);
+  document.getElementById('moonIcon').textContent = phase.emoji;
+  document.getElementById('moonIcon').title = `${phase.phaseName} (${Math.round(phase.illumFrac*100)}% illuminated)`;
+  document.getElementById('moonRiseTime').textContent = rise ? fmtHHMM(rise)+'↑' : '—';
+  document.getElementById('moonSetTime').textContent = set ? fmtHHMM(set)+'↓' : '—';
+}
+setInterval(updateMoonChip, 60000);
 
 function haversine(lat1,lon1,lat2,lon2){
   const R=6371000, φ1=lat1*Math.PI/180, φ2=lat2*Math.PI/180;
@@ -5304,6 +5408,7 @@ document.querySelectorAll('input[name="altUnitRadio"]').forEach(r=>{
 function renderSidebarPosition(){
   document.getElementById('posDMS').textContent = toDMS(state.lat,true)+' '+toDMS(state.lon,false);
   updateTwilightChip();
+  updateMoonChip();
   document.getElementById('posCompact').textContent = toCompact(state.lat, state.lon);
   document.getElementById('altAMSL').textContent = formatAltAMSL(state.altAMSL);
   document.getElementById('altAGL').textContent = Math.round(state.altAMSL-state.groundElev)+' m';
@@ -5819,7 +5924,7 @@ function doRecompute(){
     // that visually obvious and prevents switching into a mode that would
     // just sit there showing nothing, rather than only being explained by
     // the (dismissable, easy to miss) banner text.
-    document.getElementById('wxModelChip').classList.add('no-wind-data-hatched');
+    document.getElementById('wxModelChip').classList.add('no-wind-data-hatched-clickable');
     document.getElementById('modeMonitor').classList.add('no-wind-data-hatched');
     document.getElementById('modePlan').classList.add('no-wind-data-hatched');
     return;
@@ -5831,7 +5936,7 @@ function doRecompute(){
   }
   document.getElementById('particleHeightSliderWrap').classList.remove('wind-data-unavailable');
   if(groundWindLayer.active && groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'block';
-  document.getElementById('wxModelChip').classList.remove('no-wind-data-hatched');
+  document.getElementById('wxModelChip').classList.remove('no-wind-data-hatched-clickable');
   document.getElementById('modeMonitor').classList.remove('no-wind-data-hatched');
   document.getElementById('modePlan').classList.remove('no-wind-data-hatched');
   // Function 2's reference trajectory (and therefore the staged-descent
@@ -7322,7 +7427,26 @@ function hideYellowWarning(){
 }
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
 document.getElementById('sIntH').addEventListener('input', ()=>{ recomputeAll(); scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
-document.getElementById('sRate2').addEventListener('input', ()=>{ recomputeAll(); scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
+document.getElementById('sRate2').addEventListener('input', (e)=>{
+  // Free-typed text field now (not type=number), so commas need to be
+  // normalized to a period manually - a number input would otherwise
+  // silently switch to comma-as-decimal on a device set to a
+  // German/European locale, regardless of what's written in the HTML.
+  if(e.target.value.includes(',')){
+    const cursorFromEnd = e.target.value.length - e.target.selectionStart;
+    e.target.value = e.target.value.replace(',', '.');
+    const pos = e.target.value.length - cursorFromEnd;
+    e.target.setSelectionRange(pos, pos);
+  }
+  recomputeAll(); scheduleStagedAreaRecompute(); scheduleStagedRetarget();
+});
+document.getElementById('sRate2').addEventListener('blur', (e)=>{
+  let v = parseFloat(e.target.value);
+  if(isNaN(v)) v = 1.5;
+  v = Math.max(0.5, Math.min(4, v));
+  e.target.value = v.toFixed(1);
+  recomputeAll();
+});
 document.getElementById('sScatter').addEventListener('input', recomputeAll);
 // Re-run the active plan whenever a descent parameter that actually affects
 // it changes (rate, intercept height, post-intercept rate, or scatter) -
@@ -7441,25 +7565,52 @@ function showFlightDataBox(){
     box.style.left = (e.clientX-offX)+'px';
     box.style.top = (e.clientY-offY)+'px';
   });
-  box.addEventListener('pointerup', ()=>{
-    dragging = false;
-    // Dragged past any of the map's own edges - snap to sit flush against
-    // whichever one(s) it crossed, instead of leaving it partially
-    // overlapping the header/sidebar/edge of the screen, which is
-    // otherwise trivial to end up with with plain free-form dragging.
+  let snappedEdge = null; // {side:'left'|'right'|'top'|'bottom'} - re-applied when the sidebar opens/closes, since that changes where the map's own visible edge actually is
+  function getEffectiveMapRect(){
     const mapRect = document.getElementById('map').getBoundingClientRect();
+    const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
+    // The sidebar overlays on top of the map rather than the map shrinking
+    // to make room for it, so #map's own bounding rect always spans the
+    // full width underneath it - the sidebar's own left edge is the
+    // actually-visible right boundary of the map whenever it's open.
+    return {top: mapRect.top, bottom: mapRect.bottom, left: mapRect.left, right: Math.min(mapRect.right, sidebarRect.left)};
+  }
+  function applySnap(){
+    if(!snappedEdge || dragging) return;
+    const mapRect = getEffectiveMapRect();
     const boxRect = box.getBoundingClientRect();
     const margin = 6;
+    if(snappedEdge.side==='right') box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
+    else if(snappedEdge.side==='left') box.style.left = Math.round(mapRect.left + margin) + 'px';
+    if(snappedEdge.vSide==='bottom') box.style.top = Math.round(mapRect.bottom - boxRect.height - margin) + 'px';
+    else if(snappedEdge.vSide==='top') box.style.top = Math.round(mapRect.top + margin) + 'px';
+  }
+  document.getElementById('sidebarHandle').addEventListener('click', ()=>setTimeout(applySnap, 260)); // after the sidebar's own .25s slide transition finishes
+  box.addEventListener('pointerup', ()=>{
+    dragging = false;
+    // Dragged past any of the map's own (actually visible) edges - snap to
+    // sit flush against whichever one(s) it crossed, instead of leaving it
+    // partially overlapping the header/sidebar/edge of the screen, which
+    // is otherwise trivial to end up with with plain free-form dragging.
+    const mapRect = getEffectiveMapRect();
+    const boxRect = box.getBoundingClientRect();
+    const margin = 6;
+    snappedEdge = {side:null, vSide:null};
     if(boxRect.top < mapRect.top){
       box.style.top = Math.round(mapRect.top + margin) + 'px';
+      snappedEdge.vSide = 'top';
     } else if(boxRect.bottom > mapRect.bottom){
       box.style.top = Math.round(mapRect.bottom - boxRect.height - margin) + 'px';
+      snappedEdge.vSide = 'bottom';
     }
     if(boxRect.left < mapRect.left){
       box.style.left = Math.round(mapRect.left + margin) + 'px';
+      snappedEdge.side = 'left';
     } else if(boxRect.right > mapRect.right){
       box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
+      snappedEdge.side = 'right';
     }
+    if(!snappedEdge.side && !snappedEdge.vSide) snappedEdge = null; // dropped somewhere in the open middle - not snapped to anything
   });
   closeBtn.addEventListener('click', ()=>{
     box.style.display = 'none';
@@ -8829,10 +8980,57 @@ try{
 // fixes to trigger a recompute on their own.
 setInterval(()=>{ if(state.appMode==='monitor') recomputeAll(); }, 30000);
 let wxRefreshTimer = null;
-document.getElementById('wxModelChip').addEventListener('click', ()=>{
-  const el = document.getElementById('wxModelChip');
-  el.style.opacity = '0.5';
-  fetchWind(true).finally(()=>{ el.style.opacity = '1'; });
+// Only the models that actually cover the current position are offered
+// (plus Auto, always available, and a Refresh action) - showing a model
+// that would just get silently overridden anyway (per the coverage
+// fallback added earlier) would be misleading here specifically, where
+// the whole point is letting the person consciously pick one.
+function buildWxModelPopover(){
+  const pop = document.getElementById('wxModelPopover');
+  const currentSel = document.getElementById('wxModelSelect').value;
+  const rowStyle = 'width:100%;background:none;border:none;text-align:left;padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:space-between;';
+  let html = '';
+  const options = [{key:'auto', label:'Auto (finest available grid)'}]
+    .concat(Object.keys(MODEL_META).filter(k=>k!=='best_match' && isModelValidForLocation(k, state.lat, state.lon)).map(k=>({key:k, label:MODEL_META[k].label})));
+  options.forEach(opt=>{
+    const active = opt.key===currentSel;
+    html += `<button class="wx-model-opt" data-model="${opt.key}" style="${rowStyle}${active?'background:rgba(63,208,201,0.12);color:var(--accent);':''}">${opt.label}${active?' ✓':''}</button>`;
+  });
+  html += `<div style="height:1px;background:var(--border);margin:4px 0;"></div>`;
+  html += `<button id="wxModelRefreshBtn" style="${rowStyle}color:var(--accent2);">↻ Refresh now</button>`;
+  pop.innerHTML = html;
+  pop.querySelectorAll('.wx-model-opt').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.getElementById('wxModelSelect').value = btn.dataset.model;
+      fetchWind(true);
+      pop.style.display = 'none';
+    });
+  });
+  document.getElementById('wxModelRefreshBtn').addEventListener('click', ()=>{
+    fetchWind(true);
+    pop.style.display = 'none';
+  });
+}
+document.getElementById('wxModelChip').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const pop = document.getElementById('wxModelPopover');
+  const willOpen = pop.style.display==='none' || !pop.style.display;
+  document.querySelectorAll('.settings-popover, #settingsPanel, #headerMoreMenu, #wxModelPopover').forEach(p=>{ if(p!==pop) p.style.display='none'; });
+  if(willOpen){
+    buildWxModelPopover();
+    const rect = e.currentTarget.getBoundingClientRect();
+    pop.style.top = (rect.bottom+4)+'px';
+    pop.style.left = rect.left+'px';
+    pop.style.display = 'flex';
+  } else {
+    pop.style.display = 'none';
+  }
+});
+document.addEventListener('click', (e)=>{
+  const pop = document.getElementById('wxModelPopover');
+  if(pop.style.display!=='none' && !pop.contains(e.target) && e.target.id!=='wxModelChip' && !document.getElementById('wxModelChip').contains(e.target)){
+    pop.style.display = 'none';
+  }
 });
 function restartWxRefreshTimer(){
   clearInterval(wxRefreshTimer);

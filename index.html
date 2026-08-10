@@ -987,7 +987,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
             <div class="datacell wide" id="capeCell" style="display:none;">
               <label>CAPE (convective instability)</label>
-              <div class="val small" id="capeVal" style="font-weight:600;">—</div>
+              <div class="val small" id="capeVal" style="font-weight:400;">—</div>
             </div>
           </div>
           <div id="positionManualNote" style="display:none;color:var(--bad);font-size:11px;font-weight:600;margin-top:8px;">Tap the map to set position. Altitude, course and speed above are directly editable.</div>
@@ -1025,7 +1025,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 <span style="color:var(--border);">|</span>
                 <span id="landingSunElevText" style="flex-shrink:0;font-size:11.5px;">—</span>
                 <span style="color:var(--border);">|</span>
-                <span id="landingSunDaylightText" style="font-size:11.5px;font-weight:600;color:#c8862f;flex-shrink:0;">—</span>
+                <span id="landingSunDaylightText" style="font-size:11.5px;font-weight:400;color:var(--text);flex-shrink:0;">—</span>
               </div>
             </div>
             <div class="datacell wide" id="landingTerrainCell" style="display:none;">
@@ -1054,8 +1054,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;gap:10px;">
             <div id="sInitRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit">30 min</b></div>
-              <input type="range" id="sInit" min="0" max="240" step="1" value="30" style="width:100%;">
-              <div id="lblInitDist" style="font-size:9.5px;font-weight:700;color:var(--text);margin-top:4px;text-align:right;">0.00 km</div>
+              <div style="position:relative;height:18px;">
+                <div style="position:absolute;bottom:6px;left:0;right:0;height:3px;background:var(--border);border-radius:2px;"></div>
+                <div id="sInitFillBar" style="position:absolute;bottom:6px;left:0;width:12.5%;height:3px;background:#8b98a5;border-radius:2px;"></div>
+                <input type="range" id="sInit" class="wedge-slider" min="0" max="240" step="1" value="30">
+              </div>
+              <div id="lblInitDist" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:4px;text-align:right;">0.00 km</div>
             </div>
             <div id="sRateRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate" style="color:#c8862f;">4.0 m/s</b></div>
@@ -1066,7 +1070,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 </svg>
                 <input type="range" id="sRate" class="wedge-slider" min="0.5" max="9" step="0.1" value="4.0">
               </div>
-              <div id="lblAdiaRateBadge" style="font-size:9.5px;font-weight:700;color:var(--text);margin-top:4px;text-align:right;">—</div>
+              <div id="lblAdiaRateBadge" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:4px;text-align:right;">—</div>
             </div>
           </div>
           <div style="display:flex;gap:6px;margin-top:6px;">
@@ -1307,7 +1311,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.25-0725';
+const APP_VERSION = 'v260809.27-0900';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1338,6 +1342,29 @@ const KN_PER_MS = 1.94384;
 // possible path individually under time pressure.
 const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
 const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
+// Braking ballast estimate - at terminal velocity, drag exactly balances
+// the excess weight being carried, so the ballast needed to arrest a
+// descent at rate v is that same drag force converted to a mass:
+// ballast_kg = 0.5 * Cw * A_cross * rho_air(alt) * v^2 / g. Cw=0.8 sits in
+// the middle of the practical range (0.5-1.0) commonly used in gas
+// balloon flight theory for the envelope PLUS basket/net/rigging drag
+// together (an ideal sphere alone is closer to 0.4-0.5) - source:
+// balloonwiki.org/de/doku.php/gasballon/gasballon_fahrtheorie. Extracted
+// here as a shared global (was previously only defined locally inside the
+// staged descent chart function) so both that chart and the main Descent
+// Parameters badges can use the exact same estimate.
+const BALLAST_CW_PRACTICAL = 0.8;
+function airDensityAt(altM){
+  const T0=288.15, L=0.0065, R=287.05;
+  const T = T0 - L*Math.min(altM,11000);
+  const P = 101325*Math.pow(T/T0, G/(L*R));
+  return P/(R*T);
+}
+function estimateBallastKg(altM, rateMs){
+  const balloonRadiusM = Math.pow((3*balloonVolumeM3)/(4*Math.PI), 1/3);
+  const crossSectionM2 = Math.PI*balloonRadiusM*balloonRadiusM;
+  return 0.5*BALLAST_CW_PRACTICAL*crossSectionM2*airDensityAt(altM)*rateMs*rateMs/G;
+}
 let balloonVolumeM3 = 1050; // configurable in Settings
 let currentSubMode = 'quick'; // 'quick' | 'staged' - Plan Descent's two subfunctions
 // Referenced by applyFlightDataBoxSnap(), which repositionModeToggle()
@@ -2713,7 +2740,7 @@ async function openSondeHubProfile(serial){
       warnEl.textContent = `Only ${profile.length} wind level(s) could be derived so far - shown below, but this is a thin profile. It'll fill in as the sonde climbs.`;
     }
     document.getElementById('sondeProfileTableBody').innerHTML = profile.map(p=>
-      `<tr><td style="text-align:right;padding:4px 8px;">${Math.round(p.alt_m)}</td><td style="text-align:right;padding:4px 8px;">${p.speed_ms.toFixed(1)} m/s</td><td style="text-align:right;padding:4px 8px;">${Math.round(p.dir_deg)}°</td><td style="text-align:right;padding:4px 8px;">${p.temp_c!=null?p.temp_c.toFixed(1)+'°C':'—'}</td></tr>`
+      `<tr><td style="text-align:right;padding:4px 8px;">${Math.round(p.alt_m)}</td><td style="text-align:right;padding:4px 8px;">${p.speed_ms.toFixed(1)} m/s</td><td style="text-align:right;padding:4px 8px;">${String(Math.round(p.dir_deg)%360).padStart(3,'0')}°</td><td style="text-align:right;padding:4px 8px;">${p.temp_c!=null?p.temp_c.toFixed(1)+'°C':'—'}</td></tr>`
     ).join('') || '<tr><td colspan="4" style="text-align:center;padding:10px;color:var(--muted);">No levels yet</td></tr>';
     document.getElementById('sondeProfileUseBtn').disabled = profile.length===0;
     document.getElementById('sondeProfileStueveWrap').innerHTML = renderStueveDiagram(profile);
@@ -4157,7 +4184,12 @@ function computeReferenceTrajectory(){
   const rate1 = parseFloat(document.getElementById('sRate').value);
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const rate2 = parseFloat(document.getElementById('sRate2').value);
-  const REFERENCE_MINUTES = 120; // ~2h, matches Function 1's own typical horizon
+  // Matches whatever "Initiate descent in" (Function 1's own slider) is
+  // currently set to, rather than a fixed horizon - the same control the
+  // person already uses to say "how far ahead am I planning", reused here
+  // instead of introducing a second, separate setting for the same idea.
+  const sInitEl = document.getElementById('sInit');
+  const REFERENCE_MINUTES = sInitEl ? Math.max(1, parseFloat(sInitEl.value)||120) : 120;
   const path = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, REFERENCE_MINUTES*60, rate1, interceptAGL, rate2, 0);
   const cruiseOnly = path.filter(p=>p.t <= REFERENCE_MINUTES*60);
   state.referenceTrajectoryPath = cruiseOnly; // kept WITH its time values, for the staged-descent AND quick-descent draggable markers to snap to - always the FULL length, regardless of what's currently shown
@@ -4566,13 +4598,22 @@ function randomFracs(n){
 let stagedMarker = null, stagedReachableLayer = null, stagedAreaFetchTimer = null;
 let stagedLandingAreaLayer = null, stagedLandingCenterMarker = null;
 let stagedTargetFadeTimer = null;
-let stagedDescentPathLayer2 = null, stagedTargetMarker = null;
+let stagedDescentPathOutline = null, stagedDescentPathLayer2 = null, stagedTargetMarker = null;
 function ensureStagedLayers(){
   if(!stagedReachableLayer){
     stagedReachableLayer = L.polygon([], {color:'#ff6a00', weight:3, dashArray:'6,4', fillColor:'#ff6a00', fillOpacity:0.22, interactive:false});
   }
+  if(!stagedDescentPathOutline){
+    stagedDescentPathOutline = L.polyline([], {color:'#000000', weight:5.5, lineCap:'round', interactive:false});
+  }
   if(!stagedDescentPathLayer2){
-    stagedDescentPathLayer2 = L.polyline([], {color:'#ff6a00', weight:3, dashArray:'6,4', lineCap:'round', interactive:false});
+    // Matches the established yellow descent-path signature used
+    // everywhere else in the app (plannedDescentPathLayer etc.) - this was
+    // previously a dashed orange line with no black outline underneath,
+    // the only descent path in the whole app styled that way, which very
+    // likely explains it reading as "merely symbolic" rather than a
+    // properly-simulated result.
+    stagedDescentPathLayer2 = L.polyline([], {color:'#ffee00', weight:3, dashArray:'8,6', lineCap:'round', interactive:false});
   }
   if(!stagedMarker){
     stagedMarker = L.marker([state.lat,state.lon], {icon: descentCrossIcon(0, '#4d80ff'), draggable:true, zIndexOffset:1000});
@@ -4804,6 +4845,19 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   // include it as a hull vertex so the landing area is GUARANTEED to
   // contain it regardless of how close the randomized search actually
   // converged, rather than depending entirely on search precision.
+  // The centroid shown on the map is computed from the raw Monte-Carlo
+  // endpoints ONLY, not from the hull's own vertices - the target point
+  // added just below is there to GUARANTEE the drawn polygon visually
+  // contains where the person clicked, but a convex hull's vertices sit on
+  // its outer boundary by definition, so including that forced vertex in a
+  // simple vertex-average pulled the "centre" toward the edge rather than
+  // reflecting where the scatter actually clusters. This was very likely
+  // the exact cause of the red target point so often appearing to sit at
+  // the edge of its own landing area instead of near the middle. Computed
+  // BEFORE the target point is added below, so it's never included here.
+  let mcCentroidLon = 0, mcCentroidLat = 0;
+  mcEndpoints.forEach(p=>{ mcCentroidLon+=p[0]; mcCentroidLat+=p[1]; });
+  mcCentroidLon/=mcEndpoints.length; mcCentroidLat/=mcEndpoints.length;
   mcEndpoints.push([targetLon, targetLat]);
   const landingHull = mcEndpoints.length>=3 ? convexHull(mcEndpoints) : mcEndpoints;
   // NOT snapping the drawn path to the target with a fake final segment
@@ -4814,7 +4868,7 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   // best-found strategy, even if it falls a little short of the target -
   // the landing area is still guaranteed to contain the target regardless,
   // via the explicit hull point above.
-  return {...best, altitudes, landingHull};
+  return {...best, altitudes, landingHull, mcCentroid: [mcCentroidLat, mcCentroidLon]};
 }
 function showStagedDescentPlan(result){
   console.log('showStagedDescentPlan() called - setting panel display to block now.', {resultReceived: !!result});
@@ -4828,6 +4882,8 @@ function showStagedDescentPlan(result){
   try{
   ensureStagedLayers();
   state.lastStagedPlanResult = result; // so the panel can be reopened later, even from function 1
+  stagedDescentPathOutline.setLatLngs(result.path.map(p=>[p.lat,p.lon]));
+  if(!map.hasLayer(stagedDescentPathOutline)) stagedDescentPathOutline.addTo(map);
   stagedDescentPathLayer2.setLatLngs(result.path.map(p=>[p.lat,p.lon]));
   if(!map.hasLayer(stagedDescentPathLayer2)) stagedDescentPathLayer2.addTo(map);
   // The probable landing area (Monte-Carlo, forecast uncertainty around the
@@ -4845,9 +4901,11 @@ function showStagedDescentPlan(result){
   // and nearest town (only hidden from view by the plan panel itself, still
   // there once that's closed).
   if(landingHull.length){
-    let cLat=0, cLon=0;
-    landingHull.forEach(p=>{ cLon+=p[0]; cLat+=p[1]; });
-    cLat/=landingHull.length; cLon/=landingHull.length;
+    const [cLat, cLon] = result.mcCentroid || (()=>{
+      let cLat0=0, cLon0=0;
+      landingHull.forEach(p=>{ cLon0+=p[0]; cLat0+=p[1]; });
+      return [cLat0/landingHull.length, cLon0/landingHull.length];
+    })();
     if(!stagedLandingCenterMarker){
       stagedLandingCenterMarker = L.marker([0,0], {icon: smallCrossIcon, interactive:false});
     }
@@ -4959,7 +5017,7 @@ function drawStagedPlanChart(result){
   // the curve is avoided entirely (nothing is drawn ON TOP of the line).
   const W=340, H=350, ML=80, plotW=55, MT=14, MB=40;
   const plotH = H-MT-MB;
-  const infoX = ML+plotW+12;
+  const infoX = ML+plotW+6;
   const windX = infoX+44;
   const windTextX = windX+14; // the one shared column every wind readout (per-stage, mid-segment, descent-rate label) aligns to
   const yFor = alt => MT + (altMax-alt)/Math.max(1,(altMax-altMin))*plotH;
@@ -4999,26 +5057,7 @@ function drawStagedPlanChart(result){
 
   let gridlines = '', yLabels = '', infoRows = '', shading = '';
   const doneAlts = new Set();
-  // Braking ballast estimate: at terminal velocity, drag exactly balances
-  // the excess weight being carried - so the ballast needed to arrest a
-  // descent at rate v is that same drag force converted to a mass:
-  // ballast_kg = 0.5 * Cw * A_cross * rho_air(alt) * v^2 / g. Cw=0.8 sits in
-  // the middle of the practical range (0.5-1.0) commonly used in gas
-  // balloon flight theory for the envelope PLUS basket/net/rigging drag
-  // together (an ideal sphere alone is closer to 0.4-0.5) - source:
-  // balloonwiki.org/de/doku.php/gasballon/gasballon_fahrtheorie
-  const CW_PRACTICAL = 0.8;
-  const balloonRadiusM = Math.pow((3*balloonVolumeM3)/(4*Math.PI), 1/3);
-  const crossSectionM2 = Math.PI*balloonRadiusM*balloonRadiusM;
-  function airDensityAt(altM){
-    const T0=288.15, L=0.0065, R=287.05, G=9.80665;
-    const T = T0 - L*Math.min(altM,11000);
-    const P = 101325*Math.pow(T/T0, G/(L*R));
-    return P/(R*T);
-  }
-  function ballastFor(altM, rateMs){
-    return 0.5*CW_PRACTICAL*crossSectionM2*airDensityAt(altM)*rateMs*rateMs/9.80665;
-  }
+  function ballastFor(altM, rateMs){ return estimateBallastKg(altM, rateMs); }
   let totalBallastKg = 0;
   // Shade the layer between intercept and ground (the final, fixed-rate
   // descent segment) so it visually reads as a distinct final phase.
@@ -5045,7 +5084,7 @@ function drawStagedPlanChart(result){
         yLabels += `<rect x="${ML+3}" y="${y-13}" width="48" height="12" fill="var(--panel2)"/>`;
         yLabels += `<text x="${ML+5}" y="${y-3}" font-size="9" fill="#1a9850">Ground</text>`;
       } else {
-        yLabels += `<text x="${ML-6}" y="${y-2}" text-anchor="end" font-size="9" fill="${col}">${Math.round(s.altM)} m AMSL</text>`;
+        yLabels += `<text x="${ML-6}" y="${y-3}" text-anchor="end" font-size="9" fill="${col}">${Math.round(s.altM)} m AMSL</text>`;
         // "Intercept" sits to the RIGHT of the axis (not appended to the
         // right-aligned AMSL text, which was what pushed it past the left
         // edge) - directly above the shaded final-descent band, with an
@@ -5073,14 +5112,14 @@ function drawStagedPlanChart(result){
     // mid-segment (large-drop) one, and the descent-rate label below the
     // start level all share this exact x now, instead of each drifting to
     // its own slightly different position.
-    const rowY = y - 6;
+    const rowY = y - 3;
     const durMin = Math.round(s.lingerS/60);
     if(!s.isGround){
       if(i>0){
         infoRows += `<text x="${infoX}" y="${rowY}" font-size="9" fill="${s.isIntercept?col:'var(--muted)'}">${durMin} min</text>`;
       }
       const arrowRot = (s.dirFrom+180)%360;
-      const windLabel = `${Math.round(s.dirFrom)}° ${Math.round(s.speedKmh)} km/h`;
+      const windLabel = `${String(Math.round(s.dirFrom)%360).padStart(3,'0')}° ${Math.round(s.speedKmh)} km/h`;
       const windBoxW = windLabel.length*5+4;
       infoRows += `<rect x="${windX-3}" y="${rowY-10}" width="${windBoxW+6}" height="12" fill="var(--panel2)"/>`;
       infoRows += `<g transform="translate(${windX+1},${rowY-8}) rotate(${arrowRot},5,3)"><path d="M5 -3 L9 6 L5 3.5 L1 6 Z" fill="${col}"/></g>`+
@@ -5235,6 +5274,7 @@ document.getElementById('btnCenterStaged').addEventListener('click', ()=>{
 });
 function clearStagedResults(resetPlacement){
   if(stagedReachableLayer && map.hasLayer(stagedReachableLayer)) map.removeLayer(stagedReachableLayer);
+  if(stagedDescentPathOutline && map.hasLayer(stagedDescentPathOutline)) map.removeLayer(stagedDescentPathOutline);
   if(stagedDescentPathLayer2 && map.hasLayer(stagedDescentPathLayer2)) map.removeLayer(stagedDescentPathLayer2);
   if(stagedLandingAreaLayer && map.hasLayer(stagedLandingAreaLayer)) map.removeLayer(stagedLandingAreaLayer);
   if(stagedLandingCenterMarker && map.hasLayer(stagedLandingCenterMarker)) map.removeLayer(stagedLandingCenterMarker);
@@ -5754,11 +5794,10 @@ function updateCapeDisplay(){
   cell.style.display = 'block';
   const el = document.getElementById('capeVal');
   let label, color;
-  if(cape<300){ label='Low'; color='var(--good)'; }
-  else if(cape<1000){ label='Moderate'; color='#e8a838'; }
-  else if(cape<2500){ label='Strong'; color='var(--warn)'; }
-  else { label='Extreme'; color='var(--bad)'; }
-  el.textContent = `${Math.round(cape)} J/kg — ${label}`;
+  if(cape<500){ label='Low'; color='var(--good)'; }
+  else if(cape<2000){ label='Medium'; color='#e8a838'; }
+  else { label='High'; color='var(--bad)'; }
+  el.textContent = label;
   el.style.color = color;
 }
 async function fetchWind(force){
@@ -5827,7 +5866,17 @@ async function fetchWind(force){
     drawWindProfileChart();
     recomputeAll();
   }catch(e){
-    document.getElementById('wxModelName').textContent = 'offline (cached)';
+    console.error('fetchWind failed:', e);
+    // "offline (cached)" should only ever mean "no connectivity" - a bug
+    // anywhere else in this function (a bad response shape, a DOM element
+    // missing, etc.) would previously also land here and get mislabeled
+    // the same way, even on a fully online device. navigator.onLine plus
+    // the error message fetch() itself throws for a genuine connectivity
+    // failure (TypeError: "Failed to fetch" / "NetworkError...") are used
+    // to tell the two apart; anything else surfaces as an explicit error
+    // instead of silently pretending to be offline.
+    const isNetworkError = !navigator.onLine || /Failed to fetch|NetworkError|network error|ERR_INTERNET/i.test(e.message||'');
+    document.getElementById('wxModelName').textContent = isNetworkError ? 'offline (cached)' : 'error (see console)';
   }
 }
 document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
@@ -6164,7 +6213,8 @@ function doRecompute(){
   // Distance to the point where descent would be initiated, using the
   // GPS-derived ground speed (state.speedKn) at the current course.
   const initDistKm = (state.speedKn/KN_PER_MS) * (initDelayMin*60) / 1000;
-  document.getElementById('lblInitDist').textContent = initDistKm.toFixed(2)+' km';
+  const initBallastKg = estimateBallastKg(state.altAMSL, rate1);
+  document.getElementById('lblInitDist').innerHTML = `<b>${initDistKm.toFixed(2)}</b> km (~${initBallastKg.toFixed(1)}kg)`;
 
   if(landingLayerOn){
     const N=40;
@@ -6281,8 +6331,10 @@ function doRecompute(){
   if(idxAtIntercept>=0){
     const descentMin = (refPath[idxAtIntercept].t - initSecRef0)/60;
     const groundMin = (refPath[refPath.length-1].t - refPath[idxAtIntercept].t)/60;
-    document.getElementById('lblInterceptTimeBadge').innerHTML = `<b>${descentMin.toFixed(1)} min</b> to reach`;
-    document.getElementById('lblGroundTimeBadge').innerHTML = `<b>${groundMin.toFixed(1)} min</b> to ground`;
+    const interceptBallastKg = estimateBallastKg(state.altAMSL, rate1);
+    const groundBallastKg = estimateBallastKg(interceptAlt0, rate2);
+    document.getElementById('lblInterceptTimeBadge').innerHTML = `<b>${descentMin.toFixed(1)} min</b> to reach (~${interceptBallastKg.toFixed(1)}kg)`;
+    document.getElementById('lblGroundTimeBadge').innerHTML = `<b>${groundMin.toFixed(1)} min</b> to ground (~${groundBallastKg.toFixed(1)}kg)`;
   }
 
   // Always-on projection, split into two colored segments at the descent
@@ -6327,7 +6379,7 @@ function updateLandingPositionCard(){
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360; // meteorological "from" direction
-  document.getElementById('landingWindText').textContent = `${Math.round(dirFrom)}° ${speedKmh.toFixed(1)}km/h`;
+  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h`;
   document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
 
   // Trend arrow: compare the speed at the landing hour against 1h earlier,
@@ -6386,9 +6438,9 @@ async function fetchLandingPositionDetails(lat, lon){
 function updateAdiabaticReadout(rate1, interceptAGL){
   const interceptAlt = state.groundElev+interceptAGL;
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
-  const { liftBonusKg } = adiabaticVolumeAndLift(balloonVolumeM3, startAlt, interceptAlt, rate1);
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  document.getElementById('lblAdiaRateBadge').textContent = `real: ~${actualRate.toFixed(2)}m/s  ${liftBonusKg.toFixed(1)}kg lift`;
+  const rateBallastKg = estimateBallastKg(startAlt, actualRate);
+  document.getElementById('lblAdiaRateBadge').innerHTML = `<b>${actualRate.toFixed(2)} m/s</b> eff. (~${rateBallastKg.toFixed(1)}kg)`;
 }
 
 function checkObstacleWarnings(path){
@@ -7018,6 +7070,13 @@ function setAppMode(mode){
     document.getElementById('subModeToggle').style.display = 'none';
     document.getElementById('btnClearStagedResults').style.display = 'none';
     document.getElementById('stagedDescentSliders').style.display = 'none';
+    // The comment above already described this as the intended behaviour,
+    // but the actual removal calls were missing - the path stayed visible
+    // indefinitely instead. Only the descent path itself goes away here;
+    // the reachable-area polygon, the Monte-Carlo landing area, and its
+    // centre marker are deliberately left alone (per the same comment).
+    if(stagedDescentPathOutline && map.hasLayer(stagedDescentPathOutline)) map.removeLayer(stagedDescentPathOutline);
+    if(stagedDescentPathLayer2 && map.hasLayer(stagedDescentPathLayer2)) map.removeLayer(stagedDescentPathLayer2);
     document.getElementById('btnClearStagedFromMonitor').style.display =
       (state.stagedReachableHull || state.lastStagedPlanResult) ? 'inline-block' : 'none';
     // Same idea as the staged-descent button above, just for Quick Descent -
@@ -7477,7 +7536,7 @@ async function updateStagedLandingPositionCard(cLat, cLon, hourIdx){
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
-  document.getElementById('landingWindText').textContent = `${Math.round(dirFrom)}° ${speedKmh.toFixed(1)}km/h`;
+  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h`;
   document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
   document.getElementById('landingWindTrend').textContent = '';
   try{
@@ -7503,7 +7562,7 @@ async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
-  document.getElementById('landingWindText').textContent = `${Math.round(dirFrom)}° ${speedKmh.toFixed(1)}km/h`;
+  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h`;
   document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
   document.getElementById('landingWindTrend').textContent = '';
   try{
@@ -7676,6 +7735,13 @@ function bindSlider(id,lblId,fmt){
   const el=document.getElementById(id);
   el.addEventListener('input', ()=>{ document.getElementById(lblId).textContent=fmt(el.value); recomputeAll(); });
 }
+function updateInitFillBar(){
+  const el = document.getElementById('sInit');
+  const frac = (parseFloat(el.value)-parseFloat(el.min))/(parseFloat(el.max)-parseFloat(el.min));
+  document.getElementById('sInitFillBar').style.width = (frac*100)+'%';
+}
+document.getElementById('sInit').addEventListener('input', updateInitFillBar);
+updateInitFillBar();
 bindSlider('sInit','lblInit', v=> (v==0?'immediate':v+' min'));
 document.getElementById('sInit').addEventListener('input', checkDescentTimeWindWarning);
 
@@ -7845,6 +7911,11 @@ function updateFlightDataBoxContent(){
     : 'FL --';
 }
 function updateFlightDataBox(){ updateFlightDataBoxPosition(); updateFlightDataBoxContent(); }
+// Decoupled from the GPS fix rate itself (which varies by device/signal,
+// typically every 1-5s) - this keeps AMSL/AGL and the other readouts
+// refreshing smoothly at a fixed cadence regardless of how often a new
+// GPS fix actually arrives underneath.
+setInterval(updateFlightDataBoxContent, 500);
 function showFlightDataBox(){
   document.getElementById('flightDataBox').style.display = 'flex';
   updateFlightDataBox();
@@ -7992,6 +8063,14 @@ function alignPanelToPositionCard(panelEl){
   const sidebarPaddingPx = 6; // matches #sidebar's own CSS padding, where its first card's top-left corner actually sits
   panelEl.style.top = Math.round(rect.top + sidebarPaddingPx) + 'px';
   panelEl.style.left = Math.round(rect.left + sidebarPaddingPx) + 'px';
+  // The panel's own CSS width (350px) assumes the sidebar is at least that
+  // wide, but the sidebar can be as narrow as its own min-width (280px) -
+  // at that width, a 350px panel starting at the sidebar's own left edge
+  // would extend 70px past the viewport's right edge (the sidebar sits
+  // flush against it). Constraining to the actual remaining space fixes
+  // that regardless of sidebar width or viewport size.
+  const availableWidth = window.innerWidth - rect.left - sidebarPaddingPx - 10;
+  panelEl.style.width = Math.min(350, availableWidth) + 'px';
 }
 function toggleCard(h3){
   h3.parentElement.classList.toggle('collapsed');
@@ -9048,13 +9127,34 @@ async function requestWakeLock(){
   if(!('wakeLock' in navigator)){ startWakeLockFallbackVideo(); return; }
   try{
     wakeLockSentinel = await navigator.wakeLock.request('screen');
-    wakeLockSentinel.addEventListener('release', ()=>{ wakeLockSentinel = null; });
+    wakeLockSentinel.addEventListener('release', ()=>{
+      wakeLockSentinel = null;
+      // Some platforms can release the lock even while the app stays
+      // visible (not just on backgrounding) - re-acquiring immediately
+      // here, rather than only on the next visibilitychange, closes that
+      // gap. Guarded by visibilityState so this doesn't fight a release
+      // that happened BECAUSE the app just went to background.
+      if(document.visibilityState === 'visible') requestWakeLock();
+    });
   }catch(e){
     // e.g. denied - fall back to the video trick rather than letting the
     // screen sleep silently with no mitigation at all.
     startWakeLockFallbackVideo();
   }
 }
+// Periodic safety net on top of the visibilitychange/release handlers
+// above - re-checks every 30s that the lock is still actually held while
+// the app is in the foreground, and re-acquires it if not. Covers any
+// release that the 'release' event itself might not fire for reliably
+// across all platforms.
+setInterval(()=>{
+  if(document.visibilityState === 'visible' && 'wakeLock' in navigator && !wakeLockSentinel){
+    requestWakeLock();
+  }
+  if(document.visibilityState === 'visible' && wakeLockFallbackVideo && wakeLockFallbackVideo.paused){
+    wakeLockFallbackVideo.play().catch(()=>{});
+  }
+}, 30000);
 document.addEventListener('visibilitychange', ()=>{
   // The Wake Lock is automatically released when the tab is hidden/backgrounded
   // (e.g. switching apps) - re-acquire it once the app is visible again.
@@ -9360,7 +9460,8 @@ document.getElementById('wxModelChip').addEventListener('click', (e)=>{
   e.stopPropagation();
   const pop = document.getElementById('wxModelPopover');
   const willOpen = pop.style.display==='none' || !pop.style.display;
-  document.querySelectorAll('.settings-popover, #settingsPanel, #headerMoreMenu, #wxModelPopover').forEach(p=>{ if(p!==pop) p.style.display='none'; });
+  document.querySelectorAll('.settings-popover, #settingsPanel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('#headerMoreMenu, #wxModelPopover').forEach(p=>{ if(p!==pop) p.style.display='none'; });
   if(willOpen){
     buildWxModelPopover();
     const rect = e.currentTarget.getBoundingClientRect();

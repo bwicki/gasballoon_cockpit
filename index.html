@@ -375,6 +375,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;align-items:center;gap:3px;">
             <svg id="moonIcon" width="11" height="11" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="var(--muted)" stroke-width="1.5"/></svg>
             <span id="moonIllumPct" style="color:var(--muted);font-size:7.5px;font-weight:600;">—</span>
+            <svg id="moonTrendArrow" width="6" height="7" viewBox="0 0 10 12" style="flex-shrink:0;"><path d="M5 0 L10 8 L6 8 L6 12 L4 12 L4 8 L0 8 Z" fill="var(--muted)"/></svg>
           </div>
           <span id="moonRiseTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
           <span id="moonSetTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
@@ -1285,7 +1286,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.18-0440';
+const APP_VERSION = 'v260809.20-0525';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1318,6 +1319,13 @@ const WIND_SHEAR_SPEED_THRESHOLD_MS = 5; // ~10kn
 const WIND_SHEAR_DIR_THRESHOLD_DEG = 30;
 let balloonVolumeM3 = 1050; // configurable in Settings
 let currentSubMode = 'quick'; // 'quick' | 'staged' - Plan Descent's two subfunctions
+// Referenced by applyFlightDataBoxSnap(), which repositionModeToggle()
+// calls - and repositionModeToggle() is invoked from several places
+// during boot, well before this variable's old declaration point further
+// down the file would otherwise have run. Same TDZ pattern as every other
+// entry in this early block: declared here so it's always initialized
+// before anything reachable from boot can possibly reference it.
+let flightDataBoxSnappedEdge = null; // {side:'left'|'right'|null, vSide:'top'|'bottom'|null}
 let flightDataBoxManuallyPositioned = false;
 let flightDataBoxClosed = false;
 let balloonMassKg = 300; // total system mass EXCLUDING lifting gas (envelope+basket+payload+ballast), configurable in Settings
@@ -1540,7 +1548,7 @@ function moonPhaseInfo(dateUTC){
   else if(age<23.99){ phaseName='Last quarter'; emoji='🌗'; }
   else if(age<27.68){ phaseName='Waning crescent'; emoji='🌘'; }
   else { phaseName='New moon'; emoji='🌑'; }
-  return {age, illumFrac, phaseName, emoji};
+  return {age, illumFrac, phaseName, emoji, waxing: age < synodic/2};
 }
 // Filled-silhouette moon phase icon (two-arc SVG technique). For
 // illumFrac >= 0.5 (gibbous to full) the second arc must use the SAME
@@ -1568,6 +1576,9 @@ function updateMoonChip(){
   icon.innerHTML = `<circle cx="12" cy="12" r="10" fill="none" stroke="var(--muted)" stroke-width="1.5"/><path d="${moonPhaseSvgPath(phase.illumFrac)}" fill="#e8a838"/>`;
   icon.setAttribute('title', `${phase.phaseName} (${Math.round(phase.illumFrac*100)}% illuminated)`);
   document.getElementById('moonIllumPct').textContent = Math.round(phase.illumFrac*100)+'%';
+  const arrow = document.getElementById('moonTrendArrow');
+  arrow.style.transform = phase.waxing ? 'rotate(0deg)' : 'rotate(180deg)';
+  arrow.title = phase.waxing ? 'Waxing' : 'Waning';
   document.getElementById('moonRiseTime').textContent = rise ? fmtHHMM(rise)+'↑' : '—';
   document.getElementById('moonSetTime').textContent = set ? fmtHHMM(set)+'↓' : '—';
 }
@@ -7792,7 +7803,10 @@ document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
 // own flex column), so its effective "top" boundary is that stack's
 // actual bottom edge, not the map's raw top edge, and has to be
 // recalculated every time that stack grows or shrinks.
-let flightDataBoxSnappedEdge = null; // {side:'left'|'right'|null, vSide:'top'|'bottom'|null}
+// flightDataBoxSnappedEdge declared much earlier now (see top of script) -
+// repositionModeToggle() calls applyFlightDataBoxSnap() (which reads this)
+// from several places that run during boot, well before this point in the
+// file would otherwise execute.
 function getEffectiveMapRectForFlightBox(){
   const mapRect = document.getElementById('map').getBoundingClientRect();
   const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();

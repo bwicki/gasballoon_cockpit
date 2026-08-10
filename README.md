@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260810.01-1655** (10.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260810.02-1720** (10.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -108,3 +108,6 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - Fixed both descent sliders' draggable points sitting visibly above their own baseline instead of centred on it - the input element itself was positioned flush with the baseline rather than centred on it, off by half the thumb's own height. The computed-value labels below now have a bit more clearance so they don't collide with the (correctly, now lower) points.
 - Descent rate's ballast figure now shows the amount actually saved by the adiabatic braking effect (nominal-rate ballast minus actual-rate ballast), rather than just the ballast needed for the reduced rate on its own, which wasn't tied to anything the number could be compared against.
 - The "Estimated Descent Point" label's icon (and a help-text mention) now match the actual orange cross used on the map, rather than an unrelated violet triangle.
+- CAPE is now fetched in a completely separate, independent request from the core wind data - a previous attempt at combining them (with retry logic) still occasionally took the whole wind fetch down with it. CAPE failing now only means CAPE doesn't show; wind data is unaffected either way.
+- "Initiate descent in"'s value is now shown in the same colour as "Descent rate"'s.
+- Descent rate's adiabatic-effect badge simplified back to just its ballast equivalent (≈ ~X.Xkg), not bold, without the extra wording - a "savings" calculation attempted last time produced numbers small enough to look like nothing was being computed at all, even though the underlying physics itself was still correct.

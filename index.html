@@ -1054,7 +1054,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div class="cardbody">
           <div style="display:flex;gap:10px;">
             <div id="sInitRow" style="flex:1;">
-              <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit">30 min</b></div>
+              <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit" style="color:#c8862f;">30 min</b></div>
               <div style="position:relative;height:18px;">
                 <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);"></div>
                 <div id="sInitFillBar" style="position:absolute;bottom:0;left:0;width:12.5%;height:2px;background:#8b98a5;"></div>
@@ -1314,7 +1314,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.01-1655';
+const APP_VERSION = 'v260810.02-1720';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5818,6 +5818,20 @@ function updateCapeDisplay(){
   else { label='High'; color='var(--bad)'; }
   el.innerHTML = `${Math.round(cape)} J/kg <span style="color:${color};">${label}</span>`;
 }
+// Entirely separate request from the main wind fetch, fired independently
+// after that one already succeeded - not every model supports the 'cape'
+// variable, and an earlier attempt at handling that inline (retrying the
+// SAME combined request without cape) still left the two entangled enough
+// to occasionally take the whole wind fetch down with it. This can fail
+// on its own without affecting anything else.
+async function fetchCapeOnly(resolvedModel){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=cape&models=${resolvedModel}&forecast_hours=12&timezone=UTC`;
+  const r = await fetch(url);
+  const j = await r.json();
+  if(j.error || !j.hourly){ state.capeByHour = []; updateCapeDisplay(); return; }
+  state.capeByHour = j.hourly.cape || [];
+  updateCapeDisplay();
+}
 async function fetchWind(force){
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
@@ -5834,23 +5848,17 @@ async function fetchWind(force){
     }
     const windVars = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
     const FORECAST_HOURS = 12; // enough headroom to cover a multi-hour descent
-    // Not every model supports the 'cape' variable - if the combined
-    // request fails, retry without it rather than letting the WHOLE wind
-    // fetch fail (and misleadingly show "offline") just because CAPE
-    // specifically isn't available for this particular model.
-    let h, capeAvailable = true;
-    let url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars},cape&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
-    let r = await fetch(url);
-    let j = await r.json();
-    if(j.error || !j.hourly){
-      capeAvailable = false;
-      console.warn(`Weather fetch: CAPE not available for model "${resolvedModel}" (${j.reason||'unknown reason'}) - retrying without it.`);
-      url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
-      r = await fetch(url);
-      j = await r.json();
-    }
+    // CAPE is fetched entirely separately below, in its own independent
+    // try/catch, rather than combined into this URL - a previous attempt
+    // at retry-without-CAPE logic here still left this core, critical
+    // fetch entangled with CAPE's own success/failure in ways that kept
+    // causing "error (see console)" to show up. Full separation means
+    // nothing about CAPE can ever break wind data again.
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
+    const r = await fetch(url);
+    const j = await r.json();
     if(j.error || !j.hourly) throw new Error(j.reason || 'Open-Meteo returned no hourly data');
-    h = j.hourly;
+    const h = j.hourly;
     const nHours = (h.time||[]).length || FORECAST_HOURS;
     const profilesByHour = [];
     for(let hourIdx=0; hourIdx<nHours; hourIdx++){
@@ -5865,8 +5873,6 @@ async function fetchWind(force){
     }
     state.windProfilesByHour = profilesByHour;
     state.windProfile = profilesByHour[0]; // "now" - kept for existing code that expects this
-    state.capeByHour = capeAvailable ? (h.cape || []) : [];
-    try{ updateCapeDisplay(); }catch(e){ console.warn('CAPE display update failed (non-critical):', e); }
     const meta = MODEL_META[resolvedModel] || MODEL_META.best_match;
     state.modelUsed = modelSel==='auto' ? (meta.label+' · auto') : meta.label;
     state.modelRunAgeH = estimateModelRunAgeHours(resolvedModel);
@@ -5883,6 +5889,11 @@ async function fetchWind(force){
     document.getElementById('wxModelSettingsStatus').style.color = modelOverridden ? 'var(--bad)' : 'var(--muted)';
     drawWindProfileChart();
     recomputeAll();
+    // Entirely independent of everything above - fetched fire-and-forget,
+    // failing silently (just logged) if this specific model/location
+    // doesn't support it, since CAPE is a nice-to-have display, not
+    // something the rest of the app depends on.
+    fetchCapeOnly(resolvedModel).catch(e=>console.warn('CAPE fetch failed (non-critical, wind data unaffected):', e));
   }catch(e){
     console.error('fetchWind failed:', e);
     // "offline (cached)" should only ever mean "no connectivity" - a bug
@@ -6454,15 +6465,8 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   const interceptAlt = state.groundElev+interceptAGL;
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  // Ballast SAVED by the adiabatic braking effect - the difference between
-  // what would be needed to counter the nominal (slider) rate versus the
-  // lower actual rate the adiabatic cooling already provides for free.
-  // Showing the ballast needed for the actual rate alone (what was here
-  // before) wasn't tied to anything the person could relate it to; this
-  // is specifically "how much less ballast do you need to drop because
-  // of this effect".
-  const savedBallastKg = Math.max(0, estimateBallastKg(startAlt, rate1) - estimateBallastKg(startAlt, actualRate));
-  document.getElementById('lblAdiaRateBadge').innerHTML = `<b>${actualRate.toFixed(2)} m/s</b> eff. (saves ~${savedBallastKg.toFixed(1)}kg ballast)`;
+  const rateBallastKg = estimateBallastKg(startAlt, actualRate);
+  document.getElementById('lblAdiaRateBadge').innerHTML = `${actualRate.toFixed(2)} m/s eff. (≈ ~${rateBallastKg.toFixed(1)}kg)`;
 }
 
 function checkObstacleWarnings(path){

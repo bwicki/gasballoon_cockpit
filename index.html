@@ -1314,7 +1314,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.05-1820';
+const APP_VERSION = 'v260810.07-1915';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1393,6 +1393,15 @@ let smoothedAltForAdiabaticM = null;
 // time. Each call captures its own id and checks against this before
 // writing anything to the UI.
 let fetchWindRequestId = 0;
+// Same race-condition pattern as fetchWindRequestId above, for
+// fetchGroundElevation() - it's triggered on every GPS fix, and multiple
+// fixes arriving in quick succession (e.g. during initial GPS lock
+// acquisition) could leave several calls in flight at once. A slower,
+// earlier call finishing AFTER a faster, newer one could silently
+// overwrite state.groundElev with a stale value from an earlier position -
+// very likely the direct cause of AGL occasionally showing wildly wrong
+// (even negative) readings despite a plausible AMSL figure.
+let fetchGroundElevRequestId = 0;
 // Referenced by applyFlightDataBoxSnap(), which repositionModeToggle()
 // calls - and repositionModeToggle() is invoked from several places
 // during boot, well before this variable's old declaration point further
@@ -5758,10 +5767,15 @@ function updateLandingTerrainDisplay(result){
   el.innerHTML = parts.map(p=>`<span style="color:${p.color};">${p.text}</span>`).join(' · ');
 }
 async function fetchGroundElevation(){
+  const myRequestId = ++fetchGroundElevRequestId;
   try{
     console.log('fetchGroundElevation: requesting for', state.lat, state.lon);
     const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${state.lat}&longitude=${state.lon}`);
     const j = await r.json();
+    if(myRequestId !== fetchGroundElevRequestId){
+      console.log('fetchGroundElevation: discarding stale response (a newer request has since started)');
+      return;
+    }
     if(j.elevation && j.elevation.length) state.groundElev = j.elevation[0];
     state.groundElevFetchedAt = {lat: state.lat, lon: state.lon};
     console.log('fetchGroundElevation: response', j, '-> state.groundElev is now', state.groundElev);
@@ -6301,8 +6315,14 @@ function doRecompute(){
     let hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
     landingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
     state.landingPolygon = hull;
-    const hLats = hull.map(p=>p[1]), hLons = hull.map(p=>p[0]);
-    const hcLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, hcLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
+    // Centroid computed from the raw Monte-Carlo endpoints, NOT the hull's
+    // own vertices - a convex hull's vertices sit on its outer boundary by
+    // definition, so a simple vertex-average pulls the "centre" toward the
+    // edge rather than reflecting where the scatter actually clusters.
+    // Same fix as the one applied to Staged Descent's landing centroid
+    // earlier - this is the same underlying bug pattern.
+    const eLats = endpoints.map(p=>p[1]), eLons = endpoints.map(p=>p[0]);
+    const hcLat = eLats.reduce((a,b)=>a+b,0)/eLats.length, hcLon = eLons.reduce((a,b)=>a+b,0)/eLons.length;
     if(!liveLandingCenterMarker){
       liveLandingCenterMarker = L.marker([hcLat,hcLon], {icon: smallCrossIcon});
       if(state.appMode!=='plan') liveLandingCenterMarker.addTo(map);
@@ -6501,14 +6521,31 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   // Smoothed toward state.altAMSL rather than snapping to it directly -
   // heavily weighted toward the previous value (95%) since this only
   // needs to track genuine altitude change over the descent, not track
-  // GPS noise on a second-by-second basis. Initializes to the raw value
-  // on the very first call so it doesn't start at 0/null.
-  if(smoothedAltForAdiabaticM==null) smoothedAltForAdiabaticM = state.altAMSL;
-  else smoothedAltForAdiabaticM = smoothedAltForAdiabaticM*0.95 + state.altAMSL*0.05;
+  // GPS noise on a second-by-second basis. A genuine jump (e.g. the very
+  // first real GPS fix arriving after boot, replacing whatever default
+  // altitude was active until then) snaps immediately instead of slowly
+  // catching up over dozens of cycles, which previously left this stuck
+  // on a stale, unreasonable-looking value for a long stretch right after
+  // every app start.
+  if(smoothedAltForAdiabaticM==null || Math.abs(state.altAMSL-smoothedAltForAdiabaticM)>500){
+    smoothedAltForAdiabaticM = state.altAMSL;
+  } else {
+    smoothedAltForAdiabaticM = smoothedAltForAdiabaticM*0.95 + state.altAMSL*0.05;
+  }
   const startAlt = smoothedAltForAdiabaticM;
-  const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  const rateBallastKg = estimateBallastKg(startAlt, actualRate);
-  document.getElementById('lblAdiaRateBadge').innerHTML = `${actualRate.toFixed(2)} m/s eff. (≈ ~${rateBallastKg.toFixed(1)}kg)`;
+  // Computed once (not via computeActualRateAtIntercept AND separately
+  // here) to avoid running the same thermal simulation twice per update.
+  const { liftBonusKg } = simulateAdiabaticDescentThermal(balloonVolumeM3, startAlt, interceptAlt, rate1);
+  const massFraction = Math.min(0.9, liftBonusKg/Math.max(1, balloonMassKg));
+  const actualRate = Math.max(0.1, rate1*Math.sqrt(Math.max(0.02, 1-massFraction)));
+  // Shows the adiabatic lift bonus itself rather than the ballast needed
+  // for the resulting rate - that figure was dominated by the base
+  // descent rate itself (via rate², a large number on its own) and barely
+  // reflected the adiabatic effect's own size at all, since the rate
+  // reduction from this effect is typically small. liftBonusKg is the
+  // actual, physically direct "how much ballast-equivalent lift this
+  // effect is providing" - the number this badge is meant to convey.
+  document.getElementById('lblAdiaRateBadge').innerHTML = `${actualRate.toFixed(2)} m/s eff. (≈ ~${liftBonusKg.toFixed(1)}kg)`;
 }
 
 function checkObstacleWarnings(path){
@@ -8007,12 +8044,21 @@ document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
 // repositionModeToggle() calls applyFlightDataBoxSnap() (which reads this)
 // from several places that run during boot, well before this point in the
 // file would otherwise execute.
-function getEffectiveMapRectForFlightBox(){
+function getEffectiveMapRectForFlightBox(boxLeft, boxWidth){
   const mapRect = document.getElementById('map').getBoundingClientRect();
   const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
   const stackRect = document.getElementById('topAlertStack').getBoundingClientRect();
+  // The header/warning stack is only as wide as its own buttons and
+  // messages, not the full map width - forcing every top-snapped position
+  // below it regardless of horizontal position meant the box couldn't
+  // snap to the top at all once it was positioned to the right of the
+  // stack, even with no actual overlap. Only push the top boundary down
+  // when the box (at its given horizontal position) would genuinely
+  // overlap the stack horizontally.
+  const horizontalOverlap = boxLeft==null ? true // no position given yet - be conservative
+    : (boxLeft < stackRect.right && boxLeft+boxWidth > stackRect.left);
   return {
-    top: Math.max(mapRect.top, stackRect.bottom),
+    top: horizontalOverlap ? Math.max(mapRect.top, stackRect.bottom) : mapRect.top,
     bottom: mapRect.bottom,
     left: mapRect.left,
     right: Math.min(mapRect.right, sidebarRect.left)
@@ -8021,8 +8067,8 @@ function getEffectiveMapRectForFlightBox(){
 function applyFlightDataBoxSnap(){
   const box = document.getElementById('flightDataBox');
   if(!flightDataBoxSnappedEdge || box.dataset.dragging==='1') return;
-  const mapRect = getEffectiveMapRectForFlightBox();
   const boxRect = box.getBoundingClientRect();
+  const mapRect = getEffectiveMapRectForFlightBox(boxRect.left, boxRect.width);
   const margin = 6;
   if(flightDataBoxSnappedEdge.side==='right') box.style.left = Math.round(mapRect.right - boxRect.width - margin) + 'px';
   else if(flightDataBoxSnappedEdge.side==='left') box.style.left = Math.round(mapRect.left + margin) + 'px';
@@ -8055,8 +8101,8 @@ function applyFlightDataBoxSnap(){
     // sit flush against whichever one(s) it crossed, instead of leaving it
     // partially overlapping the header/sidebar/edge of the screen, which
     // is otherwise trivial to end up with with plain free-form dragging.
-    const mapRect = getEffectiveMapRectForFlightBox();
     const boxRect = box.getBoundingClientRect();
+    const mapRect = getEffectiveMapRectForFlightBox(boxRect.left, boxRect.width);
     const margin = 6;
     flightDataBoxSnappedEdge = {side:null, vSide:null};
     if(boxRect.top < mapRect.top){

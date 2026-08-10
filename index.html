@@ -1314,7 +1314,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.04-1800';
+const APP_VERSION = 'v260810.05-1820';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1381,6 +1381,18 @@ let currentSubMode = 'quick'; // 'quick' | 'staged' - Plan Descent's two subfunc
 // the next, making the displayed ballast-equivalent value swing wildly
 // for reasons that had nothing to do with anything the person changed.
 let smoothedAltForAdiabaticM = null;
+// Tracks which fetchWind() call is the most recent one - fetchWind() is
+// triggered from several independent places (boot, a periodic refresh
+// timer, manual "Refresh now", model selection) and a slow, EARLIER call
+// can finish (success or failure) AFTER a faster, LATER call already has,
+// letting a stale result silently overwrite a fresh one. Most concretely,
+// this looked like the weather chip correctly showing wind particles from
+// a successful call, only for a slower, now-irrelevant earlier call's
+// failure to show up moments later and overwrite it with a misleading
+// "error (see console)" - even though wind data itself was fine the whole
+// time. Each call captures its own id and checks against this before
+// writing anything to the UI.
+let fetchWindRequestId = 0;
 // Referenced by applyFlightDataBoxSnap(), which repositionModeToggle()
 // calls - and repositionModeToggle() is invoked from several places
 // during boot, well before this variable's old declaration point further
@@ -5853,6 +5865,7 @@ async function fetchCapeOnly(resolvedModel){
   updateCapeDisplay();
 }
 async function fetchWind(force){
+  const myRequestId = ++fetchWindRequestId;
   try{
     const modelSel = document.getElementById('wxModelSelect').value;
     let resolvedModel = modelSel==='auto' ? pickAutoModel(state.lat, state.lon) : modelSel;
@@ -5877,6 +5890,7 @@ async function fetchWind(force){
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
     const r = await fetch(url);
     const j = await r.json();
+    if(myRequestId !== fetchWindRequestId) return; // a newer call has since started - this result is stale, don't touch the UI
     if(j.error || !j.hourly) throw new Error(j.reason || 'Open-Meteo returned no hourly data');
     const h = j.hourly;
     const nHours = (h.time||[]).length || FORECAST_HOURS;
@@ -5915,6 +5929,7 @@ async function fetchWind(force){
     // something the rest of the app depends on.
     fetchCapeOnly(resolvedModel).catch(e=>console.warn('CAPE fetch failed (non-critical, wind data unaffected):', e));
   }catch(e){
+    if(myRequestId !== fetchWindRequestId) return; // superseded by a newer call - let that one's own outcome (success or failure) be what's shown instead
     console.error('fetchWind failed:', e);
     // "offline (cached)" should only ever mean "no connectivity" - a bug
     // anywhere else in this function (a bad response shape, a DOM element

@@ -217,7 +217,7 @@ body.day #map{background:#dfe6ea;}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:-10px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
-.wedge-slider{position:absolute;bottom:0;left:0;width:100%;height:14px;margin:0;-webkit-appearance:none;appearance:none;background:transparent !important;}
+.wedge-slider{position:absolute;bottom:-7px;left:0;width:100%;height:14px;margin:0;-webkit-appearance:none;appearance:none;background:transparent !important;}
 .wedge-slider::-webkit-slider-runnable-track{height:14px;background:transparent !important;border:none !important;box-shadow:none !important;}
 .wedge-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--text);margin-top:0;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;}
 .wedge-slider::-moz-range-track{height:14px;background:transparent !important;border:none !important;}
@@ -1034,7 +1034,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               <div class="val small" id="landingTerrainVal" style="font-weight:400;font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">—</div>
             </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
-              <label data-i18n="fieldEstimatedDescentPoint"><svg width="11" height="10" viewBox="0 0 26 24" style="vertical-align:-1px;margin-right:3px;"><path d="M13 22 L2 2 L24 2 Z" fill="#b026ff" stroke="#333333" stroke-width="2" stroke-linejoin="round"/></svg>Estimated Descent Point</label>
+              <label data-i18n="fieldEstimatedDescentPoint"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:3px;"><line x1="12" y1="3" x2="12" y2="21" stroke="#000" stroke-width="5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#000" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="#ff8a00" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#ff8a00" stroke-width="2.5" stroke-linecap="round"/></svg>Estimated Descent Point</label>
               <div class="val small" id="estimatedDescentPointText">—</div>
             </div>
             <div class="datacell wide" id="inversionNote" style="display:none;">
@@ -1060,7 +1060,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 <div id="sInitFillBar" style="position:absolute;bottom:0;left:0;width:12.5%;height:2px;background:#8b98a5;"></div>
                 <input type="range" id="sInit" class="wedge-slider" min="0" max="240" step="1" value="30">
               </div>
-              <div id="lblInitDist" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:4px;text-align:right;">0.00 km</div>
+              <div id="lblInitDist" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:10px;text-align:right;">0.00 km</div>
             </div>
             <div id="sRateRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate" style="color:#c8862f;">4.0 m/s</b></div>
@@ -1071,7 +1071,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
                 </svg>
                 <input type="range" id="sRate" class="wedge-slider" min="0.5" max="9" step="0.1" value="4.0">
               </div>
-              <div id="lblAdiaRateBadge" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:4px;text-align:right;">—</div>
+              <div id="lblAdiaRateBadge" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:10px;text-align:right;">—</div>
             </div>
           </div>
           <div style="display:flex;gap:6px;margin-top:6px;">
@@ -1164,7 +1164,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <li>Header icons turn map layers on/off (power lines, roads/places, airspace, ground wind, nature reserves, non-landable terrain, experimental region names). A small dot shows loading (yellow) / ready (green).</li>
             <li><b>Test Mode</b> (top-right) lets you set a position manually - useful on the ground or if GPS drops out.</li>
             <li>The red warning-triangle button (left of Test Mode) prepares an emergency position report for WhatsApp/SMS/Email.</li>
-            <li>Sliders under "Descent Parameters" drive both functions - drag the violet marker in Quick Descent, or use the Staged Descent sliders (total time budget, inter-stage rate) for the other subfunction.</li>
+            <li>Sliders under "Descent Parameters" drive both functions - drag the orange cross marker in Quick Descent, or use the Staged Descent sliders (total time budget, inter-stage rate) for the other subfunction.</li>
           </ul>
           <p style="font-size:12px;color:var(--warn);margin:10px 0 0;font-weight:600;">⚠ Fill in Settings first - your aircraft registration, pilot contact numbers, and SMS/email recipients all need to be set up there before the emergency button can send a useful report.</p>
           <div style="display:flex;gap:6px;margin-top:12px;">
@@ -1314,8 +1314,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.30-1010';
-const APP_DATE = '09.08.2026';
+const APP_VERSION = 'v260810.01-1655';
+const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -5676,19 +5676,15 @@ let terrainCheckFetchedAt = null; // {lat, lon} - debounces re-checking on every
 async function checkLandingTerrain(lat, lon){
   const RADIUS_M = 150;
   try{
-    // Water check first, and separately from the ring/obstacle query below -
-    // is_in() returns the actual enclosing area(s) at this exact point, so
-    // this is genuine polygon containment ("is this point IN a lake/river"),
-    // not just "is there a water feature somewhere nearby" the way the
-    // around() queries elsewhere in this function work. A landing point
-    // that happens to be flat and open specifically because it's the
-    // surface of a lake is the opposite of good news.
-    let inWater = false;
-    try{
-      const waterQuery = `[out:json][timeout:15];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];);out tags 5;`;
-      const waterData = await fetchOverpassThrottled(waterQuery);
-      inWater = (waterData.elements||[]).length > 0;
-    }catch(e){ console.warn('Landing water check failed (non-critical):', e); }
+    // Water check combined into the SAME Overpass call as the obstacle
+    // check below, rather than two separate sequential requests - Overpass
+    // enforces a 2.5s minimum interval between calls, so two sequential
+    // requests here would double the total latency (5s+) and risk
+    // overlapping calls racing each other as the landing point keeps
+    // moving during a real flight, which was very likely why this cell
+    // stopped showing up reliably. is_in() gives genuine polygon
+    // containment ("is this point IN a lake/river"), not just proximity
+    // the way the around() obstacle query works.
     const points = [{lat, lon}];
     for(let i=0; i<8; i++){
       const [plat, plon] = destPoint(lat, lon, i*45, RADIUS_M);
@@ -5696,14 +5692,14 @@ async function checkLandingTerrain(lat, lon){
     }
     const latsStr = points.map(p=>p.lat.toFixed(6)).join(',');
     const lonsStr = points.map(p=>p.lon.toFixed(6)).join(',');
-    const elevResp = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}`);
-    const elevJson = await elevResp.json();
+    const elevPromise = fetch(`https://api.open-meteo.com/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}`).then(r=>r.json());
+    const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 25;`;
+    const [elevJson, obsData] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
     const elevations = elevJson.elevation || [];
     const centerElev = elevations[0];
     const maxDiff = elevations.length>1 ? Math.max(...elevations.slice(1).map(e=>Math.abs(e-centerElev))) : 0;
-    const obsQuery = `[out:json][timeout:15];(way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 10;`;
-    const obsData = await fetchOverpassThrottled(obsQuery);
     const elements = obsData.elements || [];
+    const inWater = elements.some(e=>e.tags?.natural==='water' || e.tags?.waterway==='riverbank' || e.tags?.landuse==='reservoir');
     const hasBuildings = elements.some(e=>e.tags?.building);
     const hasForest = elements.some(e=>e.tags?.landuse==='forest' || e.tags?.natural==='wood');
     return {maxTerrainDiffM: maxDiff, hasBuildings, hasForest, inWater};
@@ -6458,8 +6454,15 @@ function updateAdiabaticReadout(rate1, interceptAGL){
   const interceptAlt = state.groundElev+interceptAGL;
   const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
-  const rateBallastKg = estimateBallastKg(startAlt, actualRate);
-  document.getElementById('lblAdiaRateBadge').innerHTML = `<b>${actualRate.toFixed(2)} m/s</b> eff. (~${rateBallastKg.toFixed(1)}kg)`;
+  // Ballast SAVED by the adiabatic braking effect - the difference between
+  // what would be needed to counter the nominal (slider) rate versus the
+  // lower actual rate the adiabatic cooling already provides for free.
+  // Showing the ballast needed for the actual rate alone (what was here
+  // before) wasn't tied to anything the person could relate it to; this
+  // is specifically "how much less ballast do you need to drop because
+  // of this effect".
+  const savedBallastKg = Math.max(0, estimateBallastKg(startAlt, rate1) - estimateBallastKg(startAlt, actualRate));
+  document.getElementById('lblAdiaRateBadge').innerHTML = `<b>${actualRate.toFixed(2)} m/s</b> eff. (saves ~${savedBallastKg.toFixed(1)}kg ballast)`;
 }
 
 function checkObstacleWarnings(path){

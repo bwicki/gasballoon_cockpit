@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Gasballoon Cockpit</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -1314,7 +1315,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.07-1915';
+const APP_VERSION = 'v260810.08-1955';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5717,15 +5718,15 @@ let terrainCheckFetchedAt = null; // {lat, lon} - debounces re-checking on every
 async function checkLandingTerrain(lat, lon){
   const RADIUS_M = 150;
   try{
-    // Water check combined into the SAME Overpass call as the obstacle
-    // check below, rather than two separate sequential requests - Overpass
-    // enforces a 2.5s minimum interval between calls, so two sequential
-    // requests here would double the total latency (5s+) and risk
+    // Land cover / water check combined into the SAME Overpass call as the
+    // obstacle check below, rather than separate sequential requests -
+    // Overpass enforces a 2.5s minimum interval between calls, so extra
+    // sequential requests here would multiply the total latency and risk
     // overlapping calls racing each other as the landing point keeps
     // moving during a real flight, which was very likely why this cell
-    // stopped showing up reliably. is_in() gives genuine polygon
-    // containment ("is this point IN a lake/river"), not just proximity
-    // the way the around() obstacle query works.
+    // stopped showing up reliably at one point. is_in() gives genuine
+    // polygon containment ("is this point IN a lake/meadow/field"), not
+    // just proximity the way the around() obstacle query below works.
     const points = [{lat, lon}];
     for(let i=0; i<8; i++){
       const [plat, plon] = destPoint(lat, lon, i*45, RADIUS_M);
@@ -5734,7 +5735,7 @@ async function checkLandingTerrain(lat, lon){
     const latsStr = points.map(p=>p.lat.toFixed(6)).join(',');
     const lonsStr = points.map(p=>p.lon.toFixed(6)).join(',');
     const elevPromise = fetch(`https://api.open-meteo.com/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}`).then(r=>r.json());
-    const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 25;`;
+    const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];area.a[landuse=meadow];area.a[landuse=farmland];area.a[landuse=orchard];area.a[landuse=vineyard];area.a[landuse=residential];area.a[landuse=industrial];area.a[landuse=forest];area.a[natural=wood];area.a[natural=grassland];area.a[natural=scrub];area.a[natural=wetland];area.a[landuse=farmyard];way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 25;`;
     const [elevJson, obsData] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
     const elevations = elevJson.elevation || [];
     const centerElev = elevations[0];
@@ -5743,7 +5744,26 @@ async function checkLandingTerrain(lat, lon){
     const inWater = elements.some(e=>e.tags?.natural==='water' || e.tags?.waterway==='riverbank' || e.tags?.landuse==='reservoir');
     const hasBuildings = elements.some(e=>e.tags?.building);
     const hasForest = elements.some(e=>e.tags?.landuse==='forest' || e.tags?.natural==='wood');
-    return {maxTerrainDiffM: maxDiff, hasBuildings, hasForest, inWater};
+    // Most specific land cover label at the exact point (from the is_in()
+    // areas only, i.e. elements with no "building" tag - those are the
+    // point-containment results, not the nearby-obstacle around() ones).
+    // Checked in a rough order of "most relevant to call out first".
+    const areaEls = elements.filter(e=>!e.tags?.building);
+    const tagIn = (k,v)=>areaEls.some(e=>e.tags?.[k]===v);
+    let landCoverLabel = null;
+    if(tagIn('landuse','meadow')) landCoverLabel = 'Meadow';
+    else if(tagIn('natural','grassland')) landCoverLabel = 'Grassland';
+    else if(tagIn('landuse','farmland')) landCoverLabel = 'Farmland (field)';
+    else if(tagIn('landuse','farmyard')) landCoverLabel = 'Farmyard';
+    else if(tagIn('landuse','orchard')) landCoverLabel = 'Orchard';
+    else if(tagIn('landuse','vineyard')) landCoverLabel = 'Vineyard';
+    else if(tagIn('natural','wetland')) landCoverLabel = 'Wetland';
+    else if(tagIn('natural','scrub')) landCoverLabel = 'Scrubland';
+    else if(hasForest) landCoverLabel = 'Forest';
+    else if(tagIn('landuse','residential')) landCoverLabel = 'Residential area';
+    else if(tagIn('landuse','industrial')) landCoverLabel = 'Industrial area';
+    else if(inWater) landCoverLabel = 'Water';
+    return {maxTerrainDiffM: maxDiff, hasBuildings, hasForest, inWater, landCoverLabel};
   }catch(e){ console.warn('Landing terrain check failed:', e); return null; }
 }
 function updateLandingTerrainDisplay(result){
@@ -5758,6 +5778,7 @@ function updateLandingTerrainDisplay(result){
     return;
   }
   const parts = [];
+  if(result.landCoverLabel) parts.push({text:result.landCoverLabel, color:'var(--text)'});
   if(result.maxTerrainDiffM < 8) parts.push({text:'Flat terrain', color:'var(--good)'});
   else if(result.maxTerrainDiffM < 25) parts.push({text:`Moderate slope (±${Math.round(result.maxTerrainDiffM)}m)`, color:'#e8a838'});
   else parts.push({text:`Steep/uneven (±${Math.round(result.maxTerrainDiffM)}m)`, color:'var(--bad)'});
@@ -5954,7 +5975,18 @@ async function fetchWind(force){
     // to tell the two apart; anything else surfaces as an explicit error
     // instead of silently pretending to be offline.
     const isNetworkError = !navigator.onLine || /Failed to fetch|NetworkError|network error|ERR_INTERNET/i.test(e.message||'');
-    document.getElementById('wxModelName').textContent = isNetworkError ? 'offline (cached)' : 'error (see console)';
+    if(isNetworkError){
+      document.getElementById('wxModelName').textContent = 'offline (cached)';
+    } else {
+      // Shows the actual error message directly, not just "see console" -
+      // on an iPad specifically, getting to devtools/console output isn't
+      // straightforward, so a message that requires it is effectively
+      // undiagnosable in the field. Truncated defensively in case of an
+      // unusually long message.
+      const shortMsg = String(e.message||e||'unknown error').slice(0,60);
+      document.getElementById('wxModelName').textContent = 'error: ' + shortMsg;
+      document.getElementById('wxModelName').title = String(e.stack||e.message||e);
+    }
   }
 }
 document.getElementById('wxModelSelect').addEventListener('change', ()=>fetchWind(true));
@@ -8047,18 +8079,29 @@ document.getElementById('fdbAglRow').addEventListener('click', (e)=>{
 function getEffectiveMapRectForFlightBox(boxLeft, boxWidth){
   const mapRect = document.getElementById('map').getBoundingClientRect();
   const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
-  const stackRect = document.getElementById('topAlertStack').getBoundingClientRect();
-  // The header/warning stack is only as wide as its own buttons and
-  // messages, not the full map width - forcing every top-snapped position
-  // below it regardless of horizontal position meant the box couldn't
-  // snap to the top at all once it was positioned to the right of the
-  // stack, even with no actual overlap. Only push the top boundary down
-  // when the box (at its given horizontal position) would genuinely
-  // overlap the stack horizontally.
-  const horizontalOverlap = boxLeft==null ? true // no position given yet - be conservative
-    : (boxLeft < stackRect.right && boxLeft+boxWidth > stackRect.left);
+  // #topAlertStack itself spans the full map width (left:8px to right:8px)
+  // with pointer-events:none - only its CHILDREN (buttons, active warning
+  // banners) are actually visible/clickable content. Using the container's
+  // own getBoundingClientRect() for the overlap check below meant it was
+  // effectively always "the full map width", making the horizontal-overlap
+  // check always true regardless of where the box actually was - the
+  // reason snapping to the top kept getting blocked even with no genuine
+  // overlap. Computing a tighter box from the actually-visible children
+  // fixes that.
+  const stack = document.getElementById('topAlertStack');
+  let stackLeft = Infinity, stackRight = -Infinity, stackBottom = -Infinity;
+  Array.from(stack.children).forEach(child=>{
+    const r = child.getBoundingClientRect();
+    if(r.width===0 && r.height===0) return; // display:none or genuinely empty - not actually occupying space
+    stackLeft = Math.min(stackLeft, r.left);
+    stackRight = Math.max(stackRight, r.right);
+    stackBottom = Math.max(stackBottom, r.bottom);
+  });
+  const hasVisibleStackContent = stackRight > stackLeft;
+  const horizontalOverlap = !hasVisibleStackContent ? false : (boxLeft==null ? true // no position given yet - be conservative
+    : (boxLeft < stackRight && boxLeft+boxWidth > stackLeft));
   return {
-    top: horizontalOverlap ? Math.max(mapRect.top, stackRect.bottom) : mapRect.top,
+    top: horizontalOverlap ? Math.max(mapRect.top, stackBottom) : mapRect.top,
     bottom: mapRect.bottom,
     left: mapRect.left,
     right: Math.min(mapRect.right, sidebarRect.left)

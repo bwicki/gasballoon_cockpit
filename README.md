@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260810.02-1720** (10.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260810.04-1800** (10.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -111,3 +111,5 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - CAPE is now fetched in a completely separate, independent request from the core wind data - a previous attempt at combining them (with retry logic) still occasionally took the whole wind fetch down with it. CAPE failing now only means CAPE doesn't show; wind data is unaffected either way.
 - "Initiate descent in"'s value is now shown in the same colour as "Descent rate"'s.
 - Descent rate's adiabatic-effect badge simplified back to just its ballast equivalent (≈ ~X.Xkg), not bold, without the extra wording - a "savings" calculation attempted last time produced numbers small enough to look like nothing was being computed at all, even though the underlying physics itself was still correct.
+- Fixed the adiabatic-effect ballast value appearing to jump around unpredictably: the underlying simulation integrates step-by-step from the current altitude down to the intercept altitude, so the number of simulated steps - and therefore the result - was directly sensitive to small changes in raw GPS altitude, which is well known to be noisy (especially indoors/stationary). The altitude used for this specific calculation is now smoothed rather than snapped to the instantaneous reading each time.
+- Fixed the app always appearing to start in Zürich regardless of actual location: the map only ever centred once, at boot, on the default starting position - there was no automatic re-centring when the first real GPS fix came in, only a manual "Center Map" button. The map now automatically centres on the very first real GPS fix received.

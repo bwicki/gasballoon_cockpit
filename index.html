@@ -1314,7 +1314,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.02-1720';
+const APP_VERSION = 'v260810.04-1800';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1370,6 +1370,17 @@ function estimateBallastKg(altM, rateMs){
 }
 let balloonVolumeM3 = 1050; // configurable in Settings
 let currentSubMode = 'quick'; // 'quick' | 'staged' - Plan Descent's two subfunctions
+// Smoothed (not raw, instantaneous) altitude specifically for the
+// adiabatic-braking readout - referenced by updateAdiabaticReadout(),
+// which doRecompute() calls very frequently. The underlying simulation
+// integrates step-by-step from the current altitude down to the intercept
+// altitude, so the NUMBER of simulated steps depends directly on that
+// distance - even a few metres of raw GPS altitude noise (well-documented
+// elsewhere in this app as significant, especially indoors/stationary)
+// could add or remove an entire simulated step between one recompute and
+// the next, making the displayed ballast-equivalent value swing wildly
+// for reasons that had nothing to do with anything the person changed.
+let smoothedAltForAdiabaticM = null;
 // Referenced by applyFlightDataBoxSnap(), which repositionModeToggle()
 // calls - and repositionModeToggle() is invoked from several places
 // during boot, well before this variable's old declaration point further
@@ -5334,6 +5345,15 @@ function startGPS(){
       'distance from that point (m)': distFromLastElevFetch,
       'will refresh now': !state.groundElevFetchedAt || distFromLastElevFetch > 500
     });
+    // The map itself previously only ever centred once, at boot, on
+    // whatever default position state started with (Zürich) - there was
+    // no automatic re-centring when the first REAL GPS fix came in, only
+    // a manual "Center Map" button. That's very likely the direct cause
+    // of the app appearing to "always start in Zürich" even though
+    // state.lat/lon themselves were being updated correctly underneath.
+    if(!hasHadRealGpsFix){
+      map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+    }
     if(!hasHadRealGpsFix || !state.groundElevFetchedAt || distFromLastElevFetch > 500){
       hasHadRealGpsFix = true;
       fetchGroundElevation().then(()=>console.log('Ground elevation refreshed. New state.groundElev:', state.groundElev));
@@ -6463,7 +6483,14 @@ async function fetchLandingPositionDetails(lat, lon){
 
 function updateAdiabaticReadout(rate1, interceptAGL){
   const interceptAlt = state.groundElev+interceptAGL;
-  const startAlt = state.altAMSL; // balloon assumed in equilibrium at the current altitude
+  // Smoothed toward state.altAMSL rather than snapping to it directly -
+  // heavily weighted toward the previous value (95%) since this only
+  // needs to track genuine altitude change over the descent, not track
+  // GPS noise on a second-by-second basis. Initializes to the raw value
+  // on the very first call so it doesn't start at 0/null.
+  if(smoothedAltForAdiabaticM==null) smoothedAltForAdiabaticM = state.altAMSL;
+  else smoothedAltForAdiabaticM = smoothedAltForAdiabaticM*0.95 + state.altAMSL*0.05;
+  const startAlt = smoothedAltForAdiabaticM;
   const actualRate = computeActualRateAtIntercept(balloonVolumeM3, startAlt, interceptAlt, rate1);
   const rateBallastKg = estimateBallastKg(startAlt, actualRate);
   document.getElementById('lblAdiaRateBadge').innerHTML = `${actualRate.toFixed(2)} m/s eff. (≈ ~${rateBallastKg.toFixed(1)}kg)`;

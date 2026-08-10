@@ -156,6 +156,8 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 .ltbtn-group.cat-red .ltbtn.active{border-color:#e0483f;border-width:2px;}
 #headerMoreMenu > *:not(:last-child):not(#btnCloseHeaderMore){border-bottom:1px solid var(--border);}
 #headerMoreMenu .iconbtn{width:100%;background:none;border:none;border-radius:0;justify-content:flex-start;padding:9px 12px;gap:10px;font-size:12px;font-weight:400;}
+#headerMoreMenu #btnTestMode{max-width:none;background:none;color:var(--bad);border:none;font-weight:600;}
+#headerMoreMenu #btnTestMode.active{background:none;color:var(--bad);border:none;}
 #headerMoreMenu .iconbtn.active{background:rgba(63,208,201,0.1);color:var(--accent);}
 #headerMoreMenu .iconbtn:active{background:var(--panel);}
 .layer-load-dot{position:absolute;bottom:0;left:1.5px;right:1.5px;height:2.5px;border-radius:2px 2px 0 0;background:transparent;transition:background-color .2s ease;pointer-events:none;z-index:2;}
@@ -175,6 +177,7 @@ body.day .region-name-chip{background:rgba(255,255,255,0.85);}
 #map{width:100%;height:100%;min-height:200px;background:#0a0d10;}
 body.day #map{background:#dfe6ea;}
 #map.night-filter{filter:brightness(.55) saturate(.7) hue-rotate(0deg);}
+#flightDataBox.night-filter{filter:brightness(.55) saturate(.7);}
 
 #sidebar{position:absolute;top:0;right:0;height:100%;width:25%;min-width:280px;max-width:420px;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px;display:flex;flex-direction:column;gap:4px;box-sizing:border-box;overscroll-behavior:contain;z-index:800;transform:translateX(0);transition:transform .25s ease;scrollbar-width:none;-ms-overflow-style:none;}
 #sidebar::-webkit-scrollbar{width:0;height:0;background:transparent;display:none;}
@@ -214,6 +217,11 @@ body.day #map{background:#dfe6ea;}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:-10px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.wedge-slider{position:absolute;bottom:0;left:0;width:100%;height:14px;margin:0;-webkit-appearance:none;appearance:none;background:transparent;}
+.wedge-slider::-webkit-slider-runnable-track{height:14px;background:transparent;}
+.wedge-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--text);margin-top:0;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;}
+.wedge-slider::-moz-range-track{height:14px;background:transparent;border:none;}
+.wedge-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;}
 input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
@@ -361,13 +369,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div style="display:flex;flex-direction:column;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:4px;">
             <span id="twilightIcon1" style="flex-shrink:0;">—</span>
-            <span id="twilightLabel1" style="color:var(--muted);font-size:9px;white-space:nowrap;">—</span>
-            <span id="twilightTime1" style="color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;">—</span>
+            <span id="twilightLabel1" style="color:var(--muted);font-size:9px;width:16px;flex-shrink:0;white-space:nowrap;">—</span>
+            <span id="twilightTime1" style="color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;text-align:right;flex:1;">—</span>
           </div>
           <div style="display:flex;align-items:center;gap:4px;">
             <span id="twilightIcon2" style="flex-shrink:0;">—</span>
-            <span id="twilightLabel2" style="color:var(--muted);font-size:9px;white-space:nowrap;">—</span>
-            <span id="twilightTime2" style="color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;">—</span>
+            <span id="twilightLabel2" style="color:var(--muted);font-size:9px;width:16px;flex-shrink:0;white-space:nowrap;">—</span>
+            <span id="twilightTime2" style="color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;text-align:right;flex:1;">—</span>
           </div>
         </div>
         <div style="width:1px;align-self:stretch;background:var(--border);"></div>
@@ -381,7 +389,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <span id="moonSetTime" style="color:var(--text);font-size:9px;font-weight:400;white-space:nowrap;">—</span>
         </div>
       </div>
-      <div style="text-align:right;color:var(--muted);font-size:7px;margin-top:3px;">all times UTC</div>
+      <div style="text-align:right;color:var(--muted);font-size:6px;margin-top:3px;">UTC</div>
     </div>
     <div id="allWarningsDivider" style="display:none;width:1px;align-self:stretch;background:var(--border);margin:0 10px;"></div>
     <button id="allWarningsReopenBtn" title="Show all dismissed warnings" style="display:none;background:none;color:var(--bad);border:1.5px solid var(--bad);border-radius:50%;width:24px;height:24px;cursor:pointer;padding:0;align-items:center;justify-content:center;box-sizing:border-box;opacity:0.85;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg></button>
@@ -1011,10 +1019,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
             <div class="datacell wide" id="landingSunCell" style="display:none;">
               <label>Sun at estimated landing</label>
-              <div class="val small" id="landingSunText" style="display:flex;align-items:center;gap:5px;font-weight:400;overflow:visible;">
-                <svg id="landingSunArrow" width="15" height="15" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#eecb6b"/></svg>
-                <span id="landingSunElevText" style="flex-shrink:0;font-size:12px;">—</span>
-                <span id="landingSunDaylightText" style="font-size:10.5px;color:var(--muted);flex-shrink:0;">—</span>
+              <div class="val small" id="landingSunText" style="display:flex;align-items:center;gap:6px;font-weight:400;overflow:visible;">
+                <svg id="landingSunArrow" width="14" height="14" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#eecb6b"/></svg>
+                <span id="landingSunAzText" style="flex-shrink:0;font-size:11.5px;">—</span>
+                <span style="color:var(--border);">|</span>
+                <span id="landingSunElevText" style="flex-shrink:0;font-size:11.5px;">—</span>
+                <span style="color:var(--border);">|</span>
+                <span id="landingSunDaylightText" style="font-size:11.5px;font-weight:600;color:#c8862f;flex-shrink:0;">—</span>
               </div>
             </div>
             <div class="datacell wide" id="landingTerrainCell" style="display:none;">
@@ -1040,24 +1051,34 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div class="card">
         <h3 onclick="toggleCard(this)"><span data-i18n="cardDescentParams">Descent Parameters</span> <span class="chev">▾</span></h3>
         <div class="cardbody">
-          <div class="slider-row" id="sInitRow">
-            <div class="lbl"><span><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit">30 min</b></span><span id="lblInitDist" class="dist-badge" style="margin-left:auto;">0.00 km</span></div>
-            <input type="range" id="sInit" min="0" max="240" step="1" value="30">
-          </div>
-          <div class="slider-row" id="sRateRow">
-            <div class="lbl"><span><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate">4.0 m/s</b></span><span id="lblAdiaRateBadge" class="dist-badge" style="margin-left:auto;">—</span></div>
-            <input type="range" id="sRate" min="0.5" max="9" step="0.1" value="4.0">
+          <div style="display:flex;gap:10px;">
+            <div id="sInitRow" style="flex:1;">
+              <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit">30 min</b></div>
+              <input type="range" id="sInit" min="0" max="240" step="1" value="30" style="width:100%;">
+              <div id="lblInitDist" style="font-size:9.5px;font-weight:700;color:var(--text);margin-top:4px;text-align:right;">0.00 km</div>
+            </div>
+            <div id="sRateRow" style="flex:1;">
+              <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderDescentRate">Descent rate</span> <b id="lblRate" style="color:#c8862f;">4.0 m/s</b></div>
+              <div style="position:relative;height:18px;">
+                <svg width="100%" height="15" viewBox="0 0 130 15" preserveAspectRatio="none" style="position:absolute;bottom:0;left:0;pointer-events:none;">
+                  <polygon points="0,12 130,2 130,15 0,15" fill="var(--border)"/>
+                  <polygon id="sRateWedgeFill" points="0,12 65,7 65,15 0,15" fill="#c8862f"/>
+                </svg>
+                <input type="range" id="sRate" class="wedge-slider" min="0.5" max="9" step="0.1" value="4.0">
+              </div>
+              <div id="lblAdiaRateBadge" style="font-size:9.5px;font-weight:700;color:var(--text);margin-top:4px;text-align:right;">—</div>
+            </div>
           </div>
           <div style="display:flex;gap:6px;margin-top:6px;">
             <div id="sIntHRow" style="flex:1;">
               <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Intercept AGL (m)</div>
               <input type="number" id="sIntH" min="100" max="1000" step="10" value="400" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
-              <div id="lblInterceptTimeBadge" style="font-size:8.5px;font-weight:700;color:var(--text);margin-top:2px;text-align:right;">—</div>
+              <div id="lblInterceptTimeBadge" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:2px;text-align:right;">—</div>
             </div>
             <div id="sRate2Row" style="flex:1;">
               <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Rate below (m/s)</div>
               <input type="text" inputmode="decimal" id="sRate2" value="1.5" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 5px;font-family:var(--mono);font-size:11px;text-align:right;box-sizing:border-box;">
-              <div id="lblGroundTimeBadge" style="font-size:8.5px;font-weight:700;color:var(--text);margin-top:2px;text-align:right;">—</div>
+              <div id="lblGroundTimeBadge" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:2px;text-align:right;">—</div>
             </div>
             <div id="sScatterRow" style="flex:1;">
               <div style="font-size:9px;color:var(--muted);margin-bottom:2px;white-space:nowrap;">Scatter (%)</div>
@@ -1168,7 +1189,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
 
     </div>
-      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);box-shadow:0 2px 8px rgba(0,0,0,.3);">
+      <div id="stagedPlanPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button onclick="document.getElementById('stagedPlanPanel').style.display='none'; if(state.lastStagedPlanResult) document.getElementById('btnReopenStagedPlan').style.display='inline-flex';" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
@@ -1286,7 +1307,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260809.20-0525';
+const APP_VERSION = 'v260809.25-0725';
 const APP_DATE = '09.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1576,9 +1597,14 @@ function updateMoonChip(){
   icon.innerHTML = `<circle cx="12" cy="12" r="10" fill="none" stroke="var(--muted)" stroke-width="1.5"/><path d="${moonPhaseSvgPath(phase.illumFrac)}" fill="#e8a838"/>`;
   icon.setAttribute('title', `${phase.phaseName} (${Math.round(phase.illumFrac*100)}% illuminated)`);
   document.getElementById('moonIllumPct').textContent = Math.round(phase.illumFrac*100)+'%';
+  // Waxing (growing, first half of the ~29.53-day cycle) points up;
+  // waning (shrinking, second half) points down - same triangle, just
+  // rotated, rather than two separate icons to keep in sync. (phase.age
+  // is what moonPhaseInfo() actually returns - there's no "waxing" field.)
+  const waxing = phase.age < 29.530588861/2;
   const arrow = document.getElementById('moonTrendArrow');
-  arrow.style.transform = phase.waxing ? 'rotate(0deg)' : 'rotate(180deg)';
-  arrow.title = phase.waxing ? 'Waxing' : 'Waning';
+  arrow.style.transform = waxing ? 'rotate(0deg)' : 'rotate(180deg)';
+  arrow.setAttribute('title', waxing ? 'Waxing' : 'Waning');
   document.getElementById('moonRiseTime').textContent = rise ? fmtHHMM(rise)+'↑' : '—';
   document.getElementById('moonSetTime').textContent = set ? fmtHHMM(set)+'↓' : '—';
 }
@@ -6189,19 +6215,37 @@ function doRecompute(){
     const landingTime = new Date(Date.now() + state.secondsToLanding*1000);
     const sunPos = computeSunPosition(ll.lat, ll.lng, landingTime);
     document.getElementById('landingSunCell').style.display = 'block';
+    // Arrow points TOWARD the sun (the azimuth direction itself, not the
+    // opposite/shadow direction) - the icon's own "up" tip is north (0°)
+    // at rotate(0), so rotating by azimuthDeg (a standard 0=N clockwise
+    // compass bearing, verified against known sun-path behaviour earlier)
+    // correctly points it at wherever the sun actually is.
     document.getElementById('landingSunArrow').style.transform = `rotate(${sunPos.azimuthDeg}deg)`;
-    const shadowDeg = (sunPos.azimuthDeg+180)%360;
     if(sunPos.elevationDeg > 0){
-      document.getElementById('landingSunElevText').textContent = `${sunPos.elevationDeg.toFixed(0)}° elev · shadow ${shadowDeg.toFixed(0)}°`;
+      const azStr = String(Math.round(sunPos.azimuthDeg)%360).padStart(3,'0');
+      document.getElementById('landingSunAzText').textContent = `${azStr}°`;
+      document.getElementById('landingSunElevText').textContent = `${sunPos.elevationDeg.toFixed(0)}°el`;
+      // Time to ECT (evening civil twilight), not sunset - civil twilight
+      // extends usable outdoor light well past sunset itself, which is
+      // the more relevant cutoff for whether there's still enough light
+      // to see the landing terrain, not just whether the sun disc itself
+      // is above the horizon.
       const todaySun = computeSunEventsUTC(ll.lat, ll.lng, landingTime);
-      if(todaySun.sunset!=null){
-        const sunsetDate = formatUTCFromMinutes(landingTime, todaySun.sunset);
-        const minToSunset = Math.round((sunsetDate - landingTime)/60000);
-        document.getElementById('landingSunDaylightText').textContent = minToSunset>0 ? `${minToSunset}min daylight left` : 'after sunset';
+      if(todaySun.civilDusk!=null){
+        const ectDate = formatUTCFromMinutes(landingTime, todaySun.civilDusk);
+        const minToECT = Math.round((ectDate - landingTime)/60000);
+        if(minToECT>0){
+          const hh = String(Math.floor(minToECT/60)).padStart(2,'0');
+          const mm = String(minToECT%60).padStart(2,'0');
+          document.getElementById('landingSunDaylightText').textContent = `${hh}:${mm} to ECT`;
+        } else {
+          document.getElementById('landingSunDaylightText').textContent = 'after ECT';
+        }
       } else {
         document.getElementById('landingSunDaylightText').textContent = '';
       }
     } else {
+      document.getElementById('landingSunAzText').textContent = '';
       document.getElementById('landingSunElevText').textContent = 'below horizon (dark)';
       document.getElementById('landingSunDaylightText').textContent = '';
     }
@@ -6237,8 +6281,8 @@ function doRecompute(){
   if(idxAtIntercept>=0){
     const descentMin = (refPath[idxAtIntercept].t - initSecRef0)/60;
     const groundMin = (refPath[refPath.length-1].t - refPath[idxAtIntercept].t)/60;
-    document.getElementById('lblInterceptTimeBadge').textContent = descentMin.toFixed(1)+' min descent';
-    document.getElementById('lblGroundTimeBadge').textContent = groundMin.toFixed(1)+' min to ground';
+    document.getElementById('lblInterceptTimeBadge').innerHTML = `<b>${descentMin.toFixed(1)} min</b> to reach`;
+    document.getElementById('lblGroundTimeBadge').innerHTML = `<b>${groundMin.toFixed(1)} min</b> to ground`;
   }
 
   // Always-on projection, split into two colored segments at the descent
@@ -7665,6 +7709,22 @@ function hideYellowWarning(){
   updateAllWarningsReopenBtn();
   repositionModeToggle();
 }
+// Descent rate's wedge-shaped fill - the draggable point itself stays on
+// the flat bottom baseline the whole time (that's just the native range
+// thumb, unmoved vertically); only this background polygon changes to
+// show how much of the wedge's rising height is "filled" at the current
+// value, which is what actually visualizes the accelerating rate.
+function updateDescentRateWedge(){
+  const el = document.getElementById('sRate');
+  const min = parseFloat(el.min), max = parseFloat(el.max), val = parseFloat(el.value);
+  const frac = Math.max(0, Math.min(1, (val-min)/(max-min)));
+  const W = 130, topLeftY = 12, topRightY = 2, bottomY = 15;
+  const x = frac*W;
+  const y = topLeftY - (topLeftY-topRightY)*frac;
+  document.getElementById('sRateWedgeFill').setAttribute('points', `0,${topLeftY} ${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${bottomY} 0,${bottomY}`);
+}
+document.getElementById('sRate').addEventListener('input', updateDescentRateWedge);
+updateDescentRateWedge(); // correct the hand-approximated HTML default to the exact value
 bindSlider('sRate','lblRate', v=> parseFloat(v).toFixed(1)+' m/s');
 document.getElementById('sIntH').addEventListener('input', ()=>{ recomputeAll(); scheduleStagedAreaRecompute(); scheduleStagedRetarget(); });
 document.getElementById('sRate2').addEventListener('input', (e)=>{
@@ -7710,6 +7770,7 @@ document.getElementById('btnDayNight').addEventListener('click', ()=>{
   state.night=!state.night;
   document.body.classList.toggle('day', !state.night);
   document.getElementById('map').classList.toggle('night-filter', state.night);
+  document.getElementById('flightDataBox').classList.toggle('night-filter', state.night);
   document.getElementById('iconSun').style.display = state.night ? 'none' : 'block';
   document.getElementById('iconMoon').style.display = state.night ? 'block' : 'none';
 });
@@ -7767,7 +7828,7 @@ function updateFlightDataBoxContent(){
   document.getElementById('fdbVArrow').innerHTML = vRate>=0
     ? '<path d="M12 20V4M6 10l6-6 6 6"/>'
     : '<path d="M12 4V20M6 14l6 6 6-6"/>';
-  document.getElementById('fdbCourse').textContent = state.courseKnown ? Math.round(state.course)+'°' : '---°';
+  document.getElementById('fdbCourse').textContent = state.courseKnown ? String(Math.round(state.course)%360).padStart(3,'0')+'°' : '---°';
   document.getElementById('fdbCourseArrow').style.visibility = state.courseKnown ? 'visible' : 'hidden';
   document.getElementById('fdbCourseArrow').style.transform = `rotate(${state.course}deg)`;
   const kmh = state.speedKn*1.852;
@@ -7929,23 +7990,7 @@ function alignPanelToPositionCard(panelEl){
     return;
   }
   const sidebarPaddingPx = 6; // matches #sidebar's own CSS padding, where its first card's top-left corner actually sits
-  let topPx = rect.top + sidebarPaddingPx;
-  // The flight data box positions itself independently (draggable, can be
-  // snapped to any edge including this exact spot - the sidebar's own left
-  // edge) and previously ended up sitting directly on top of this panel
-  // whenever it happened to be there. Nudging this panel below it when
-  // they'd overlap keeps both visible and usable instead of one hiding
-  // the other.
-  const fdb = document.getElementById('flightDataBox');
-  if(fdb && fdb.style.display!=='none'){
-    const fdbRect = fdb.getBoundingClientRect();
-    const horizontalOverlap = fdbRect.right > (rect.left+sidebarPaddingPx) && fdbRect.left < (rect.left+sidebarPaddingPx+350);
-    const verticalOverlap = fdbRect.bottom > topPx && fdbRect.top < topPx+200; // 200px: enough of the panel's own height to count as "in the way"
-    if(horizontalOverlap && verticalOverlap){
-      topPx = fdbRect.bottom + 8;
-    }
-  }
-  panelEl.style.top = Math.round(topPx) + 'px';
+  panelEl.style.top = Math.round(rect.top + sidebarPaddingPx) + 'px';
   panelEl.style.left = Math.round(rect.left + sidebarPaddingPx) + 'px';
 }
 function toggleCard(h3){

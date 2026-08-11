@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Gasballoon Cockpit</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -744,6 +745,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
           <p style="font-size:10px;color:var(--muted);margin:-4px 0 10px;">When set, switches to customer-api.open-meteo.com (no daily call limit) instead of the free tier's 10,000 calls/day.</p>
 
+          <div class="subhead" style="margin-top:0;">openAIP (airspace tiles)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:12.5px;flex:1;">API key</span>
+            <input type="text" id="sOpenaipApiKey" class="api-key-input" placeholder="openAIP API key" value="e9946fdef0b38f6540986cb7045f893a" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
+          </div>
+
           <div class="subhead" style="margin-top:0;">Air Traffic (RapidAPI)</div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <span style="font-size:12.5px;flex:1;">RapidAPI key</span>
@@ -1335,7 +1342,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.04-0930';
+const APP_VERSION = 'v260811.06-1010';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1958,7 +1965,13 @@ updatePowerLegendVisibility();
 // Fixed in code on purpose (not exposed as an editable settings field) so it
 // can't be accidentally cleared/changed. Change this constant if you need a
 // different openAIP key.
-const OPENAIP_API_KEY = 'e9946fdef0b38f6540986cb7045f893a';
+// Now reads live from the Settings field (sOpenaipApiKey) instead of being
+// fixed in code - the field is pre-filled with the same key as before, so
+// nothing changes unless the person actually edits it there, but it's no
+// longer hidden from the "Tokens and keys" list the way it was earlier.
+function openaipApiKey(){
+  return document.getElementById('sOpenaipApiKey')?.value?.trim() || 'e9946fdef0b38f6540986cb7045f893a';
+}
 let airspaceLayer = null; // L.layerGroup of the openAIP categories we DO want
 
 // ---- compact icon-button layer toggles (top-left of header) ----
@@ -2190,7 +2203,7 @@ bindLayerToggle('tgAirspace', false, on=>{
     // no longer be selectively hidden via their public tile API - that would
     // require switching to their vector tile (.pbf) endpoint with custom
     // styling, which is a bigger separate piece of work.
-    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${OPENAIP_API_KEY}`,
+    airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${openaipApiKey()}`,
       {maxZoom:14, opacity:0.95, className:'airspace-tiles', pane:'overlayTilesPane', attribution:'© openAIP'});
     setLayerLoadDot('tgAirspace','loading');
     airspaceLayer.on('load', ()=>setLayerLoadDot('tgAirspace','ready'));
@@ -9026,7 +9039,7 @@ async function precacheAreaTiles(lat, lon, radiusKm, force){
       addTilesForZooms(zoomsBase, (z,x,y)=>`https://openinframap.org/tiles/${z}/${x}/${y}.pbf`);
     }
     if(document.getElementById('tgAirspace').classList.contains('active')){
-      addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://api.tiles.openaip.net/api/data/openaip/${z}/${x}/${y}.png?apiKey=${OPENAIP_API_KEY}`);
+      addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://api.tiles.openaip.net/api/data/openaip/${z}/${x}/${y}.png?apiKey=${openaipApiKey()}`);
     }
     if(document.getElementById('tgRoads').classList.contains('active')){
       addTilesForZooms(zoomsOverlay, (z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`);
@@ -9636,7 +9649,7 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sOpenMeteoApiKey','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret','sTransitionAlt'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sOpenMeteoApiKey','sOpenaipApiKey','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret','sTransitionAlt'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 // ---------- profile export/import (all settings, keys, emergency contact

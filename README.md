@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260810.14-2320** (10.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260811.01-0825** (11.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -132,3 +132,4 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - Added a small badge next to the model name in the header weather chip showing at a glance whether landing-area scatter currently draws on real ensemble members ("E", green) or the age-based heuristic ("H", gray).
 - Wind gusts at the landing site now shown as their own second line below the ground wind reading instead of appended inline.
 - Both remaining descent sliders (and Staged Descent Parameters' two sliders) now use the same thumb size and colour as the vertical wind-height slider (18px, filled with the app's accent colour), instead of a smaller, differently-styled one.
+- Bumped the service worker's cache name (forces old cached entries to be discarded on next activation) and added periodic (30min) update checks for the service worker itself - for a page left open for genuine 24/7 operation, the browser would otherwise only ever check for a newer service worker on navigation, which might never happen again once the app is running.

@@ -1335,8 +1335,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.14-2320';
-const APP_DATE = '10.08.2026';
+const APP_VERSION = 'v260811.01-0825';
+const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -8911,7 +8911,13 @@ capPauseBtn.addEventListener('click', ()=>{
 // connection drops. This uses real network bandwidth to pre-fetch tiles, so
 // it's throttled to only run when the balloon has moved appreciably.
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW registration failed (offline caching disabled):', e));
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    // Explicit periodic update check - the browser normally only checks
+    // for a new service worker on navigation, but a page left open for
+    // real 24/7 operation might never navigate again, so a newer sw.js
+    // could otherwise go undetected indefinitely.
+    setInterval(()=>reg.update().catch(()=>{}), 30*60*1000); // every 30min
+  }).catch(e=>console.warn('SW registration failed (offline caching disabled):', e));
 }
 function lonLatToTileXY(lon, lat, z){
   const n = Math.pow(2, z);

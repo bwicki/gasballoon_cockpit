@@ -11,7 +11,7 @@
 // service worker took over would fail outright rather than just skipping
 // the cache. Weather/elevation requests now bypass this service worker
 // entirely, going straight to the network every time.
-const CACHE_NAME = 'gblp-tiles-v1';
+const CACHE_NAME = 'gblp-tiles-v2';
 const TILE_HOSTS = [
   'tile.openstreetmap.org',
   'tile.opentopomap.org',
@@ -21,7 +21,13 @@ const TILE_HOSTS = [
 ];
 
 self.addEventListener('install', ()=>{ self.skipWaiting(); });
-self.addEventListener('activate', (event)=>{ event.waitUntil(self.clients.claim()); });
+self.addEventListener('activate', (event)=>{
+  event.waitUntil(
+    caches.keys().then(names=>Promise.all(
+      names.filter(n=>n!==CACHE_NAME).map(n=>caches.delete(n))
+    )).then(()=>self.clients.claim())
+  );
+});
 
 self.addEventListener('fetch', (event)=>{
   let url;

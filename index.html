@@ -576,7 +576,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <label><input type="checkbox" data-as="TMZ">TMZ</label>
           <label><input type="checkbox" data-as="RMZ">RMZ</label>
         </div>
-        <p style="font-size:10px;color:var(--bad);margin:8px 0 0;">⚠ Not currently functional: openAIP's Core API (needed for real per-class filtering) blocks browser requests via CORS, so the ✈️ layer always shows the single combined raster image regardless of these checkboxes. Left here for when/if that becomes possible.</p>
+        <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">✓ Real per-class filtering active (openAIP Core API, confirmed working). "TMZ"/"RMZ"/"Restricted"/"Prohibited" are matched by airspace type where recognized; an airspace whose type or class isn't recognized is shown regardless of these checkboxes rather than silently hidden.</p>
 
         
         
@@ -1342,7 +1342,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.10-2120';
+const APP_VERSION = 'v260811.12-2230';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -2185,31 +2185,109 @@ bindLayerToggle('tgPower', false, on=>{
 });
 powerLayer.on('load', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','ready'); });
 powerLayer.on('loading', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','loading'); });
-// Real, class-filtered airspace boundaries (openAIP Core API, actual GeoJSON
-// NOTE: openAIP's Core API (api.core.openaip.net) does NOT send an
-// Access-Control-Allow-Origin header, so browsers block it outright under
-// CORS - there is no client-side fix for that (it would need a server-side
-// proxy we don't have). The real per-class filtered airspace overlay that
-// used to be attempted here therefore could never actually work from this
-// page and has been removed; the Airspace Class checkboxes below are back
-// to being a placeholder for a possible future vector-tile-based approach.
+// Real, class-filtered airspace boundaries via openAIP's Core API -
+// confirmed working via a live browser CORS test on 11.08.2026 (HTTP 200
+// with actual GeoJSON data), reversing an earlier finding that this was
+// CORS-blocked. icaoClass is 0-indexed (0=A,1=B,2=C,3=D,4=E,5=F,6=G) -
+// verified against real data: Zürich's own TMA sectors (icaoClass 2)
+// match its documented Class C status, and a small Swiss military
+// airfield's TMA (icaoClass 3) matches its documented Class D status.
+// "type" governs the non-ICAO-class categories (Restricted/Prohibited/
+// TMZ/RMZ) - verified type 7 = TMA and type 15 = airway against real
+// airspace names, but the FULL enum isn't independently confirmed beyond
+// what's been directly observed, so an airspace whose type doesn't match
+// any of the mapped special categories below is still shown (governed by
+// its icaoClass checkbox instead, or always-shown if neither matches),
+// rather than being silently hidden due to an unmapped/unknown type.
+const AIRSPACE_ICAO_CLASS_MAP = {0:'A', 1:'B', 2:'C', 3:'D', 4:'E', 6:'G'};
+const AIRSPACE_TYPE_MAP = {1:'R', 3:'P', 5:'TMZ', 6:'RMZ'}; // Restricted, Prohibited, TMZ, RMZ - overrides icaoClass-based filtering for these specific categories, since they're independent overlay designations rather than a controlled-airspace class
+const AIRSPACE_CLASS_COLORS = {A:'#c026d3', B:'#dc2626', C:'#2563eb', D:'#0891b2', E:'#65a30d', G:'#8b98a5', R:'#dc2626', P:'#991b1b', TMZ:'#ea580c', RMZ:'#d97706'};
+let airspaceVectorLayer = null;
+let airspaceFetchAbort = null;
+let airspaceFetchTimer = null;
+function airspaceCategoryFor(props){
+  // Type-based special categories take priority (an airspace can carry
+  // both an icaoClass AND be e.g. a TMZ overlay at the same time - the
+  // TMZ/RMZ/Restricted/Prohibited checkbox is the more specific/relevant
+  // one to filter by in that case).
+  if(AIRSPACE_TYPE_MAP[props.type]) return AIRSPACE_TYPE_MAP[props.type];
+  if(AIRSPACE_ICAO_CLASS_MAP[props.icaoClass]) return AIRSPACE_ICAO_CLASS_MAP[props.icaoClass];
+  return null; // unrecognized category - shown regardless of checkbox state rather than silently hidden
+}
+function checkedAirspaceClasses(){
+  return new Set(Array.from(document.querySelectorAll('[data-as]')).filter(el=>el.checked).map(el=>el.dataset.as));
+}
+async function fetchAndRenderAirspaces(){
+  if(!document.getElementById('tgAirspace').classList.contains('active')) return;
+  if(map.getZoom() < 8) return; // whole-country-scale queries would return an enormous, slow result for little visual benefit at that zoom
+  if(airspaceFetchAbort) airspaceFetchAbort.abort();
+  airspaceFetchAbort = new AbortController();
+  const b = map.getBounds();
+  const bbox = `${b.getWest().toFixed(3)},${b.getSouth().toFixed(3)},${b.getEast().toFixed(3)},${b.getNorth().toFixed(3)}`;
+  setLayerLoadDot('tgAirspace','loading');
+  try{
+    let allItems = [];
+    let page = 1;
+    // Capped at 8 pages (400 airspaces at limit=50) as a safety bound -
+    // a genuinely enormous viewport could otherwise trigger unbounded
+    // pagination; this comfortably covers a normal working view.
+    while(page && page<=8){
+      const url = `https://api.core.openaip.net/api/airspaces?apiKey=${openaipApiKey()}&bbox=${bbox}&limit=50&page=${page}`;
+      const r = await fetch(url, {signal: airspaceFetchAbort.signal});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      allItems = allItems.concat(j.items||[]);
+      page = j.nextPage || null;
+    }
+    const checked = checkedAirspaceClasses();
+    if(!airspaceVectorLayer){ airspaceVectorLayer = L.layerGroup(); }
+    airspaceVectorLayer.clearLayers();
+    allItems.forEach(item=>{
+      const cat = airspaceCategoryFor(item);
+      if(cat && !checked.has(cat)) return; // recognized category, but its checkbox is unchecked
+      if(!item.geometry || !item.geometry.coordinates) return;
+      const color = cat ? (AIRSPACE_CLASS_COLORS[cat]||'#8b98a5') : '#8b98a5';
+      const rings = item.geometry.type==='Polygon' ? [item.geometry.coordinates] : (item.geometry.coordinates||[]);
+      rings.forEach(polyCoords=>{
+        const latlngs = polyCoords.map(ring=>ring.map(([lon,lat])=>[lat,lon]));
+        const poly = L.polygon(latlngs, {color, weight:1.5, fillOpacity:0.08, opacity:0.75, pane:'overlayTilesPane'});
+        const fmtLimit = (lim)=> lim==null ? '—' : (lim.unit===6 ? `FL${lim.value}` : `${lim.value}${lim.referenceDatum===1?'ft AGL':'ft MSL'}`);
+        poly.bindTooltip(`<b>${item.name}</b><br>${cat||'?'} · ${fmtLimit(item.lowerLimit)} - ${fmtLimit(item.upperLimit)}`, {sticky:true});
+        airspaceVectorLayer.addLayer(poly);
+      });
+    });
+    if(!map.hasLayer(airspaceVectorLayer)) airspaceVectorLayer.addTo(map);
+    setLayerLoadDot('tgAirspace','ready');
+  }catch(e){
+    if(e.name==='AbortError') return; // superseded by a newer fetch - not a real failure
+    console.warn('Airspace fetch failed, falling back to the combined raster tile:', e);
+    setLayerLoadDot('tgAirspace','ready'); // the raster fallback below is already showing
+  }
+}
+function scheduleAirspaceFetch(){
+  clearTimeout(airspaceFetchTimer);
+  airspaceFetchTimer = setTimeout(fetchAndRenderAirspaces, 400);
+}
+document.querySelectorAll('[data-as]').forEach(el=>el.addEventListener('change', scheduleAirspaceFetch));
 bindLayerToggle('tgAirspace', false, on=>{
   if(on){
-    // NOTE: openAIP retired the separate per-category tile endpoints
-    // (airspaces/airports/reporting-points/navaids) in May 2023 to reduce
-    // server load - they now only serve a single combined "openaip" layer
-    // that includes everything (airspaces, airports, navaids/VOR, reporting
-    // points) baked into one raster tile. This means VOR/navaid symbols can
-    // no longer be selectively hidden via their public tile API - that would
-    // require switching to their vector tile (.pbf) endpoint with custom
-    // styling, which is a bigger separate piece of work.
+    // Raster tile as an always-present visual base (airports, navaids,
+    // reporting points - still only available combined, per openAIP's own
+    // retirement of separate per-category tile endpoints in May 2023) -
+    // the vector layer above draws the real, class-filtered airspace
+    // boundaries on top of it. If the vector fetch fails for any reason,
+    // this raster layer alone still shows something rather than nothing.
     airspaceLayer = L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${openaipApiKey()}`,
-      {maxZoom:14, opacity:0.95, className:'airspace-tiles', pane:'overlayTilesPane', attribution:'© openAIP'});
+      {maxZoom:14, opacity:0.55, className:'airspace-tiles', pane:'overlayTilesPane', attribution:'© openAIP'});
     setLayerLoadDot('tgAirspace','loading');
     airspaceLayer.on('load', ()=>setLayerLoadDot('tgAirspace','ready'));
     airspaceLayer.addTo(map);
+    fetchAndRenderAirspaces();
+    map.on('moveend', scheduleAirspaceFetch);
   } else {
     if(airspaceLayer){ map.removeLayer(airspaceLayer); airspaceLayer=null; }
+    if(airspaceVectorLayer){ map.removeLayer(airspaceVectorLayer); }
+    map.off('moveend', scheduleAirspaceFetch);
     setLayerLoadDot('tgAirspace', null);
   }
 });
@@ -3713,7 +3791,7 @@ async function fetchAprsStations(){
     aprsFailCount = 0;
   }catch(e){
     console.error('APRS fetch failed:', e);
-    console.warn('APRS: this is very likely CORS-blocked, not a transient error - confirmed via a live browser test with real credentials. aprs.fi\'s API does not appear to send the headers needed for direct browser fetch(), the same situation as openAIP\'s airspace-class filtering elsewhere in this app.');
+    console.warn('APRS: this is very likely CORS-blocked, not a transient error - confirmed via a live browser test with real credentials. aprs.fi\'s API does not appear to send the headers needed for direct browser fetch().');
     if(aprsActive){
       aprsFailCount = (aprsFailCount||0)+1;
       setLayerLoadDot('tgAprs', 'error');
@@ -6123,7 +6201,17 @@ async function fetchEnsembleWind(resolvedModel){
   if(!ensembleModel){ state.ensembleWindProfilesByHour = null; return; }
   try{
     const vars = ENSEMBLE_PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
-    const url = `https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${state.lat}&longitude=${state.lon}&hourly=${vars}&models=${ensembleModel}&forecast_hours=12&timezone=UTC${openMeteoKeyParam()}`;
+    // Uses the commercial "customer-ensemble-api" host directly when a key
+    // is set, matching the same customer-<service>-api naming pattern
+    // Open-Meteo uses for their main API (customer-api.open-meteo.com).
+    // Previously always hit the free ensemble-api.open-meteo.com host even
+    // with a key present - Open-Meteo's own server then appears to
+    // redirect that to the commercial host internally, but with a bug on
+    // their end producing a malformed double-slash URL (confirmed via a
+    // live console log: .com//v1/ensemble, 403 Forbidden). Hitting the
+    // correct host directly sidesteps that redirect entirely.
+    const ensembleBase = openMeteoKeyParam() ? 'https://customer-ensemble-api.open-meteo.com' : 'https://ensemble-api.open-meteo.com';
+    const url = `${ensembleBase}/v1/ensemble?latitude=${state.lat}&longitude=${state.lon}&hourly=${vars}&models=${ensembleModel}&forecast_hours=12&timezone=UTC${openMeteoKeyParam()}`;
     trackOpenMeteoCall();
     const r = await fetch(url);
     const j = await r.json();

@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260811.10-2120** (11.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260811.12-2230** (11.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -60,6 +60,10 @@ Shown for whichever landing-point marker is currently the relevant one (Landing 
 Wind is fetched per-altitude across 19 pressure levels from the auto-selected model for the current location (ICON-D2 for DACH, ICON-EU for wider Europe, GFS globally), refreshed on a timer (default 15min, configurable). CAPE and wind gusts are fetched as separate, independent requests on a reduced schedule (every 3rd wind refresh) so an unsupported variable on a given model can never take down the core wind fetch.
 
 **Ensemble modeling**: with a commercial Open-Meteo API key set (see below), the Monte-Carlo landing-area scatter in all three functions draws on real ensemble model members (ICON-D2-EPS / ICON-EU-EPS / GEFS, ~20-40 members depending on model) instead of an artificial age-based heuristic - each Monte-Carlo sample uses an actual member's own wind profile, genuine forecast uncertainty rather than a random perturbation. A small badge next to the model name in the header ("E" green / "H" gray) shows which mode is currently active. Falls back to the heuristic automatically without a key or if the ensemble fetch fails.
+
+## Airspace
+
+The ✈️ airspace layer draws real, class-filtered airspace boundaries from openAIP's Core API (confirmed working via a live CORS test - it was previously believed CORS-blocked) on top of the combined raster tile as a visual base (still the only way to show airports/navaids/reporting points, since openAIP retired separate per-category tile endpoints in 2023). The Settings checkboxes (Class A-G, Restricted, Prohibited, TMZ, RMZ) now genuinely filter which boundaries are drawn, refetched as the map moves or the selection changes. An airspace whose type/class isn't recognized by the mapping used here is shown regardless of checkbox state, rather than silently hidden.
 
 **Commercial Open-Meteo API key**: optional field in Settings. When set, every Open-Meteo request in the app (wind, CAPE, gusts, elevation, ensemble) automatically switches to the dedicated `customer-api.open-meteo.com` endpoint, which has no daily call limit, instead of the free tier's 10,000/day cap - needed for genuine 24/7 unattended operation, since a single wind-profile request already counts as several calls toward that quota (any request covering more than 10 variables does). A running "Open-Meteo calls today" counter is shown in the weather model popover regardless of which tier is active.
 

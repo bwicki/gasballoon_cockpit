@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v260811.08-2040</title>
+<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v260811.12-2230</title>
 <style>
   body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
   h1{font-size:18px;}
@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v260811.08-2040</span></h1>
+<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v260811.12-2230</span></h1>
 <p class="intro">
 Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie Gasballoon Cockpit sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
@@ -59,7 +59,7 @@ const TESTS = [
   { name: '★ MeteoGate/E-SOH - Zeitreihe einer echten Station (aus deinem letzten Testergebnis), jetzt in der App im Einsatz - Format noch nicht bestätigt', url: 'https://observations.meteogate.eu/collections/observations/items?platform=0-0-0-115&limit=20' },
   { name: '★ aprs.fi - Rufzeichen-Abfrage (Testrufzeichen), jetzt im APRS-Layer im Einsatz', url: 'https://api.aprs.fi/api/get?name=OH7RDA&what=loc&apikey=167195.j9YO5rPCFfnS4y&format=json' },
   { name: '★ Xweather - Blitz-Endpunkt (braucht deine eigenen Zugangsdaten unten in der URL, sonst schlägt der Test bewusst fehl) - client_id/client_secret Auth noch nicht bestätigt', url: 'https://api.xweather.com/lightning/47.3769,8.5417?radius=100km&from=-10minutes&to=now&limit=50&client_id=DEIN_CLIENT_ID&client_secret=DEIN_CLIENT_SECRET' },
-  { name: '★ openAIP Core API - echte, klassengefilterte Luftraum-Geometrien (GeoJSON) statt nur der Kachel-API - wird für selektive Anzeige einzelner Luftraumklassen benötigt, letzter Test hatte dies als CORS-blockiert ergeben', url: 'https://api.core.openaip.net/api/airspaces?apiKey=e9946fdef0b38f6540986cb7045f893a&bbox=8.3,47.2,8.8,47.6&limit=5' },
+  { name: '★ openAIP Core API - echte, klassengefilterte Luftraum-Geometrien (GeoJSON) - bestätigt funktionierend am 11.08.2026, jetzt im Airspace-Layer implementiert (ersetzt die reine Rasterkachel)', url: 'https://api.core.openaip.net/api/airspaces?apiKey=e9946fdef0b38f6540986cb7045f893a&bbox=8.3,47.2,8.8,47.6&limit=5' },
   { name: '★ CheckWX - möglicher MetarCentral-Ersatz (braucht deinen eigenen kostenlosen API-Key unten in der URL, sonst schlägt der Test bewusst fehl) - CORS noch nicht live bestätigt, unterstützt bis zu 25 Flughäfen in einer Anfrage', url: 'https://api.checkwx.com/metar/LSZH,LSGG,LSMD?x-api-key=DEIN_API_KEY' }
 ];
 

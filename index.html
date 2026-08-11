@@ -8,7 +8,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Gasballoon Cockpit</title>
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -494,6 +493,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <option value="ecmwf_ifs04">ECMWF IFS (25 km)</option>
         </select>
         <div id="wxModelSettingsStatus" style="font-size:10px;color:var(--muted);margin-top:4px;">—</div>
+        <div id="openMeteoCallCounter" style="font-size:9px;color:var(--muted);margin-top:2px;" title="Open-Meteo's free tier allows under 10,000 calls/day - a request covering more than 10 variables (like the wind profile fetch) counts as several toward that limit, not just one">Open-Meteo calls today: —</div>
+        <div id="ensembleStatusText" style="font-size:9px;color:var(--muted);margin-top:2px;" title="Landing-area scatter uses real ensemble model members (genuine forecast uncertainty) when available, or falls back to an age-based heuristic otherwise">Landing area scatter: —</div>
         <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
           <button class="ghost" style="flex:1;" onclick="fetchWind(true)">Refresh now</button>
           <select id="wxRefreshInterval" style="flex:1;">
@@ -734,6 +735,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <details id="apiKeysDetails" style="margin-top:8px;">
           <summary style="font-size:12px;color:var(--text);cursor:pointer;font-weight:600;padding:4px 0;">API Keys &amp; Tokens</summary>
           <p style="font-size:10px;color:var(--muted);margin:6px 0 10px;">Every external service credential this app uses, gathered in one place. As with any client-side app, these are visible in the page source to anyone who views it. Changing anything here asks for confirmation first, since a mistyped key would otherwise silently break a working connection.</p>
+
+          <div class="subhead" style="margin-top:0;">Open-Meteo (weather/elevation)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:12.5px;flex:1;">Commercial API key</span>
+            <input type="text" id="sOpenMeteoApiKey" class="api-key-input" placeholder="leave empty for free tier" value="OcBkMnyepU09zHlZ" style="width:150px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:11px;">
+          </div>
+          <p style="font-size:10px;color:var(--muted);margin:-4px 0 10px;">When set, switches to customer-api.open-meteo.com (no daily call limit) instead of the free tier's 10,000 calls/day.</p>
 
           <div class="subhead" style="margin-top:0;">Air Traffic (RapidAPI)</div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -1315,7 +1323,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.08-1955';
+const APP_VERSION = 'v260810.11-2200';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1403,6 +1411,39 @@ let fetchWindRequestId = 0;
 // very likely the direct cause of AGL occasionally showing wildly wrong
 // (even negative) readings despite a plausible AMSL figure.
 let fetchGroundElevRequestId = 0;
+let fetchWindSuccessCount = 0; // used to fetch CAPE only every 3rd successful wind refresh, not every single one
+// Simple daily-resetting counter for Open-Meteo calls, so actual usage can
+// be seen in the app itself (in the weather model popover) rather than
+// only discovering a quota problem after the fact. Not a strict call
+// count (a single request with >10 variables counts as several toward
+// Open-Meteo's own quota) - just how many requests THIS app made today,
+// which is still a useful signal of whether refresh settings need
+// adjusting for genuine 24/7 operation.
+let openMeteoCallLog = {date: null, count: 0};
+// Central switch for every Open-Meteo call in the app: with a commercial
+// API key set in Settings, all requests move to the dedicated, no-daily-
+// limit customer endpoint instead of the free tier (10,000 calls/day).
+// Same request parameters and response format either way - only the host
+// and the added &apikey= differ, per Open-Meteo's own documentation.
+function openMeteoBase(){
+  const key = document.getElementById('sOpenMeteoApiKey')?.value?.trim();
+  return key ? 'https://customer-api.open-meteo.com' : 'https://api.open-meteo.com';
+}
+function openMeteoKeyParam(){
+  const key = document.getElementById('sOpenMeteoApiKey')?.value?.trim();
+  return key ? `&apikey=${encodeURIComponent(key)}` : '';
+}
+function trackOpenMeteoCall(){
+  const today = new Date().toISOString().slice(0,10);
+  if(openMeteoCallLog.date !== today) openMeteoCallLog = {date: today, count: 0};
+  openMeteoCallLog.count++;
+  const el = document.getElementById('openMeteoCallCounter');
+  if(!el) return;
+  const hasKey = document.getElementById('sOpenMeteoApiKey')?.value?.trim();
+  el.textContent = hasKey
+    ? `Open-Meteo calls today: ${openMeteoCallLog.count} (commercial key active, no daily limit)`
+    : `Open-Meteo calls today: ${openMeteoCallLog.count}`;
+}
 // Referenced by applyFlightDataBoxSnap(), which repositionModeToggle()
 // calls - and repositionModeToggle() is invoked from several places
 // during boot, well before this variable's old declaration point further
@@ -3641,7 +3682,7 @@ async function checkRainNearbyForLightningPrompt(){
     const ringPts = generateGridPoints(state.lat, state.lon, 300000, 8).slice(1, 6); // 5 points, not the full ring - this is a background safety check, not the main forecast, so a coarser sample is an acceptable trade-off against Open-Meteo's daily quota
     const latStr = ringPts.map(p=>p[0].toFixed(2)).join(',');
     const lonStr = ringPts.map(p=>p[1].toFixed(2)).join(',');
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&current=precipitation&timezone=UTC`);
+    const r = await fetch(`${openMeteoBase()}/v1/forecast?latitude=${latStr}&longitude=${lonStr}&current=precipitation&timezone=UTC${openMeteoKeyParam()}`);
     const j = await r.json();
     const list = Array.isArray(j) ? j : [j];
     const rainFound = list.some(entry=>entry.current && entry.current.precipitation!=null && entry.current.precipitation>0.1);
@@ -5365,7 +5406,7 @@ function startGPS(){
     console.log('Ground elevation refresh check:', {
       'state.groundElevFetchedAt': state.groundElevFetchedAt,
       'distance from that point (m)': distFromLastElevFetch,
-      'will refresh now': !state.groundElevFetchedAt || distFromLastElevFetch > 500
+      'will refresh now': !state.groundElevFetchedAt || distFromLastElevFetch > 1000
     });
     // The map itself previously only ever centred once, at boot, on
     // whatever default position state started with (Zürich) - there was
@@ -5376,7 +5417,11 @@ function startGPS(){
     if(!hasHadRealGpsFix){
       map.setView([pos.coords.latitude, pos.coords.longitude], 13);
     }
-    if(!hasHadRealGpsFix || !state.groundElevFetchedAt || distFromLastElevFetch > 500){
+    // Debounce widened from 500m to 1000m - part of a broader push to stay
+    // well clear of Open-Meteo's free-tier daily call quota (10'000/day)
+    // for genuinely 24/7 operation, since AGL doesn't need metre-perfect
+    // freshness at every single GPS tick.
+    if(!hasHadRealGpsFix || !state.groundElevFetchedAt || distFromLastElevFetch > 1000){
       hasHadRealGpsFix = true;
       fetchGroundElevation().then(()=>console.log('Ground elevation refreshed. New state.groundElev:', state.groundElev));
     }
@@ -5734,7 +5779,8 @@ async function checkLandingTerrain(lat, lon){
     }
     const latsStr = points.map(p=>p.lat.toFixed(6)).join(',');
     const lonsStr = points.map(p=>p.lon.toFixed(6)).join(',');
-    const elevPromise = fetch(`https://api.open-meteo.com/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}`).then(r=>r.json());
+    trackOpenMeteoCall();
+    const elevPromise = fetch(`${openMeteoBase()}/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}${openMeteoKeyParam()}`).then(r=>r.json());
     const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];area.a[landuse=meadow];area.a[landuse=farmland];area.a[landuse=orchard];area.a[landuse=vineyard];area.a[landuse=residential];area.a[landuse=industrial];area.a[landuse=forest];area.a[natural=wood];area.a[natural=grassland];area.a[natural=scrub];area.a[natural=wetland];area.a[landuse=farmyard];way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 25;`;
     const [elevJson, obsData] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
     const elevations = elevJson.elevation || [];
@@ -5791,7 +5837,8 @@ async function fetchGroundElevation(){
   const myRequestId = ++fetchGroundElevRequestId;
   try{
     console.log('fetchGroundElevation: requesting for', state.lat, state.lon);
-    const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${state.lat}&longitude=${state.lon}`);
+    trackOpenMeteoCall();
+    const r = await fetch(`${openMeteoBase()}/v1/elevation?latitude=${state.lat}&longitude=${state.lon}${openMeteoKeyParam()}`);
     const j = await r.json();
     if(myRequestId !== fetchGroundElevRequestId){
       console.log('fetchGroundElevation: discarding stale response (a newer request has since started)');
@@ -5855,7 +5902,7 @@ async function fetchWindProfileAtLocation(lat, lon, hourIdx){
   const resolvedModel = (modelSel==='auto' || !isModelValidForLocation(modelSel, lat, lon)) ? pickAutoModel(lat, lon) : modelSel;
   const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa,temperature_${p}hPa`).join(',');
   const forecastHours = Math.max(hourIdx+1, 3);
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${forecastHours}&timezone=UTC`;
+  const url = `${openMeteoBase()}/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=${forecastHours}&timezone=UTC${openMeteoKeyParam()}`;
   const r = await fetch(url);
   const j = await r.json();
   const h = j.hourly;
@@ -5892,12 +5939,84 @@ function updateCapeDisplay(){
 // to occasionally take the whole wind fetch down with it. This can fail
 // on its own without affecting anything else.
 async function fetchCapeOnly(resolvedModel){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=cape&models=${resolvedModel}&forecast_hours=12&timezone=UTC`;
+  const url = `${openMeteoBase()}/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=cape&models=${resolvedModel}&forecast_hours=12&timezone=UTC${openMeteoKeyParam()}`;
+  trackOpenMeteoCall();
   const r = await fetch(url);
   const j = await r.json();
   if(j.error || !j.hourly){ state.capeByHour = []; updateCapeDisplay(); return; }
   state.capeByHour = j.hourly.cape || [];
   updateCapeDisplay();
+}
+// Same pattern as fetchCapeOnly - not every model supports wind_gusts_10m
+// (e.g. JMA doesn't), so this stays a fully separate request rather than
+// being folded into the main wind fetch, where a single unsupported
+// variable previously broke the whole thing.
+async function fetchGustsOnly(resolvedModel){
+  const url = `${openMeteoBase()}/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=wind_gusts_10m&models=${resolvedModel}&forecast_hours=12&timezone=UTC${openMeteoKeyParam()}`;
+  trackOpenMeteoCall();
+  const r = await fetch(url);
+  const j = await r.json();
+  if(j.error || !j.hourly){ state.windGustsByHour = []; return; }
+  state.windGustsByHour = (j.hourly.wind_gusts_10m || []).map(v=>v!=null? v/3.6 : null); // km/h -> m/s, matching the app's other wind units
+}
+// Ensemble equivalents of the app's own auto-picked models - same
+// DACH/Europe/global coverage logic, just the perturbed-member versions
+// instead of the single deterministic run.
+const ENSEMBLE_MODEL_MAP = {icon_d2:'icon_d2_eps', icon_eu:'icon_eu_eps', gfs_global:'ncep_gefs025', ecmwf_ifs04:'ecmwf_ifs025_ensemble', best_match:'icon_seamless_eps'};
+// Reduced pressure-level set for the ensemble fetch specifically (8 vs the
+// main fetch's 19) - this request's size multiplies by member count (~20-40
+// members), so keeping only levels covering a typical gas balloon's actual
+// operating range (up to ~7km) keeps it from becoming enormous.
+const ENSEMBLE_PRESSURE_LEVELS = [1000,925,850,800,700,600,500,400];
+async function fetchEnsembleWind(resolvedModel){
+  const ensembleModel = ENSEMBLE_MODEL_MAP[resolvedModel];
+  if(!ensembleModel){ state.ensembleWindProfilesByHour = null; return; }
+  try{
+    const vars = ENSEMBLE_PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
+    const url = `https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${state.lat}&longitude=${state.lon}&hourly=${vars}&models=${ensembleModel}&forecast_hours=12&timezone=UTC${openMeteoKeyParam()}`;
+    trackOpenMeteoCall();
+    const r = await fetch(url);
+    const j = await r.json();
+    if(j.error || !j.hourly){ state.ensembleWindProfilesByHour = null; return; }
+    const h = j.hourly;
+    // Discover how many members actually came back by scanning for the
+    // highest _memberN suffix on any returned key, rather than assuming a
+    // fixed count - this varies by model (ICON-D2-EPS ~20, ICON-EU-EPS
+    // ~40, GEFS ~30).
+    let maxMember = -1;
+    Object.keys(h).forEach(k=>{
+      const m = k.match(/_member(\d+)$/);
+      if(m) maxMember = Math.max(maxMember, parseInt(m[1]));
+    });
+    if(maxMember < 0){ state.ensembleWindProfilesByHour = null; return; }
+    const nHours = (h.time||[]).length || 12;
+    // Structure: [memberIdx][hourIdx] -> profile array (same shape as the
+    // regular windProfilesByHour[hourIdx], so windAt() can reuse the same
+    // interpolation logic once given a specific member's profile).
+    const members = [];
+    for(let m=0; m<=maxMember; m++){
+      const perHour = [];
+      for(let hourIdx=0; hourIdx<nHours; hourIdx++){
+        const profile = ENSEMBLE_PRESSURE_LEVELS.map(p=>{
+          const spdArr = h[`wind_speed_${p}hPa_member${m}`], dirArr = h[`wind_direction_${p}hPa_member${m}`];
+          const spd = spdArr ? spdArr[hourIdx] : null;
+          const dir = dirArr ? dirArr[hourIdx] : null;
+          return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
+        }).filter(p=>p.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
+        perHour.push(profile);
+      }
+      members.push(perHour);
+    }
+    state.ensembleWindProfilesByHour = members;
+    console.log(`Ensemble wind: ${members.length} members loaded for ${ensembleModel}`);
+    const statusEl = document.getElementById('ensembleStatusText');
+    if(statusEl) statusEl.textContent = `Landing area scatter: real ensemble (${members.length} members, ${ensembleModel})`;
+  }catch(e){
+    console.warn('Ensemble wind fetch failed (falling back to heuristic scatter):', e);
+    state.ensembleWindProfilesByHour = null;
+    const statusEl = document.getElementById('ensembleStatusText');
+    if(statusEl) statusEl.textContent = 'Landing area scatter: heuristic (ensemble fetch failed)';
+  }
 }
 async function fetchWind(force){
   const myRequestId = ++fetchWindRequestId;
@@ -5922,7 +6041,8 @@ async function fetchWind(force){
     // fetch entangled with CAPE's own success/failure in ways that kept
     // causing "error (see console)" to show up. Full separation means
     // nothing about CAPE can ever break wind data again.
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC`;
+    const url = `${openMeteoBase()}/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=${windVars}&models=${resolvedModel}&forecast_hours=${FORECAST_HOURS}&timezone=UTC${openMeteoKeyParam()}`;
+    trackOpenMeteoCall();
     const r = await fetch(url);
     const j = await r.json();
     if(myRequestId !== fetchWindRequestId) return; // a newer call has since started - this result is stale, don't touch the UI
@@ -5962,7 +6082,25 @@ async function fetchWind(force){
     // failing silently (just logged) if this specific model/location
     // doesn't support it, since CAPE is a nice-to-have display, not
     // something the rest of the app depends on.
-    fetchCapeOnly(resolvedModel).catch(e=>console.warn('CAPE fetch failed (non-critical, wind data unaffected):', e));
+    // Only every 3rd successful wind refresh, not every single one - CAPE
+    // doesn't change nearly as fast as wind does, and this meaningfully
+    // cuts the daily Open-Meteo call count for genuine 24/7 operation
+    // (that API's free tier is capped at 10'000 calls/day).
+    fetchWindSuccessCount++;
+    if(fetchWindSuccessCount % 3 === 1){
+      fetchCapeOnly(resolvedModel).catch(e=>console.warn('CAPE fetch failed (non-critical, wind data unaffected):', e));
+      fetchGustsOnly(resolvedModel).catch(e=>console.warn('Wind gusts fetch failed (non-critical, wind data unaffected):', e));
+      // The ensemble fetch is comparatively expensive (many members ×
+      // pressure levels) - only attempted with a commercial key set, to
+      // avoid burning through the free tier's daily quota on it.
+      if(openMeteoKeyParam()){
+        fetchEnsembleWind(resolvedModel).catch(e=>console.warn('Ensemble wind fetch failed (falling back to heuristic scatter):', e));
+      } else {
+        state.ensembleWindProfilesByHour = null;
+        const statusEl = document.getElementById('ensembleStatusText');
+        if(statusEl) statusEl.textContent = 'Landing area scatter: heuristic (add a commercial API key for real ensemble data)';
+      }
+    }
   }catch(e){
     if(myRequestId !== fetchWindRequestId) return; // superseded by a newer call - let that one's own outcome (success or failure) be what's shown instead
     console.error('fetchWind failed:', e);
@@ -5995,8 +6133,27 @@ function getActiveWindProfile(hourIdx){
   const profiles = state.windProfilesByHour;
   return (hourIdx!=null && profiles && profiles.length) ? profiles[Math.max(0,Math.min(profiles.length-1, hourIdx))] : state.windProfile;
 }
-function windAt(altM, dirBiasDeg, speedScale, hourIdx){
-  const p = getActiveWindProfile(hourIdx);
+function windAt(altM, dirBiasDeg, speedScale, hourIdx, memberIdx){
+  let p;
+  if(memberIdx!=null && state.ensembleWindProfilesByHour && state.ensembleWindProfilesByHour[memberIdx]){
+    // Real ensemble member profile - its own deviation from the base
+    // forecast already represents genuine model uncertainty, so no
+    // artificial dirBias/speedScale is applied on top of it.
+    const memberHours = state.ensembleWindProfilesByHour[memberIdx];
+    p = memberHours[Math.min(hourIdx, memberHours.length-1)];
+    if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};
+    if(altM<=p[0].alt_m) return toUV(p[0], 0, 1);
+    if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1], 0, 1);
+    for(let i=0;i<p.length-1;i++){
+      if(altM>=p[i].alt_m && altM<=p[i+1].alt_m){
+        const f=(altM-p[i].alt_m)/(p[i+1].alt_m-p[i].alt_m);
+        const a=toUV(p[i], 0, 1), b=toUV(p[i+1], 0, 1);
+        return {u:a.u+(b.u-a.u)*f, v:a.v+(b.v-a.v)*f};
+      }
+    }
+    return toUV(p[p.length-1], 0, 1);
+  }
+  p = getActiveWindProfile(hourIdx);
   if(!p || p.length===0) return {u:0,v:0,speed_ms:0,dir_deg:0};
   if(altM<=p[0].alt_m) return toUV(p[0], dirBiasDeg, speedScale);
   if(altM>=p[p.length-1].alt_m) return toUV(p[p.length-1], dirBiasDeg, speedScale);
@@ -6014,6 +6171,16 @@ function toUV(pt, dirBiasDeg, speedScale){ // meteorological dir (from) -> u/v v
   const spd = pt.speed_ms * (speedScale||1);
   const rad=(dir+180)*Math.PI/180;
   return {u: spd*Math.sin(rad), v: spd*Math.cos(rad)};
+}
+// Cycles through the real ensemble members (if fetched) rather than
+// picking one at random each time, so a full Monte-Carlo run of N samples
+// uses each available member roughly equally often - returns null if no
+// ensemble data is available, signalling the caller to fall back to the
+// artificial dirBias/speedScale heuristic instead.
+function pickEnsembleMember(sampleIdx){
+  const members = state.ensembleWindProfilesByHour;
+  if(!members || !members.length) return null;
+  return sampleIdx % members.length;
 }
 setInterval(()=>{
   if(state.modelRunAge){
@@ -6164,7 +6331,7 @@ function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1M
 }
 
 // ---------- Monte-Carlo landing footprint ----------
-function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride, startOverride, debugWindProgression){
+function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride, startOverride, debugWindProgression, memberIdx){
   // Phase 0: continue toward the descent-initiation point. For the first
   // few minutes we're still extrapolating the OBSERVED GPS course/speed
   // (the most reliable data we have for what's happening right now), but for
@@ -6204,7 +6371,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   while(t<initDelayS){
     const step=Math.min(dt, initDelayS-t);
     const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
     if(debugWindProgression && hourIdxAtT!==lastLoggedHourIdx){
       const p = getActiveWindProfile(hourIdxAtT);
       console.log(`Wind progression: hour ${hourIdxAtT} (t=${(t/60).toFixed(0)}min) - profile has ${p?p.length:0} levels, wind at cruise alt ${alt.toFixed(0)}m: ${Math.hypot(w.u,w.v).toFixed(1)} m/s, source profile length available: ${(state.windProfilesByHour||[]).length} hours total`);
@@ -6242,7 +6409,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
     const targetRate = effRate2 + (effRate1-effRate2)*decelFactor;
     const instantRate = targetRate*accelFactor;
     const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-instantRate*step); t+=step;
     path.push({lat,lon,alt,t});
@@ -6250,7 +6417,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   while(alt>state.groundElev){
     const step=dt;
     const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT);
+    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(state.groundElev, alt-effRate2*step); t+=step;
     path.push({lat,lon,alt,t});
@@ -6338,9 +6505,13 @@ function doRecompute(){
     const windDirUncertaintyDeg = Math.min(35, 5 + ageH*2.5);
     const windSpeedUncertaintyFrac = Math.min(0.35, 0.05 + ageH*0.02);
     for(let i=0;i<N;i++){
-      const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
-      const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
-      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale);
+      const memberIdx = pickEnsembleMember(i);
+      // With a real ensemble member, its own profile already represents a
+      // genuine alternate forecast - no artificial bias/scale layered on
+      // top of it. Without one, falls back to the heuristic as before.
+      const dirBias = memberIdx!=null ? 0 : (Math.random()*2-1)*windDirUncertaintyDeg;
+      const speedScale = memberIdx!=null ? 1 : 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
+      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initDelayMin*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, null, null, false, memberIdx);
       const last=path[path.length-1];
       endpoints.push([last.lon,last.lat]);
     }
@@ -6419,7 +6590,7 @@ function doRecompute(){
   }
   if(liveLandingCenterMarker){
     const ll = liveLandingCenterMarker.getLatLng();
-    if(!terrainCheckFetchedAt || haversine(terrainCheckFetchedAt.lat, terrainCheckFetchedAt.lon, ll.lat, ll.lng) > 200){
+    if(!terrainCheckFetchedAt || haversine(terrainCheckFetchedAt.lat, terrainCheckFetchedAt.lon, ll.lat, ll.lng) > 500){
       terrainCheckFetchedAt = {lat: ll.lat, lon: ll.lng};
       checkLandingTerrain(ll.lat, ll.lng).then(updateLandingTerrainDisplay);
     }
@@ -6492,7 +6663,7 @@ function updateLandingPositionCard(){
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360; // meteorological "from" direction
-  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h`;
+  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h${state.windGustsByHour && state.windGustsByHour[hourIdx]!=null ? ` (gusts ${(state.windGustsByHour[hourIdx]*3.6).toFixed(0)}km/h)` : ''}`;
   document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
 
   // Trend arrow: compare the speed at the landing hour against 1h earlier,
@@ -6532,7 +6703,7 @@ async function fetchLandingPositionDetails(lat, lon){
   try{
     const [geoR, elevR] = await Promise.all([
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
-      fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`)
+      fetch(`${openMeteoBase()}/v1/elevation?latitude=${lat}&longitude=${lon}${openMeteoKeyParam()}`)
     ]);
     // This is a LIVE (monitor-mode) lookup - if the app switched to Plan
     // Descent while this was in flight, its result is now stale and must
@@ -6738,7 +6909,7 @@ async function checkTerrainClearance(path, signal){
   if(!samples.length) return null;
   const lats = samples.map(p=>p.lat.toFixed(5)).join(',');
   const lons = samples.map(p=>p.lon.toFixed(5)).join(',');
-  const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`, {signal});
+  const r = await fetch(`${openMeteoBase()}/v1/elevation?latitude=${lats}&longitude=${lons}${openMeteoKeyParam()}`, {signal});
   const j = await r.json();
   if(!j.elevation) return null;
   let worst = null;
@@ -6920,7 +7091,7 @@ async function fetchWindGridForViewport(){
     const varsList = PRESSURE_LEVELS.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
     const latStr = points.map(p=>p.lat.toFixed(3)).join(',');
     const lonStr = points.map(p=>p.lon.toFixed(3)).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latStr}&longitude=${lonStr}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=6&timezone=UTC`;
+    const url = `${openMeteoBase()}/v1/forecast?latitude=${latStr}&longitude=${lonStr}&hourly=${varsList}&models=${resolvedModel}&forecast_hours=6&timezone=UTC${openMeteoKeyParam()}`;
     const r = await fetch(url);
     const j = await r.json();
     const results = Array.isArray(j) ? j : [j]; // Open-Meteo returns a plain object (not array) for a single point
@@ -7466,9 +7637,10 @@ async function planDescentToTarget(lat, lon){
   const N = 40;
   const endpoints = [];
   for(let i=0;i<N;i++){
-    const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
-    const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
-    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale);
+    const memberIdx = pickEnsembleMember(i);
+    const dirBias = memberIdx!=null ? 0 : (Math.random()*2-1)*windDirUncertaintyDeg;
+    const speedScale = memberIdx!=null ? 1 : 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, best*60, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, null, null, false, memberIdx);
     const last = path[path.length-1];
     endpoints.push([last.lon, last.lat]);
   }
@@ -7626,9 +7798,10 @@ async function recomputeFromManualDescentPoint(lat, lon, snappedT){
   const N = 40;
   const endpoints = [];
   for(let i=0;i<N;i++){
-    const dirBias = (Math.random()*2-1)*windDirUncertaintyDeg;
-    const speedScale = 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
-    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initSec, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, arrivalHourIdx, startOverride);
+    const memberIdx = pickEnsembleMember(i);
+    const dirBias = memberIdx!=null ? 0 : (Math.random()*2-1)*windDirUncertaintyDeg;
+    const speedScale = memberIdx!=null ? 1 : 1 + (Math.random()*2-1)*windSpeedUncertaintyFrac;
+    const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initSec, rate1, interceptAGL, rate2, scatter, false, dirBias, speedScale, arrivalHourIdx, startOverride, false, memberIdx);
     const last = path[path.length-1];
     endpoints.push([last.lon, last.lat]);
   }
@@ -7679,7 +7852,7 @@ async function updateStagedLandingPositionCard(cLat, cLon, hourIdx){
   try{
     const [geoR, elevR] = await Promise.all([
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${cLat}&lon=${cLon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
-      fetch(`https://api.open-meteo.com/v1/elevation?latitude=${cLat}&longitude=${cLon}`)
+      fetch(`${openMeteoBase()}/v1/elevation?latitude=${cLat}&longitude=${cLon}${openMeteoKeyParam()}`)
     ]);
     if(currentSubMode!=='staged') return; // switched away while these were in flight
     const geoJ = await geoR.json();
@@ -7705,7 +7878,7 @@ async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
   try{
     const [geoR, elevR] = await Promise.all([
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${cLat}&lon=${cLon}&zoom=12&format=json`,{headers:{'Accept-Language':'en'}}),
-      fetch(`https://api.open-meteo.com/v1/elevation?latitude=${cLat}&longitude=${cLon}`)
+      fetch(`${openMeteoBase()}/v1/elevation?latitude=${cLat}&longitude=${cLon}${openMeteoKeyParam()}`)
     ]);
     if(!(state.appMode==='plan' && state.plannedLandingActive)) return; // mode changed while these were in flight
     const geoJ = await geoR.json();
@@ -9329,7 +9502,7 @@ document.addEventListener('click', function primeWakeLockVideo(){
 requestWakeLock();
 
 // ---------- save / restore configuration ----------
-const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret','sTransitionAlt'];
+const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRadius','sBalloonVolume','sBalloonMass','sAdiaVariance','wxModelSelect','altUnitSelect','wxRefreshInterval','sMinStageSeparation','sMaxIntermediateStages','sStagedTotalTime','sStagedRate','sOpenMeteoApiKey','sAdsbApiKey','sAdsbAbove','sAprsApiKey','sAprsCallsigns','sLightningRadius','sXweatherClientId','sXweatherClientSecret','sTransitionAlt'];
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 // ---------- profile export/import (all settings, keys, emergency contact

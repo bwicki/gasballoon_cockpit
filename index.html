@@ -1342,7 +1342,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.07-1030';
+const APP_VERSION = 'v260811.08-2040';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -7400,6 +7400,18 @@ startGroundWindLayer();
   [flightChartsBtn, dayNightBtn, captureWrap, logbookWrap, settingsWrap, testModeBtn].forEach(el=>{
     if(el){ el.style.width='100%'; menu.appendChild(el); }
   });
+  // Always last in the menu, regardless of what else is (or isn't) above
+  // it - opens the current README as a PDF in its own tab/window, kept in
+  // sync with the app's own version manually whenever the README changes.
+  const aboutLink = document.createElement('a');
+  aboutLink.href = 'README.pdf';
+  aboutLink.target = '_blank';
+  aboutLink.rel = 'noopener';
+  aboutLink.className = 'iconbtn';
+  aboutLink.style.width = '100%';
+  aboutLink.style.textDecoration = 'none';
+  aboutLink.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> About - Read first!';
+  menu.appendChild(aboutLink);
   document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{
     e.stopPropagation();
     const willOpen = menu.style.display==='none' || !menu.style.display;

@@ -217,12 +217,12 @@ body.day #map{background:#dfe6ea;}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:-10px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
-.wedge-slider{position:absolute;bottom:-7px;left:0;width:100%;height:14px;margin:0;-webkit-appearance:none;appearance:none;background:transparent !important;}
-.wedge-slider::-webkit-slider-runnable-track{height:14px;background:transparent !important;border:none !important;box-shadow:none !important;}
-.wedge-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--text);margin-top:0;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;}
-.wedge-slider::-moz-range-track{height:14px;background:transparent !important;border:none !important;}
+.wedge-slider{position:absolute;bottom:-9px;left:0;width:100%;height:18px;margin:0;-webkit-appearance:none;appearance:none;background:transparent !important;}
+.wedge-slider::-webkit-slider-runnable-track{height:18px;background:transparent !important;border:none !important;box-shadow:none !important;}
+.wedge-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:0;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;}
+.wedge-slider::-moz-range-track{height:18px;background:transparent !important;border:none !important;}
 .wedge-slider::-moz-range-progress{background:transparent !important;}
-.wedge-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;}
+.wedge-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;}
 input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
@@ -345,6 +345,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div style="display:flex;align-items:center;gap:4px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         <b id="wxModelName" style="font-size:12px;">Loading…</b>
+        <span id="ensembleModeBadge" style="display:none;align-items:center;justify-content:center;width:13px;height:13px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;" title="">—</span>
       </div>
       <div style="display:flex;align-items:center;gap:2px;color:var(--muted);font-size:9px;white-space:nowrap;">
         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 4v13M7 12l5 5 5-5"/></svg>
@@ -1021,10 +1022,13 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div class="datacell"><label data-i18n="fieldApproxAltitude">Approx Altitude</label><div class="val small" id="landingPosAlt" style="font-weight:400;">—</div></div>
             <div class="datacell">
               <label data-i18n="fieldGroundWind">Ground Wind</label>
-              <div class="val small" id="landingGroundWind" style="display:flex;align-items:center;gap:3px;overflow:visible;font-weight:400;">
-                <svg id="landingWindArrow" width="15" height="15" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
-                <span id="landingWindText" style="flex-shrink:0;font-size:12px;">—</span>
-                <span id="landingWindTrend" style="font-size:12px;flex-shrink:0;" title="Trend vs. 1h earlier"></span>
+              <div class="val small" id="landingGroundWind" style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;overflow:visible;font-weight:400;">
+                <div style="display:flex;align-items:center;gap:3px;">
+                  <svg id="landingWindArrow" width="15" height="15" viewBox="0 0 24 24" style="transform:rotate(0deg);flex-shrink:0;"><path d="M12 2 L18 22 L12 17 L6 22 Z" fill="#00e5c8"/></svg>
+                  <span id="landingWindText" style="flex-shrink:0;font-size:12px;">—</span>
+                  <span id="landingWindTrend" style="font-size:12px;flex-shrink:0;" title="Trend vs. 1h earlier"></span>
+                </div>
+                <div id="landingWindGustsText" style="font-size:10.5px;color:var(--muted);">—</div>
               </div>
             </div>
             <div class="datacell wide" id="landingSunCell" style="display:none;">
@@ -1111,11 +1115,19 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;gap:10px;">
             <div id="sStagedTotalTimeRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;">Max descent time <b id="lblStagedTotalTime">60 min</b></div>
-              <input type="range" id="sStagedTotalTime" min="15" max="180" step="5" value="60" style="width:100%;">
+              <div style="position:relative;height:18px;">
+                <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);"></div>
+                <div id="sStagedTotalTimeFillBar" style="position:absolute;bottom:0;left:0;width:27.3%;height:2px;background:#8b98a5;"></div>
+                <input type="range" id="sStagedTotalTime" class="wedge-slider" min="15" max="180" step="5" value="60">
+              </div>
             </div>
             <div id="sStagedRateRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;">Inter-stage rate <b id="lblStagedRate">1.5 m/s</b></div>
-              <input type="range" id="sStagedRate" min="0.5" max="4" step="0.1" value="1.5" style="width:100%;">
+              <div style="position:relative;height:18px;">
+                <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);"></div>
+                <div id="sStagedRateFillBar" style="position:absolute;bottom:0;left:0;width:28.6%;height:2px;background:#8b98a5;"></div>
+                <input type="range" id="sStagedRate" class="wedge-slider" min="0.5" max="4" step="0.1" value="1.5">
+              </div>
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
@@ -1323,7 +1335,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260810.11-2200';
+const APP_VERSION = 'v260810.14-2320';
 const APP_DATE = '10.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -4525,18 +4537,32 @@ function scheduleStagedChartOnlyUpdate(){
     showStagedDescentPlan(result);
   }, 200);
 }
+function updateStagedTotalTimeFillBar(){
+  const el = document.getElementById('sStagedTotalTime');
+  const frac = (parseFloat(el.value)-parseFloat(el.min))/(parseFloat(el.max)-parseFloat(el.min));
+  document.getElementById('sStagedTotalTimeFillBar').style.width = (frac*100)+'%';
+}
+function updateStagedRateFillBar(){
+  const el = document.getElementById('sStagedRate');
+  const frac = (parseFloat(el.value)-parseFloat(el.min))/(parseFloat(el.max)-parseFloat(el.min));
+  document.getElementById('sStagedRateFillBar').style.width = (frac*100)+'%';
+}
 document.getElementById('sStagedTotalTime').addEventListener('input', e=>{
   stagedTotalTimeMin = parseInt(e.target.value);
   document.getElementById('lblStagedTotalTime').textContent = stagedTotalTimeMin+' min';
+  updateStagedTotalTimeFillBar();
   scheduleStagedAreaRecompute();
   scheduleStagedChartOnlyUpdate();
 });
 document.getElementById('sStagedRate').addEventListener('input', e=>{
   stagedDescentRateMs = parseFloat(e.target.value);
   document.getElementById('lblStagedRate').textContent = stagedDescentRateMs.toFixed(1)+' m/s';
+  updateStagedRateFillBar();
   scheduleStagedAreaRecompute();
   scheduleStagedChartOnlyUpdate();
 });
+updateStagedTotalTimeFillBar();
+updateStagedRateFillBar();
 let maxIntermediateStages = 2;
 document.getElementById('sMaxIntermediateStages').addEventListener('input', e=>{
   const v = parseInt(e.target.value);
@@ -5760,6 +5786,37 @@ async function fetchNearestTownForCurrentPosition(){
 // nearby - "is the immediate area flat and clear" rather than "here is
 // the exact obstacle clearance angle".
 let terrainCheckFetchedAt = null; // {lat, lon} - debounces re-checking on every recompute
+// Runs independently of which main function/submode is active, unlike the
+// old logic (buried inside updateLandingPositionCard(), which returns
+// early in Quick Descent's own planned-view branch) - the terrain-check
+// cell is meant to be permanently present and always reflect whichever
+// black landing-point cross is currently the relevant one for the active
+// function, not just Function 1's own live prediction.
+function getActiveLandingCenterMarker(){
+  if(state.appMode==='plan'){
+    if(currentSubMode==='staged' && stagedLandingCenterMarker){
+      const ll = stagedLandingCenterMarker.getLatLng();
+      if(ll && (ll.lat!==0 || ll.lng!==0)) return stagedLandingCenterMarker;
+    }
+    if(state.plannedLandingActive && plannedLandingCenterMarker) return plannedLandingCenterMarker;
+    return null;
+  }
+  return liveLandingCenterMarker || null;
+}
+function updateTerrainCheckForActiveMarker(){
+  const marker = getActiveLandingCenterMarker();
+  if(!marker){
+    document.getElementById('landingTerrainCell').style.display = 'none';
+    terrainCheckFetchedAt = null; // so switching back to an active marker later triggers a fresh check immediately, not a stale debounce
+    return;
+  }
+  const ll = marker.getLatLng();
+  if(!terrainCheckFetchedAt || haversine(terrainCheckFetchedAt.lat, terrainCheckFetchedAt.lon, ll.lat, ll.lng) > 500){
+    terrainCheckFetchedAt = {lat: ll.lat, lon: ll.lng};
+    checkLandingTerrain(ll.lat, ll.lng).then(updateLandingTerrainDisplay);
+  }
+}
+setInterval(updateTerrainCheckForActiveMarker, 3000); // frequent enough to pick up a newly-set marker promptly, well above the 500m debounce inside it so this itself is cheap
 async function checkLandingTerrain(lat, lon){
   const RADIUS_M = 150;
   try{
@@ -6182,6 +6239,25 @@ function pickEnsembleMember(sampleIdx){
   if(!members || !members.length) return null;
   return sampleIdx % members.length;
 }
+// Small badge next to the model name in the header chip, showing at a
+// glance whether landing-area scatter currently draws on real ensemble
+// members ("E", green) or the artificial age-based heuristic ("H", gray).
+function updateEnsembleModeBadge(){
+  const badge = document.getElementById('ensembleModeBadge');
+  if(!badge) return;
+  const members = state.ensembleWindProfilesByHour;
+  if(members && members.length){
+    badge.textContent = 'E';
+    badge.style.background = '#1D9E75';
+    badge.title = `Landing area scatter uses ${members.length} real ensemble members`;
+  } else {
+    badge.textContent = 'H';
+    badge.style.background = '#8b98a5';
+    badge.title = 'Landing area scatter uses the age-based heuristic (no ensemble data)';
+  }
+  badge.style.display = 'inline-flex';
+}
+setInterval(updateEnsembleModeBadge, 3000);
 setInterval(()=>{
   if(state.modelRunAge){
     const ageMin = Math.round((Date.now()-state.modelRunAge.getTime())/60000);
@@ -6588,16 +6664,9 @@ function doRecompute(){
   } else {
     document.getElementById('landingSunCell').style.display = 'none';
   }
-  if(liveLandingCenterMarker){
-    const ll = liveLandingCenterMarker.getLatLng();
-    if(!terrainCheckFetchedAt || haversine(terrainCheckFetchedAt.lat, terrainCheckFetchedAt.lon, ll.lat, ll.lng) > 500){
-      terrainCheckFetchedAt = {lat: ll.lat, lon: ll.lng};
-      checkLandingTerrain(ll.lat, ll.lng).then(updateLandingTerrainDisplay);
-    }
-  } else {
-    document.getElementById('landingTerrainCell').style.display = 'none';
-    terrainCheckFetchedAt = null;
-  }
+  // Terrain-check display itself is fully handled by
+  // updateTerrainCheckForActiveMarker(), which runs independently of
+  // doRecompute()/appMode - nothing further needed here.
   // A separate, longer cruise-only path (out to 250min, just past the
   // "Initiate descent in" slider's own 240min max) kept fresh here purely
   // so the descent-point marker can be dragged forward past whatever the
@@ -6663,7 +6732,8 @@ function updateLandingPositionCard(){
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360; // meteorological "from" direction
-  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h${state.windGustsByHour && state.windGustsByHour[hourIdx]!=null ? ` (gusts ${(state.windGustsByHour[hourIdx]*3.6).toFixed(0)}km/h)` : ''}`;
+  document.getElementById('landingWindText').textContent = `${String(Math.round(dirFrom)%360).padStart(3,'0')}° ${speedKmh.toFixed(1)}km/h`;
+  document.getElementById('landingWindGustsText').textContent = (state.windGustsByHour && state.windGustsByHour[hourIdx]!=null) ? `gusts ${(state.windGustsByHour[hourIdx]*3.6).toFixed(0)}km/h` : '—';
   document.getElementById('landingWindArrow').style.transform = `rotate(${(dirFrom+180)%360}deg)`;
 
   // Trend arrow: compare the speed at the landing hour against 1h earlier,

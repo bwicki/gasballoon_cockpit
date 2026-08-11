@@ -1335,7 +1335,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.03-0900';
+const APP_VERSION = 'v260811.04-0930';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -2372,6 +2372,54 @@ function fetchOverpassThrottled(query, signal){
   };
   const result = overpassQueue.then(run, run);
   overpassQueue = result.catch(()=>{});
+  return result;
+}
+// Fully independent copy of the throttling infrastructure above,
+// dedicated exclusively to the landing-point terrain check. It previously
+// shared the same queue and 45s cooldown as every other Overpass-using
+// feature in the app (nature reserves, airports, roads, place labels) -
+// any ONE of those failing (a real possibility, since some of those
+// queries cover a wide viewport and are far more prone to timing out)
+// would silently block terrain-check results for up to 45 seconds at a
+// time even though the terrain check itself was working fine, which is
+// very likely why it looked both unreliable and slow. The 2.5s minimum
+// interval is kept (a genuine server-side rate limit, not just an app
+// choice), but this lane can never be blocked by failures elsewhere.
+let terrainOverpassLastCallTime = 0;
+let terrainOverpassQueue = Promise.resolve();
+let terrainOverpassCooldownUntil = 0;
+let terrainOverpassMirrorIdx = 0;
+function fetchOverpassForTerrainCheck(query){
+  const run = async ()=>{
+    if(Date.now() < terrainOverpassCooldownUntil){
+      throw new Error('Terrain-check Overpass lane on cooldown after a recent failure - skipping this request.');
+    }
+    const wait = Math.max(0, terrainOverpassLastCallTime + OVERPASS_MIN_INTERVAL_MS - Date.now());
+    if(wait>0) await new Promise(res=>setTimeout(res, wait));
+    terrainOverpassLastCallTime = Date.now();
+    let lastErr = null;
+    for(let attempt=0; attempt<OVERPASS_MIRRORS.length; attempt++){
+      const url = OVERPASS_MIRRORS[(terrainOverpassMirrorIdx+attempt) % OVERPASS_MIRRORS.length];
+      try{
+        const r = await fetch(url, {method:'POST', body:'data='+encodeURIComponent(query)});
+        if(r.ok) return r;
+        if(r.status===429 || r.status>=500){
+          terrainOverpassMirrorIdx = (terrainOverpassMirrorIdx+attempt+1) % OVERPASS_MIRRORS.length;
+          lastErr = new Error('HTTP '+r.status);
+          continue;
+        }
+        return r;
+      }catch(networkErr){
+        lastErr = networkErr;
+        terrainOverpassMirrorIdx = (terrainOverpassMirrorIdx+attempt+1) % OVERPASS_MIRRORS.length;
+        continue;
+      }
+    }
+    terrainOverpassCooldownUntil = Date.now() + 15000; // shorter than the shared lane's 45s - this is a small, cheap query, worth retrying sooner
+    throw lastErr;
+  };
+  const result = terrainOverpassQueue.then(run, run);
+  terrainOverpassQueue = result.catch(()=>{});
   return result;
 }
 async function fetchNatureReserves(force){
@@ -5840,7 +5888,7 @@ async function checkLandingTerrain(lat, lon){
     // elements array in the JSON response - out is called twice, appending
     // to the same result set - so this is still a single HTTP request).
     const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;area.a[~"^(natural|landuse|waterway)$"~"."];out tags;way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon});out tags 10;`;
-    const [elevJson, obsResp] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
+    const [elevJson, obsResp] = await Promise.all([elevPromise, fetchOverpassForTerrainCheck(combinedQuery)]);
     if(!obsResp.ok){
       console.warn('Landing terrain check: Overpass HTTP error', obsResp.status, await obsResp.text().catch(()=>'(no body)'));
       return null;

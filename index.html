@@ -1074,11 +1074,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div class="cardbody">
           <div style="display:flex;gap:10px;">
             <div id="sInitRow" style="flex:1;">
-              <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit" style="color:#c8862f;">30 min</b></div>
+              <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit" style="color:#c8862f;">20 min</b></div>
               <div style="position:relative;height:18px;">
                 <div style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--border);"></div>
-                <div id="sInitFillBar" style="position:absolute;bottom:-1px;left:0;width:12.5%;height:2px;background:#8b98a5;"></div>
-                <input type="range" id="sInit" class="wedge-slider" min="0" max="240" step="1" value="30">
+                <div id="sInitFillBar" style="position:absolute;bottom:-1px;left:0;width:8.3%;height:2px;background:#8b98a5;"></div>
+                <input type="range" id="sInit" class="wedge-slider" min="0" max="240" step="10" value="20">
               </div>
               <div id="lblInitDist" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:10px;text-align:right;">0.00 km</div>
             </div>
@@ -1121,11 +1121,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div class="cardbody">
           <div style="display:flex;gap:10px;">
             <div id="sStagedTotalTimeRow" style="flex:1;">
-              <div style="font-size:11px;color:var(--text);margin-bottom:4px;">Max descent time <b id="lblStagedTotalTime">60 min</b></div>
+              <div style="font-size:11px;color:var(--text);margin-bottom:4px;">Max descent time <b id="lblStagedTotalTime">20 min</b></div>
               <div style="position:relative;height:18px;">
                 <div style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--border);"></div>
-                <div id="sStagedTotalTimeFillBar" style="position:absolute;bottom:-1px;left:0;width:27.3%;height:2px;background:#8b98a5;"></div>
-                <input type="range" id="sStagedTotalTime" class="wedge-slider" min="15" max="180" step="5" value="60">
+                <div id="sStagedTotalTimeFillBar" style="position:absolute;bottom:-1px;left:0;width:5.9%;height:2px;background:#8b98a5;"></div>
+                <input type="range" id="sStagedTotalTime" class="wedge-slider" min="10" max="180" step="10" value="20">
               </div>
             </div>
             <div id="sStagedRateRow" style="flex:1;">
@@ -1342,7 +1342,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.08-2040';
+const APP_VERSION = 'v260811.10-2120';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5847,6 +5847,28 @@ async function fetchNearestTownForCurrentPosition(){
 // nearby - "is the immediate area flat and clear" rather than "here is
 // the exact obstacle clearance angle".
 let terrainCheckFetchedAt = null; // {lat, lon} - debounces re-checking on every recompute
+// Keeps the live landing area (Function 1) visible on screen as its shape
+// and position shift in response to slider changes (Initiate descent in,
+// Descent rate, Intercept AGL, Rate below, Scatter) - only actually
+// touches the view if the polygon would otherwise fall partially or
+// fully outside the current visible bounds, not on every single
+// recompute, so panning/zooming the map manually isn't constantly
+// fought. Debounced so dragging a slider doesn't cause the map to jump
+// on every intermediate value - it settles shortly after the last change.
+let ensureLandingAreaVisibleTimer = null;
+function ensureLandingAreaVisible(){
+  clearTimeout(ensureLandingAreaVisibleTimer);
+  ensureLandingAreaVisibleTimer = setTimeout(()=>{
+    const hull = state.landingPolygon;
+    if(!hull || hull.length<2) return;
+    const latLngs = hull.map(p=>[p[1],p[0]]);
+    const polyBounds = L.latLngBounds(latLngs);
+    const mapBounds = map.getBounds();
+    if(!mapBounds.contains(polyBounds)){
+      map.fitBounds(polyBounds, {padding:[50,50], maxZoom:map.getZoom(), animate:true});
+    }
+  }, 500);
+}
 // Runs independently of which main function/submode is active, unlike the
 // old logic (buried inside updateLandingPositionCard(), which returns
 // early in Quick Descent's own planned-view branch) - the terrain-check
@@ -6665,6 +6687,7 @@ function doRecompute(){
     let hull = endpoints.length>=3 ? convexHull(endpoints) : endpoints;
     landingPolyLayer.setLatLngs(hull.map(p=>[p[1],p[0]]));
     state.landingPolygon = hull;
+    ensureLandingAreaVisible();
     // Centroid computed from the raw Monte-Carlo endpoints, NOT the hull's
     // own vertices - a convex hull's vertices sit on its outer boundary by
     // definition, so a simple vertex-average pulls the "centre" toward the

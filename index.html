@@ -1069,8 +1069,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div id="sInitRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;white-space:nowrap;"><span data-i18n="sliderInitiate">Initiate descent in</span> <b id="lblInit" style="color:#c8862f;">30 min</b></div>
               <div style="position:relative;height:18px;">
-                <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);"></div>
-                <div id="sInitFillBar" style="position:absolute;bottom:0;left:0;width:12.5%;height:2px;background:#8b98a5;"></div>
+                <div style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--border);"></div>
+                <div id="sInitFillBar" style="position:absolute;bottom:-1px;left:0;width:12.5%;height:2px;background:#8b98a5;"></div>
                 <input type="range" id="sInit" class="wedge-slider" min="0" max="240" step="1" value="30">
               </div>
               <div id="lblInitDist" style="font-size:8.5px;font-weight:400;color:var(--text);margin-top:10px;text-align:right;">0.00 km</div>
@@ -1116,16 +1116,16 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div id="sStagedTotalTimeRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;">Max descent time <b id="lblStagedTotalTime">60 min</b></div>
               <div style="position:relative;height:18px;">
-                <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);"></div>
-                <div id="sStagedTotalTimeFillBar" style="position:absolute;bottom:0;left:0;width:27.3%;height:2px;background:#8b98a5;"></div>
+                <div style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--border);"></div>
+                <div id="sStagedTotalTimeFillBar" style="position:absolute;bottom:-1px;left:0;width:27.3%;height:2px;background:#8b98a5;"></div>
                 <input type="range" id="sStagedTotalTime" class="wedge-slider" min="15" max="180" step="5" value="60">
               </div>
             </div>
             <div id="sStagedRateRow" style="flex:1;">
               <div style="font-size:11px;color:var(--text);margin-bottom:4px;">Inter-stage rate <b id="lblStagedRate">1.5 m/s</b></div>
               <div style="position:relative;height:18px;">
-                <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);"></div>
-                <div id="sStagedRateFillBar" style="position:absolute;bottom:0;left:0;width:28.6%;height:2px;background:#8b98a5;"></div>
+                <div style="position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--border);"></div>
+                <div id="sStagedRateFillBar" style="position:absolute;bottom:-1px;left:0;width:28.6%;height:2px;background:#8b98a5;"></div>
                 <input type="range" id="sStagedRate" class="wedge-slider" min="0.5" max="4" step="0.1" value="1.5">
               </div>
             </div>
@@ -1335,7 +1335,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.02-0840';
+const APP_VERSION = 'v260811.03-0900';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5820,15 +5820,6 @@ setInterval(updateTerrainCheckForActiveMarker, 3000); // frequent enough to pick
 async function checkLandingTerrain(lat, lon){
   const RADIUS_M = 150;
   try{
-    // Land cover / water check combined into the SAME Overpass call as the
-    // obstacle check below, rather than separate sequential requests -
-    // Overpass enforces a 2.5s minimum interval between calls, so extra
-    // sequential requests here would multiply the total latency and risk
-    // overlapping calls racing each other as the landing point keeps
-    // moving during a real flight, which was very likely why this cell
-    // stopped showing up reliably at one point. is_in() gives genuine
-    // polygon containment ("is this point IN a lake/meadow/field"), not
-    // just proximity the way the around() obstacle query below works.
     const points = [{lat, lon}];
     for(let i=0; i<8; i++){
       const [plat, plon] = destPoint(lat, lon, i*45, RADIUS_M);
@@ -5838,13 +5829,31 @@ async function checkLandingTerrain(lat, lon){
     const lonsStr = points.map(p=>p.lon.toFixed(6)).join(',');
     trackOpenMeteoCall();
     const elevPromise = fetch(`${openMeteoBase()}/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}${openMeteoKeyParam()}`).then(r=>r.json());
-    const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];area.a[landuse=meadow];area.a[landuse=farmland];area.a[landuse=orchard];area.a[landuse=vineyard];area.a[landuse=residential];area.a[landuse=industrial];area.a[landuse=forest];area.a[natural=wood];area.a[natural=grassland];area.a[natural=scrub];area.a[natural=wetland];area.a[landuse=farmyard];way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 25;`;
+    // Simplified from an earlier version that chained 15 separate
+    // area.a[key=value] statements plus 3 around() way queries inside one
+    // shared union block - that combination of point-containment (is_in)
+    // and proximity (around) queries mixed together was needlessly complex
+    // and a plausible source of a silent Overpass-side query error. Now:
+    // is_in()'s area result is filtered with a single regex covering all
+    // relevant land-cover keys at once, and the around() obstacle queries
+    // are kept as separate statements (both still combine into ONE
+    // elements array in the JSON response - out is called twice, appending
+    // to the same result set - so this is still a single HTTP request).
+    const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;area.a[~"^(natural|landuse|waterway)$"~"."];out tags;way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon});out tags 10;`;
     const [elevJson, obsResp] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
+    if(!obsResp.ok){
+      console.warn('Landing terrain check: Overpass HTTP error', obsResp.status, await obsResp.text().catch(()=>'(no body)'));
+      return null;
+    }
     const obsData = await obsResp.json();
+    if(obsData.remark || obsData.error){
+      console.warn('Landing terrain check: Overpass reported an error:', obsData.remark || obsData.error);
+    }
     const elevations = elevJson.elevation || [];
     const centerElev = elevations[0];
     const maxDiff = elevations.length>1 ? Math.max(...elevations.slice(1).map(e=>Math.abs(e-centerElev))) : 0;
     const elements = obsData.elements || [];
+    console.log(`Landing terrain check: ${elements.length} Overpass elements returned for (${lat.toFixed(5)}, ${lon.toFixed(5)})`, elements.map(e=>e.tags));
     const inWater = elements.some(e=>e.tags?.natural==='water' || e.tags?.waterway==='riverbank' || e.tags?.landuse==='reservoir');
     const hasBuildings = elements.some(e=>e.tags?.building);
     const hasForest = elements.some(e=>e.tags?.landuse==='forest' || e.tags?.natural==='wood');
@@ -5868,7 +5877,7 @@ async function checkLandingTerrain(lat, lon){
     else if(tagIn('landuse','industrial')) landCoverLabel = 'Industrial area';
     else if(inWater) landCoverLabel = 'Water';
     return {maxTerrainDiffM: maxDiff, hasBuildings, hasForest, inWater, landCoverLabel};
-  }catch(e){ console.warn('Landing terrain check failed:', e); return null; }
+  }catch(e){ console.error('Landing terrain check failed:', e); return null; }
 }
 function updateLandingTerrainDisplay(result){
   const cell = document.getElementById('landingTerrainCell');

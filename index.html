@@ -1342,7 +1342,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.06-1010';
+const APP_VERSION = 'v260811.07-1030';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1469,7 +1469,7 @@ function trackOpenMeteoCall(){
 // down the file would otherwise have run. Same TDZ pattern as every other
 // entry in this early block: declared here so it's always initialized
 // before anything reachable from boot can possibly reference it.
-let flightDataBoxSnappedEdge = null; // {side:'left'|'right'|null, vSide:'top'|'bottom'|null}
+let flightDataBoxSnappedEdge = {side:'left', vSide:'top'}; // default: snapped to the map's left edge, just below the header button row - overwritten once the person drags/drops it themselves
 let flightDataBoxManuallyPositioned = false;
 let flightDataBoxClosed = false;
 let balloonMassKg = 300; // total system mass EXCLUDING lifting gas (envelope+basket+payload+ballast), configurable in Settings
@@ -8326,14 +8326,12 @@ document.getElementById('iconMoon').style.display = 'none';
 function updateFlightDataBoxPosition(){
   const box = document.getElementById('flightDataBox');
   if(flightDataBoxManuallyPositioned || box.style.display==='none') return;
-  const mapEl = document.getElementById('map');
-  const mapRect = mapEl.getBoundingClientRect();
-  const pt = map.latLngToContainerPoint([state.lat, state.lon]);
-  // Offset up and to the right of the marker - clear of its own icon at
-  // typical sizes, and clear of the "N" compass/base-layer controls in
-  // the top-right corner at typical zoom levels.
-  box.style.left = Math.round(mapRect.left + pt.x + 26) + 'px';
-  box.style.top = Math.round(mapRect.top + pt.y - 110) + 'px';
+  // Default is snapped to the map's left edge just below the header
+  // button row (flightDataBoxSnappedEdge's own initial value) - handled
+  // by the same snap logic used once the person drags/drops the box
+  // themselves, so it correctly tracks the header stack's actual height
+  // as banners appear/disappear, same as any other snapped state.
+  if(typeof applyFlightDataBoxSnap==='function') applyFlightDataBoxSnap();
 }
 function updateFlightDataBoxContent(){
   const box = document.getElementById('flightDataBox');

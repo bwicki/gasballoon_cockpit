@@ -217,12 +217,12 @@ body.day #map{background:#dfe6ea;}
 input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border);}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:-10px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
-.wedge-slider{position:absolute;bottom:-9px;left:0;width:100%;height:18px;margin:0;-webkit-appearance:none;appearance:none;background:transparent !important;}
-.wedge-slider::-webkit-slider-runnable-track{height:18px;background:transparent !important;border:none !important;box-shadow:none !important;}
-.wedge-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:0;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;}
-.wedge-slider::-moz-range-track{height:18px;background:transparent !important;border:none !important;}
-.wedge-slider::-moz-range-progress{background:transparent !important;}
-.wedge-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;}
+input[type=range].wedge-slider{position:absolute;bottom:-9px;left:0;width:100%;height:18px;margin:0;-webkit-appearance:none;appearance:none;background:transparent !important;}
+input[type=range].wedge-slider::-webkit-slider-runnable-track{height:18px;background:transparent !important;border:none !important;box-shadow:none !important;}
+input[type=range].wedge-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);margin-top:0;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;}
+input[type=range].wedge-slider::-moz-range-track{height:18px;background:transparent !important;border:none !important;}
+input[type=range].wedge-slider::-moz-range-progress{background:transparent !important;}
+input[type=range].wedge-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--panel2);box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;}
 input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
@@ -1335,7 +1335,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.01-0825';
+const APP_VERSION = 'v260811.02-0840';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5839,7 +5839,8 @@ async function checkLandingTerrain(lat, lon){
     trackOpenMeteoCall();
     const elevPromise = fetch(`${openMeteoBase()}/v1/elevation?latitude=${latsStr}&longitude=${lonsStr}${openMeteoKeyParam()}`).then(r=>r.json());
     const combinedQuery = `[out:json][timeout:20];is_in(${lat},${lon})->.a;(area.a[natural=water];area.a[waterway=riverbank];area.a[landuse=reservoir];area.a[landuse=meadow];area.a[landuse=farmland];area.a[landuse=orchard];area.a[landuse=vineyard];area.a[landuse=residential];area.a[landuse=industrial];area.a[landuse=forest];area.a[natural=wood];area.a[natural=grassland];area.a[natural=scrub];area.a[natural=wetland];area.a[landuse=farmyard];way["building"](around:${RADIUS_M},${lat},${lon});way["landuse"="forest"](around:${RADIUS_M},${lat},${lon});way["natural"="wood"](around:${RADIUS_M},${lat},${lon}););out tags 25;`;
-    const [elevJson, obsData] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
+    const [elevJson, obsResp] = await Promise.all([elevPromise, fetchOverpassThrottled(combinedQuery)]);
+    const obsData = await obsResp.json();
     const elevations = elevJson.elevation || [];
     const centerElev = elevations[0];
     const maxDiff = elevations.length>1 ? Math.max(...elevations.slice(1).map(e=>Math.abs(e-centerElev))) : 0;

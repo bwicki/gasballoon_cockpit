@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260811.01-0825** (11.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260811.02-0840** (11.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change + a 2-digit counter that resets to 01 each new day + the build time), so multiple same-day builds are unambiguous at a glance - helpful for confirming a deployment actually picked up the latest one, not a stale cached build. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -133,3 +133,5 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 - Wind gusts at the landing site now shown as their own second line below the ground wind reading instead of appended inline.
 - Both remaining descent sliders (and Staged Descent Parameters' two sliders) now use the same thumb size and colour as the vertical wind-height slider (18px, filled with the app's accent colour), instead of a smaller, differently-styled one.
 - Bumped the service worker's cache name (forces old cached entries to be discarded on next activation) and added periodic (30min) update checks for the service worker itself - for a page left open for genuine 24/7 operation, the browser would otherwise only ever check for a newer service worker on navigation, which might never happen again once the app is running.
+- Found and fixed the actual reason the descent sliders' thumbs stayed at the old, larger size despite the CSS specifying 18px: the generic `input[type=range]::-webkit-slider-thumb` rule (26px) has HIGHER CSS specificity than the `.wedge-slider::-webkit-slider-thumb` rule that was meant to override it, so it always won regardless of source order. All `.wedge-slider` rules now combine with `input[type=range]` explicitly to guarantee sufficient specificity.
+- Found and fixed the actual reason land cover (meadow, forest, water, etc.) never showed up in the terrain-check cell: the combined Overpass query's response was never actually parsed as JSON (a missing `.json()` call meant the code was reading properties off the raw fetch Response object instead of the data itself), so obstacle/land-cover detection silently always came back empty.

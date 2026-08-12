@@ -1344,7 +1344,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260812.01-1225';
+const APP_VERSION = 'v260812.02-1245';
 const APP_DATE = '12.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1972,7 +1972,7 @@ const powerVectorStyles = {
   // themselves; the line itself (able to be followed continuously) is
   // what actually matters for spotting overhead wires, not each individual
   // mast along it.
-  power_tower:          (p)=> powerCatVisible.tower ? {radius:1.3, color:'#9aa5ad', fillColor:'#9aa5ad', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
+  power_tower:          (p)=> powerCatVisible.tower ? {radius:1.3, color:'#8a95a0', fillColor:'#8a95a0', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
   power_substation:     (p)=> powerCatVisible.substation ? {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22} : HIDDEN_STYLE,
   power_substation_point:(p)=> powerCatVisible.substation ? {radius:4, color:'#ff9d3b', fillColor:'#ff9d3b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_plant:          (p)=> powerCatVisible.plant ? {color:'#ff3b3b', weight:1, fillColor:'#ff3b3b', fillOpacity:0.18} : HIDDEN_STYLE,
@@ -1982,8 +1982,12 @@ const powerVectorStyles = {
   // Same reasoning as towers above - these previously rendered as fairly
   // prominent light-blue circles along distribution lines (very frequent
   // in dense networks), which is very likely what read as "confusing blue
-  // circles" obscuring the lines themselves.
-  power_transformer:    (p)=> powerCatVisible.transformer ? {radius:1.3, color:'#9aa5ad', fillColor:'#9aa5ad', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
+  // circles" obscuring the lines themselves. Given a distinct (if muted)
+  // blue-grey rather than the same tone as towers, since making both
+  // identical meant toggling one checkbox while leaving the other on
+  // looked like filtering wasn't working at all - the remaining dots were
+  // simply the other, still-visible category.
+  power_transformer:    (p)=> powerCatVisible.transformer ? {radius:1.3, color:'#7a9fc2', fillColor:'#7a9fc2', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
   power_compensator:    (p)=> powerCatVisible.compensator ? {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_switch:         (p)=> powerCatVisible.switch ? {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE
 };

@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260812.02-1245** (12.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260812.03-1300** (12.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -67,7 +67,7 @@ Besides the auto-selected models, ARPEGE Europe (Météo-France, 11km, all of Eu
 
 ## Power lines
 
-Overhead line towers and transformers are rendered as small, muted markers rather than bright coloured circles, so they don't visually compete with the lines themselves (able to be followed continuously) - spotting the wires is what actually matters for flight safety, not each individual mast along the route. Towers (neutral grey) and transformers (muted blue-grey) use distinct tones, not identical ones, so toggling one category's checkbox in Settings while leaving the other on stays visually verifiable rather than looking like filtering stopped working.
+Overhead line towers and transformers are rendered as small, muted markers rather than bright coloured circles, so they don't visually compete with the lines themselves (able to be followed continuously) - spotting the wires is what actually matters for flight safety, not each individual mast along the route. Towers (neutral grey) and transformers (muted blue-grey) use distinct tones, not identical ones, so toggling one category's checkbox in Settings while leaving the other on stays visually verifiable rather than looking like filtering stopped working. Category checkboxes and the "overhead only" toggle now force the layer to be fully removed and re-added rather than relying on VectorGrid's own redraw() (documented upstream as unreliable for reapplying styles to already-rendered tiles) - this is very likely the actual reason unchecking a category didn't always hide it.
 
 ## Airspace
 

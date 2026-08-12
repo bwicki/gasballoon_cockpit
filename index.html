@@ -1344,7 +1344,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260812.02-1245';
+const APP_VERSION = 'v260812.03-1300';
 const APP_DATE = '12.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1999,14 +1999,29 @@ const powerLayer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}
   pane: 'overlayTilesPane',
   attribution: '© OpenInfraMap / OpenStreetMap contributors'
 });
+// VectorGrid's own redraw() is documented as unreliable for reapplying
+// styles on already-rendered tiles (see Leaflet.VectorGrid GitHub issue
+// #159 - a "soft redraw" that properly reapplies styles without this
+// issue has been requested but never implemented). Removing and
+// re-adding the layer forces every visible tile to be genuinely
+// re-fetched and re-styled from scratch, which is more expensive but
+// actually reliable - redraw() alone was very likely why unchecking a
+// category didn't consistently hide it.
+let powerLayerRefreshTimer = null;
+function forceRefreshPowerLayer(){
+  clearTimeout(powerLayerRefreshTimer);
+  powerLayerRefreshTimer = setTimeout(()=>{
+    if(map.hasLayer(powerLayer)){ map.removeLayer(powerLayer); powerLayer.addTo(map); }
+  }, 150);
+}
 document.getElementById('overheadOnly').addEventListener('change', e=>{
   overheadOnly = e.target.checked;
-  if(map.hasLayer(powerLayer)) powerLayer.redraw();
+  forceRefreshPowerLayer();
 });
 document.querySelectorAll('[data-powercat]').forEach(cb=>{
   cb.addEventListener('change', e=>{
     powerCatVisible[e.target.dataset.powercat] = e.target.checked;
-    if(map.hasLayer(powerLayer)) powerLayer.redraw();
+    forceRefreshPowerLayer();
     updatePowerLegendVisibility();
   });
 });
@@ -9998,7 +10013,7 @@ function loadConfig(){
     if(cfg.powerCat){
       Object.assign(powerCatVisible, cfg.powerCat);
       Object.keys(cfg.powerCat).forEach(k=>{ const cb=document.querySelector(`[data-powercat="${k}"]`); if(cb) cb.checked=cfg.powerCat[k]; });
-      if(map.hasLayer(powerLayer)) powerLayer.redraw();
+      forceRefreshPowerLayer();
     }
     if(cfg.aprsClasses){
       Object.keys(cfg.aprsClasses).forEach(k=>{ const cb=document.querySelector(`[data-aprs-class="${k}"]`); if(cb) cb.checked=cfg.aprsClasses[k]; });

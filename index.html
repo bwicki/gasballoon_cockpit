@@ -1342,7 +1342,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260811.12-2230';
+const APP_VERSION = 'v260811.13-2320';
 const APP_DATE = '11.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1749,7 +1749,46 @@ function isoDensity(altM){
 
 // ---------- map setup ----------
 const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([state.lat,state.lon], 13); // ~5km scale by default
-L.control.zoom({position:'bottomright'}).addTo(map);
+// Custom zoom buttons instead of L.control.zoom()'s default ones - those
+// zoom around the map CONTAINER's own geometric centre, but the sidebar
+// overlays on top of the map rather than shrinking it (the container
+// itself always spans the full width underneath), so that centre is
+// visually off-centre from what's actually visible whenever the sidebar
+// is open. These zoom around the genuinely visible area's centre instead.
+function getVisibleMapCenterLatLng(){
+  const mapRect = document.getElementById('map').getBoundingClientRect();
+  const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
+  const visibleRight = Math.min(mapRect.right, sidebarRect.left);
+  const cx = (mapRect.left + visibleRight)/2 - mapRect.left;
+  const cy = mapRect.height/2;
+  return map.containerPointToLatLng([cx, cy]);
+}
+const customZoomControl = L.control({position:'bottomright'});
+customZoomControl.onAdd = function(){
+  const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+  const inBtn = L.DomUtil.create('a', 'leaflet-control-zoom-in', div);
+  inBtn.innerHTML = '+'; inBtn.href = '#'; inBtn.title = 'Zoom in';
+  const outBtn = L.DomUtil.create('a', 'leaflet-control-zoom-out', div);
+  outBtn.innerHTML = '−'; outBtn.href = '#'; outBtn.title = 'Zoom out';
+  L.DomEvent.on(inBtn, 'click', (e)=>{ L.DomEvent.stop(e); map.setZoomAround(getVisibleMapCenterLatLng(), map.getZoom()+1); });
+  L.DomEvent.on(outBtn, 'click', (e)=>{ L.DomEvent.stop(e); map.setZoomAround(getVisibleMapCenterLatLng(), map.getZoom()-1); });
+  L.DomEvent.disableClickPropagation(div);
+  return div;
+};
+customZoomControl.addTo(map);
+// Centres the map so the given point ends up at the VISIBLE area's centre
+// (accounting for the sidebar overlaying part of the map), not the map
+// container's own geometric centre - used for the very first real GPS fix
+// after boot, same reasoning as the custom zoom buttons above.
+function setViewAtVisibleCenter(lat, lon, zoom){
+  map.setView([lat, lon], zoom);
+  const mapRect = document.getElementById('map').getBoundingClientRect();
+  const sidebarRect = document.getElementById('sidebar').getBoundingClientRect();
+  const visibleRight = Math.min(mapRect.right, sidebarRect.left);
+  const containerCenterX = mapRect.width/2;
+  const visibleCenterX = (visibleRight - mapRect.left)/2;
+  map.panBy([containerCenterX - visibleCenterX, 0], {animate:false});
+}
 // Custom scale bar (km AND nautical miles - Leaflet's built-in control only
 // offers metric/imperial, not nm) - positioned via CSS to sit to the LEFT
 // of the zoom buttons, which share the same corner.
@@ -1921,18 +1960,28 @@ const powerVectorStyles = {
   power_line: (props)=>{
     if(!powerCatVisible.line) return HIDDEN_STYLE;
     if(overheadOnly && isUndergroundOrUnderwater(props)) return {weight:0, opacity:0};
-    // Minimum weight of 1.8 so low/unknown-voltage distribution lines never
-    // render as near-invisible hairlines next to thick transmission lines.
-    return { weight: Math.max(1.8, Math.min(4.5, (props.voltage||30)/45)), color: powerLineColor(props.voltage), opacity: 1 };
+    // Minimum weight raised from 1.8 to 2.4 so overhead lines read clearly
+    // as continuous lines even at lower zoom levels, rather than being
+    // visually dominated by the tower/transformer point markers along them.
+    return { weight: Math.max(2.4, Math.min(4.5, (props.voltage||30)/45)), color: powerLineColor(props.voltage), opacity: 1 };
   },
-  power_tower:          (p)=> powerCatVisible.tower ? {radius:2, color:'#ffcc66', fillColor:'#ffcc66', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  // Towers made deliberately understated (smaller, muted grey rather than
+  // a bright colour) - they previously competed visually with the lines
+  // themselves; the line itself (able to be followed continuously) is
+  // what actually matters for spotting overhead wires, not each individual
+  // mast along it.
+  power_tower:          (p)=> powerCatVisible.tower ? {radius:1.3, color:'#9aa5ad', fillColor:'#9aa5ad', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
   power_substation:     (p)=> powerCatVisible.substation ? {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22} : HIDDEN_STYLE,
   power_substation_point:(p)=> powerCatVisible.substation ? {radius:4, color:'#ff9d3b', fillColor:'#ff9d3b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_plant:          (p)=> powerCatVisible.plant ? {color:'#ff3b3b', weight:1, fillColor:'#ff3b3b', fillOpacity:0.18} : HIDDEN_STYLE,
   power_plant_point:    (p)=> powerCatVisible.plant ? {radius:5, color:'#ff3b3b', fillColor:'#ff3b3b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_generator:      (p)=> powerCatVisible.generator ? {radius:3, color:'#ffe83b', fillColor:'#ffe83b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_generator_area: (p)=> powerCatVisible.generator ? {color:'#ffe83b', weight:1, fillColor:'#ffe83b', fillOpacity:0.15} : HIDDEN_STYLE,
-  power_transformer:    (p)=> powerCatVisible.transformer ? {radius:3, color:'#8bd3ff', fillColor:'#8bd3ff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  // Same reasoning as towers above - these previously rendered as fairly
+  // prominent light-blue circles along distribution lines (very frequent
+  // in dense networks), which is very likely what read as "confusing blue
+  // circles" obscuring the lines themselves.
+  power_transformer:    (p)=> powerCatVisible.transformer ? {radius:1.3, color:'#9aa5ad', fillColor:'#9aa5ad', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
   power_compensator:    (p)=> powerCatVisible.compensator ? {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_switch:         (p)=> powerCatVisible.switch ? {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE
 };
@@ -5580,7 +5629,7 @@ function startGPS(){
     // of the app appearing to "always start in Zürich" even though
     // state.lat/lon themselves were being updated correctly underneath.
     if(!hasHadRealGpsFix){
-      map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+      setViewAtVisibleCenter(pos.coords.latitude, pos.coords.longitude, 13);
     }
     // Debounce widened from 500m to 1000m - part of a broader push to stay
     // well clear of Open-Meteo's free-tier daily call quota (10'000/day)
@@ -7512,16 +7561,20 @@ startGroundWindLayer();
     if(el){ el.style.width='100%'; menu.appendChild(el); }
   });
   // Always last in the menu, regardless of what else is (or isn't) above
-  // it - opens the current README as a PDF in its own tab/window, kept in
-  // sync with the app's own version manually whenever the README changes.
+  // it - opens the current README as a PDF, wrapped in its own small
+  // viewer page (readme_viewer.html) that adds always-visible Print/Close
+  // buttons, since the browser's own native PDF viewer (what a plain link
+  // to the .pdf directly would open) doesn't allow adding those. Uses
+  // window.open() rather than a plain <a target="_blank"> specifically so
+  // that viewer page's own window.close() button works reliably - that
+  // only works for windows/tabs that were opened by script.
   const aboutLink = document.createElement('a');
-  aboutLink.href = 'README.pdf';
-  aboutLink.target = '_blank';
-  aboutLink.rel = 'noopener';
+  aboutLink.href = 'readme_viewer.html';
+  aboutLink.addEventListener('click', (e)=>{ e.preventDefault(); window.open('readme_viewer.html', '_blank'); });
   aboutLink.className = 'iconbtn';
   aboutLink.style.width = '100%';
   aboutLink.style.textDecoration = 'none';
-  aboutLink.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> About - Read first!';
+  aboutLink.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> About - more info!';
   menu.appendChild(aboutLink);
   document.getElementById('btnHeaderMore').addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -7563,7 +7616,7 @@ state.appMode = 'monitor'; // 'monitor' | 'plan'
 document.getElementById('modeMonitor').addEventListener('click', ()=>setAppMode('monitor'));
 document.getElementById('modePlan').addEventListener('click', ()=>setAppMode('plan'));
 document.getElementById('btnCenterMap').addEventListener('click', ()=>{
-  map.setView([state.lat, state.lon], map.getZoom());
+  setViewAtVisibleCenter(state.lat, state.lon, map.getZoom());
 });
 document.getElementById('btnCenterLanding').addEventListener('click', ()=>{
   if(state.landingPolygon && state.landingPolygon.length){

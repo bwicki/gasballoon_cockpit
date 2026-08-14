@@ -1344,7 +1344,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260814.03-1615';
+const APP_VERSION = 'v260814.04-1625';
 const APP_DATE = '14.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -3983,7 +3983,7 @@ async function fetchLightningData(){
     const bearings = [0, 120, 240];
     const points = bearings.map(b=>destPoint(state.lat, state.lon, b, offsetKm*1000));
     const results = await Promise.allSettled(points.map(([lat,lon])=>
-      fetch(`https://data.api.xweather.com/lightning/${lat.toFixed(3)},${lon.toFixed(3)}?radius=100km&from=-10minutes&to=now&limit=200&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`)
+      fetch(`https://data.api.xweather.com/lightning/${lat.toFixed(3)},${lon.toFixed(3)}?radius=100km&from=-5minutes&to=now&limit=200&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`)
         .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     ));
     lightningMarkers.clearLayers();

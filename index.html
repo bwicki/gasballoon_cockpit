@@ -767,8 +767,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
           <div class="subhead">Lightning (Xweather)</div>
           <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Free account at xweather.com - client ID and secret both needed.</p>
-          <input type="text" id="sXweatherClientId" class="api-key-input" placeholder="Xweather Client ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-          <input type="text" id="sXweatherClientSecret" class="api-key-input" placeholder="Xweather Client Secret" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+          <input type="text" id="sXweatherClientId" class="api-key-input" placeholder="Xweather Client ID" value="4G8hMsDYgVHwQl7I3p8zz" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+          <input type="text" id="sXweatherClientSecret" class="api-key-input" placeholder="Xweather Client Secret" value="FXonOzGTtkQM0EOcXdXdyW6lP91laRTpFdCR5dUV" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
 
           <div class="subhead">Silent Emergency Email (EmailJS)</div>
           <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key).</p>
@@ -1344,8 +1344,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260812.03-1300';
-const APP_DATE = '12.08.2026';
+const APP_VERSION = 'v260814.03-1615';
+const APP_DATE = '14.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -1991,27 +1991,36 @@ const powerVectorStyles = {
   power_compensator:    (p)=> powerCatVisible.compensator ? {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_switch:         (p)=> powerCatVisible.switch ? {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE
 };
-const powerLayer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}/{y}.pbf', {
-  vectorTileLayerStyles: powerVectorStyles,
-  interactive: false,
-  maxNativeZoom: 14,
-  minZoom: 0,
-  pane: 'overlayTilesPane',
-  attribution: '© OpenInfraMap / OpenStreetMap contributors'
-});
-// VectorGrid's own redraw() is documented as unreliable for reapplying
-// styles on already-rendered tiles (see Leaflet.VectorGrid GitHub issue
-// #159 - a "soft redraw" that properly reapplies styles without this
-// issue has been requested but never implemented). Removing and
-// re-adding the layer forces every visible tile to be genuinely
-// re-fetched and re-styled from scratch, which is more expensive but
-// actually reliable - redraw() alone was very likely why unchecking a
-// category didn't consistently hide it.
+function createPowerLayer(){
+  const layer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}/{y}.pbf', {
+    vectorTileLayerStyles: powerVectorStyles,
+    interactive: false,
+    maxNativeZoom: 14,
+    minZoom: 0,
+    pane: 'overlayTilesPane',
+    attribution: '© OpenInfraMap / OpenStreetMap contributors'
+  });
+  layer.on('load', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','ready'); });
+  layer.on('loading', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','loading'); });
+  return layer;
+}
+let powerLayer = createPowerLayer();
+// A first attempt at fixing category filtering relied on VectorGrid's own
+// redraw() (documented upstream as unreliable for reapplying styles to
+// already-rendered tiles). A second attempt removed and re-added the SAME
+// layer instance, which turned out to still not be reliably enough - very
+// likely because VectorGrid keeps its own internal tile cache tied to
+// that instance regardless of whether it's currently attached to the
+// map. This discards the instance entirely and builds a genuinely new
+// one from scratch, which cannot have any stale internal state left over.
 let powerLayerRefreshTimer = null;
 function forceRefreshPowerLayer(){
   clearTimeout(powerLayerRefreshTimer);
   powerLayerRefreshTimer = setTimeout(()=>{
-    if(map.hasLayer(powerLayer)){ map.removeLayer(powerLayer); powerLayer.addTo(map); }
+    const wasOn = map.hasLayer(powerLayer);
+    if(map.hasLayer(powerLayer)) map.removeLayer(powerLayer);
+    powerLayer = createPowerLayer();
+    if(wasOn) powerLayer.addTo(map);
   }, 150);
 }
 document.getElementById('overheadOnly').addEventListener('change', e=>{
@@ -2253,8 +2262,8 @@ bindLayerToggle('tgPower', false, on=>{
   if(on){ reopenBanner('powerLegendBar','powerLegendIcon'); }
   else { dismissBanner('powerLegendBar','powerLegendIcon'); legendActiveButDismissed.powerLegendBar = false; updateAllLegendsReopenBtn(); }
 });
-powerLayer.on('load', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','ready'); });
-powerLayer.on('loading', ()=>{ if(document.getElementById('tgPower').classList.contains('active')) setLayerLoadDot('tgPower','loading'); });
+// (load/loading listeners now bound inside createPowerLayer() itself, so
+// they're correctly re-attached every time the instance is rebuilt)
 // Real, class-filtered airspace boundaries via openAIP's Core API -
 // confirmed working via a live browser CORS test on 11.08.2026 (HTTP 200
 // with actual GeoJSON data), reversing an earlier finding that this was
@@ -2496,8 +2505,16 @@ let overpassCooldownUntil = 0;
 // chance of success instead of just failing outright every time.
 const OVERPASS_MIRRORS = [
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://lz4.overpass-api.de/api/interpreter' // an official alternate subdomain of the main project (different backend server), not a third-party mirror
+  'https://overpass.private.coffee/api/interpreter', // renamed from overpass.kumi.systems (confirmed via the current OSM wiki) - same operator, no stated rate limit
+  'https://lz4.overpass-api.de/api/interpreter', // an official alternate subdomain of the main project (different backend server), not a third-party mirror
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter' // genuinely independent operator (VK/Mail.ru), global coverage, no stated rate limit
+  // Deliberately NOT including region-limited mirrors like overpass.osm.ch
+  // (Switzerland only) here: for a safety-relevant check like this, a
+  // mirror that silently returns "successful, zero elements" rather than
+  // a genuine error for any position outside its coverage area risks a
+  // dangerous false negative (e.g. "no land cover/obstacles found" when
+  // some genuinely exist, just outside that mirror's data) - worse than
+  // an honest failure that triggers a retry on a different mirror.
 ];
 let overpassMirrorIdx = 0;
 function fetchOverpassThrottled(query, signal){
@@ -3966,7 +3983,7 @@ async function fetchLightningData(){
     const bearings = [0, 120, 240];
     const points = bearings.map(b=>destPoint(state.lat, state.lon, b, offsetKm*1000));
     const results = await Promise.allSettled(points.map(([lat,lon])=>
-      fetch(`https://api.xweather.com/lightning/${lat.toFixed(3)},${lon.toFixed(3)}?radius=100km&from=-10minutes&to=now&limit=200&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`)
+      fetch(`https://data.api.xweather.com/lightning/${lat.toFixed(3)},${lon.toFixed(3)}?radius=100km&from=-10minutes&to=now&limit=200&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`)
         .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     ));
     lightningMarkers.clearLayers();
@@ -6295,8 +6312,17 @@ async function fetchEnsembleWind(resolvedModel){
       const bodyText = await r.text().catch(()=>'(could not read body)');
       console.warn('Ensemble: non-OK response body:', bodyText.slice(0,500));
       state.ensembleWindProfilesByHour = null;
+      // Confirmed via a live test (14.08.2026): Open-Meteo's Ensemble API
+      // requires the Professional or Enterprise commercial tier
+      // specifically - a Standard/base commercial key (which unlocks the
+      // main forecast/elevation/CAPE endpoints just fine) is NOT enough.
+      // This is a genuine plan limitation, not a bug - surfaced honestly
+      // in the badge rather than silently looking identical to "no key
+      // set" or "the ensemble fetch failed for some other reason".
+      state.ensemblePlanInsufficient = /professional|enterprise/i.test(bodyText);
       return;
     }
+    state.ensemblePlanInsufficient = false;
     const j = await r.json();
     if(j.error || !j.hourly){ console.warn('Ensemble: no usable hourly data in response, top-level keys:', Object.keys(j)); state.ensembleWindProfilesByHour = null; return; }
     const h = j.hourly;
@@ -6514,6 +6540,10 @@ function updateEnsembleModeBadge(){
     badge.textContent = 'E';
     badge.style.background = '#1D9E75';
     badge.title = `Landing area scatter uses ${members.length} real ensemble members`;
+  } else if(state.ensemblePlanInsufficient){
+    badge.textContent = 'H';
+    badge.style.background = '#c8862f';
+    badge.title = 'Landing area scatter uses the age-based heuristic - Open-Meteo\'s Ensemble API requires the Professional or Enterprise plan specifically, confirmed via a live test; the current commercial key\'s tier doesn\'t include it';
   } else {
     badge.textContent = 'H';
     badge.style.background = '#8b98a5';

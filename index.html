@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.05-1215';
+const APP_VERSION = 'v260817.06-1235';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -6393,13 +6393,16 @@ async function fetchEnsembleWind(resolvedModel){
     if(j.error || !j.hourly){ console.warn('Ensemble: no usable hourly data in response, top-level keys:', Object.keys(j)); state.ensembleWindProfilesByHour = null; return; }
     const h = j.hourly;
     // Discover how many members actually came back by scanning for the
-    // highest _memberN suffix on any returned key, rather than assuming a
+    // highest _memberNN suffix on any returned key, rather than assuming a
     // fixed count - this varies by model (ICON-D2-EPS ~20, ICON-EU-EPS
-    // ~40, GEFS ~30).
-    let maxMember = -1;
+    // ~40, GEFS ~30). Also used to detect the exact zero-padding width
+    // Open-Meteo actually uses (confirmed via a live response: 2-digit,
+    // e.g. "member01" not "member1") rather than assuming it, since
+    // reconstructing a key with the wrong padding silently finds nothing.
+    let maxMember = -1, memberDigits = 2;
     Object.keys(h).forEach(k=>{
       const m = k.match(/_member(\d+)$/);
-      if(m) maxMember = Math.max(maxMember, parseInt(m[1]));
+      if(m){ maxMember = Math.max(maxMember, parseInt(m[1])); memberDigits = m[1].length; }
     });
     if(maxMember < 0){ console.warn('Ensemble: response had no _memberN keys - sample keys:', Object.keys(h).slice(0,5)); state.ensembleWindProfilesByHour = null; return; }
     const nHours = (h.time||[]).length || 12;
@@ -6408,10 +6411,11 @@ async function fetchEnsembleWind(resolvedModel){
     // interpolation logic once given a specific member's profile).
     const members = [];
     for(let m=0; m<=maxMember; m++){
+      const mStr = String(m).padStart(memberDigits,'0');
       const perHour = [];
       for(let hourIdx=0; hourIdx<nHours; hourIdx++){
         const profile = ENSEMBLE_PRESSURE_LEVELS.map(p=>{
-          const spdArr = h[`wind_speed_${p}hPa_member${m}`], dirArr = h[`wind_direction_${p}hPa_member${m}`];
+          const spdArr = h[`wind_speed_${p}hPa_member${mStr}`], dirArr = h[`wind_direction_${p}hPa_member${mStr}`];
           const spd = spdArr ? spdArr[hourIdx] : null;
           const dir = dirArr ? dirArr[hourIdx] : null;
           return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };

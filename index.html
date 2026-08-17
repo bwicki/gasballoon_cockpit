@@ -596,6 +596,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <label><input type="checkbox" data-powercat="transformer" checked>Transformers</label>
           <label><input type="checkbox" data-powercat="compensator" checked>Compensators</label>
           <label><input type="checkbox" data-powercat="switch" checked>Switches</label>
+          <label><input type="checkbox" data-powercat="telecomMast" checked>Telecom/antenna masts</label>
           <label><input type="checkbox" id="overheadOnly" checked>Overhead only</label>
         </div>
         <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">"Overhead only" hides cables tagged underground/underwater in OpenStreetMap, where mapped.</p>
@@ -934,13 +935,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#ff9d3b;"></span>100-219kV</span>
         <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#ffe83b;"></span>50-99kV</span>
         <span class="gwl-item" data-legend-cat="line"><span class="legend-swatch" style="background:#5bb8ff;"></span>&lt;50kV</span>
-        <span class="gwl-item" data-legend-cat="tower"><span class="legend-swatch" style="background:#ffcc66;border-radius:50%;"></span>Tower</span>
+        <span class="gwl-item" data-legend-cat="tower"><span class="legend-swatch" style="background:#8a95a0;border-radius:50%;"></span>Tower</span>
         <span class="gwl-item" data-legend-cat="substation"><span class="legend-swatch" style="background:#ff9d3b;border-radius:50%;"></span>Substation</span>
         <span class="gwl-item" data-legend-cat="plant"><span class="legend-swatch" style="background:#ff3b3b;border-radius:50%;"></span>Plant</span>
         <span class="gwl-item" data-legend-cat="generator"><span class="legend-swatch" style="background:#ffe83b;border-radius:50%;"></span>Generator</span>
-        <span class="gwl-item" data-legend-cat="transformer"><span class="legend-swatch" style="background:#8bd3ff;border-radius:50%;"></span>Transformer</span>
+        <span class="gwl-item" data-legend-cat="transformer"><span class="legend-swatch" style="background:#7a9fc2;border-radius:50%;"></span>Transformer</span>
         <span class="gwl-item" data-legend-cat="compensator"><span class="legend-swatch" style="background:#c58bff;border-radius:50%;"></span>Compensator</span>
         <span class="gwl-item" data-legend-cat="switch"><span class="legend-swatch" style="background:#ffffff;border-radius:50%;border:1px solid #888;"></span>Switch</span>
+        <span class="gwl-item" data-legend-cat="telecomMast"><span class="legend-swatch" style="background:#e14cc9;border-radius:50%;"></span>Telecom/antenna mast</span>
       </div>
       <div id="groundWindLegendBar" class="legend-bar">
         <button class="banner-close" onclick="dismissBanner('groundWindLegendBar','groundWindLegendIcon')">✕</button>
@@ -1344,8 +1346,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260814.04-1625';
-const APP_DATE = '14.08.2026';
+const APP_VERSION = 'v260817.02-1030';
+const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -1955,10 +1957,10 @@ function isUndergroundOrUnderwater(props){
 // switched off individually to reduce clutter.
 const powerCatVisible = {
   line:true, tower:true, substation:true, plant:true,
-  generator:true, transformer:true, compensator:true, switch:true
+  generator:true, transformer:true, compensator:true, switch:true, telecomMast:true
 };
 const HIDDEN_STYLE = {weight:0, opacity:0, radius:0, fillOpacity:0};
-const powerVectorStyles = {
+const powerVectorStylesRaw = {
   power_line: (props)=>{
     if(!powerCatVisible.line) return HIDDEN_STYLE;
     if(overheadOnly && isUndergroundOrUnderwater(props)) return {weight:0, opacity:0};
@@ -1989,8 +1991,54 @@ const powerVectorStyles = {
   // simply the other, still-visible category.
   power_transformer:    (p)=> powerCatVisible.transformer ? {radius:1.3, color:'#7a9fc2', fillColor:'#7a9fc2', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
   power_compensator:    (p)=> powerCatVisible.compensator ? {radius:3, color:'#c58bff', fillColor:'#c58bff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
-  power_switch:         (p)=> powerCatVisible.switch ? {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE
+  power_switch:         (p)=> powerCatVisible.switch ? {radius:2, color:'#ffffff', fillColor:'#ffffff', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
+  // Telecom/antenna masts - physical structures just as dangerous for a
+  // balloon as a power tower, unlike the wireless microwave links between
+  // them (deliberately left hidden below - no physical cable/structure a
+  // balloon could actually hit). Distinct magenta so it reads as its own
+  // category, not confusable with the power-line colour scheme. Exact
+  // layer name not confirmed from public docs, so several plausible
+  // candidates (matching the power_* naming convention) are covered here
+  // at once - harmless if a given name doesn't exist in a particular
+  // tile, and the console logging above will confirm the real name(s) on
+  // next use so this can be narrowed down.
+  telecoms_mast:               (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  telecoms_tower:               (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  telecoms_communication_tower: (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  communication_tower:          (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  mast:                          (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE
 };
+// OpenInfraMap's combined tile endpoint (used here instead of per-category
+// tiles, since separate category tiles were retired in 2023) bundles
+// several vector layers beyond power: telecoms (including microwave radio
+// links - point-to-point wireless connections with no cable between them,
+// often drawn as isolated markers or directional half-circle symbols for
+// antenna orientation), petroleum, and water infrastructure. Only the
+// power_* layers above were ever explicitly styled here; VectorGrid falls
+// back to its own default rendering for any layer name it doesn't
+// recognize, which is very likely the actual source of persistent "blue
+// circles and half-circles, not connected by any line" - these are
+// probably telecom masts/links, not power infrastructure at all, and this
+// app has no use for them. Wrapping the whole style object in a Proxy
+// means every layer name NOT explicitly listed above is hidden by
+// default, regardless of its exact name - robust against not knowing (or
+// OpenInfraMap changing) the precise non-power layer names.
+const loggedUnknownPowerLayers = new Set();
+const powerVectorStyles = new Proxy(powerVectorStylesRaw, {
+  get(target, prop){
+    if(prop in target) return target[prop];
+    // One-time diagnostic: logs every distinct layer name actually
+    // encountered in OpenInfraMap's tiles that isn't explicitly handled
+    // above, so the real telecoms/petroleum/water layer names (which
+    // couldn't be confirmed from public docs) can be read directly out of
+    // a live console instead of guessed at.
+    if(typeof prop === 'string' && !loggedUnknownPowerLayers.has(prop)){
+      loggedUnknownPowerLayers.add(prop);
+      console.log('OpenInfraMap: encountered layer name not explicitly styled:', prop);
+    }
+    return ()=>HIDDEN_STYLE;
+  }
+});
 function createPowerLayer(){
   const layer = L.vectorGrid.protobuf('https://openinframap.org/tiles/{z}/{x}/{y}.pbf', {
     vectorTileLayerStyles: powerVectorStyles,

@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.04-1140';
+const APP_VERSION = 'v260817.05-1215';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8034,22 +8034,24 @@ async function planDescentToTarget(lat, lon){
     const d = haversine(last.lat,last.lon,lat,lon);
     if(d<bestDist){ bestDist=d; best=mid; bestPath=path; }
   }
-  // If the coarse scan's best result sits right at the edge of the range,
-  // the true answer may require MORE delay than our normal range allows -
-  // extend further out rather than settling for whatever the boundary
-  // gives, EVEN IF it already looks "close enough": a still-improving trend
-  // right at the edge means the real optimum is further out, and stopping
-  // early there was producing inconsistent, seemingly illogical results
-  // between two nearby target clicks.
   const coarseStepMin = MAX_DELAY_MIN/COARSE_STEPS;
-  if(best >= MAX_DELAY_MIN-coarseStepMin){
-    for(let extraMin=MAX_DELAY_MIN+30; extraMin<=600; extraMin+=30){
-      const path = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, extraMin*60, rate1, interceptAGL, rate2, 0);
-      const last=path[path.length-1];
-      const d = haversine(last.lat,last.lon,lat,lon);
-      if(d<bestDist){ bestDist=d; best=extraMin; bestPath=path; } else if(d>bestDist*1.5){ break; } // clearly moving away now, stop extending
-    }
-  }
+  // NOTE: an earlier version extended this search out to 600 minutes (10
+  // hours) whenever the 240min boundary still looked "improving", to fix
+  // inconsistent results between nearby target clicks. That traded one bug
+  // for a worse one: the search could then pick an operationally
+  // unrealistic multi-hour delay purely because the forecast wind
+  // happened to swing back toward the target that far out (e.g. a
+  // forecast frontal passage) - which is exactly what produced paths that
+  // looked correct initially (following the current, real wind) and then
+  // made an apparently arbitrary reversal, since the shown path's later
+  // portion was actually being driven by a completely different, much
+  // later forecast hour. The search is kept within the same 0-240min
+  // range the slider itself offers - consistent with what's actually
+  // controllable, and short enough that the forecast driving it stays
+  // reasonably trustworthy. If the true optimum needs longer than that,
+  // the best-found result within this range is what's shown, which is
+  // the operationally honest answer rather than a technically-closer but
+  // unrealistic one.
   // Fine local refinement, centered on the coarse winner. Deliberately WIDE
   // (several coarse-steps in each direction, not just one) - a too-narrow
   // starting window was the likely cause of "obviously reachable" points

@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260817.04-1140** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260817.05-1215** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -116,6 +116,10 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 **Profile backup**: export/import as a JSON file (native share sheet on mobile), or back up encrypted to a GitHub Gist (AES-GCM + PBKDF2, password-protected).
 
 **Emergency contact**: pilot name, aircraft registration, mobile number, and email, with prepared-message sending over WhatsApp, SMS, or email (via mailto, or silently via EmailJS if configured).
+
+## Quick Descent trajectory fix
+
+Fixed a serious bug (17.08.2026): Quick Descent's search for the descent-initiation delay that lands closest to a clicked target could pick a delay of up to 600 minutes (10 hours) if that happened to land closer, whenever the normal 240-minute range still looked "improving" at its edge. This could produce a shown path that started correctly (following the current, real wind) and then made an apparently arbitrary reversal partway through - not a data or algorithm error, but the later portion of the path being genuinely driven by a completely different, much-later forecast hour (e.g. a forecast wind direction shift many hours out), which is operationally unrealistic for an actual flight and undermines trust in the trajectory shown. The search is now kept within the same 0-240 minute range the "Initiate descent in" slider itself offers - consistent with what's actually controllable and short enough that the forecast driving it stays reasonably trustworthy.
 
 ## Known limitations
 

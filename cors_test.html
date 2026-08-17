@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v260814.04-1625</title>
+<title>CORS-Test für METAR-/Wetter-/ADS-B-Quellen · v260817.04-1140</title>
 <style>
   body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;max-width:720px;margin:0 auto;}
   h1{font-size:18px;}
@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v260814.04-1625</span></h1>
+<h1>CORS-Test für METAR-/Wetter-/ADS-B-Quellen <span style="color:#8b98a5;font-size:13px;font-weight:400;">· v260817.04-1140</span></h1>
 <p class="intro">
 Testet direkt aus DEINEM Browser heraus, ob diese APIs per <code>fetch()</code> erreichbar sind (also ob eine Web-App wie Gasballoon Cockpit sie direkt nutzen könnte, ohne Umweg über einen Server). Das ist der einzige zuverlässige Test - Analysen von aussen (z.B. robots.txt-Prüfungen) sagen nichts darüber aus.
 </p>
@@ -60,7 +60,7 @@ const TESTS = [
   { name: '★ aprs.fi - Rufzeichen-Abfrage (echtes Rufzeichen HB3XAD-11), jetzt im APRS-Layer im Einsatz', url: 'https://api.aprs.fi/api/get?name=HB3XAD-11&what=loc&apikey=167195.j9YO5rPCFfnS4y&format=json' },
   { name: '★ Xweather - Blitz-Endpunkt - bestätigt funktionierend am 14.08.2026 (HTTP 200, success:true, echte Blitzdaten zurückgegeben), from-Parameter auf 5min korrigiert (Standard-Plan-Limit ohne Lightning Enterprise Add-on)', url: 'https://data.api.xweather.com/lightning/47.3769,8.5417?radius=100km&from=-5minutes&to=now&limit=5&client_id=4G8hMsDYgVHwQl7I3p8zz&client_secret=FXonOzGTtkQM0EOcXdXdyW6lP91laRTpFdCR5dUV' },
   { name: '★ openAIP Core API - echte, klassengefilterte Luftraum-Geometrien (GeoJSON) - bestätigt funktionierend am 11.08.2026, jetzt im Airspace-Layer implementiert (ersetzt die reine Rasterkachel)', url: 'https://api.core.openaip.net/api/airspaces?apiKey=e9946fdef0b38f6540986cb7045f893a&bbox=8.3,47.2,8.8,47.6&limit=5' },
-  { name: '★ Open-Meteo Ensemble (customer-ensemble-api) - exakt die URL, die die App fürs Landing-Area-Ensemble generiert - falls das hier fehlschlägt, bitte den genauen Fehlertext/Status hier melden', url: 'https://customer-ensemble-api.open-meteo.com/v1/ensemble?latitude=47.3769&longitude=8.5417&hourly=wind_speed_1000hPa,wind_direction_1000hPa&models=icon_d2_eps&forecast_hours=12&timezone=UTC&apikey=OcBkMnyepU09zHlZ' },
+  { name: '★ Open-Meteo Ensemble (customer-ensemble-api) - exakt die URL, die die App fürs Landing-Area-Ensemble generiert - nach Upgrade auf API Professional (17.08.2026), sollte jetzt HTTP 200 statt 403 liefern, da derselbe Key jetzt zum Professional-Konto gehört', url: 'https://customer-ensemble-api.open-meteo.com/v1/ensemble?latitude=47.3769&longitude=8.5417&hourly=wind_speed_1000hPa,wind_direction_1000hPa&models=icon_d2_eps&forecast_hours=12&timezone=UTC&apikey=OcBkMnyepU09zHlZ' },
   { name: '★ CheckWX - möglicher MetarCentral-Ersatz (braucht deinen eigenen kostenlosen API-Key unten in der URL, sonst schlägt der Test bewusst fehl) - CORS noch nicht live bestätigt, unterstützt bis zu 25 Flughäfen in einer Anfrage', url: 'https://api.checkwx.com/metar/LSZH,LSGG,LSMD?x-api-key=DEIN_API_KEY' }
 ];
 

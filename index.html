@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.02-1030';
+const APP_VERSION = 'v260817.04-1140';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5210,12 +5210,23 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   // (same idea as Quick Descent's landing area) to get the probable LANDING
   // AREA given forecast wind uncertainty - distinct from the reachable-area
   // polygon, which reflects STRATEGY choice, not forecast uncertainty.
+  // Uses antithetic sampling (each random draw is simulated together with
+  // its exact opposite) rather than 40 fully independent draws - the
+  // uncertainty bias here is constant for an entire run and accumulates
+  // over the whole (potentially hours-long) path rather than averaging out
+  // step-by-step, so with only 40 independent samples the draws could land
+  // asymmetrically by chance, pulling the centroid noticeably off the
+  // deterministic best-found path (and so off the intended target) rather
+  // than sitting close to it. Antithetic pairs guarantee the scatter stays
+  // symmetric around that deterministic path regardless of sample size.
   const mcEndpoints = [];
-  for(let run=0; run<40; run++){
+  for(let run=0; run<20; run++){
     const uncertaintyFrac = Math.random()*2-1;
-    const path = simulateStagedDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, startT, interceptAlt, roughHourIdx, best.lingerDurations, rate2, uncertaintyFrac);
-    const last = path[path.length-1];
-    mcEndpoints.push([last.lon, last.lat]);
+    for(const signedFrac of [uncertaintyFrac, -uncertaintyFrac]){
+      const path = simulateStagedDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, startT, interceptAlt, roughHourIdx, best.lingerDurations, rate2, signedFrac);
+      const last = path[path.length-1];
+      mcEndpoints.push([last.lon, last.lat]);
+    }
   }
   // The clicked point is, by definition, supposed to be reachable if it was
   // inside the (already-verified) reachable-area polygon - explicitly
@@ -6340,11 +6351,18 @@ async function fetchGustsOnly(resolvedModel){
 // DACH/Europe/global coverage logic, just the perturbed-member versions
 // instead of the single deterministic run.
 const ENSEMBLE_MODEL_MAP = {icon_d2:'icon_d2_eps', icon_eu:'icon_eu_eps', gfs_global:'ncep_gefs025', ecmwf_ifs04:'ecmwf_ifs025_ensemble', best_match:'icon_seamless_eps'};
-// Reduced pressure-level set for the ensemble fetch specifically (8 vs the
-// main fetch's 19) - this request's size multiplies by member count (~20-40
-// members), so keeping only levels covering a typical gas balloon's actual
-// operating range (up to ~7km) keeps it from becoming enormous.
-const ENSEMBLE_PRESSURE_LEVELS = [1000,925,850,800,700,600,500,400];
+// Pressure-level set for the ensemble fetch specifically - widened from 8
+// to 11 levels (17.08.2026, after the account upgraded to API
+// Professional's 5M calls/month, vs Standard's 1M) for finer vertical
+// resolution within a typical gas balloon's operating range (up to ~7km).
+// Kept to values confirmed present in the main forecast API's own level
+// list (975hPa etc. excluded where Météo-France models don't support it -
+// not a concern here since ensemble models are ICON/GFS/ECMWF only) so
+// none of these risk being an unsupported variable that breaks the whole
+// request. Not widened further than this - request cost still multiplies
+// by member count (~20-40), so this stays a deliberate middle ground
+// rather than requesting the full 19-level set.
+const ENSEMBLE_PRESSURE_LEVELS = [1000,975,950,925,900,850,800,700,600,500,400];
 async function fetchEnsembleWind(resolvedModel){
   const ensembleModel = ENSEMBLE_MODEL_MAP[resolvedModel];
   if(!ensembleModel){ console.warn('Ensemble: no ensemble equivalent mapped for model', resolvedModel); state.ensembleWindProfilesByHour = null; return; }
@@ -10092,6 +10110,7 @@ function loadConfig(){
       Object.assign(powerCatVisible, cfg.powerCat);
       Object.keys(cfg.powerCat).forEach(k=>{ const cb=document.querySelector(`[data-powercat="${k}"]`); if(cb) cb.checked=cfg.powerCat[k]; });
       forceRefreshPowerLayer();
+      updatePowerLegendVisibility();
     }
     if(cfg.aprsClasses){
       Object.keys(cfg.aprsClasses).forEach(k=>{ const cb=document.querySelector(`[data-aprs-class="${k}"]`); if(cb) cb.checked=cfg.aprsClasses[k]; });

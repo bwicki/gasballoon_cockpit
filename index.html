@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.06-1235';
+const APP_VERSION = 'v260817.07-1330';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -4551,8 +4551,20 @@ function computeReferenceTrajectory(){
   // currently set to, rather than a fixed horizon - the same control the
   // person already uses to say "how far ahead am I planning", reused here
   // instead of introducing a second, separate setting for the same idea.
+  // "Initiate descent in" is Quick Descent's own control and reused here
+  // for consistency when that sub-function is active - but Staged Descent
+  // needs a much longer horizon regardless of that slider's own value: it
+  // needs room for a genuine cruise phase (where the person drags the
+  // staged-descent marker to choose when descent begins) PLUS the actual
+  // multi-stage descent duration. Coupling this trajectory's length
+  // directly to "Initiate descent in" broke Staged Descent's marker/
+  // reachable-area/Monte-Carlo display entirely once that slider's own
+  // default was later reduced from 120 to 20 minutes - the reference line
+  // became too short to drag a marker or search for a plan on at all.
   const sInitEl = document.getElementById('sInit');
-  const REFERENCE_MINUTES = sInitEl ? Math.max(1, parseFloat(sInitEl.value)||120) : 120;
+  const REFERENCE_MINUTES = currentSubMode==='staged'
+    ? 240
+    : (sInitEl ? Math.max(1, parseFloat(sInitEl.value)||120) : 120);
   const path = simulateDescentPath(state.lat, state.lon, state.altAMSL, 0, REFERENCE_MINUTES*60, rate1, interceptAGL, rate2, 0);
   const cruiseOnly = path.filter(p=>p.t <= REFERENCE_MINUTES*60);
   state.referenceTrajectoryPath = cruiseOnly; // kept WITH its time values, for the staged-descent AND quick-descent draggable markers to snap to - always the FULL length, regardless of what's currently shown
@@ -4912,7 +4924,7 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
     let elapsed=0;
     while(elapsed<lingerS){
       const step=Math.min(dt, lingerS-elapsed);
-      const hourIdxAtT = Math.round(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path
+      const hourIdxAtT = Math.floor(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path. floor(), not round(): hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1 - round() was switching to the next hour's forecast a full 30 minutes too early.
       const unc = stagedWindUncertainty(t);
       const w = windAt(alt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT);
       const bearing=(Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
@@ -4928,7 +4940,7 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
       while(elapsed2<transitionS){
         const step=Math.min(dt2, transitionS-elapsed2);
         const curAlt = alt+(nextAlt-alt)*Math.min(1,(elapsed2+step/2)/transitionS);
-        const hourIdxAtT = Math.round(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path
+        const hourIdxAtT = Math.floor(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path. floor(), not round(): hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1 - round() was switching to the next hour's forecast a full 30 minutes too early.
         const unc = stagedWindUncertainty(t);
         const w = windAt(curAlt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT);
         const bearing=(Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
@@ -4943,7 +4955,7 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
   const dt3=15;
   while(alt>groundAlt){
     const step=Math.min(dt3, Math.max(0.1,(alt-groundAlt)/rate2Ms));
-    const hourIdxAtT = Math.round(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path
+    const hourIdxAtT = Math.floor(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path. floor(), not round(): hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1 - round() was switching to the next hour's forecast a full 30 minutes too early.
     const unc = stagedWindUncertainty(t);
     const w = windAt(alt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT);
     const bearing=(Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
@@ -5043,7 +5055,7 @@ async function computeStagedReachableArea(){
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const interceptAlt = state.groundElev + interceptAGL;
   const rate2 = parseFloat(document.getElementById('sRate2').value);
-  const roughHourIdx = Math.round(startT/3600);
+  const roughHourIdx = Math.floor(startT/3600);
   const altitudes = computeStageAltitudes(state.altAMSL, interceptAlt, roughHourIdx);
   const discretionaryS = stagedDiscretionarySeconds(altitudes);
   const n = altitudes.length;
@@ -5137,7 +5149,7 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   const interceptAGL = parseFloat(document.getElementById('sIntH').value);
   const interceptAlt = state.groundElev + interceptAGL;
   const rate2 = parseFloat(document.getElementById('sRate2').value);
-  const roughHourIdx = Math.round(startT/3600);
+  const roughHourIdx = Math.floor(startT/3600);
   const altitudes = computeStageAltitudes(state.altAMSL, interceptAlt, roughHourIdx);
   const discretionaryS = stagedDiscretionarySeconds(altitudes);
   function evalFracs(fracs){
@@ -5300,7 +5312,7 @@ function showStagedDescentPlan(result){
     stagedLandingCenterMarker.setLatLng([cLat,cLon]);
     if(!map.hasLayer(stagedLandingCenterMarker)) stagedLandingCenterMarker.addTo(map);
     const startTForHour = state.stagedMarkerT || 0;
-    const arrivalHourIdx = Math.round(result.path[result.path.length-1].t/3600);
+    const arrivalHourIdx = Math.floor(result.path[result.path.length-1].t/3600);
     document.getElementById('stagedPlanLandingInfo').textContent = toCompact(cLat, cLon);
     updateStagedLandingPositionCard(cLat, cLon, arrivalHourIdx).then(()=>{
       const name = state.stagedLandingTownName;
@@ -5363,7 +5375,7 @@ function drawStagedPlanChart(result){
   const startT = (result.path.find(p=>p.stage===0) || result.path[0]).t;
   const stages = result.altitudes.map((alt,i)=>{
     const stagePoint = result.path.find(p=>p.stage===i) || result.path[0];
-    const hourIdxAtStage = Math.round(stagePoint.t/3600);
+    const hourIdxAtStage = Math.floor(stagePoint.t/3600);
     const w = windAt(alt, 0, 1, hourIdxAtStage);
     return {
       altM: alt, lingerS: result.lingerDurations[i]||0,
@@ -5427,7 +5439,7 @@ function drawStagedPlanChart(result){
       if(dropM>1000){
         const midAlt = Math.round(((seg.altFrom+seg.altTo)/2)/50)*50;
         const midT = (seg.t0+seg.t1)/2;
-        const midHourIdx = Math.round((startT+midT)/3600);
+        const midHourIdx = Math.floor((startT+midT)/3600);
         const w = midAlt!=null ? windAt(midAlt, 0, 1, midHourIdx) : null;
         if(w){
           const midX = xFor(midT), midY = yFor(midAlt);
@@ -6810,7 +6822,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   } else {
   while(t<initDelayS){
     const step=Math.min(dt, initDelayS-t);
-    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.floor(t/3600); // floor(), not round() - hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1
     const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
     if(debugWindProgression && hourIdxAtT!==lastLoggedHourIdx){
       const p = getActiveWindProfile(hourIdxAtT);
@@ -6848,7 +6860,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
     const decelFactor = Math.max(0, Math.min(1, altAboveIntercept/decelWindowM)); // 1=full nominal rate, 0=already at post-intercept rate
     const targetRate = effRate2 + (effRate1-effRate2)*decelFactor;
     const instantRate = targetRate*accelFactor;
-    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.floor(t/3600); // floor(), not round() - hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1
     const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(interceptAlt, alt-instantRate*step); t+=step;
@@ -6856,7 +6868,7 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   }
   while(alt>state.groundElev){
     const step=dt;
-    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.round(t/3600);
+    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.floor(t/3600); // floor(), not round() - hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1
     const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
     const [nlat,nlon]=destPoint(lat,lon, (Math.atan2(w.u,w.v)*180/Math.PI+360)%360, Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; alt=Math.max(state.groundElev, alt-effRate2*step); t+=step;
@@ -7093,7 +7105,7 @@ function updateLandingPositionCard(){
   document.getElementById('landingPosCoords').textContent = toCompact(cLat, cLon);
 
   // Ground wind at the landing site, evaluated at the estimated landing time.
-  const hourIdx = Math.round((state.secondsToLanding||0)/3600);
+  const hourIdx = Math.floor((state.secondsToLanding||0)/3600);
   const w = windAt(state.groundElev+50, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360; // meteorological "from" direction
@@ -7416,7 +7428,7 @@ let particleHeightMaxAGL = 1200;
 let particleWindPreviewTimer = null;
 function showParticleWindPreview(trackRect, frac, stackRect){
   const particleAltM = state.groundElev + particleHeightAGL;
-  const hourIdx = Math.round((state.secondsToLanding||0)/3600);
+  const hourIdx = Math.floor((state.secondsToLanding||0)/3600);
   const w = windAt(particleAltM, 0, 1, hourIdx);
   const speedKmh = Math.hypot(w.u,w.v)*3.6;
   const dirFrom = (Math.atan2(-w.u,-w.v)*180/Math.PI+360)%360;
@@ -7589,7 +7601,7 @@ function animateGroundWind(){
   // can go up to current altitude + 1000m), evaluated at the ESTIMATED
   // LANDING TIME (not "now") - that's the wind that will actually matter.
   const particleAltM = state.groundElev + particleHeightAGL;
-  const hourIdx = Math.round((state.secondsToLanding||0)/3600);
+  const hourIdx = Math.floor((state.secondsToLanding||0)/3600);
   const w = windAt(particleAltM, 0, 1, hourIdx);
   const speedMs = Math.hypot(w.u, w.v);
   const b = map.getBounds();
@@ -8153,13 +8165,13 @@ async function planDescentToTarget(lat, lon){
   state.secondsToLanding = bestPath.length ? bestPath[bestPath.length-1].t : 0;
   hideYellowWarning(); // the descent-time slider has no effect in Plan Descent, so that warning doesn't apply here
 
-  const arrivalHourIdx = Math.round(bestPath[bestPath.length-1].t/3600); // for display purposes only (wind readout at the landing site)
+  const arrivalHourIdx = Math.floor(bestPath[bestPath.length-1].t/3600); // for display purposes only (wind readout at the landing site)
   await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
 
   // Wind Profile / Hodograph should reflect conditions at the PLANNED
   // DESCENT POINT itself (its own location and arrival time), not the
   // balloon's current position - fetch a dedicated profile for that.
-  const descentPointHourIdx = Math.round(initSec/3600);
+  const descentPointHourIdx = Math.floor(initSec/3600);
   try{
     state.plannedWindProfile = await fetchWindProfileAtLocation(initFix.lat, initFix.lon, descentPointHourIdx);
     drawWindProfileChart('windProfileChart', state.plannedWindProfile);
@@ -8237,11 +8249,11 @@ async function recomputeFromManualDescentPoint(lat, lon, snappedT){
   const cruiseSpeedMs = Math.max(0.1, state.speedKn/KN_PER_MS);
   const initSec = snappedT!=null ? snappedT : haversine(state.lat,state.lon,lat,lon) / cruiseSpeedMs;
   state.plannedInitDelayMin = initSec/60;
-  const arrivalHourIdxGuess = Math.round(initSec/3600);
+  const arrivalHourIdxGuess = Math.floor(initSec/3600);
   const startOverride = {lat, lon, t: initSec};
 
   const bestPath = simulateDescentPath(state.lat,state.lon,state.altAMSL,0, initSec, rate1, interceptAGL, rate2, 0, false, 0, 1, arrivalHourIdxGuess, startOverride);
-  const arrivalHourIdx = Math.round(bestPath[bestPath.length-1].t/3600);
+  const arrivalHourIdx = Math.floor(bestPath[bestPath.length-1].t/3600);
 
   document.getElementById('estimatedDescentPointText').textContent = `${(initSec/60).toFixed(1)} min · ${(haversine(state.lat,state.lon,lat,lon)/1000).toFixed(1)} km from here`;
 
@@ -8280,7 +8292,7 @@ async function recomputeFromManualDescentPoint(lat, lon, snappedT){
 
   await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
   try{
-    state.plannedWindProfile = await fetchWindProfileAtLocation(lat, lon, Math.round(initSec/3600));
+    state.plannedWindProfile = await fetchWindProfileAtLocation(lat, lon, Math.floor(initSec/3600));
     drawWindProfileChart('windProfileChart', state.plannedWindProfile);
     drawHodograph(bestPath, 'hodographChart', state.plannedWindProfile);
   }catch(e){ /* keep showing whatever was last drawn */ }

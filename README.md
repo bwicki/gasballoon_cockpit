@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260817.06-1235** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260817.07-1330** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -119,9 +119,13 @@ Organized into color-coded groups: General (cache radius, transition altitude, u
 
 **Emergency contact**: pilot name, aircraft registration, mobile number, and email, with prepared-message sending over WhatsApp, SMS, or email (via mailto, or silently via EmailJS if configured).
 
-## Quick Descent trajectory fix
+## Trajectory modeling fixes
 
-Fixed a serious bug (17.08.2026): Quick Descent's search for the descent-initiation delay that lands closest to a clicked target could pick a delay of up to 600 minutes (10 hours) if that happened to land closer, whenever the normal 240-minute range still looked "improving" at its edge. This could produce a shown path that started correctly (following the current, real wind) and then made an apparently arbitrary reversal partway through - not a data or algorithm error, but the later portion of the path being genuinely driven by a completely different, much-later forecast hour (e.g. a forecast wind direction shift many hours out), which is operationally unrealistic for an actual flight and undermines trust in the trajectory shown. The search is now kept within the same 0-240 minute range the "Initiate descent in" slider itself offers - consistent with what's actually controllable and short enough that the forecast driving it stays reasonably trustworthy.
+Found the actual, deeper cause of Quick Descent's reported 180° reversal (17.08.2026), after an earlier fix (capping the delay search at 240 minutes, described below) turned out insufficient on its own: every simulation step resolved which hour's forecast wind to use via `Math.round(t/3600)` rather than `Math.floor(t/3600)`. Hourly forecast data represents the full hour starting at that mark - so 30 minutes into a flight is still within hour 0's forecast, not already hour 1's - but `round()` was switching to the next hour's forecast a full 30 minutes too early. If that next hour's forecast differs meaningfully from the current one (a realistic case, not a data error), the shown path would appear to snap onto a different wind direction partway through, exactly matching what was reported. This affected every trajectory simulation in the app (Landing Area, Quick Descent, Staged Descent, and the "wind at landing site" readouts) - all 19 occurrences of this rounding pattern are now consistently `floor()`.
+
+Separately, fixed a genuinely broken Staged Descent: its reference trajectory (the line the staged-descent marker is dragged along) had its length tied to the "Initiate descent in" slider for consistency with Quick Descent - reasonable while that slider defaulted to 120 minutes, but once its default was later reduced to 20 minutes (in an unrelated change), the reference line became far too short to drag a marker on, search for a plan within, or show any reachable area/Monte-Carlo scatter at all. Staged Descent's reference trajectory is now a fixed 240 minutes regardless of that slider, independent of Quick Descent's own horizon.
+
+Also fixed the earlier-described bug: Quick Descent's search for the descent-initiation delay that lands closest to a clicked target could pick a delay of up to 600 minutes (10 hours) if that happened to land closer, whenever the normal 240-minute range still looked "improving" at its edge - an operationally unrealistic delay for an actual flight. The search is now kept within the same 0-240 minute range the "Initiate descent in" slider itself offers.
 
 ## Known limitations
 

@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260817.07-1330** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260817.08-1400** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -126,6 +126,8 @@ Found the actual, deeper cause of Quick Descent's reported 180° reversal (17.08
 Separately, fixed a genuinely broken Staged Descent: its reference trajectory (the line the staged-descent marker is dragged along) had its length tied to the "Initiate descent in" slider for consistency with Quick Descent - reasonable while that slider defaulted to 120 minutes, but once its default was later reduced to 20 minutes (in an unrelated change), the reference line became far too short to drag a marker on, search for a plan within, or show any reachable area/Monte-Carlo scatter at all. Staged Descent's reference trajectory is now a fixed 240 minutes regardless of that slider, independent of Quick Descent's own horizon.
 
 Also fixed the earlier-described bug: Quick Descent's search for the descent-initiation delay that lands closest to a clicked target could pick a delay of up to 600 minutes (10 hours) if that happened to land closer, whenever the normal 240-minute range still looked "improving" at its edge - an operationally unrealistic delay for an actual flight. The search is now kept within the same 0-240 minute range the "Initiate descent in" slider itself offers.
+
+Found and fixed a further contributor to nonsensical-looking paths, particularly visible when testing without a real GPS fix: the first 1-3 minutes of every simulated cruise phase blended FROM the observed course/speed toward the forecast wind - but without a real fix yet (courseKnown still false), state.course/speedKn sit at arbitrary placeholder defaults (90°, 15kn), not an actual observation. Blending from that placeholder was pulling the very start of every path toward that arbitrary direction regardless of the real wind. With no genuine observation to blend from, the simulation now uses the actual forecast wind from t=0 instead in that situation.
 
 ## Known limitations
 

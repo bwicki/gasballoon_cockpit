@@ -1346,13 +1346,14 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.13-1650';
+const APP_VERSION = 'v260817.14-1735';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
 const state = {
   lat: 47.3769, lon: 8.5417, altAMSL: 3000, groundElev: 450,
+  appMode: 'monitor', // 'monitor' (Landing Area) | 'plan' (Plan Descent) - explicitly set here since Landing Area is the actual default function shown on boot; leaving this undefined until the first mode-switch click meant every "state.appMode==='monitor'" check elsewhere evaluated false during that entire initial period, even though Landing Area was genuinely the active function
   course: 90, speedKn: 15, climbRateMs: 0, courseKnown: false, // courseKnown stays false until real movement is observed - 90° is just an arbitrary starting default, not a real reading, so it shouldn't display as one
   breadcrumb: [], // {lat,lon,t}
   testMode: false,
@@ -5286,24 +5287,23 @@ function searchStagedDescentToTarget(targetLat, targetLon){
     }
   }
   // The clicked point is, by definition, supposed to be reachable if it was
-  // inside the (already-verified) reachable-area polygon - explicitly
-  // include it as a hull vertex so the landing area is GUARANTEED to
-  // contain it regardless of how close the randomized search actually
-  // converged, rather than depending entirely on search precision.
-  // The centroid shown on the map is computed from the raw Monte-Carlo
-  // endpoints ONLY, not from the hull's own vertices - the target point
-  // added just below is there to GUARANTEE the drawn polygon visually
-  // contains where the person clicked, but a convex hull's vertices sit on
-  // its outer boundary by definition, so including that forced vertex in a
-  // simple vertex-average pulled the "centre" toward the edge rather than
-  // reflecting where the scatter actually clusters. This was very likely
-  // the exact cause of the red target point so often appearing to sit at
-  // the edge of its own landing area instead of near the middle. Computed
-  // BEFORE the target point is added below, so it's never included here.
+  // The landing area now shows ONLY the natural Monte-Carlo scatter around
+  // the actual best-found plan - it previously always included the
+  // clicked target itself as a forced extra hull vertex, "to guarantee"
+  // the drawn polygon visually reached it. But when the search's actual
+  // best plan didn't land exactly on the target (routine, since the
+  // reachable strategy space is discrete/constrained), that forced vertex
+  // stretched the polygon into a thin wedge/triangle with the target at
+  // one tip and the real scatter clustered at the other - the landing
+  // area was never honestly centred AROUND the target the way a genuine
+  // uncertainty cloud should be. With the search now refining from
+  // several starting points (see above) rather than just one, the actual
+  // best-found plan should land close enough to the target on its own
+  // merits, without this artificial stretch misrepresenting where the
+  // simulation actually predicts landing.
   let mcCentroidLon = 0, mcCentroidLat = 0;
   mcEndpoints.forEach(p=>{ mcCentroidLon+=p[0]; mcCentroidLat+=p[1]; });
   mcCentroidLon/=mcEndpoints.length; mcCentroidLat/=mcEndpoints.length;
-  mcEndpoints.push([targetLon, targetLat]);
   const landingHull = mcEndpoints.length>=3 ? convexHull(mcEndpoints) : mcEndpoints;
   // NOT snapping the drawn path to the target with a fake final segment
   // anymore - that straight-line "fix" from a previous round could point in

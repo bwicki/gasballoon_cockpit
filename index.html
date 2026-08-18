@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.08-1400';
+const APP_VERSION = 'v260817.11-1545';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5039,6 +5039,7 @@ function scheduleStagedAreaRecompute(){
   stagedAreaFetchTimer = setTimeout(computeStagedReachableArea, 400);
 }
 let stagedAreaComputeInFlight = false;
+let stagedAreaRecomputePending = false; // set when a call arrives while one is already in flight - triggers one automatic catch-up run right after, instead of silently discarding the request
 async function computeStagedReachableArea(){
   // A reentrancy guard - this function is fairly expensive (hundreds of
   // simulations), and without this, clicking again before a previous call
@@ -5046,7 +5047,16 @@ async function computeStagedReachableArea(){
   // shared state.stagedGridStrategies/state.stagedGridContext, which is
   // very likely what caused the search to intermittently fail or produce
   // nonsensical results on a second click.
-  if(stagedAreaComputeInFlight) return;
+  // Previously just discarded an overlapping call outright - but several
+  // different triggers (marker drag, various sliders) can each schedule a
+  // call within a short window, and silently dropping one of them left
+  // state.stagedReachableHull stale relative to whatever the person had
+  // most recently actually done, which is very likely the cause of the
+  // reachable area no longer displaying reliably. Now remembers that
+  // another run was requested and automatically re-runs once, immediately
+  // after the current one finishes, so the last requested state is always
+  // eventually computed rather than silently lost.
+  if(stagedAreaComputeInFlight){ stagedAreaRecomputePending = true; return; }
   stagedAreaComputeInFlight = true;
   try{
   ensureStagedLayers();
@@ -5062,13 +5072,18 @@ async function computeStagedReachableArea(){
   // The SAME exhaustive grid used by the specific-point search below (see
   // searchStagedDescentToTarget) - critically important that both use
   // identical strategy sets, otherwise the drawn reachable area and what
-  // the search can actually achieve could silently disagree. Resolution is
-  // kept modest - each combination costs a full physics simulation, and
-  // the earlier much finer grid (into the thousands of combinations per
-  // click) was almost certainly what made things feel unreliable/slow
-  // enough to invite the double-clicking that triggered the reentrancy
-  // problem in the first place.
-  const resolution = n<=3 ? 10 : n<=4 ? 8 : n<=5 ? 6 : 4;
+  // the search can actually achieve could silently disagree. An earlier
+  // version reduced this resolution substantially, reasoning that a much
+  // finer grid was what made clicks feel unreliable/slow - but the actual
+  // reentrancy guard above (stagedAreaComputeInFlight) already protects
+  // against overlapping double-click runs independently of resolution, so
+  // that reduction traded away search quality for a problem it wasn't
+  // actually fixing. Too coarse a grid gives the subsequent coordinate-
+  // descent refinement a poor starting point, which can converge on a
+  // mediocre local optimum well short of the actual target - producing
+  // exactly the "landing area centroid stuck far from the clicked point"
+  // shape that was reported. Raised back to a genuinely fine grid.
+  const resolution = n<=3 ? 24 : n<=4 ? 16 : n<=5 ? 12 : 8;
   function* simplexCompositions(remaining, partsLeft){
     if(partsLeft===1){ yield [remaining]; return; }
     for(let i=0;i<=remaining;i++){
@@ -5136,6 +5151,10 @@ async function computeStagedReachableArea(){
   if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
   } finally {
     stagedAreaComputeInFlight = false;
+    if(stagedAreaRecomputePending){
+      stagedAreaRecomputePending = false;
+      computeStagedReachableArea(); // fire-and-forget the catch-up run - not awaited here so this call's own caller isn't kept waiting for it
+    }
   }
 }
 // Randomized search (many trials + local refinement) for the specific
@@ -6784,43 +6803,24 @@ function computeActualRateAtIntercept(volumeM3, startAltM, interceptAltM, rate1M
 
 // ---------- Monte-Carlo landing footprint ----------
 function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, initDelayS, rateMs, interceptAGL, rate2Ms, scatterFrac, driftWithFlightBefore, windDirBiasDeg, windSpeedScale, hourIdxOverride, startOverride, debugWindProgression, memberIdx){
-  // Phase 0: continue toward the descent-initiation point. For the first
-  // few minutes we're still extrapolating the OBSERVED GPS course/speed
-  // (the most reliable data we have for what's happening right now), but for
-  // longer delays we switch to the FORECAST wind at cruise altitude for the
-  // hour actually being flown through - a free gas balloon's ground track
-  // already IS essentially "the wind pushing it", so a multi-hour wait
-  // should follow however the model expects that wind to evolve/shift over
-  // time, not a straight-line extrapolation of the current heading forever.
-  // This matters directly for reachability: a point that requires the
-  // cruise-phase drift to curve along with a forecast wind shift wouldn't
-  // otherwise be found by varying the delay alone.
-  // Blend smoothly from the OBSERVED GPS course/speed (most reliable for
-  // "right now") toward the FORECAST wind at cruise altitude over a SHORT
-  // window (1-3 min) - just long enough to avoid a hard visible snap, but
-  // short enough that almost the entire reachable curve (used by the
-  // search below) is governed by ONE consistent rule (forecast wind), not
-  // a mix of "observed course" for short delays and "forecast wind" for
-  // long ones. That inconsistency was the real cause of search results for
-  // two different target points - even ones lying along the same obvious
-  // wind line - landing on unrelated, seemingly illogical solutions.
-  const BLEND_START_S = 60, BLEND_END_S = 180;
+  // Vector hierarchy for the cruise-phase extrapolation, per explicit
+  // instruction: as long as a real GPS course/speed is currently known,
+  // that vector has PRIORITY for the entire cruise-phase extrapolation -
+  // the reference trajectory is simply the continuation of the presently
+  // observed course/speed, for as long as that observation is available,
+  // not a blend into forecast wind after a few minutes. Only when there is
+  // NO GPS signal (which can also happen temporarily mid-flight, not just
+  // before the first fix) does the trajectory fall back to the forecast
+  // wind model at the CURRENT altitude instead. No blending between the
+  // two - whichever one applies governs the entire cruise phase.
   let lastLoggedHourIdx = -1;
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
   let t=0;
   const path=[{lat,lon,alt,t}];
   const cruiseSpeedMs = state.speedKn/KN_PER_MS;
-  // If no real course/speed has ever actually been observed (no GPS fix
-  // yet, courseKnown still false), state.course/speedKn sit at arbitrary
-  // placeholder defaults (90°/15kn) - blending FROM them for the first 1-3
-  // minutes of simulated flight was pulling the very start of every path
-  // toward that arbitrary direction regardless of the real wind, which is
-  // very likely why a path could look nonsensical particularly when
-  // testing without a GPS fix. With no real observation to blend from,
-  // skip the blend entirely and use the actual forecast wind from t=0.
-  const observedU = state.courseKnown ? cruiseSpeedMs*Math.sin(state.course*Math.PI/180) : null;
-  const observedV = state.courseKnown ? cruiseSpeedMs*Math.cos(state.course*Math.PI/180) : null;
+  const gpsU = state.courseKnown ? cruiseSpeedMs*Math.sin(state.course*Math.PI/180) : null;
+  const gpsV = state.courseKnown ? cruiseSpeedMs*Math.cos(state.course*Math.PI/180) : null;
   if(startOverride){
     // Skip the cruise simulation entirely and start the descent phase
     // exactly from a manually-specified point (e.g. the draggable descent
@@ -6830,16 +6830,23 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   } else {
   while(t<initDelayS){
     const step=Math.min(dt, initDelayS-t);
-    const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.floor(t/3600); // floor(), not round() - hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1
-    const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
-    if(debugWindProgression && hourIdxAtT!==lastLoggedHourIdx){
-      const p = getActiveWindProfile(hourIdxAtT);
-      console.log(`Wind progression: hour ${hourIdxAtT} (t=${(t/60).toFixed(0)}min) - profile has ${p?p.length:0} levels, wind at cruise alt ${alt.toFixed(0)}m: ${Math.hypot(w.u,w.v).toFixed(1)} m/s, source profile length available: ${(state.windProfilesByHour||[]).length} hours total`);
-      lastLoggedHourIdx = hourIdxAtT;
+    let u, v;
+    if(gpsU!=null){
+      // GPS course/speed has priority - straight-line continuation of the
+      // currently observed vector, for the entire cruise phase.
+      u = gpsU; v = gpsV;
+    } else {
+      // No GPS signal - use the forecast wind model at the current
+      // altitude instead.
+      const hourIdxAtT = hourIdxOverride!=null ? hourIdxOverride : Math.floor(t/3600); // floor(), not round() - hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1
+      const w = windAt(alt, windDirBiasDeg, windSpeedScale, hourIdxAtT, memberIdx);
+      if(debugWindProgression && hourIdxAtT!==lastLoggedHourIdx){
+        const p = getActiveWindProfile(hourIdxAtT);
+        console.log(`Wind progression: hour ${hourIdxAtT} (t=${(t/60).toFixed(0)}min) - profile has ${p?p.length:0} levels, wind at cruise alt ${alt.toFixed(0)}m: ${Math.hypot(w.u,w.v).toFixed(1)} m/s, source profile length available: ${(state.windProfilesByHour||[]).length} hours total`);
+        lastLoggedHourIdx = hourIdxAtT;
+      }
+      u = w.u; v = w.v;
     }
-    const blendFrac = observedU==null ? 1 : Math.max(0, Math.min(1, (t-BLEND_START_S)/(BLEND_END_S-BLEND_START_S)));
-    const u = observedU==null ? w.u : observedU + (w.u-observedU)*blendFrac;
-    const v = observedV==null ? w.v : observedV + (w.v-observedV)*blendFrac;
     const bearingTo = (Math.atan2(u,v)*180/Math.PI+360)%360;
     const [nlat,nlon]=destPoint(lat,lon, bearingTo, Math.hypot(u,v)*step);
     lat=nlat; lon=nlon; t+=step;
@@ -8100,6 +8107,15 @@ async function planDescentToTarget(lat, lon){
 
   document.getElementById('estimatedDescentPointText').textContent = `${best.toFixed(1)} min · ${(distToInit/1000).toFixed(1)} km from here`;
   document.getElementById('estimatedDescentPointCell').style.display = 'block';
+  // The "Initiate descent in" label otherwise only ever reflects the
+  // slider's own raw value, unrelated to what this search actually found
+  // - showing e.g. "20 min" there while the plan just found needs 12.1min
+  // is a confusing, avoidable inconsistency. Updates the label text only,
+  // not the slider's own value/position (sInit.value) - that's Function
+  // 1's own independent setting and shouldn't be silently overwritten by
+  // a Quick Descent search result.
+  const lblInitEl = document.getElementById('lblInit');
+  if(lblInitEl) lblInitEl.textContent = `${best.toFixed(1)} min (plan)`;
 
   // Monte-Carlo scatter AT this same initiation time and wind hour, to get
   // an approximate BEST LANDING AREA close to the clicked point, not just
@@ -8201,6 +8217,14 @@ async function planDescentToTarget(lat, lon){
 function clearPlannedLandingArea(){
   state.plannedLandingActive = false;
   state.plannedInitDelayMin = null;
+  // Restore the "Initiate descent in" label to reflect the slider's own
+  // value again, undoing the temporary "(plan)" override shown while a
+  // Quick Descent plan was active.
+  const sInitElReset = document.getElementById('sInit'), lblInitElReset = document.getElementById('lblInit');
+  if(sInitElReset && lblInitElReset){
+    const v = parseFloat(sInitElReset.value);
+    lblInitElReset.textContent = (v==0 ? 'immediate' : v+' min');
+  }
   updateReferenceTrajectoryDisplay(); // restores the full reference line now that no plan is truncating it
   state.plannedLandingPolygon = null;
   plannedLandingPolyLayer.setLatLngs([]);

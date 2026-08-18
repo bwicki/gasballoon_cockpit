@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.12-1610';
+const APP_VERSION = 'v260817.13-1650';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -4581,8 +4581,16 @@ function computeReferenceTrajectory(){
 function updateReferenceTrajectoryDisplay(){
   const full = state.referenceTrajectoryPath;
   if(!full || !full.length) return;
-  const cutT = (currentSubMode==='quick' && state.plannedLandingActive && state.plannedInitDelayMin!=null)
-    ? state.plannedInitDelayMin*60 : Infinity;
+  let cutT = Infinity;
+  if(currentSubMode==='quick' && state.plannedLandingActive && state.plannedInitDelayMin!=null){
+    cutT = state.plannedInitDelayMin*60;
+  } else if(currentSubMode==='staged' && state.stagedMarkerT!=null){
+    // Show the reference trajectory only up to the staged-descent marker
+    // (the blue cross) itself, not the full length behind it - the marker
+    // IS the chosen descent-initiation point, so nothing beyond it is
+    // actually part of "how the balloon gets there".
+    cutT = state.stagedMarkerT;
+  }
   const shown = cutT===Infinity ? full : full.filter(p=>p.t<=cutT);
   referenceTrajectoryOutline.setLatLngs(shown.map(p=>[p.lat,p.lon]));
   referenceTrajectoryLayer.setLatLngs(shown.map(p=>[p.lat,p.lon]));
@@ -5029,6 +5037,7 @@ function ensureStagedLayers(){
       const snapped = path[bestIdx];
       e.target.setLatLng([snapped.lat, snapped.lon]);
       state.stagedMarkerT = snapped.t;
+      updateReferenceTrajectoryDisplay();
       scheduleStagedAreaRecompute();
     });
   }
@@ -5189,12 +5198,19 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   const ctx = state.stagedGridContext;
   const ctxMatches = ctx && Math.abs(ctx.markerLat-markerPos.lat)<1e-6 && Math.abs(ctx.markerLon-markerPos.lng)<1e-6
     && ctx.startT===startT && ctx.altitudes.length===n;
-  let best = null;
+  // Collect the TOP-4 grid candidates (not just the single best) to refine
+  // from - coordinate descent from just one starting point can settle into
+  // a mediocre local optimum well short of the actual target, particularly
+  // whenever the true optimum sits in a different region of the strategy
+  // space than wherever the single best grid point happened to land. Each
+  // of the 4 is independently refined below, and the best result across
+  // all of them is kept.
+  let candidates = [];
   if(ctxMatches && state.stagedGridResults && state.stagedGridResults.length){
     for(const gr of state.stagedGridResults){
       const last = gr.path[gr.path.length-1];
       const dist = haversine(last.lat,last.lon,targetLat,targetLon);
-      if(!best || dist<best.dist) best = {dist, path:gr.path, lingerDurations:gr.lingerDurations, fracs:gr.fracs};
+      candidates.push({dist, path:gr.path, lingerDurations:gr.lingerDurations, fracs:gr.fracs});
     }
   } else {
     // Fallback: no cached grid available (e.g. called before the area was
@@ -5209,33 +5225,43 @@ function searchStagedDescentToTarget(targetLat, targetLon){
       }
     }
     for(const combo of simplexCompositions(resolution, n)){
-      const res = evalFracs(combo.map(v=>v/resolution));
-      if(!best || res.dist<best.dist) best = res;
+      candidates.push(evalFracs(combo.map(v=>v/resolution)));
     }
   }
+  candidates.sort((a,b)=>a.dist-b.dist);
+  const startingPoints = candidates.slice(0, 4);
   // Systematic coordinate descent: for each stage in turn, try nudging its
   // time share up or down (redistributing the change proportionally among
   // the other stages so fractions still sum to 1), keeping whichever nudge
-  // improves the distance to target most. This polishes the grid search's
-  // result to a finer precision than the grid resolution alone allows.
+  // improves the distance to target most. This polishes a grid starting
+  // point to a finer precision than the grid resolution alone allows.
   const STEPS = [0.2, -0.2, 0.08, -0.08, 0.03, -0.03, 0.01, -0.01];
-  for(let round=0; round<10; round++){
-    let improved = false;
-    for(let i=0;i<altitudes.length;i++){
-      for(const delta of STEPS){
-        const trial = best.fracs.slice();
-        const newVal = Math.max(0, trial[i]+delta);
-        const diff = newVal - trial[i];
-        trial[i] = newVal;
-        const others = trial.map((v,idx)=>idx).filter(idx=>idx!==i);
-        const otherSum = others.reduce((a,idx)=>a+best.fracs[idx],0) || 1;
-        others.forEach(idx=>{ trial[idx] = Math.max(0, trial[idx] - diff*(best.fracs[idx]/otherSum)); });
-        const sum = trial.reduce((a,b)=>a+b,0) || 1;
-        const res = evalFracs(trial.map(v=>v/sum));
-        if(res.dist<best.dist){ best = res; improved = true; }
+  function refine(startPoint){
+    let cur = startPoint;
+    for(let round=0; round<10; round++){
+      let improved = false;
+      for(let i=0;i<altitudes.length;i++){
+        for(const delta of STEPS){
+          const trial = cur.fracs.slice();
+          const newVal = Math.max(0, trial[i]+delta);
+          const diff = newVal - trial[i];
+          trial[i] = newVal;
+          const others = trial.map((v,idx)=>idx).filter(idx=>idx!==i);
+          const otherSum = others.reduce((a,idx)=>a+cur.fracs[idx],0) || 1;
+          others.forEach(idx=>{ trial[idx] = Math.max(0, trial[idx] - diff*(cur.fracs[idx]/otherSum)); });
+          const sum = trial.reduce((a,b)=>a+b,0) || 1;
+          const res = evalFracs(trial.map(v=>v/sum));
+          if(res.dist<cur.dist){ cur = res; improved = true; }
+        }
       }
+      if(!improved) break;
     }
-    if(!improved) break;
+    return cur;
+  }
+  let best = null;
+  for(const sp of startingPoints){
+    const refined = refine(sp);
+    if(!best || refined.dist<best.dist) best = refined;
   }
   // Once the specific stage plan is fixed, run a Monte-Carlo pass around it
   // (same idea as Quick Descent's landing area) to get the probable LANDING
@@ -6114,6 +6140,7 @@ let ensureLandingAreaVisibleTimer = null;
 function ensureLandingAreaVisible(){
   clearTimeout(ensureLandingAreaVisibleTimer);
   ensureLandingAreaVisibleTimer = setTimeout(()=>{
+    if(state.appMode!=='monitor') return; // this is Function 1's own logic - Plan Descent (Quick/Staged) sets its own zoom after a search completes, which this must not fight with using stale Function 1 data
     const hull = state.landingPolygon;
     if(!hull || hull.length<2) return;
     const latLngs = hull.map(p=>[p[1],p[0]]);
@@ -7955,6 +7982,7 @@ map.on('click', async (e)=>{
       state.stagedMarkerT = snapped.t;
       state.stagedMarkerInitialized = true;
       stagedMarker.addTo(map);
+      updateReferenceTrajectoryDisplay();
       if(!map.hasLayer(stagedReachableLayer)) stagedReachableLayer.addTo(map);
       console.log('Staged descent: marker placed at', snapped.lat, snapped.lon, '- now computing reachable area...');
       await computeStagedReachableArea();

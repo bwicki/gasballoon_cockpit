@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.14-1735';
+const APP_VERSION = 'v260817.15-1800';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8033,7 +8033,12 @@ map.on('click', async (e)=>{
   // flight path (by searching for a descent-initiation time) to find the
   // best approximate match, rather than requiring the click to already be
   // within the live landing area.
-  await planDescentToTarget(e.latlng.lat, e.latlng.lng);
+  try{
+    await planDescentToTarget(e.latlng.lat, e.latlng.lng);
+  }catch(err){
+    console.error('Quick descent: click handling failed:', err);
+    showMapHint(e.latlng, "couldn't compute a plan for this point - see console for details");
+  }
 });
 // A brief, self-dismissing tooltip at a map point - used for the staged-
 // descent placement/target-selection guidance messages, so an invalid tap
@@ -8218,6 +8223,25 @@ async function planDescentToTarget(lat, lon){
   document.getElementById('plannedBadgeWord').style.display = 'inline';
   document.getElementById('btnCenterPlanned').style.display = 'block';
 
+  // Make sure the resulting landing area is actually visible - it could
+  // easily be outside the current view, especially for a distant/long-
+  // delay target. Zooms to the landing area (hull) itself, not the span
+  // from the balloon's current position to it - including the current
+  // position here previously meant this effectively zoomed out to show
+  // the whole trajectory instead of focusing on the actual result.
+  // Deliberately placed HERE, before the network-dependent operations
+  // below (position card, wind profile) - those can fail (a terrain-check
+  // or geocoding request timing out, for instance), and an uncaught
+  // failure there previously aborted this whole function before ever
+  // reaching the zoom call, which is very likely why the map sometimes
+  // never actually focused on a newly-computed landing area even though
+  // it had been drawn correctly.
+  if(hull.length){
+    map.fitBounds(hull.map(p=>[p[1],p[0]]), {padding:[40,40]});
+  } else {
+    map.fitBounds([[state.lat,state.lon],[lat,lon]], {padding:[40,40]});
+  }
+
   // The ground wind particle simulation picks its wind hour from
   // state.secondsToLanding - while planning, that must reflect the PLANNED
   // arrival time, not whatever the (irrelevant here) "Initiate descent in"
@@ -8226,7 +8250,9 @@ async function planDescentToTarget(lat, lon){
   hideYellowWarning(); // the descent-time slider has no effect in Plan Descent, so that warning doesn't apply here
 
   const arrivalHourIdx = Math.floor(bestPath[bestPath.length-1].t/3600); // for display purposes only (wind readout at the landing site)
-  await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
+  try{
+    await updatePlannedLandingPositionCard(cLat, cLon, arrivalHourIdx);
+  }catch(e){ console.warn('Quick descent: updatePlannedLandingPositionCard failed (non-critical, the plan itself is already shown):', e); }
 
   // Wind Profile / Hodograph should reflect conditions at the PLANNED
   // DESCENT POINT itself (its own location and arrival time), not the
@@ -8237,18 +8263,6 @@ async function planDescentToTarget(lat, lon){
     drawWindProfileChart('windProfileChart', state.plannedWindProfile);
     drawHodograph(plannedDescentSeg, 'hodographChart', state.plannedWindProfile);
   }catch(e){ /* keep showing whatever was last drawn if this fails */ }
-
-  // Make sure the resulting landing area is actually visible - it could
-  // easily be outside the current view, especially for a distant/long-
-  // delay target. Zooms to the landing area (hull) itself, not the span
-  // from the balloon's current position to it - including the current
-  // position here previously meant this effectively zoomed out to show
-  // the whole trajectory instead of focusing on the actual result.
-  if(hull.length){
-    map.fitBounds(hull.map(p=>[p[1],p[0]]), {padding:[40,40]});
-  } else {
-    map.fitBounds([[state.lat,state.lon],[lat,lon]], {padding:[40,40]});
-  }
 }
 function clearPlannedLandingArea(){
   state.plannedLandingActive = false;

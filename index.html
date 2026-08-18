@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.11-1545';
+const APP_VERSION = 'v260817.12-1610';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8166,11 +8166,19 @@ async function planDescentToTarget(lat, lon){
   const cLat = hLats.reduce((a,b)=>a+b,0)/hLats.length, cLon = hLons.reduce((a,b)=>a+b,0)/hLons.length;
   if(plannedLandingCenterMarker) map.removeLayer(plannedLandingCenterMarker);
   plannedLandingCenterMarker = L.marker([cLat,cLon], {icon: smallCrossIcon}).addTo(map);
-  // The descent path should end exactly AT the landing-area center marker,
-  // not wherever the single deterministic (zero-scatter) path happened to
-  // land - which can differ slightly from the Monte-Carlo hull's center.
+  // The descent path ends at its own actual, physically-simulated
+  // endpoint - it previously got its last point artificially overwritten
+  // with the Monte-Carlo hull's centroid instead, on the reasoning that it
+  // should end exactly at the landing-area centre marker. But that
+  // centroid is a statistical average over many separate, uncertainty-
+  // perturbed simulations, not a point this specific deterministic path
+  // actually reaches - forcibly snapping the last segment onto it produced
+  // a visible, unnatural kink/fork right at the end of the line whenever
+  // the centroid sat off to the side of where the path was actually
+  // heading. The landing-area centre marker (drawn separately just below)
+  // already conveys where the Monte-Carlo centre is; the path itself
+  // doesn't need to be bent to visually reach it.
   const descentLatLngs = plannedDescentSeg.map(p=>[p.lat,p.lon]);
-  if(descentLatLngs.length) descentLatLngs[descentLatLngs.length-1] = [cLat, cLon];
   plannedDescentPathOutline.setLatLngs(descentLatLngs);
   plannedDescentPathLayer.setLatLngs(descentLatLngs);
   if(!map.hasLayer(plannedDescentPathOutline)) plannedDescentPathOutline.addTo(map);

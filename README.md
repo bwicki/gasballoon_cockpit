@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260817.16-1840** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260817.17-1900** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -156,6 +156,8 @@ Also fixed a confusing display inconsistency: the "Initiate descent in" label ne
 **Staged Descent's Monte-Carlo area never actually being shown**: found the real cause - `showStagedDescentPlan()` had no `map.fitBounds(...)` call anywhere in it, at all. The plan itself computed correctly (the side panel already showed concrete numbers - total time, ballast, expected landing location) and the landing-area polygon was drawn correctly, but the map never moved to actually show it. For a result landing well away from the clicked point (routine for staged descent, given its longer time horizon), that left the correctly-computed area sitting completely outside the visible viewport - which is very likely what looked like "the Monte-Carlo area doesn't work" despite the underlying computation being fine. Now zooms to the landing area immediately after it's computed, the same pattern used for Quick Descent's own result.
 
 **Staged Descent now also uses real ensemble data when available**: previously only used the age-based heuristic scatter regardless of whether a commercial Open-Meteo key with ensemble access was configured - the only one of the three functions that didn't. Now checks for real ensemble members first (each sample drawing an actual member's own wind profile, genuine forecast uncertainty rather than a random perturbation) and only falls back to the heuristic when no ensemble data is available, matching Landing Area and Quick Descent's own behaviour.
+
+Tower and telecom/antenna mast marker diameters doubled on the map (radius 1.3→2.6 and 1.6→3.2 respectively).
 
 ## Known limitations
 

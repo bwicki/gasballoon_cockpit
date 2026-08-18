@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.16-1840';
+const APP_VERSION = 'v260817.17-1900';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1975,7 +1975,7 @@ const powerVectorStylesRaw = {
   // themselves; the line itself (able to be followed continuously) is
   // what actually matters for spotting overhead wires, not each individual
   // mast along it.
-  power_tower:          (p)=> powerCatVisible.tower ? {radius:1.3, color:'#8a95a0', fillColor:'#8a95a0', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
+  power_tower:          (p)=> powerCatVisible.tower ? {radius:2.6, color:'#8a95a0', fillColor:'#8a95a0', fill:true, fillOpacity:0.75, weight:0.5} : HIDDEN_STYLE,
   power_substation:     (p)=> powerCatVisible.substation ? {color:'#ff9d3b', weight:1, fillColor:'#ff9d3b', fillOpacity:0.22} : HIDDEN_STYLE,
   power_substation_point:(p)=> powerCatVisible.substation ? {radius:4, color:'#ff9d3b', fillColor:'#ff9d3b', fill:true, fillOpacity:0.9, weight:1} : HIDDEN_STYLE,
   power_plant:          (p)=> powerCatVisible.plant ? {color:'#ff3b3b', weight:1, fillColor:'#ff3b3b', fillOpacity:0.18} : HIDDEN_STYLE,
@@ -2003,11 +2003,11 @@ const powerVectorStylesRaw = {
   // at once - harmless if a given name doesn't exist in a particular
   // tile, and the console logging above will confirm the real name(s) on
   // next use so this can be narrowed down.
-  telecoms_mast:               (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  telecoms_tower:               (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  telecoms_communication_tower: (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  communication_tower:          (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  mast:                          (p)=> powerCatVisible.telecomMast ? {radius:1.6, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE
+  telecoms_mast:               (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  telecoms_tower:               (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  telecoms_communication_tower: (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  communication_tower:          (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
+  mast:                          (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE
 };
 // OpenInfraMap's combined tile endpoint (used here instead of per-category
 // tiles, since separate category tiles were retired in 2023) bundles

@@ -1346,7 +1346,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.15-1800';
+const APP_VERSION = 'v260817.16-1840';
 const APP_DATE = '17.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -4915,7 +4915,7 @@ function stagedWindUncertainty(tSeconds){
   const ageH = (state.modelRunAgeH||3) + tSeconds/3600;
   return { dirDeg: Math.min(35, 5+ageH*2.5), speedFrac: Math.min(0.35, 0.05+ageH*0.02) };
 }
-function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, interceptAltAMSL, stageSelectionHourIdx, lingerDurationsS, rate2Ms, uncertaintySign){
+function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, interceptAltAMSL, stageSelectionHourIdx, lingerDurationsS, rate2Ms, uncertaintySign, memberIdx){
   uncertaintySign = uncertaintySign||0;
   // stageSelectionHourIdx is a ONE-TIME snapshot (the forecast for when the
   // marker is actually reached) used only to pick WHICH altitudes are worth
@@ -4935,7 +4935,7 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
       const step=Math.min(dt, lingerS-elapsed);
       const hourIdxAtT = Math.floor(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path. floor(), not round(): hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1 - round() was switching to the next hour's forecast a full 30 minutes too early.
       const unc = stagedWindUncertainty(t);
-      const w = windAt(alt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT);
+      const w = windAt(alt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT, memberIdx);
       const bearing=(Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
       const [nlat,nlon]=destPoint(lat,lon,bearing,Math.hypot(w.u,w.v)*step);
       lat=nlat; lon=nlon; t+=step; elapsed+=step;
@@ -4951,7 +4951,7 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
         const curAlt = alt+(nextAlt-alt)*Math.min(1,(elapsed2+step/2)/transitionS);
         const hourIdxAtT = Math.floor(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path. floor(), not round(): hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1 - round() was switching to the next hour's forecast a full 30 minutes too early.
         const unc = stagedWindUncertainty(t);
-        const w = windAt(curAlt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT);
+        const w = windAt(curAlt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT, memberIdx);
         const bearing=(Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
         const [nlat,nlon]=destPoint(lat,lon,bearing,Math.hypot(w.u,w.v)*step);
         lat=nlat; lon=nlon; t+=step; elapsed2+=step;
@@ -4966,7 +4966,7 @@ function simulateStagedDescentPath(startLat, startLon, cruiseAltAMSL, startT, in
     const step=Math.min(dt3, Math.max(0.1,(alt-groundAlt)/rate2Ms));
     const hourIdxAtT = Math.floor(t/3600); // dynamic - the wind hour must match the ACTUAL time this specific point in the staged descent occurs at, not a single snapshot for the whole (potentially hours-long) path. floor(), not round(): hourly forecast data represents the FULL hour starting at that mark, so t=1800s (30min) is still within hour 0, not already hour 1 - round() was switching to the next hour's forecast a full 30 minutes too early.
     const unc = stagedWindUncertainty(t);
-    const w = windAt(alt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT);
+    const w = windAt(alt, unc.dirDeg*uncertaintySign, 1+unc.speedFrac*uncertaintySign, hourIdxAtT, memberIdx);
     const bearing=(Math.atan2(w.u,w.v)*180/Math.PI+360)%360;
     const [nlat,nlon]=destPoint(lat,lon,bearing,Math.hypot(w.u,w.v)*step);
     lat=nlat; lon=nlon; t+=step; alt=Math.max(groundAlt,alt-rate2Ms*step);
@@ -5278,12 +5278,27 @@ function searchStagedDescentToTarget(targetLat, targetLon){
   // than sitting close to it. Antithetic pairs guarantee the scatter stays
   // symmetric around that deterministic path regardless of sample size.
   const mcEndpoints = [];
+  const usingEnsemble = pickEnsembleMember(0)!=null;
   for(let run=0; run<20; run++){
-    const uncertaintyFrac = Math.random()*2-1;
-    for(const signedFrac of [uncertaintyFrac, -uncertaintyFrac]){
-      const path = simulateStagedDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, startT, interceptAlt, roughHourIdx, best.lingerDurations, rate2, signedFrac);
-      const last = path[path.length-1];
-      mcEndpoints.push([last.lon, last.lat]);
+    if(usingEnsemble){
+      // Real ensemble member has priority over the heuristic - its own
+      // profile already represents a genuine alternate forecast, no
+      // artificial bias/scale needed on top of it. Two samples per loop
+      // iteration (matching the antithetic-pair loop shape below) simply
+      // draws two different members rather than a +/- pair.
+      for(const idx of [run*2, run*2+1]){
+        const memberIdx = pickEnsembleMember(idx);
+        const path = simulateStagedDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, startT, interceptAlt, roughHourIdx, best.lingerDurations, rate2, 0, memberIdx);
+        const last = path[path.length-1];
+        mcEndpoints.push([last.lon, last.lat]);
+      }
+    } else {
+      const uncertaintyFrac = Math.random()*2-1;
+      for(const signedFrac of [uncertaintyFrac, -uncertaintyFrac]){
+        const path = simulateStagedDescentPath(markerPos.lat, markerPos.lng, state.altAMSL, startT, interceptAlt, roughHourIdx, best.lingerDurations, rate2, signedFrac);
+        const last = path[path.length-1];
+        mcEndpoints.push([last.lon, last.lat]);
+      }
     }
   }
   // The clicked point is, by definition, supposed to be reachable if it was
@@ -5340,6 +5355,17 @@ function showStagedDescentPlan(result){
   const landingHull = result.landingHull || [];
   stagedLandingAreaLayer.setLatLngs(landingHull.map(p=>[p[1],p[0]]));
   stagedLandingAreaLayer.addTo(map);
+  // Make sure the resulting landing area is actually visible - same
+  // reasoning and pattern as Quick Descent's own zoom-to-result call. This
+  // was missing entirely here, which is very likely the actual cause of
+  // "the Monte-Carlo area doesn't work" reports: the plan itself computed
+  // fine (the side panel already showed concrete numbers), and the area
+  // was drawn correctly, but the map never moved to show it - for a
+  // result landing well away from the clicked point, that left it
+  // sitting completely outside the visible viewport.
+  if(landingHull.length>=2){
+    map.fitBounds(landingHull.map(p=>[p[1],p[0]]), {padding:[30,30]});
+  }
   // A black crosshair at the landing area's centroid - same visual language
   // as the live/planned landing area's own center marker in function 1 -
   // plus populating the "Landing Area" sidebar card with its position, wind

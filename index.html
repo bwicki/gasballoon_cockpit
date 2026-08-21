@@ -1063,7 +1063,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             </div>
             <div class="datacell wide" id="landingMeteologixCell" style="display:none;">
               <label title="Independent cross-check reading from Meteologix/Kachelmannwetter - station-observation-backed where a nearby station exists, otherwise model-analysis based. Precipitation probability isn't available from any other configured source.">Meteologix cross-check</label>
-              <div class="val small" id="landingMeteologixVal" style="font-weight:400;font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">—</div>
+              <div class="val small" id="landingMeteologixVal" style="font-weight:400;font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;display:flex;align-items:flex-start;gap:4px;"><span id="landingMeteologixIcon" style="flex-shrink:0;"></span><span id="landingMeteologixText">—</span></div>
             </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
               <label data-i18n="fieldEstimatedDescentPoint"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:3px;"><line x1="12" y1="3" x2="12" y2="21" stroke="#000" stroke-width="5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#000" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="#ff8a00" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#ff8a00" stroke-width="2.5" stroke-linecap="round"/></svg>Estimated Descent Point</label>
@@ -1354,7 +1354,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260821.02-0920';
+const APP_VERSION = 'v260821.04-1100';
 const APP_DATE = '21.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -3219,6 +3219,98 @@ function calcDewPointC(tempC, rhPct){
 // the smallest text, since it matters least. Any future national network
 // added alongside SwissMetNet should go through this same function so the
 // display rules stay consistent across all of them.
+// Meteologix stations shown on the weather-stations layer, alongside
+// SwissMetNet/METAR - unlike those (a fixed list of real, named stations,
+// or a genuine per-airport API), Meteologix has no working station-search
+// endpoint (confirmed - tried under many different URL patterns, always a
+// clean 404). Real station identities are still used here, never
+// fabricated grid-point locations: each of a handful of query points
+// around the CURRENT BALLOON POSITION is passed through the confirmed-
+// working current/{lat}/{lon} endpoint, and only the genuine station it
+// names (its own real coordinates, id, name) gets drawn - deduplicated by
+// station id, since nearby query points often resolve to the same one.
+// Deliberately NOT tied to map pan/zoom (unlike the METAR layer) and
+// fetched only every 20 minutes while the layer is on - a handful of
+// current() calls per refresh adds up fast against the monthly quota if
+// re-triggered on every map interaction.
+const meteologixStationsLayer = L.layerGroup();
+let meteologixStationsFetchTimer = null;
+let meteologixStationsLastFetchAt = 0;
+async function fetchMeteologixStationsLayer(){
+  const apiKey = document.getElementById('sMeteologixApiKey')?.value?.trim();
+  if(!apiKey || !metarActive) return;
+  meteologixStationsLastFetchAt = Date.now();
+  const queryPoints = generateGridPoints(state.lat, state.lon, 20000, 4); // centre + 3 ring points, ~20km radius
+  const results = await Promise.allSettled(queryPoints.map(([lat,lon])=>
+    fetch(`https://api.kachelmannwetter.com/v02/current/${lat.toFixed(4)}/${lon.toFixed(4)}?units=metric`, {headers:{'Accept':'application/json','X-API-Key':apiKey}}).then(r=>r.ok?r.json():null)
+  ));
+  const byStationId = {};
+  results.forEach(res=>{
+    if(res.status!=='fulfilled' || !res.value) return;
+    const d = res.value.data || {};
+    // Only genuine, station-backed readings - never draw a marker at a
+    // query point itself when the response fell back to ANALYSIS (no
+    // nearby station), which would recreate exactly the "fake station at
+    // an arbitrary grid point" problem this whole approach is built to
+    // avoid.
+    const station = d.temp?.source==='OBSERVATION' ? d.temp.station : null;
+    if(!station || byStationId[station.id]) return;
+    byStationId[station.id] = {
+      id: station.id, name: station.name, lat: station.lat, lon: station.lon,
+      temp: d.temp?.value ?? null, dewpoint: d.dewpoint?.value ?? null,
+      windSpeed: d.windSpeed?.value ?? null, windDirection: d.windDirection?.value ?? null,
+      windGust: d.windGust?.value ?? null, humidityRelative: d.humidityRelative?.value ?? null,
+      weatherSymbol: d.weatherSymbol?.value ?? null
+    };
+  });
+  meteologixStationsLayer.clearLayers();
+  Object.values(byStationId).forEach(s=>{
+    // Skip if a SwissMetNet/METAR marker already sits right here, same
+    // de-duplication reasoning as the existing Swiss-station/airport check
+    // just above - avoids two near-identical symbols stacked together.
+    const tooClose = metarLayer.getLayers().some(m=>haversine(s.lat,s.lon,m.getLatLng().lat,m.getLatLng().lng)<8000);
+    if(tooClose) return;
+    const tooltip = `<b>${s.name}</b> (Meteologix)<br>${meteologixStationTooltipLine(s)}`;
+    L.marker([s.lat, s.lon], {icon: meteologixStationIcon(s), pane:'metarPane'})
+      .bindTooltip(tooltip, {sticky:true})
+      .addTo(meteologixStationsLayer);
+  });
+  setLayerLoadDot('tgMetar', 'ready');
+}
+function meteologixStationTooltipLine(s){
+  const parts = [];
+  if(s.temp!=null) parts.push(`${Math.round(s.temp)}°${s.dewpoint!=null?'/'+Math.round(s.dewpoint)+'°':''}`);
+  if(s.windDirection!=null && s.windSpeed!=null) parts.push(`${Math.round(s.windDirection).toString().padStart(3,'0')}° ${Math.round(s.windSpeed)}km/h`+(s.windGust!=null?` (gusts ${Math.round(s.windGust)})`:''));
+  if(s.humidityRelative!=null) parts.push(`${Math.round(s.humidityRelative)}% RH`);
+  return parts.join(' · ') || 'no data';
+}
+function meteologixStationIcon(s){
+  const icon = meteologixSymbolIcon(s.weatherSymbol);
+  const tempText = s.temp!=null ? `${Math.round(s.temp)}°` : '';
+  const windText = (s.windDirection!=null && s.windSpeed!=null) ? `${Math.round(s.windDirection).toString().padStart(3,'0')}° ${Math.round(s.windSpeed)}` : '';
+  return L.divIcon({
+    // Left accent bar in the app's Meteologix magenta (same colour used
+    // for the telecom/antenna mast category elsewhere) is the "own
+    // symbol" distinguishing these from SwissMetNet/METAR's plain grey
+    // border, at a glance and without needing a legend lookup.
+    html:`<div style="background:rgba(225,227,229,0.92);border:1px solid rgba(60,60,58,0.5);border-left:3px solid #e14cc9;border-radius:5px;padding:1.5px 5px 1.5px 4px;display:flex;align-items:center;gap:3px;font-family:sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap;">
+      ${icon || '<svg width="15" height="15" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="#8b98a5"/></svg>'}
+      <div>
+        <div style="font-weight:700;font-size:9px;color:#242422;line-height:1.15;">${tempText}${windText?' '+windText:''}</div>
+        <div style="font-size:7px;color:#4a4a48;line-height:1.15;">Meteologix</div>
+      </div>
+    </div>`,
+    className:'', iconSize:null, iconAnchor:[10,10]
+  });
+}
+function scheduleMeteologixStationsFetch(){
+  if(!metarActive) return;
+  clearTimeout(meteologixStationsFetchTimer);
+  const sinceLastFetch = Date.now()-meteologixStationsLastFetchAt;
+  const delay = sinceLastFetch>20*60*1000 ? 1000 : (20*60*1000-sinceLastFetch);
+  meteologixStationsFetchTimer = setTimeout(()=>{ fetchMeteologixStationsLayer(); scheduleMeteologixStationsFetch(); }, delay);
+}
+
 function buildWeatherStationTooltip(code, name, windDir, windKmh, tempC, dewC, rhPct, networkLabel){
   const windText = (windDir!=null && windKmh!=null) ? `${Math.round(windDir).toString().padStart(3,'0')}° ${Math.round(windKmh)}km/h` : 'no wind data';
   const tempText = tempC!=null ? `${Math.round(tempC)}°${dewC!=null?' ('+Math.round(dewC)+'°)':''}` : '';
@@ -3307,8 +3399,14 @@ document.getElementById('tgMetar').addEventListener('click', function(){
     setLayerLoadDot('tgMetar', metarLayer.getLayers().length ? 'ready' : 'loading');
     metarLayer.addTo(map);
     scheduleMetarFetch();
+    if(document.getElementById('sMeteologixApiKey')?.value?.trim()){
+      meteologixStationsLayer.addTo(map);
+      scheduleMeteologixStationsFetch();
+    }
   } else {
     map.removeLayer(metarLayer);
+    map.removeLayer(meteologixStationsLayer);
+    clearTimeout(meteologixStationsFetchTimer);
     setLayerLoadDot('tgMetar', null);
   }
   // The weather station wind arrows use the same colour scale as the wind
@@ -3433,6 +3531,7 @@ async function fetchMeteologixCrossCheck(lat, lon){
       windSpeed: d.windSpeed?.value ?? null,
       windDirection: d.windDirection?.value ?? null,
       windGust: d.windGust?.value ?? null,
+      weatherSymbol: d.weatherSymbol?.value ?? null,
       precProb1mm: todayForecast?.precProb1mm ?? null, // probability of at least 1mm precipitation today - not available from any other source in this app
       stationName: d.temp?.source==='OBSERVATION' ? d.temp?.station?.name : null,
       stationDistKm: d.temp?.source==='OBSERVATION' ? d.temp?.station?.distance : null,
@@ -7309,9 +7408,41 @@ async function fetchLandingPositionDetails(lat, lon){
     updateMeteologixCell('landingMeteologixCell', 'landingMeteologixVal', mx);
   }catch(e){ /* keep whatever was last shown */ }
 }
+// Small, self-drawn weather-symbol icon set for the Meteologix cross-check
+// cell, matched to this app's own minimal SVG style rather than pulling in
+// an external icon set. Meteologix's weatherSymbol values are lowercase,
+// no-separator English words/phrases (confirmed live: "cloudy",
+// "partlycloudy", "sunshine") - matched by substring rather than an exact
+// lookup table, so a value not seen yet (e.g. "lightrain", "fog",
+// "thunderstorm") still resolves to a sensible icon instead of showing
+// nothing.
+function meteologixSymbolIcon(symbol){
+  if(!symbol) return '';
+  const s = symbol.toLowerCase();
+  const sun = '<circle cx="12" cy="12" r="4.5" fill="#eecb6b"/><g stroke="#eecb6b" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7" y2="7"/><line x1="17" y1="17" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7" y2="17"/><line x1="17" y1="7" x2="19.1" y2="4.9"/></g>';
+  const cloud = '<path d="M7 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 16.2 8.1 4.5 4.5 0 0 1 17.5 18Z" fill="#8b98a5"/>';
+  const cloudSmall = '<path d="M8.5 19a3.2 3.2 0 0 1-.4-6.37A4 4 0 0 1 15.9 11 3.6 3.6 0 0 1 16.9 19Z" fill="#8b98a5"/>';
+  const sunSmall = '<circle cx="9" cy="8" r="3.4" fill="#eecb6b"/><g stroke="#eecb6b" stroke-width="1.3" stroke-linecap="round"><line x1="9" y1="2.2" x2="9" y2="4"/><line x1="3.2" y1="8" x2="5" y2="8"/><line x1="4.8" y1="3.8" x2="6" y2="5"/></g>';
+  const rainDrops = '<g stroke="#5bb8ff" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="19" x2="7" y2="22"/><line x1="12" y1="19" x2="11" y2="22"/><line x1="16" y1="19" x2="15" y2="22"/></g>';
+  const snowDots = '<g fill="#dfe6ee"><circle cx="8" cy="20" r="1"/><circle cx="12" cy="21" r="1"/><circle cx="16" cy="20" r="1"/></g>';
+  const bolt = '<path d="M13 12 L9.5 17 H12 L11 21 L15.5 15 H13 Z" fill="#eecb6b"/>';
+  const fogLines = '<g stroke="#8b98a5" stroke-width="1.6" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="13" x2="20" y2="13"/><line x1="4" y1="17" x2="20" y2="17"/></g>';
+  let inner;
+  if(s.includes('thunder')) inner = cloud+bolt;
+  else if(s.includes('snow')) inner = cloud+snowDots;
+  else if(s.includes('fog') || s.includes('mist') || s.includes('haze')) inner = fogLines;
+  else if(s.includes('rain') || s.includes('shower') || s.includes('drizzle')) inner = cloud+rainDrops;
+  else if(s.includes('partly') || s.includes('partial')) inner = sunSmall+cloudSmall;
+  else if(s.includes('cloud') || s.includes('overcast')) inner = cloud;
+  else if(s.includes('sun') || s.includes('clear')) inner = sun;
+  else return ''; // unrecognized code - no icon rather than a misleading guess
+  return `<svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0;">${inner}</svg>`;
+}
 function updateMeteologixCell(cellId, valId, mx){
-  const cell = document.getElementById(cellId), val = document.getElementById(valId);
-  if(!cell || !val) return;
+  const cell = document.getElementById(cellId);
+  const iconEl = document.getElementById('landingMeteologixIcon');
+  const textEl = document.getElementById('landingMeteologixText');
+  if(!cell || !textEl) return;
   if(!mx){ cell.style.display = 'none'; return; }
   cell.style.display = 'block';
   const parts = [];
@@ -7319,7 +7450,14 @@ function updateMeteologixCell(cellId, valId, mx){
   if(mx.windSpeed!=null) parts.push(`wind ${Math.round(mx.windDirection??0)}° ${mx.windSpeed.toFixed(1)}km/h`+(mx.windGust!=null?` (gusts ${mx.windGust.toFixed(1)})`:''));
   if(mx.precProb1mm!=null) parts.push(`${mx.precProb1mm}% rain prob. today`);
   const sourceNote = mx.stationName ? `station: ${mx.stationName} (${mx.stationDistKm?.toFixed(1)}km away)` : 'model analysis (no nearby station)';
-  val.textContent = parts.join(' · ') + (parts.length ? ` — ${sourceNote}` : 'no data');
+  // Icon HTML is entirely self-generated (a small fixed set of static SVG
+  // fragments keyed by symbol category) - never includes mx.* values
+  // directly, so this stays safe even though it's set via innerHTML.
+  if(iconEl) iconEl.innerHTML = meteologixSymbolIcon(mx.weatherSymbol);
+  // Text content comes straight from the external API response (station
+  // name etc.) - kept on textContent, never innerHTML, so it can never be
+  // interpreted as markup.
+  textEl.textContent = parts.length ? parts.join(' · ') + ` — ${sourceNote}` : 'no data';
 }
 
 function updateAdiabaticReadout(rate1, interceptAGL){

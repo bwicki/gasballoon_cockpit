@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260817.17-1900** (17.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260821.02-0920** (21.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -108,6 +108,7 @@ The ✈️ airspace layer draws real, class-filtered airspace boundaries from op
 | MetarCentral | Airport METARs | Working. Airport lookup uses a curated list of major European airports first, falling back to a live Overpass query (any OSM-tagged aerodrome with an ICAO code) elsewhere. |
 | aprs.fi | APRS station tracking | **Not functional** - CORS-blocked from the browser, confirmed with a live key. Settings clearly label this. |
 | Xweather | Lightning (only polls when rain is detected nearby) | Confirmed working (14.08.2026): live strikes returned (HTTP 200, `success:true`). Credentials/domain fixed as described above; the `from` time-range parameter was also corrected from 10 to 5 minutes, the maximum allowed without the Lightning Enterprise add-on. |
+| Meteologix/Kachelmannwetter | Independent ground-conditions cross-check at the landing point, plus precipitation probability | Confirmed working (21.08.2026, Business Starter tier): `current`/`{lat}/{lon}` and `forecast`/`{lat}/{lon}/3day` both return real data, with no location restriction (any coordinates work, not just pre-registered locations). Surface-level only in this tier - no altitude wind soundings, so this is a supplementary cross-check, not a wind-profile source. A dedicated station-search endpoint was tried under 8 different URL patterns and never found (all a clean 404); worked around by simply reading the station the `current` endpoint's own response already cites for OBSERVATION-sourced fields, via the confirmed-working `station/{stationId}/observations/latest` path. |
 
 ## Settings
 
@@ -158,6 +159,10 @@ Also fixed a confusing display inconsistency: the "Initiate descent in" label ne
 **Staged Descent now also uses real ensemble data when available**: previously only used the age-based heuristic scatter regardless of whether a commercial Open-Meteo key with ensemble access was configured - the only one of the three functions that didn't. Now checks for real ensemble members first (each sample drawing an actual member's own wind profile, genuine forecast uncertainty rather than a random perturbation) and only falls back to the heuristic when no ensemble data is available, matching Landing Area and Quick Descent's own behaviour.
 
 Tower and telecom/antenna mast marker diameters doubled on the map (radius 1.3→2.6 and 1.6→3.2 respectively).
+
+**Quick Descent zoom, still under investigation**: re-verified the entire chain (mode-switch state, the zoom call's position in the function, the click handler's error handling) line by line and found no further concrete bug - everything checked reads correctly. Added detailed console logging around the search result and the zoom call itself (the found delay, the resulting hull's bounds, current position) so the actual live behaviour can be read directly from the console on the next test, rather than continuing to theorize about it without being able to see what the search is actually finding.
+
+**GPS altitude vs. lat/lon**: many devices - especially desktop/laptop computers without a real GPS chip, using WLAN/IP-based location instead - report a real latitude/longitude but never an altitude at all (`pos.coords.altitude` stays `null` indefinitely, not just on the first fix). The app already fell back to holding the last known altitude value in that case, which is correct behaviour, but gave no visible sign that this was happening - a fixed default value could look exactly like a stuck/broken GPS reading rather than the platform limitation it actually is. The "Alt AMSL" label now reads "Alt AMSL (no GPS altitude - held)" in amber whenever no real altitude reading has ever been received, reverting to the normal "Alt AMSL (GPS)" label the moment a device that does provide one is used.
 
 ## Known limitations
 

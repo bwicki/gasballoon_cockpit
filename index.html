@@ -771,6 +771,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <input type="text" id="sXweatherClientId" class="api-key-input" placeholder="Xweather Client ID" value="4G8hMsDYgVHwQl7I3p8zz" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
           <input type="text" id="sXweatherClientSecret" class="api-key-input" placeholder="Xweather Client Secret" value="FXonOzGTtkQM0EOcXdXdyW6lP91laRTpFdCR5dUV" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
 
+          <div class="subhead">Ground weather (Meteologix/Kachelmannwetter)</div>
+          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Business Starter API - an independent cross-check ground-conditions reading at the landing point (station-observation-backed where a nearby station exists), plus precipitation probability, which no other configured source provides.</p>
+          <input type="text" id="sMeteologixApiKey" class="api-key-input" placeholder="Meteologix X-API-Key" value="QJr0GiJX-sfNL-ROf4MqqhYBQi-vFma7R3i5uplvyifdVJ8KomMONUGDes3-Ycc6ZRipcN2V3iwxxXhy7nja1r4TcZ2yfnCZ6UNG0puGQRrFPkmvJzt_OToK28GharEi" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
+
           <div class="subhead">Silent Emergency Email (EmailJS)</div>
           <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Unlike the plain "Email" button (which just opens your mail app pre-filled), filling these in lets the <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> panel also send the email genuinely in the background, no app-switch or manual "send" tap needed. Requires a free account at emailjs.com - the public key is safe to use here since it's meant for client-side apps (unlike a normal secret API key).</p>
           <input type="text" id="cfgEmailJsServiceId" class="api-key-input" placeholder="EmailJS Service ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
@@ -1056,6 +1060,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <div class="datacell wide" id="landingTerrainCell" style="display:none;">
               <label title="Approximate: elevation sampled in a ring around the point, plus nearby OSM buildings/forest tags - not a true obstacle-height line-of-sight">Terrain near landing point</label>
               <div class="val small" id="landingTerrainVal" style="font-weight:400;font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">—</div>
+            </div>
+            <div class="datacell wide" id="landingMeteologixCell" style="display:none;">
+              <label title="Independent cross-check reading from Meteologix/Kachelmannwetter - station-observation-backed where a nearby station exists, otherwise model-analysis based. Precipitation probability isn't available from any other configured source.">Meteologix cross-check</label>
+              <div class="val small" id="landingMeteologixVal" style="font-weight:400;font-size:11px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;">—</div>
             </div>
             <div class="datacell wide" id="estimatedDescentPointCell" style="display:none;border:1px solid var(--bad);">
               <label data-i18n="fieldEstimatedDescentPoint"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:3px;"><line x1="12" y1="3" x2="12" y2="21" stroke="#000" stroke-width="5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#000" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="#ff8a00" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#ff8a00" stroke-width="2.5" stroke-linecap="round"/></svg>Estimated Descent Point</label>
@@ -1346,8 +1354,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260817.17-1900';
-const APP_DATE = '17.08.2026';
+const APP_VERSION = 'v260821.02-0920';
+const APP_DATE = '21.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -1355,6 +1363,7 @@ const state = {
   lat: 47.3769, lon: 8.5417, altAMSL: 3000, groundElev: 450,
   appMode: 'monitor', // 'monitor' (Landing Area) | 'plan' (Plan Descent) - explicitly set here since Landing Area is the actual default function shown on boot; leaving this undefined until the first mode-switch click meant every "state.appMode==='monitor'" check elsewhere evaluated false during that entire initial period, even though Landing Area was genuinely the active function
   course: 90, speedKn: 15, climbRateMs: 0, courseKnown: false, // courseKnown stays false until real movement is observed - 90° is just an arbitrary starting default, not a real reading, so it shouldn't display as one
+  altitudeKnown: false, // stays false until a real GPS altitude reading (pos.coords.altitude) is actually received - many devices (desktop/laptop computers without a real GPS chip especially) never provide one at all, only lat/lon
   breadcrumb: [], // {lat,lon,t}
   testMode: false,
   windProfile: null, // array of {alt_m, dir_deg, speed_ms}
@@ -3387,6 +3396,51 @@ async function fetchNearbyIcaoAirportsOverpass(lat, lon, radiusM){
       return {icao: el.tags.icao, name: el.tags.name || el.tags.icao, lat: elLat, lon: elLon, dist: haversine(lat,lon,elLat,elLon)};
     }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
   }catch(e){ console.warn('Global airport fallback (Overpass) failed:', e); return []; }
+}
+// Meteologix/Kachelmannwetter (Business Starter tier) - an independent
+// ground-conditions cross-check at a given point, plus precipitation
+// probability, which no other configured source in this app provides.
+// NOT a replacement for the Open-Meteo pressure-level wind profiles this
+// app relies on for trajectory simulation - live-tested responses (21.08.2026)
+// showed only surface-level current/daily-forecast data, no altitude
+// soundings, so this stays a supplementary ground-truth check, not a
+// wind-profile source. A dedicated station-search endpoint to explicitly
+// list nearby stations was tried under 8 different plausible URL patterns
+// and never found (all returned a clean 404, not a CORS/auth failure) -
+// this function works around that by simply reading whichever station (if
+// any) the /current endpoint's own response cites for its OBSERVATION-
+// sourced fields, rather than needing a separate search step.
+let meteologixCache = {key:null, at:0, data:null};
+async function fetchMeteologixCrossCheck(lat, lon){
+  const apiKey = document.getElementById('sMeteologixApiKey')?.value?.trim();
+  if(!apiKey) return null;
+  const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  if(meteologixCache.key===cacheKey && (Date.now()-meteologixCache.at)<10*60*1000){
+    return meteologixCache.data; // 10min cache - this is a supplementary cross-check, not something that needs to be hammered on every recompute cycle
+  }
+  try{
+    const [curRes, fcRes] = await Promise.all([
+      fetch(`https://api.kachelmannwetter.com/v02/current/${lat.toFixed(4)}/${lon.toFixed(4)}?units=metric`, {headers:{'Accept':'application/json','X-API-Key':apiKey}}),
+      fetch(`https://api.kachelmannwetter.com/v02/forecast/${lat.toFixed(4)}/${lon.toFixed(4)}/3day?units=metric`, {headers:{'Accept':'application/json','X-API-Key':apiKey}})
+    ]);
+    if(!curRes.ok){ console.warn('Meteologix current: HTTP', curRes.status); return null; }
+    const cur = await curRes.json();
+    const fc = fcRes.ok ? await fcRes.json() : null;
+    const d = cur.data || {};
+    const todayForecast = fc?.data?.[0] || null;
+    const result = {
+      temp: d.temp?.value ?? null,
+      windSpeed: d.windSpeed?.value ?? null,
+      windDirection: d.windDirection?.value ?? null,
+      windGust: d.windGust?.value ?? null,
+      precProb1mm: todayForecast?.precProb1mm ?? null, // probability of at least 1mm precipitation today - not available from any other source in this app
+      stationName: d.temp?.source==='OBSERVATION' ? d.temp?.station?.name : null,
+      stationDistKm: d.temp?.source==='OBSERVATION' ? d.temp?.station?.distance : null,
+      source: d.temp?.source || 'ANALYSIS'
+    };
+    meteologixCache = {key:cacheKey, at:Date.now(), data:result};
+    return result;
+  }catch(e){ console.warn('Meteologix cross-check fetch failed:', e); return null; }
 }
 async function fetchMetarStations(force){
   if(!metarActive && !force) return;
@@ -5786,6 +5840,18 @@ function startGPS(){
     updatePosition(pos.coords.latitude, pos.coords.longitude,
       pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
       null, null, true);
+    // Many devices - especially desktop/laptop computers without a real
+    // GPS chip, using WLAN/IP-based location instead - report a real
+    // lat/lon but never an altitude at all (pos.coords.altitude stays
+    // null indefinitely, not just on the first fix). Tracked separately
+    // from state.altAMSL itself (which keeps whatever value it last had,
+    // by design) so the display can honestly show whether that number is
+    // a genuine GPS reading or just a held-over value that was never
+    // actually updated - otherwise indistinguishable from a real reading,
+    // which is very likely why a fixed 3000m default looked like a stuck
+    // GPS bug rather than the platform limitation it actually is.
+    if(pos.coords.altitude!=null) state.altitudeKnown = true;
+    updateAltitudeKnownIndicator();
     // Ground elevation was previously only ever fetched at boot (whatever
     // position was active then) and on a manual test-mode click - never
     // when real GPS actually moved to a genuinely different place. That's
@@ -5907,6 +5973,8 @@ function setTestMode(enable, reason){
         updatePosition(pos.coords.latitude, pos.coords.longitude,
           pos.coords.altitude!=null? pos.coords.altitude : state.altAMSL,
           null, null, true);
+        if(pos.coords.altitude!=null) state.altitudeKnown = true;
+        updateAltitudeKnownIndicator();
         // This code path (returning to live GPS from test mode) never had
         // the ground-elevation refresh the main watchPosition callback
         // got - meaning switching test mode off after testing somewhere
@@ -7232,6 +7300,26 @@ async function fetchLandingPositionDetails(lat, lon){
       document.getElementById('landingPosAlt').textContent = Math.round(elevJ.elevation[0])+' m AMSL';
     }
   }catch(e){ /* keep previous values on failure */ }
+  // Meteologix cross-check - run separately (own try/catch) so a failure
+  // here never affects the geocoding/elevation lookup above, and it's
+  // simply skipped (cell hidden) when no key is configured.
+  try{
+    const mx = await fetchMeteologixCrossCheck(lat, lon);
+    if(state.appMode==='plan' && state.plannedLandingActive) return; // stale by the time this resolved
+    updateMeteologixCell('landingMeteologixCell', 'landingMeteologixVal', mx);
+  }catch(e){ /* keep whatever was last shown */ }
+}
+function updateMeteologixCell(cellId, valId, mx){
+  const cell = document.getElementById(cellId), val = document.getElementById(valId);
+  if(!cell || !val) return;
+  if(!mx){ cell.style.display = 'none'; return; }
+  cell.style.display = 'block';
+  const parts = [];
+  if(mx.temp!=null) parts.push(`${mx.temp.toFixed(1)}°C`);
+  if(mx.windSpeed!=null) parts.push(`wind ${Math.round(mx.windDirection??0)}° ${mx.windSpeed.toFixed(1)}km/h`+(mx.windGust!=null?` (gusts ${mx.windGust.toFixed(1)})`:''));
+  if(mx.precProb1mm!=null) parts.push(`${mx.precProb1mm}% rain prob. today`);
+  const sourceNote = mx.stationName ? `station: ${mx.stationName} (${mx.stationDistKm?.toFixed(1)}km away)` : 'model analysis (no nearby station)';
+  val.textContent = parts.join(' · ') + (parts.length ? ` — ${sourceNote}` : 'no data');
 }
 
 function updateAdiabaticReadout(rate1, interceptAGL){
@@ -8163,6 +8251,13 @@ async function planDescentToTarget(lat, lon){
   const initFix = bestPath[bestPath.findIndex(p=>p.t>=initSec)] || bestPath[0];
   const distToInit = haversine(state.lat,state.lon, initFix.lat, initFix.lon);
   state.plannedInitDelayMin = best;
+  console.log('Quick descent: search result -', {
+    'clicked target': {lat, lon},
+    'best delay found (min)': best.toFixed(1),
+    'distance from click to bestPath endpoint (m)': bestDist.toFixed(0),
+    'bestPath endpoint': bestPath[bestPath.length-1],
+    'current balloon position': {lat: state.lat, lon: state.lon},
+  });
 
   document.getElementById('estimatedDescentPointText').textContent = `${best.toFixed(1)} min · ${(distToInit/1000).toFixed(1)} km from here`;
   document.getElementById('estimatedDescentPointCell').style.display = 'block';
@@ -8263,8 +8358,10 @@ async function planDescentToTarget(lat, lon){
   // never actually focused on a newly-computed landing area even though
   // it had been drawn correctly.
   if(hull.length){
+    console.log('Quick descent: zooming to landing-area hull -', {hullSize: hull.length, hullBounds: hull.length ? {latMin: Math.min(...hull.map(p=>p[1])), latMax: Math.max(...hull.map(p=>p[1])), lonMin: Math.min(...hull.map(p=>p[0])), lonMax: Math.max(...hull.map(p=>p[0]))} : null});
     map.fitBounds(hull.map(p=>[p[1],p[0]]), {padding:[40,40]});
   } else {
+    console.warn('Quick descent: hull is empty, falling back to a bounds spanning current position and clicked target - this means the Monte-Carlo endpoints array itself was empty.');
     map.fitBounds([[state.lat,state.lon],[lat,lon]], {padding:[40,40]});
   }
 
@@ -8437,6 +8534,11 @@ async function updateStagedLandingPositionCard(cLat, cLon, hourIdx){
       document.getElementById('landingPosAlt').textContent = Math.round(elevJ.elevation[0])+' m AMSL';
     }
   }catch(e){ /* keep previous values on failure */ }
+  try{
+    const mx = await fetchMeteologixCrossCheck(cLat, cLon);
+    if(currentSubMode!=='staged') return;
+    updateMeteologixCell('landingMeteologixCell', 'landingMeteologixVal', mx);
+  }catch(e){ /* keep whatever was last shown */ }
 }
 async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
   if(!(state.appMode==='plan' && state.plannedLandingActive)) return; // mode changed while this was computing
@@ -8462,6 +8564,11 @@ async function updatePlannedLandingPositionCard(cLat, cLon, hourIdx){
       document.getElementById('landingPosAlt').textContent = Math.round(elevJ.elevation[0])+' m AMSL';
     }
   }catch(e){ /* keep previous values on failure */ }
+  try{
+    const mx = await fetchMeteologixCrossCheck(cLat, cLon);
+    if(!(state.appMode==='plan' && state.plannedLandingActive)) return;
+    updateMeteologixCell('landingMeteologixCell', 'landingMeteologixVal', mx);
+  }catch(e){ /* keep whatever was last shown */ }
 }
 // ---------- charts ----------
 let vertChart=null, hodoChart=null, hodoChartExpanded=null, windProfileChartExpanded=null;
@@ -9045,6 +9152,13 @@ document.addEventListener('click', ()=>{
 // (state changes are centralized in setTestMode(), defined near the GPS code)
 
 // Show/hide the inline editable fields in the Current Position card.
+function updateAltitudeKnownIndicator(){
+  const label = document.getElementById('altAMSLLabel');
+  if(!label || state.testMode) return; // manual mode has its own label text, set in setManualModeUI
+  label.textContent = state.altitudeKnown ? 'Alt AMSL (GPS)' : 'Alt AMSL (no GPS altitude - held)';
+  label.style.color = state.altitudeKnown ? '' : 'var(--warn)';
+  label.title = state.altitudeKnown ? '' : "This device isn't providing a real GPS altitude reading (common on desktop/laptop computers without a GPS chip) - this value is just held over from whatever it last was, not a live reading.";
+}
 function setManualModeUI(active){
   document.getElementById('positionCard').classList.toggle('manual-active', active);
   document.getElementById('altAMSL').style.display = active ? 'none' : 'block';
@@ -10318,6 +10432,7 @@ try{
 // ---------- boot ----------
 (async function boot(){
   loadConfig();
+  updateAltitudeKnownIndicator();
   await fetchGroundElevation();
   await fetchWind(true);
   renderSidebarPosition();

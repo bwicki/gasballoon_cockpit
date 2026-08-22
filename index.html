@@ -1354,7 +1354,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260821.04-1100';
+const APP_VERSION = 'v260821.06-1155';
 const APP_DATE = '21.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -3237,10 +3237,11 @@ const meteologixStationsLayer = L.layerGroup();
 let meteologixStationsFetchTimer = null;
 let meteologixStationsLastFetchAt = 0;
 async function fetchMeteologixStationsLayer(){
+  try{
   const apiKey = document.getElementById('sMeteologixApiKey')?.value?.trim();
   if(!apiKey || !metarActive) return;
   meteologixStationsLastFetchAt = Date.now();
-  const queryPoints = generateGridPoints(state.lat, state.lon, 20000, 4); // centre + 3 ring points, ~20km radius
+  const queryPoints = generateGridPoints(state.lat, state.lon, 20000, 5); // centre + a few ring points, ~20km radius
   const results = await Promise.allSettled(queryPoints.map(([lat,lon])=>
     fetch(`https://api.kachelmannwetter.com/v02/current/${lat.toFixed(4)}/${lon.toFixed(4)}?units=metric`, {headers:{'Accept':'application/json','X-API-Key':apiKey}}).then(r=>r.ok?r.json():null)
   ));
@@ -3276,6 +3277,12 @@ async function fetchMeteologixStationsLayer(){
       .addTo(meteologixStationsLayer);
   });
   setLayerLoadDot('tgMetar', 'ready');
+  }catch(e){
+    // Never let a failure here escape uncaught - this layer is a
+    // supplementary addition and must not be able to affect anything else
+    // running in the app, regardless of what goes wrong inside it.
+    console.error('Meteologix stations layer: fetch/render failed (isolated, does not affect anything else):', e);
+  }
 }
 function meteologixStationTooltipLine(s){
   const parts = [];
@@ -3285,20 +3292,28 @@ function meteologixStationTooltipLine(s){
   return parts.join(' · ') || 'no data';
 }
 function meteologixStationIcon(s){
-  const icon = meteologixSymbolIcon(s.weatherSymbol);
-  const tempText = s.temp!=null ? `${Math.round(s.temp)}°` : '';
-  const windText = (s.windDirection!=null && s.windSpeed!=null) ? `${Math.round(s.windDirection).toString().padStart(3,'0')}° ${Math.round(s.windSpeed)}` : '';
+  const hasWind = s.windDirection!=null && s.windSpeed!=null;
+  const arrowColor = hasWind ? groundWindSpeedColor(s.windSpeed/3.6) : '#8b98a5';
+  const windText = hasWind ? `${Math.round(s.windDirection).toString().padStart(3,'0')}° ${Math.round(s.windSpeed)}km/h` : 'no wind data';
+  const line2Parts = [];
+  if(s.temp!=null) line2Parts.push(`${Math.round(s.temp)}°${s.dewpoint!=null?'/'+Math.round(s.dewpoint)+'°':''}`);
+  if(s.humidityRelative!=null) line2Parts.push(`${Math.round(s.humidityRelative)}%`);
+  const symbolIcon = meteologixSymbolIcon(s.weatherSymbol);
   return L.divIcon({
-    // Left accent bar in the app's Meteologix magenta (same colour used
-    // for the telecom/antenna mast category elsewhere) is the "own
-    // symbol" distinguishing these from SwissMetNet/METAR's plain grey
-    // border, at a glance and without needing a legend lookup.
-    html:`<div style="background:rgba(225,227,229,0.92);border:1px solid rgba(60,60,58,0.5);border-left:3px solid #e14cc9;border-radius:5px;padding:1.5px 5px 1.5px 4px;display:flex;align-items:center;gap:3px;font-family:sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap;">
-      ${icon || '<svg width="15" height="15" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="#8b98a5"/></svg>'}
+    // Same box/wind-arrow/text layout as SwissMetNet's own
+    // weatherStationCombinedIcon (down to the identical
+    // windArrowOutlined+groundWindSpeedColor logic), with the weather-
+    // symbol icon added on the right and a small "Meteologix" label below
+    // - the only visual differentiator from a Swiss station is that label
+    // plus the added symbol, not a different base style.
+    html:`<div style="background:rgba(225,227,229,0.92);border:1px solid rgba(60,60,58,0.5);border-radius:5px;padding:1.5px 4px;display:flex;align-items:center;gap:3px;font-family:sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap;">
+      <svg width="15" height="15" viewBox="0 0 24 24" style="flex-shrink:0;">${windArrowOutlined(s.windDirection, arrowColor, hasWind)}</svg>
       <div>
-        <div style="font-weight:700;font-size:9px;color:#242422;line-height:1.15;">${tempText}${windText?' '+windText:''}</div>
-        <div style="font-size:7px;color:#4a4a48;line-height:1.15;">Meteologix</div>
+        <div style="font-weight:700;font-size:9px;color:#242422;line-height:1.15;">${windText}</div>
+        <div style="font-size:7px;color:#4a4a48;line-height:1.15;">${line2Parts.join(' ')}</div>
+        <div style="font-size:6.5px;color:#4a4a48;line-height:1.15;">Meteologix</div>
       </div>
+      ${symbolIcon ? `<span style="flex-shrink:0;">${symbolIcon}</span>` : ''}
     </div>`,
     className:'', iconSize:null, iconAnchor:[10,10]
   });

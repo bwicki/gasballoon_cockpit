@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.03-0955** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.04-1100** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -167,6 +167,18 @@ Tower and telecom/antenna mast marker diameters doubled on the map (radius 1.3�
 **Quick Descent zoom, still under investigation**: re-verified the entire chain (mode-switch state, the zoom call's position in the function, the click handler's error handling) line by line and found no further concrete bug - everything checked reads correctly. Added detailed console logging around the search result and the zoom call itself (the found delay, the resulting hull's bounds, current position) so the actual live behaviour can be read directly from the console on the next test, rather than continuing to theorize about it without being able to see what the search is actually finding.
 
 **GPS altitude vs. lat/lon**: many devices - especially desktop/laptop computers without a real GPS chip, using WLAN/IP-based location instead - report a real latitude/longitude but never an altitude at all (`pos.coords.altitude` stays `null` indefinitely, not just on the first fix). The app already fell back to holding the last known altitude value in that case, which is correct behaviour, but gave no visible sign that this was happening - a fixed default value could look exactly like a stuck/broken GPS reading rather than the platform limitation it actually is. The "Alt AMSL" label now reads "Alt AMSL (no GPS altitude - held)" in amber whenever no real altitude reading has ever been received, reverting to the normal "Alt AMSL (GPS)" label the moment a device that does provide one is used.
+
+## Wind sounding panel
+
+A detailed vertical wind profile, opened via the new button next to the E/H model badge in the header. Shows wind speed and direction from 0m AGL up to current altitude + 1750m (a fixed buffer, not a percentage), at either the current position or the currently active planned descent point (Quick Descent's own marker, or Staged Descent's - selectable via radio buttons, updates live while dragging either marker along the reference trajectory).
+
+Deliberately shows the model's own real, raw pressure-level data points connected by straight lines - not a smoothed/densely-interpolated curve, which would imply more vertical resolution than the underlying forecast actually has.
+
+The primary (currently auto-selected or manually chosen) model gets full meteorological wind barbs - shaft pointing toward where the wind is coming FROM (standard convention), full barb = 10kn, half barb = 5kn, pennant = 50kn - plus a degree label at each point. Additional models (only those with actual geographic coverage at the queried point are offered as toggles) can be overlaid as thin colored curves with simple arrows instead of full barbs - these arrows point the OPPOSITE way from the primary's barbs, toward where the wind is blowing TO, since that reads more intuitively for a quick visual comparison of several curves at once. An arrow's degree label gets a light red background (and the arrow itself turns red) whenever that model's direction at that altitude deviates by more than 25° from the primary model's own direction there.
+
+A "ø Avg" toggle computes and overlays a genuine per-altitude weighted average across the primary plus whichever comparison models are currently selected - weighted by both grid resolution (finer wins) and model-run age (fresher wins), not an unweighted mean.
+
+Y-axis is AMSL throughout; the intercept altitude (from Descent Parameters) is marked with a dashed line, and only the very bottom of the scale additionally shows the equivalent AGL value in parentheses, since AGL matters most near the ground. X-axis (wind speed in kn) is fully dynamic, scaling to whatever the actually-displayed data's range is. A vertical dual-handle range slider next to the chart lets the shown altitude band be narrowed in on.
 
 ## Known limitations
 

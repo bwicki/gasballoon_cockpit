@@ -347,6 +347,14 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         <b id="wxModelName" style="font-size:12px;">Loading…</b>
         <span id="ensembleModeBadge" style="display:none;align-items:center;justify-content:center;width:13px;height:13px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;" title="">—</span>
+        <span style="width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;"></span>
+        <button id="btnWindSounding" title="Detailed wind sounding" style="background:none;border:none;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <rect x="4" y="3" width="16" height="18" rx="2.5" stroke="var(--text)" stroke-width="1.2"/>
+            <polyline points="8,17 10,13 9,10 13,11 12,7 16,5" fill="none" stroke="#00e5c8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8" cy="17" r="1" fill="#00e5c8"/><circle cx="9" cy="10" r="1" fill="#00e5c8"/><circle cx="12" cy="7" r="1" fill="#00e5c8"/><circle cx="16" cy="5" r="1" fill="#00e5c8"/>
+          </svg>
+        </button>
       </div>
       <div style="display:flex;align-items:center;gap:2px;color:var(--muted);font-size:9px;white-space:nowrap;">
         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 4v13M7 12l5 5 5-5"/></svg>
@@ -1243,6 +1251,32 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div style="font-size:9px;color:var(--muted);margin-bottom:8px;">Expected landing location<br><span id="stagedPlanLandingInfo" style="color:var(--text);">—</span></div>
         <div id="stagedPlanSvgWrap" style="width:100%;"></div>
       </div>
+      <div id="windSoundingPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.3);">
+        <button id="btnCloseWindSounding" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Wind sounding</div>
+        <div style="display:flex;gap:14px;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
+            <input type="radio" name="windSoundingSrc" id="wsSrcCurrent" checked style="margin:0;">Current position
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
+            <input type="radio" name="windSoundingSrc" id="wsSrcPlanned" style="margin:0;">Planned descent point
+          </label>
+        </div>
+        <div id="wsModelToggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <svg id="wsChartSvg" width="270" height="300" viewBox="0 0 270 300" style="flex-shrink:0;"></svg>
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:14px;">
+            <span id="wsRangeTopLabel" style="font-size:9px;color:var(--muted);margin-bottom:4px;">—</span>
+            <div id="wsRangeTrack" style="position:relative;width:16px;height:200px;background:var(--panel);border-radius:8px;">
+              <div id="wsRangeFill" style="position:absolute;left:5px;width:6px;background:#00e5c8;border-radius:3px;"></div>
+              <div id="wsRangeHandleTop" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #00e5c8;cursor:ns-resize;"></div>
+              <div id="wsRangeHandleBottom" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #00e5c8;cursor:ns-resize;"></div>
+            </div>
+            <span id="wsRangeBottomLabel" style="font-size:9px;color:var(--muted);margin-top:4px;">—</span>
+          </div>
+        </div>
+        <div style="font-size:8px;color:var(--muted);margin-top:6px;">barbs point toward source · arrows point toward flow · red = &gt;25° off primary</div>
+      </div>
   </div>
 </div>
 
@@ -1354,7 +1388,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.03-0955';
+const APP_VERSION = 'v260823.04-1100';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5208,6 +5242,7 @@ function ensureStagedLayers(){
       state.stagedMarkerT = snapped.t;
       updateReferenceTrajectoryDisplay();
       scheduleStagedAreaRecompute();
+      if(document.getElementById('windSoundingPanel').style.display!=='none' && document.getElementById('wsSrcPlanned').checked) refreshWindSoundingPanel();
     });
   }
 }
@@ -8623,6 +8658,7 @@ plannedDescentInitMarker.on('dragend', (e)=>{
   if(!snapped) return;
   plannedDescentInitMarker.setLatLng([snapped.lat, snapped.lon]);
   recomputeFromManualDescentPoint(snapped.lat, snapped.lon, snapped.t);
+  if(document.getElementById('windSoundingPanel').style.display!=='none' && document.getElementById('wsSrcPlanned').checked) refreshWindSoundingPanel();
 });
 async function recomputeFromManualDescentPoint(lat, lon, snappedT){
   if(!state.plannedLandingActive) return;
@@ -8903,6 +8939,332 @@ function closeExpandedChart(){
   if(windProfileChartExpanded){ windProfileChartExpanded.destroy(); windProfileChartExpanded=null; }
   if(hodoChartExpanded){ hodoChartExpanded.destroy(); hodoChartExpanded=null; }
 }
+// ---------- Wind sounding panel ----------
+// Approximate grid resolution in km per model - not tracked elsewhere in
+// MODEL_META (which only has cadence/latency), used here purely for the
+// weighted-average calculation below (finer resolution -> more weight).
+const MODEL_RESOLUTION_KM = {
+  best_match: 2, icon_d2: 2, icon_eu: 7, gfs_global: 25, ecmwf_ifs04: 25,
+  meteofrance_arpege_europe: 11, meteofrance_arome_france: 2.5
+};
+let wsSelectedModels = []; // which non-primary models are currently toggled on
+let wsShowAvg = false;
+let wsProfilesByModel = {}; // modelKey -> raw profile array (alt_m, speed_ms, dir_deg), fetched fresh each time the panel is shown/updated
+let wsRangeLowM = 0, wsRangeHighM = null; // AGL bounds currently shown - null high means "not yet set, use full range"
+let wsDraggingHandle = null;
+let wsLastModelColors = {}; // cached from the last refreshWindSoundingPanel() call, so the range-slider drag handler can redraw without recomputing model colours from scratch on every pixel of movement
+function wsGetReferencePoint(){
+  // "Planned descent point" resolves to whichever marker is actually
+  // relevant for the currently active sub-function - Quick Descent's own
+  // init marker, or Staged Descent's draggable marker - falling back to
+  // the current position if neither is actually active/placed yet, so the
+  // radio button never points at a marker that doesn't exist.
+  if(document.getElementById('wsSrcPlanned').checked){
+    if(currentSubMode==='staged' && stagedMarker){
+      const ll = stagedMarker.getLatLng();
+      if(ll.lat!==0 || ll.lng!==0) return {lat:ll.lat, lon:ll.lng};
+    }
+    if(state.appMode==='plan' && currentSubMode==='quick' && state.plannedLandingActive && plannedDescentInitMarker){
+      const ll = plannedDescentInitMarker.getLatLng();
+      return {lat:ll.lat, lon:ll.lng};
+    }
+  }
+  return {lat: state.lat, lon: state.lon};
+}
+async function wsFetchModels(lat, lon, modelKeys){
+  // A single Open-Meteo request with comma-separated models returns each
+  // variable suffixed per model (e.g. wind_speed_1000hPa_icon_d2) rather
+  // than needing one request per model.
+  const levels = PRESSURE_LEVELS; // deliberately the FULL set, not a reduced one - "please don't smooth the data" means showing the model's own real levels, not a lighter/interpolated subset
+  const varsList = levels.map(p=>`wind_speed_${p}hPa,wind_direction_${p}hPa`).join(',');
+  const url = `${openMeteoBase()}/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${varsList}&models=${modelKeys.join(',')}&forecast_hours=3&timezone=UTC${openMeteoKeyParam()}`;
+  const r = await fetch(url);
+  const j = await r.json();
+  const h = j.hourly || {};
+  const result = {};
+  modelKeys.forEach(mk=>{
+    result[mk] = levels.map(p=>{
+      // With multiple models requested, Open-Meteo suffixes every field
+      // with the model key - but with only ONE model requested it does
+      // NOT add a suffix at all, so both forms have to be checked.
+      const spdArr = h[`wind_speed_${p}hPa_${mk}`] ?? h[`wind_speed_${p}hPa`];
+      const dirArr = h[`wind_direction_${p}hPa_${mk}`] ?? h[`wind_direction_${p}hPa`];
+      const spd = spdArr ? spdArr[0] : null;
+      const dir = dirArr ? dirArr[0] : null;
+      return { alt_m: pressureToAltM(p), speed_ms: spd!=null? spd/3.6 : null, dir_deg: dir };
+    }).filter(pt=>pt.speed_ms!=null).sort((a,b)=>a.alt_m-b.alt_m);
+  });
+  return result;
+}
+function wsWeightedAverageProfile(profiles, modelKeys){
+  // Weighted by resolution (finer grid -> more weight) and by model-run
+  // age (fresher run -> more weight), per explicit instruction - neither
+  // weight alone would be enough on its own (a stale high-res run isn't
+  // necessarily better than a fresh coarse one).
+  const weights = {};
+  let total = 0;
+  modelKeys.forEach(mk=>{
+    const resKm = MODEL_RESOLUTION_KM[mk] || 25;
+    const ageH = estimateModelRunAgeHours(mk);
+    const w = (1/resKm) * (1/(1+ageH));
+    weights[mk] = w; total += w;
+  });
+  modelKeys.forEach(mk=>{ weights[mk] /= (total||1); });
+  // Average at each of the app's own standard pressure levels, using each
+  // model's own windAt-style linear interpolation onto that level (models
+  // don't all report the same native levels), so the result is a genuine
+  // per-altitude weighted blend, not just an average of mismatched points.
+  return PRESSURE_LEVELS.map(p=>{
+    const altM = pressureToAltM(p);
+    let u=0, v=0, wsum=0;
+    modelKeys.forEach(mk=>{
+      const prof = profiles[mk];
+      if(!prof || !prof.length) return;
+      let pt;
+      if(altM<=prof[0].alt_m) pt = prof[0];
+      else if(altM>=prof[prof.length-1].alt_m) pt = prof[prof.length-1];
+      else {
+        for(let i=0;i<prof.length-1;i++){
+          if(altM>=prof[i].alt_m && altM<=prof[i+1].alt_m){
+            const f=(altM-prof[i].alt_m)/(prof[i+1].alt_m-prof[i].alt_m);
+            pt = {speed_ms: prof[i].speed_ms+(prof[i+1].speed_ms-prof[i].speed_ms)*f, dir_deg: prof[i].dir_deg+(((prof[i+1].dir_deg-prof[i].dir_deg+540)%360)-180)*f};
+            break;
+          }
+        }
+      }
+      if(!pt) return;
+      const rad=(pt.dir_deg+180)*Math.PI/180;
+      u += Math.sin(rad)*pt.speed_ms*weights[mk];
+      v += Math.cos(rad)*pt.speed_ms*weights[mk];
+      wsum += weights[mk];
+    });
+    if(wsum===0) return null;
+    const spd = Math.hypot(u,v);
+    const dir = (Math.atan2(u,v)*180/Math.PI+180+360)%360;
+    return {alt_m: altM, speed_ms: spd, dir_deg: dir};
+  }).filter(Boolean);
+}
+function wsAvailableModels(lat, lon){
+  return Object.keys(MODEL_META).filter(mk=>mk!=='best_match' && isModelValidForLocation(mk, lat, lon));
+}
+async function refreshWindSoundingPanel(){
+  const panel = document.getElementById('windSoundingPanel');
+  if(panel.style.display==='none') return;
+  const ref = wsGetReferencePoint();
+  const modelSel = document.getElementById('wxModelSelect').value;
+  const primaryModel = (modelSel==='auto' || !isModelValidForLocation(modelSel, ref.lat, ref.lon)) ? pickAutoModel(ref.lat, ref.lon) : modelSel;
+  const available = wsAvailableModels(ref.lat, ref.lon);
+  wsSelectedModels = wsSelectedModels.filter(mk=>available.includes(mk) && mk!==primaryModel);
+  const togglesEl = document.getElementById('wsModelToggles');
+  const modelColors = {}; let ci=0;
+  const palette = ['#c58bff','#ff9d3b','#5bb8ff','#ffe83b'];
+  available.filter(mk=>mk!==primaryModel).forEach(mk=>{ modelColors[mk] = palette[ci++ % palette.length]; });
+  wsLastModelColors = modelColors;
+  togglesEl.innerHTML = '';
+  const primaryChip = document.createElement('button');
+  primaryChip.textContent = MODEL_META[primaryModel].label.replace(/\s*\([^)]*\)/,'');
+  primaryChip.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid #00e5c8;background:rgba(0,229,200,0.15);color:#00e5c8;cursor:default;';
+  togglesEl.appendChild(primaryChip);
+  available.filter(mk=>mk!==primaryModel).forEach(mk=>{
+    const on = wsSelectedModels.includes(mk);
+    const btn = document.createElement('button');
+    btn.textContent = (on?'':'+ ') + MODEL_META[mk].label.replace(/\s*\([^)]*\)/,'');
+    btn.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid ${modelColors[mk]};background:${on?modelColors[mk]+'26':'transparent'};color:${modelColors[mk]};cursor:pointer;`;
+    btn.onclick = ()=>{ if(on) wsSelectedModels = wsSelectedModels.filter(x=>x!==mk); else wsSelectedModels.push(mk); refreshWindSoundingPanel(); };
+    togglesEl.appendChild(btn);
+  });
+  const avgBtn = document.createElement('button');
+  avgBtn.textContent = 'ø Avg';
+  avgBtn.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid var(--muted);background:${wsShowAvg?'var(--panel)':'transparent'};color:var(--text);cursor:pointer;`;
+  avgBtn.onclick = ()=>{ wsShowAvg = !wsShowAvg; refreshWindSoundingPanel(); };
+  togglesEl.appendChild(avgBtn);
+  const fetchKeys = [primaryModel, ...wsSelectedModels];
+  wsProfilesByModel = await wsFetchModels(ref.lat, ref.lon, fetchKeys);
+  const currentAglTop = Math.round(state.altAMSL - state.groundElev) + 1750;
+  if(wsRangeHighM==null) wsRangeHighM = currentAglTop;
+  wsDrawChart(primaryModel, modelColors, ref);
+}
+function wsDrawChart(primaryModel, modelColors, ref){
+  const svg = document.getElementById('wsChartSvg');
+  const W=270, H=300, left=52, right=240, top=14, bottom=244;
+  const groundAmsl = state.groundElev;
+  const interceptAgl = parseFloat(document.getElementById('sIntH')?.value) || 400;
+  const lowAgl = wsRangeLowM, highAgl = wsRangeHighM;
+  const yForAlt = (altAmsl)=>{
+    const agl = altAmsl - groundAmsl;
+    const f = (agl-lowAgl)/Math.max(1,(highAgl-lowAgl));
+    return bottom - f*(bottom-top);
+  };
+  const filterRange = (prof)=> prof.filter(p=>{ const agl=p.alt_m-groundAmsl; return agl>=lowAgl-50 && agl<=highAgl+50; });
+  const primaryProf = filterRange(wsProfilesByModel[primaryModel]||[]);
+  let allSpeedsKn = primaryProf.map(p=>p.speed_ms*KN_PER_MS);
+  wsSelectedModels.forEach(mk=>{ (filterRange(wsProfilesByModel[mk]||[])).forEach(p=>allSpeedsKn.push(p.speed_ms*KN_PER_MS)); });
+  let avgProf = [];
+  if(wsShowAvg && wsSelectedModels.length){
+    avgProf = filterRange(wsWeightedAverageProfile(wsProfilesByModel, [primaryModel, ...wsSelectedModels]));
+    avgProf.forEach(p=>allSpeedsKn.push(p.speed_ms*KN_PER_MS));
+  }
+  const maxSpeed = Math.max(5, ...allSpeedsKn.map(s=>Math.ceil(s/5)*5), 10);
+  const xForSpeed = (kn)=> left + (kn/maxSpeed)*(right-left);
+  let svgParts = [];
+  svgParts.push(`<defs>
+    <marker id="wsArrPrimary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6"/></marker>
+  </defs>`);
+  // Gridlines
+  for(let i=0;i<=5;i++){
+    const y = top + i*(bottom-top)/5;
+    svgParts.push(`<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`);
+  }
+  for(let i=0;i<=4;i++){
+    const x = left + i*(right-left)/4;
+    svgParts.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="var(--border)" stroke-width="0.5"/>`);
+    const kn = Math.round((i*(right-left)/4)/(right-left)*maxSpeed);
+    svgParts.push(`<text x="${x}" y="${bottom+16}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
+  }
+  svgParts.push(`<text x="${(left+right)/2}" y="${bottom+30}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
+  // Y axis labels: AMSL throughout, AGL only shown additionally at/below intercept
+  for(let i=0;i<=5;i++){
+    const y = top + i*(bottom-top)/5;
+    const agl = highAgl - i*(highAgl-lowAgl)/5;
+    const amsl = Math.round(groundAmsl + agl);
+    svgParts.push(`<text x="2" y="${y+3}" font-size="9" fill="var(--muted)">${amsl}m</text>`);
+  }
+  const interceptY = yForAlt(groundAmsl+interceptAgl);
+  if(interceptY>=top && interceptY<=bottom){
+    svgParts.push(`<line x1="${left}" y1="${interceptY}" x2="${right}" y2="${interceptY}" stroke="#00e5c8" stroke-width="0.7" stroke-dasharray="3 2"/>`);
+    svgParts.push(`<text x="${right-2}" y="${interceptY-3}" font-size="7.5" fill="#00e5c8" text-anchor="end">intercept ${Math.round(interceptAgl)}m AGL</text>`);
+  }
+  if(lowAgl<=0){
+    svgParts.push(`<text x="2" y="${bottom+3}" font-size="8" fill="var(--muted)">(0m AGL)</text>`);
+  }
+  // Comparison model curves + simple arrows (point toward flow = dir+180) + degree labels, red-highlighted when >25 deg off primary at that level
+  wsSelectedModels.forEach(mk=>{
+    const prof = filterRange(wsProfilesByModel[mk]||[]);
+    const color = modelColors[mk];
+    if(prof.length>1){
+      const pts = prof.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
+      svgParts.push(`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.4"/>`);
+    }
+    prof.forEach(p=>{
+      const x=xForSpeed(p.speed_ms*KN_PER_MS), y=yForAlt(p.alt_m);
+      const primaryAtLevel = wsNearestDir(primaryProf, p.alt_m);
+      const dev = primaryAtLevel!=null ? Math.min(Math.abs(p.dir_deg-primaryAtLevel), 360-Math.abs(p.dir_deg-primaryAtLevel)) : 0;
+      const flag = dev>25;
+      const arrowColor = flag ? 'var(--bad)' : color;
+      const flowDir = (p.dir_deg+180)%360;
+      svgParts.push(`<g transform="translate(${x},${y}) rotate(${flowDir})" stroke="${arrowColor}" stroke-width="1.6" stroke-linecap="round" color="${arrowColor}"><line x1="0" y1="0" x2="0" y2="-13" marker-end="url(#wsArrPrimary)"/></g>`);
+      if(flag) svgParts.push(`<rect x="${x+3}" y="${y-19}" width="24" height="11" rx="3" fill="var(--bad)" opacity="0.22"/>`);
+      svgParts.push(`<text x="${x+15}" y="${y-11}" font-size="7.5" fill="${arrowColor}" text-anchor="middle">${Math.round(p.dir_deg)}°</text>`);
+    });
+  });
+  // Average curve (dashed, neutral) + arrows + degree labels
+  if(wsShowAvg && avgProf.length>1){
+    const pts = avgProf.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
+    svgParts.push(`<polyline points="${pts}" fill="none" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="3 2"/>`);
+    avgProf.forEach(p=>{
+      const x=xForSpeed(p.speed_ms*KN_PER_MS), y=yForAlt(p.alt_m);
+      const flowDir = (p.dir_deg+180)%360;
+      svgParts.push(`<g transform="translate(${x},${y}) rotate(${flowDir})" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" color="var(--muted)"><line x1="0" y1="0" x2="0" y2="-13" marker-end="url(#wsArrPrimary)"/></g>`);
+      svgParts.push(`<text x="${x+13}" y="${y-15}" font-size="7" fill="var(--muted)" text-anchor="middle">${Math.round(p.dir_deg)}°</text>`);
+    });
+  }
+  // Primary model: solid curve + full wind barbs (point toward source = dir_deg directly) + degree labels
+  if(primaryProf.length>1){
+    const pts = primaryProf.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
+    svgParts.push(`<polyline points="${pts}" fill="none" stroke="#00e5c8" stroke-width="1.8"/>`);
+  }
+  primaryProf.forEach(p=>{
+    const x=xForSpeed(p.speed_ms*KN_PER_MS), y=yForAlt(p.alt_m);
+    svgParts.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#00e5c8"/>`);
+    svgParts.push(wsBarbSvg(x, y, p.speed_ms*KN_PER_MS, p.dir_deg));
+    svgParts.push(`<text x="${x-24}" y="${y+3}" font-size="7.5" fill="var(--text)" text-anchor="end">${Math.round(p.dir_deg)}°</text>`);
+  });
+  svg.innerHTML = svgParts.join('');
+  wsUpdateRangeSliderUI();
+}
+function wsNearestDir(prof, altM){
+  if(!prof.length) return null;
+  let best=prof[0], bestD=Math.abs(prof[0].alt_m-altM);
+  prof.forEach(p=>{ const d=Math.abs(p.alt_m-altM); if(d<bestD){bestD=d;best=p;} });
+  return best.dir_deg;
+}
+function wsBarbSvg(x, y, speedKn, dirDeg){
+  // Standard meteorological wind barb: shaft points TOWARD the direction
+  // the wind is coming FROM (dirDeg directly, no +180 - the opposite
+  // convention from the plain comparison-model arrows above, per explicit
+  // instruction). Full barb = 10kn, half barb = 5kn, pennant = 50kn,
+  // rounded to the nearest 5kn.
+  const rounded = Math.round(speedKn/5)*5;
+  let pennants = Math.floor(rounded/50), rem = rounded%50;
+  let fullBarbs = Math.floor(rem/10); rem = rem%10;
+  let halfBarb = rem>=5 ? 1 : 0;
+  let parts = [`<g transform="translate(${x},${y}) rotate(${dirDeg})" stroke="var(--text)" stroke-width="1.4" stroke-linecap="round">`];
+  const shaftLen = 20;
+  parts.push(`<line x1="0" y1="0" x2="0" y2="${-shaftLen}"/>`);
+  let pos = -shaftLen;
+  for(let i=0;i<pennants;i++){ parts.push(`<path d="M0,${pos} L8,${pos+3} L0,${pos+6} Z" fill="var(--text)"/>`); pos+=7; }
+  for(let i=0;i<fullBarbs;i++){ parts.push(`<line x1="0" y1="${pos}" x2="7" y2="${pos+3}"/>`); pos+=5; }
+  if(halfBarb){ parts.push(`<line x1="0" y1="${pos}" x2="4" y2="${pos+1.5}"/>`); }
+  parts.push('</g>');
+  return parts.join('');
+}
+function wsUpdateRangeSliderUI(){
+  const currentAglTop = Math.round(state.altAMSL - state.groundElev) + 1750;
+  const fullMax = Math.max(currentAglTop, wsRangeHighM||currentAglTop);
+  const track = document.getElementById('wsRangeTrack');
+  const trackH = 200;
+  const topFrac = 1 - (wsRangeHighM/fullMax);
+  const botFrac = 1 - (wsRangeLowM/fullMax);
+  document.getElementById('wsRangeHandleTop').style.top = Math.round(topFrac*trackH-7)+'px';
+  document.getElementById('wsRangeHandleBottom').style.top = Math.round(botFrac*trackH-7)+'px';
+  document.getElementById('wsRangeFill').style.top = Math.round(topFrac*trackH)+'px';
+  document.getElementById('wsRangeFill').style.height = Math.round((botFrac-topFrac)*trackH)+'px';
+  document.getElementById('wsRangeTopLabel').textContent = Math.round(state.groundElev+wsRangeHighM)+'m';
+  document.getElementById('wsRangeBottomLabel').textContent = Math.round(state.groundElev+wsRangeLowM)+'m';
+}
+function wsRangeHandleDrag(which){
+  return (e)=>{
+    wsDraggingHandle = which;
+    e.preventDefault();
+  };
+}
+document.getElementById('wsRangeHandleTop').addEventListener('mousedown', wsRangeHandleDrag('top'));
+document.getElementById('wsRangeHandleTop').addEventListener('touchstart', wsRangeHandleDrag('top'));
+document.getElementById('wsRangeHandleBottom').addEventListener('mousedown', wsRangeHandleDrag('bottom'));
+document.getElementById('wsRangeHandleBottom').addEventListener('touchstart', wsRangeHandleDrag('bottom'));
+function wsHandlePointerMove(clientY){
+  if(!wsDraggingHandle) return;
+  const track = document.getElementById('wsRangeTrack');
+  const rect = track.getBoundingClientRect();
+  const frac = Math.max(0, Math.min(1, (clientY-rect.top)/rect.height));
+  const currentAglTop = Math.round(state.altAMSL - state.groundElev) + 1750;
+  const fullMax = Math.max(currentAglTop, wsRangeHighM||currentAglTop);
+  const agl = Math.round((1-frac)*fullMax/10)*10;
+  if(wsDraggingHandle==='top') wsRangeHighM = Math.max(agl, wsRangeLowM+50);
+  else wsRangeLowM = Math.min(agl, wsRangeHighM-50);
+  const ref = wsGetReferencePoint();
+  const modelSel = document.getElementById('wxModelSelect').value;
+  const primaryModel = (modelSel==='auto' || !isModelValidForLocation(modelSel, ref.lat, ref.lon)) ? pickAutoModel(ref.lat, ref.lon) : modelSel;
+  wsDrawChart(primaryModel, wsLastModelColors, ref);
+}
+window.addEventListener('mousemove', (e)=>wsHandlePointerMove(e.clientY));
+window.addEventListener('touchmove', (e)=>{ if(wsDraggingHandle && e.touches[0]) wsHandlePointerMove(e.touches[0].clientY); });
+window.addEventListener('mouseup', ()=>{ wsDraggingHandle=null; });
+window.addEventListener('touchend', ()=>{ wsDraggingHandle=null; });
+document.getElementById('btnWindSounding').addEventListener('click', ()=>{
+  const panel = document.getElementById('windSoundingPanel');
+  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+  if(panel.style.display==='block'){
+    try{ alignPanelToPositionCard(panel); }catch(e){ console.error('Wind sounding panel: alignment failed (panel still opened):', e); }
+    wsRangeLowM = 0; wsRangeHighM = null;
+    refreshWindSoundingPanel();
+  }
+});
+document.getElementById('btnCloseWindSounding').addEventListener('click', ()=>{
+  document.getElementById('windSoundingPanel').style.display = 'none';
+});
+document.getElementById('wsSrcCurrent').addEventListener('change', refreshWindSoundingPanel);
+document.getElementById('wsSrcPlanned').addEventListener('change', refreshWindSoundingPanel);
 // ---------- sliders ----------
 function bindSlider(id,lblId,fmt){
   const el=document.getElementById(id);

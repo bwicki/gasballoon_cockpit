@@ -1271,8 +1271,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div id="wsModelToggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
         <div style="display:flex;gap:8px;">
           <div style="position:relative;flex-shrink:0;">
-            <svg id="wsChartSvg" width="270" height="312" viewBox="0 0 270 312"></svg>
-            <div id="wsSpeedRangeWrap" style="display:none;position:absolute;top:260px;left:0;right:0;">
+            <svg id="wsChartSvg" width="270" height="352" viewBox="0 0 270 352"></svg>
+            <div id="wsSpeedRangeWrap" style="display:none;position:absolute;top:296px;left:0;right:0;">
               <span id="wsSpeedMinLabel" style="position:absolute;top:0;left:40px;font-size:9px;color:var(--muted);">—</span>
               <span id="wsSpeedMaxLabel" style="position:absolute;top:0;right:2px;font-size:9px;color:var(--muted);">—</span>
               <div style="position:relative;height:16px;margin-top:14px;">
@@ -1285,7 +1285,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;padding-top:14px;">
             <span id="wsRangeTopLabel" style="font-size:9px;color:var(--muted);margin-bottom:4px;">—</span>
-            <div id="wsRangeTrack" style="position:relative;width:16px;height:200px;">
+            <div id="wsRangeTrack" style="position:relative;width:16px;height:240px;">
               <div style="position:absolute;top:0;bottom:0;left:7px;width:2px;background:var(--panel);border-radius:1px;"></div>
               <div id="wsRangeFill" style="position:absolute;left:7px;width:2px;background:#4169e1;border-radius:1px;"></div>
               <div id="wsRangeHandleTop" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ns-resize;"></div>
@@ -1410,7 +1410,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.10-1520';
+const APP_VERSION = 'v260823.11-1540';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -9164,7 +9164,7 @@ async function refreshWindSoundingPanel(){
 }
 function wsDrawChart(primaryModel, modelColors, ref){
   const svg = document.getElementById('wsChartSvg');
-  const W=270, H=312, left=66, right=240, top=14, bottom=244;
+  const W=270, H=352, left=66, right=240, top=14, bottom=290;
   const aglColX=2, amslColX=30; // two separate label columns so AMSL and AGL numbers never overlap
   const groundAmsl = state.groundElev;
   const interceptAgl = parseFloat(document.getElementById('sIntH')?.value) || 400;
@@ -9192,22 +9192,23 @@ function wsDrawChart(primaryModel, modelColors, ref){
   svgParts.push(`<defs>
     <marker id="wsArrPrimary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6"/></marker>
   </defs>`);
-  // Gridlines
-  for(let i=0;i<=5;i++){
-    const y = top + i*(bottom-top)/5;
+  // Gridlines - denser than before (9 horizontal, 6 vertical divisions) per explicit instruction
+  const GRID_ROWS=9, GRID_COLS=6;
+  for(let i=0;i<=GRID_ROWS;i++){
+    const y = top + i*(bottom-top)/GRID_ROWS;
     svgParts.push(`<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`);
   }
-  for(let i=0;i<=4;i++){
-    const x = left + i*(right-left)/4;
+  for(let i=0;i<=GRID_COLS;i++){
+    const x = left + i*(right-left)/GRID_COLS;
     svgParts.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="var(--border)" stroke-width="0.5"/>`);
-    const kn = Math.round(minSpeed + (i/4)*(maxSpeed-minSpeed));
-    svgParts.push(`<text x="${x}" y="${bottom+13}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
+    const kn = Math.round(minSpeed + (i/GRID_COLS)*(maxSpeed-minSpeed));
+    svgParts.push(`<text x="${x}" y="${bottom+46}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
   }
-  svgParts.push(`<text x="${(left+right)/2}" y="${bottom+42}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
+  svgParts.push(`<text x="${(left+right)/2}" y="${bottom+64}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
   // Y axis labels: two separate columns, AGL (left, only at/below intercept) and AMSL (right of that, every gridline) - previously shared one column and overlapped.
-  for(let i=0;i<=5;i++){
-    const y = top + i*(bottom-top)/5;
-    const agl = highAgl - i*(highAgl-lowAgl)/5;
+  for(let i=0;i<=GRID_ROWS;i++){
+    const y = top + i*(bottom-top)/GRID_ROWS;
+    const agl = highAgl - i*(highAgl-lowAgl)/GRID_ROWS;
     const amsl = Math.round(groundAmsl + agl);
     svgParts.push(`<text x="${amslColX}" y="${y+3}" font-size="9" fill="var(--muted)">${amsl}m</text>`);
     if(agl<=interceptAgl+1 && agl>=lowAgl-1){
@@ -9303,7 +9304,7 @@ function wsUpdateRangeSliderUI(){
   const currentAglTop = Math.round(state.altAMSL - state.groundElev) + 1750;
   const fullMax = Math.max(currentAglTop, wsRangeHighM||currentAglTop);
   const track = document.getElementById('wsRangeTrack');
-  const trackH = 200;
+  const trackH = 240;
   const topFrac = 1 - (wsRangeHighM/fullMax);
   const botFrac = 1 - (wsRangeLowM/fullMax);
   document.getElementById('wsRangeHandleTop').style.top = Math.round(topFrac*trackH-7)+'px';

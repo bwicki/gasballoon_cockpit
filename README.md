@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.10-1520** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.11-1540** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -195,6 +195,10 @@ Comparison models get a heavier black outline drawn behind their curve (in addit
 **Avg toggle now matches the other model toggles' on/off styling** (thicker black border when active), and the primary model itself became toggleable too (default on) - its curve/barbs can be hidden the same way as any comparison model, though its underlying data stays available for the red-flag deviation check on comparison arrows regardless of whether it's currently drawn.
 
 **Location radio buttons fit on one line**: shortened labels (Current / Planned point / Marker) and reduced font size, since all three plus "Planned descent point"'s and "Marker location"'s full wording didn't fit the panel's 350px width on one row.
+
+## Wind sounding chart resized and reorganised (23.08.2026)
+
+Plot area height increased 20% (230→276px), with the vertical zoom slider's own track grown proportionally (200→240px) so it still spans the full plot range. The horizontal speed-range slider was moved from mid-chart (where it collided with the "wind speed (kn)" axis title) to directly below the plot's x-axis line, roughly level with the vertical slider's own bottom label - tick numbers and the axis title now sit further down below both sliders, in a clear top-to-bottom order with no overlap. Gridline density increased from 5×4 to 9×6 divisions for finer visual reference.
 
 ## Entire page below the header went blank - the actual root cause (23.08.2026)
 

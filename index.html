@@ -347,10 +347,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         <b id="wxModelName" style="font-size:12px;">Loading…</b>
         <span id="ensembleModeBadge" style="display:none;align-items:center;justify-content:center;width:13px;height:13px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;" title="">—</span>
-        <span style="width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;"></span>
-        <button id="btnWindSounding" title="Detailed wind sounding" style="background:none;border:1.5px solid #5a5a55;border-radius:8px;padding:5px;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-            <path d="M6 21 L11 14 L9 10 L16 3" stroke="#4169e1" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <button id="btnWindSounding" title="Detailed wind sounding" style="background:rgba(128,128,128,0.15);border:1px solid var(--border);border-radius:5px;padding:2px;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M6 21 L11 14 L9 10 L16 3" stroke="#4169e1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
           </svg>
         </button>
       </div>
@@ -1252,21 +1251,31 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="windSoundingPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button id="btnCloseWindSounding" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Wind sounding</div>
-        <div style="display:flex;gap:12px;margin-bottom:4px;flex-wrap:wrap;">
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-            <input type="radio" name="windSoundingSrc" id="wsSrcCurrent" checked style="margin:0;">Current position
+        <div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:nowrap;">
+          <label style="display:flex;align-items:center;gap:3px;font-size:10.5px;cursor:pointer;white-space:nowrap;">
+            <input type="radio" name="windSoundingSrc" id="wsSrcCurrent" checked style="margin:0;">Current
           </label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-            <input type="radio" name="windSoundingSrc" id="wsSrcPlanned" style="margin:0;">Planned descent point
+          <label style="display:flex;align-items:center;gap:3px;font-size:10.5px;cursor:pointer;white-space:nowrap;">
+            <input type="radio" name="windSoundingSrc" id="wsSrcPlanned" style="margin:0;">Planned point
           </label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;" id="wsSrcMarkerLabel">
-            <input type="radio" name="windSoundingSrc" id="wsSrcMarker" disabled style="margin:0;">Marker location
+          <label style="display:flex;align-items:center;gap:3px;font-size:10.5px;cursor:pointer;white-space:nowrap;" id="wsSrcMarkerLabel">
+            <input type="radio" name="windSoundingSrc" id="wsSrcMarker" disabled style="margin:0;">Marker
           </label>
         </div>
         <div id="wsMarkerHint" style="font-size:9.5px;color:#4169e1;margin-bottom:8px;">Tap anywhere on the map to place a marker there</div>
         <div id="wsModelToggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
         <div style="display:flex;gap:8px;">
-          <svg id="wsChartSvg" width="270" height="300" viewBox="0 0 270 300" style="flex-shrink:0;"></svg>
+          <div style="position:relative;flex-shrink:0;">
+            <svg id="wsChartSvg" width="270" height="312" viewBox="0 0 270 312"></svg>
+            <div id="wsSpeedRangeWrap" style="display:none;position:absolute;top:264px;left:0;right:0;padding-left:66px;padding-right:30px;">
+              <div style="position:relative;height:16px;">
+                <div style="position:absolute;top:7px;left:0;right:0;height:2px;background:var(--panel);border-radius:1px;"></div>
+                <div id="wsSpeedRangeFill" style="position:absolute;top:7px;height:2px;background:#4169e1;border-radius:1px;"></div>
+                <div id="wsSpeedRangeHandleMin" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
+                <div id="wsSpeedRangeHandleMax" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
+              </div>
+            </div>
+          </div>
           <div style="display:flex;flex-direction:column;align-items:center;padding-top:14px;">
             <span id="wsRangeTopLabel" style="font-size:9px;color:var(--muted);margin-bottom:4px;">—</span>
             <div id="wsRangeTrack" style="position:relative;width:16px;height:200px;background:var(--panel);border-radius:8px;">
@@ -1275,14 +1284,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               <div id="wsRangeHandleBottom" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ns-resize;"></div>
             </div>
             <span id="wsRangeBottomLabel" style="font-size:9px;color:var(--muted);margin-top:4px;">—</span>
-          </div>
-        </div>
-        <div id="wsSpeedRangeWrap" style="display:none;margin-top:8px;padding-left:66px;padding-right:30px;">
-          <div style="position:relative;height:16px;">
-            <div style="position:absolute;top:7px;left:0;right:0;height:2px;background:var(--panel);border-radius:1px;"></div>
-            <div id="wsSpeedRangeFill" style="position:absolute;top:7px;height:2px;background:#4169e1;border-radius:1px;"></div>
-            <div id="wsSpeedRangeHandleMin" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
-            <div id="wsSpeedRangeHandleMax" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
           </div>
         </div>
         <div style="font-size:8px;color:var(--muted);margin-top:6px;">barbs point toward source · arrows point toward flow · red = &gt;25° off primary</div>
@@ -1398,7 +1399,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.06-1245';
+const APP_VERSION = 'v260823.07-1330';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8959,6 +8960,7 @@ const MODEL_RESOLUTION_KM = {
 };
 let wsSelectedModels = []; // which non-primary models are currently toggled on
 let wsShowAvg = false;
+let wsPrimaryEnabled = true; // primary model curve/barbs shown by default, but toggleable like the other models - its underlying data is still used for deviation flagging on comparison arrows even when hidden
 let wsProfilesByModel = {}; // modelKey -> raw profile array (alt_m, speed_ms, dir_deg), fetched fresh each time the panel is shown/updated
 let wsRangeLowM = 0, wsRangeHighM = null; // AGL bounds currently shown - null high means "not yet set, use full range"
 let wsDraggingHandle = null;
@@ -9111,8 +9113,9 @@ async function refreshWindSoundingPanel(){
   wsLastModelColors = modelColors;
   togglesEl.innerHTML = '';
   const primaryChip = document.createElement('button');
-  primaryChip.textContent = MODEL_META[primaryModel].label.replace(/\s*\([^)]*\)/,'');
-  primaryChip.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid #4169e1;background:rgba(65,105,225,0.15);color:#4169e1;cursor:default;';
+  primaryChip.textContent = (wsPrimaryEnabled?'':'+ ') + MODEL_META[primaryModel].label.replace(/\s*\([^)]*\)/,'');
+  primaryChip.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:${wsPrimaryEnabled?'2.5px solid #1a1a1a':'1.5px solid #4169e1'};background:${wsPrimaryEnabled?'rgba(65,105,225,0.15)':'transparent'};color:#4169e1;cursor:pointer;`;
+  primaryChip.onclick = ()=>{ wsPrimaryEnabled = !wsPrimaryEnabled; refreshWindSoundingPanel(); };
   togglesEl.appendChild(primaryChip);
   available.filter(mk=>mk!==primaryModel).forEach(mk=>{
     const on = wsSelectedModels.includes(mk);
@@ -9124,7 +9127,7 @@ async function refreshWindSoundingPanel(){
   });
   const avgBtn = document.createElement('button');
   avgBtn.textContent = 'ø Avg';
-  avgBtn.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid var(--muted);background:${wsShowAvg?'var(--panel)':'transparent'};color:var(--text);cursor:pointer;`;
+  avgBtn.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:${wsShowAvg?'2.5px solid #1a1a1a':'1.5px solid var(--muted)'};background:${wsShowAvg?'var(--panel)':'transparent'};color:var(--text);cursor:pointer;`;
   avgBtn.onclick = ()=>{ wsShowAvg = !wsShowAvg; refreshWindSoundingPanel(); };
   togglesEl.appendChild(avgBtn);
   const fetchKeys = [primaryModel, ...wsSelectedModels];
@@ -9135,7 +9138,7 @@ async function refreshWindSoundingPanel(){
 }
 function wsDrawChart(primaryModel, modelColors, ref){
   const svg = document.getElementById('wsChartSvg');
-  const W=270, H=300, left=66, right=240, top=14, bottom=244;
+  const W=270, H=312, left=66, right=240, top=14, bottom=244;
   const aglColX=2, amslColX=30; // two separate label columns so AMSL and AGL numbers never overlap
   const groundAmsl = state.groundElev;
   const interceptAgl = parseFloat(document.getElementById('sIntH')?.value) || 400;
@@ -9172,9 +9175,9 @@ function wsDrawChart(primaryModel, modelColors, ref){
     const x = left + i*(right-left)/4;
     svgParts.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="var(--border)" stroke-width="0.5"/>`);
     const kn = Math.round(minSpeed + (i/4)*(maxSpeed-minSpeed));
-    svgParts.push(`<text x="${x}" y="${bottom+16}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
+    svgParts.push(`<text x="${x}" y="${bottom+13}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
   }
-  svgParts.push(`<text x="${(left+right)/2}" y="${bottom+30}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
+  svgParts.push(`<text x="${(left+right)/2}" y="${bottom+42}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
   // Y axis labels: two separate columns, AGL (left, only at/below intercept) and AMSL (right of that, every gridline) - previously shared one column and overlapped.
   for(let i=0;i<=5;i++){
     const y = top + i*(bottom-top)/5;
@@ -9228,17 +9231,19 @@ function wsDrawChart(primaryModel, modelColors, ref){
       svgParts.push(`<text x="${x+13}" y="${y-15}" font-size="7" fill="var(--muted)" text-anchor="middle">${Math.round(p.dir_deg)}°</text>`);
     });
   }
-  // Primary model: solid curve + full wind barbs (point toward source = dir_deg directly) + degree labels
-  if(primaryProf.length>1){
-    const pts = primaryProf.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
-    svgParts.push(`<polyline points="${pts}" fill="none" stroke="#4169e1" stroke-width="1.8"/>`);
+  // Primary model: solid curve + full wind barbs (point toward source = dir_deg directly) + degree labels - only actually drawn when toggled on, but primaryProf itself stays available above for the comparison-arrow deviation check regardless
+  if(wsPrimaryEnabled){
+    if(primaryProf.length>1){
+      const pts = primaryProf.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
+      svgParts.push(`<polyline points="${pts}" fill="none" stroke="#4169e1" stroke-width="1.8"/>`);
+    }
+    primaryProf.forEach(p=>{
+      const x=xForSpeed(p.speed_ms*KN_PER_MS), y=yForAlt(p.alt_m);
+      svgParts.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#4169e1"/>`);
+      svgParts.push(wsBarbSvg(x, y, p.speed_ms*KN_PER_MS, p.dir_deg));
+      svgParts.push(`<text x="${x-24}" y="${y+3}" font-size="7.5" fill="var(--text)" text-anchor="end">${Math.round(p.dir_deg)}°</text>`);
+    });
   }
-  primaryProf.forEach(p=>{
-    const x=xForSpeed(p.speed_ms*KN_PER_MS), y=yForAlt(p.alt_m);
-    svgParts.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#4169e1"/>`);
-    svgParts.push(wsBarbSvg(x, y, p.speed_ms*KN_PER_MS, p.dir_deg));
-    svgParts.push(`<text x="${x-24}" y="${y+3}" font-size="7.5" fill="var(--text)" text-anchor="end">${Math.round(p.dir_deg)}°</text>`);
-  });
   svg.innerHTML = svgParts.join('');
   wsUpdateRangeSliderUI();
 }

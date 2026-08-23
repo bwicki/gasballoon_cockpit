@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.06-1245** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.07-1330** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -187,6 +187,14 @@ A third position option, "Marker location", is available alongside "Current posi
 Comparison models get a heavier black outline drawn behind their curve (in addition to the toggle button's own bold black border when active) so which models are currently selected reads clearly at a glance, both in the toggle row and in the chart itself.
 
 **Y-axis label overlap fixed** (23.08.2026): AMSL and AGL numbers were sharing the same column and overlapping each other. Now in two separate columns - AGL only shown (and only up to the intercept altitude, per the earlier design decision) in the left column, AMSL throughout in a second column to its right. The intercept marking itself was moved from a text label at the chart's right edge into a small "intcpt" label in the AGL column, with the dashed line across the chart unchanged. A distinct green ground line (true 0m AGL) was also added, separate from the intercept line.
+
+**Header button resized** (23.08.2026): the button had grown large enough to push the header's own model-name/cadence rows apart. Shrunk substantially (14px icon in a compact, low-contrast frame with a light grey fill, no separator line) so it fits within the existing row height instead of expanding it.
+
+**Speed-range slider repositioned**: moved from below the whole chart into the chart's own layout, directly under the x-axis tick numbers and above the "wind speed (kn)" axis title - implemented as an absolutely-positioned overlay on the chart, with the SVG's own height increased to make room.
+
+**Avg toggle now matches the other model toggles' on/off styling** (thicker black border when active), and the primary model itself became toggleable too (default on) - its curve/barbs can be hidden the same way as any comparison model, though its underlying data stays available for the red-flag deviation check on comparison arrows regardless of whether it's currently drawn.
+
+**Location radio buttons fit on one line**: shortened labels (Current / Planned point / Marker) and reduced font size, since all three plus "Planned descent point"'s and "Marker location"'s full wording didn't fit the panel's 350px width on one row.
 
 ## Wind sounding panel - map click handler isolation
 

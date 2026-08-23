@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.11-1540** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.12-1600** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -222,6 +222,12 @@ If the report persists after this, the next most useful thing would be the actua
 ## Sub-mode switch never actually moved the map - the real root cause (23.08.2026)
 
 A recurring report ("zoom goes back to current position instead of the landing area when switching to Quick or Staged") turned out to have a genuinely different root cause than the earlier fixes to `planDescentToTarget` and `showStagedDescentPlan` - those only fire after a brand-new search computes a result and correctly zoom to it. `setSubMode()` - the function behind clicking the Quick/Staged tabs themselves - had no `fitBounds` call at all: switching back to a subfunction that already had a result sitting on the map (from earlier in the session) left the view wherever it happened to be, since nothing ever moved it there. Now reuses the exact same `fitBounds` logic the manual "center" buttons already used for each subfunction's own result, applied directly inside the tab-switch handler itself.
+
+## Wind sounding marker was leaking into Quick/Staged Descent click handling (23.08.2026)
+
+The map has several independent `click` listeners registered (Leaflet calls every one of them on a single click, not just the "most relevant" one) - the wind-sounding panel's own marker-placement handler was one of them, alongside the main handler that drives Quick/Staged Descent's own click logic (placing the Staged marker, setting a Quick Descent target, test-mode repositioning). With the wind-sounding panel open, a tap meant only for its own marker was ALSO reaching that main handler, which could silently place or recompute a Staged Descent plan from a click the person never intended for it. Fixed with an early-return guard at the very top of the main click handler: while the wind-sounding panel is visible, it does nothing at all, leaving that click exclusively to the wind-sounding marker's own handler.
+
+This very plausibly also explains the separately-reported "Quick/Staged Descent zoom doesn't go to the Monte-Carlo area" - both `planDescentToTarget` and `showStagedDescentPlan` were re-verified (again) to have their `fitBounds` calls correctly placed with nothing overriding them afterward, so a genuinely unrelated click accidentally triggering an unwanted Staged Descent computation (with its own, unexpected zoom) is a much better explanation for what looked like "zoom doesn't work" than a bug in the zoom logic itself, which has now been checked this thoroughly multiple times without finding a fault.
 
 ## Wind sounding panel refinements (23.08.2026)
 

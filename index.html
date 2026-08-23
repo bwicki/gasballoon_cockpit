@@ -1410,7 +1410,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.11-1540';
+const APP_VERSION = 'v260823.12-1600';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8296,6 +8296,14 @@ function setAppMode(mode){
 
 // ---------- map click handling ----------
 map.on('click', async (e)=>{
+  // Wind sounding panel's marker placement must be completely isolated -
+  // while that panel is open, a map tap belongs exclusively to it, never
+  // to Quick/Staged Descent's own click logic below (which would
+  // otherwise ALSO fire on the exact same click, since Leaflet calls every
+  // registered listener for an event - previously this could silently
+  // place/recompute a Staged Descent plan from a click the person only
+  // intended for the wind-sounding marker).
+  if(document.getElementById('windSoundingPanel').style.display!=='none') return;
   if(document.getElementById('testEnable').checked && state.appMode!=='plan'){
     // Manual/Test mode repositioning only applies while in "Landing Area"
     // (monitor) mode - if the user has switched to "Plan Descent", a map

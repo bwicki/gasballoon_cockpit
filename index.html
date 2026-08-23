@@ -348,11 +348,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <b id="wxModelName" style="font-size:12px;">Loading…</b>
         <span id="ensembleModeBadge" style="display:none;align-items:center;justify-content:center;width:13px;height:13px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;" title="">—</span>
         <span style="width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;"></span>
-        <button id="btnWindSounding" title="Detailed wind sounding" style="background:none;border:none;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-            <rect x="4" y="3" width="16" height="18" rx="2.5" stroke="var(--text)" stroke-width="1.2"/>
-            <polyline points="8,17 10,13 9,10 13,11 12,7 16,5" fill="none" stroke="#00e5c8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="8" cy="17" r="1" fill="#00e5c8"/><circle cx="9" cy="10" r="1" fill="#00e5c8"/><circle cx="12" cy="7" r="1" fill="#00e5c8"/><circle cx="16" cy="5" r="1" fill="#00e5c8"/>
+        <button id="btnWindSounding" title="Detailed wind sounding" style="background:none;border:1.5px solid #5a5a55;border-radius:8px;padding:5px;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <path d="M6 21 L11 14 L9 10 L16 3" stroke="#4169e1" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
           </svg>
         </button>
       </div>
@@ -1254,25 +1252,37 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <div id="windSoundingPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button id="btnCloseWindSounding" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Wind sounding</div>
-        <div style="display:flex;gap:14px;margin-bottom:8px;">
+        <div style="display:flex;gap:12px;margin-bottom:4px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
             <input type="radio" name="windSoundingSrc" id="wsSrcCurrent" checked style="margin:0;">Current position
           </label>
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
             <input type="radio" name="windSoundingSrc" id="wsSrcPlanned" style="margin:0;">Planned descent point
           </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;" id="wsSrcMarkerLabel">
+            <input type="radio" name="windSoundingSrc" id="wsSrcMarker" disabled style="margin:0;">Marker location
+          </label>
         </div>
+        <div id="wsMarkerHint" style="font-size:9.5px;color:#4169e1;margin-bottom:8px;">Tap anywhere on the map to place a marker there</div>
         <div id="wsModelToggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
         <div style="display:flex;gap:8px;">
           <svg id="wsChartSvg" width="270" height="300" viewBox="0 0 270 300" style="flex-shrink:0;"></svg>
           <div style="display:flex;flex-direction:column;align-items:center;padding-top:14px;">
             <span id="wsRangeTopLabel" style="font-size:9px;color:var(--muted);margin-bottom:4px;">—</span>
             <div id="wsRangeTrack" style="position:relative;width:16px;height:200px;background:var(--panel);border-radius:8px;">
-              <div id="wsRangeFill" style="position:absolute;left:5px;width:6px;background:#00e5c8;border-radius:3px;"></div>
-              <div id="wsRangeHandleTop" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #00e5c8;cursor:ns-resize;"></div>
-              <div id="wsRangeHandleBottom" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #00e5c8;cursor:ns-resize;"></div>
+              <div id="wsRangeFill" style="position:absolute;left:5px;width:6px;background:#4169e1;border-radius:3px;"></div>
+              <div id="wsRangeHandleTop" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ns-resize;"></div>
+              <div id="wsRangeHandleBottom" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ns-resize;"></div>
             </div>
             <span id="wsRangeBottomLabel" style="font-size:9px;color:var(--muted);margin-top:4px;">—</span>
+          </div>
+        </div>
+        <div id="wsSpeedRangeWrap" style="display:none;margin-top:8px;padding-left:52px;padding-right:30px;">
+          <div style="position:relative;height:16px;">
+            <div style="position:absolute;top:7px;left:0;right:0;height:2px;background:var(--panel);border-radius:1px;"></div>
+            <div id="wsSpeedRangeFill" style="position:absolute;top:7px;height:2px;background:#4169e1;border-radius:1px;"></div>
+            <div id="wsSpeedRangeHandleMin" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
+            <div id="wsSpeedRangeHandleMax" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
           </div>
         </div>
         <div style="font-size:8px;color:var(--muted);margin-top:6px;">barbs point toward source · arrows point toward flow · red = &gt;25° off primary</div>
@@ -1388,7 +1398,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.04-1100';
+const APP_VERSION = 'v260823.05-1155';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8953,12 +8963,41 @@ let wsProfilesByModel = {}; // modelKey -> raw profile array (alt_m, speed_ms, d
 let wsRangeLowM = 0, wsRangeHighM = null; // AGL bounds currently shown - null high means "not yet set, use full range"
 let wsDraggingHandle = null;
 let wsLastModelColors = {}; // cached from the last refreshWindSoundingPanel() call, so the range-slider drag handler can redraw without recomputing model colours from scratch on every pixel of movement
+let wsMarkerLatLng = null; // set by tapping the map while the panel is open
+let wsClickMarker = null; // the distinctive Leaflet marker shown at that point
+let wsSpeedRangeActive = false; // becomes true once the height slider has actually been used, revealing the speed-range slider too (per explicit instruction: only once height-zooming is in use, not shown by default)
+let wsSpeedMinKn = 0, wsSpeedMaxKn = null; // null max means "not yet set, use full data range"
+function wsMapClickHandler(e){
+  const panel = document.getElementById('windSoundingPanel');
+  if(panel.style.display==='none') return;
+  wsMarkerLatLng = e.latlng;
+  if(!wsClickMarker){
+    // A distinctive marker - royal blue to match the feature's own colour,
+    // visually different from every other marker type in the app (target-
+    // ring style rather than a pin or cross) so it reads clearly as "this
+    // is the wind-sounding marker", not confusable with a landing point.
+    wsClickMarker = L.marker(e.latlng, {icon: L.divIcon({
+      html: '<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="9" fill="none" stroke="#4169e1" stroke-width="2.4"/><circle cx="13" cy="13" r="3" fill="#4169e1"/></svg>',
+      className:'', iconSize:null, iconAnchor:[13,13]
+    })}).addTo(map);
+  } else {
+    wsClickMarker.setLatLng(e.latlng);
+  }
+  const radio = document.getElementById('wsSrcMarker');
+  radio.disabled = false;
+  radio.checked = true;
+  document.getElementById('wsSrcMarkerLabel').style.opacity = '1';
+  refreshWindSoundingPanel();
+}
 function wsGetReferencePoint(){
   // "Planned descent point" resolves to whichever marker is actually
   // relevant for the currently active sub-function - Quick Descent's own
   // init marker, or Staged Descent's draggable marker - falling back to
   // the current position if neither is actually active/placed yet, so the
   // radio button never points at a marker that doesn't exist.
+  if(document.getElementById('wsSrcMarker').checked && wsMarkerLatLng){
+    return {lat: wsMarkerLatLng.lat, lon: wsMarkerLatLng.lng};
+  }
   if(document.getElementById('wsSrcPlanned').checked){
     if(currentSubMode==='staged' && stagedMarker){
       const ll = stagedMarker.getLatLng();
@@ -9063,13 +9102,13 @@ async function refreshWindSoundingPanel(){
   togglesEl.innerHTML = '';
   const primaryChip = document.createElement('button');
   primaryChip.textContent = MODEL_META[primaryModel].label.replace(/\s*\([^)]*\)/,'');
-  primaryChip.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid #00e5c8;background:rgba(0,229,200,0.15);color:#00e5c8;cursor:default;';
+  primaryChip.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid #4169e1;background:rgba(65,105,225,0.15);color:#4169e1;cursor:default;';
   togglesEl.appendChild(primaryChip);
   available.filter(mk=>mk!==primaryModel).forEach(mk=>{
     const on = wsSelectedModels.includes(mk);
     const btn = document.createElement('button');
     btn.textContent = (on?'':'+ ') + MODEL_META[mk].label.replace(/\s*\([^)]*\)/,'');
-    btn.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:1.5px solid ${modelColors[mk]};background:${on?modelColors[mk]+'26':'transparent'};color:${modelColors[mk]};cursor:pointer;`;
+    btn.style.cssText = `font-size:10px;padding:3px 8px;border-radius:12px;border:${on?'2.5px solid #1a1a1a':'1.5px solid '+modelColors[mk]};background:${on?modelColors[mk]+'26':'transparent'};color:${modelColors[mk]};cursor:pointer;`;
     btn.onclick = ()=>{ if(on) wsSelectedModels = wsSelectedModels.filter(x=>x!==mk); else wsSelectedModels.push(mk); refreshWindSoundingPanel(); };
     togglesEl.appendChild(btn);
   });
@@ -9104,8 +9143,11 @@ function wsDrawChart(primaryModel, modelColors, ref){
     avgProf = filterRange(wsWeightedAverageProfile(wsProfilesByModel, [primaryModel, ...wsSelectedModels]));
     avgProf.forEach(p=>allSpeedsKn.push(p.speed_ms*KN_PER_MS));
   }
-  const maxSpeed = Math.max(5, ...allSpeedsKn.map(s=>Math.ceil(s/5)*5), 10);
-  const xForSpeed = (kn)=> left + (kn/maxSpeed)*(right-left);
+  const dataMax = Math.max(5, ...allSpeedsKn.map(s=>Math.ceil(s/5)*5), 10);
+  if(wsSpeedMaxKn==null) wsSpeedMaxKn = dataMax;
+  const minSpeed = wsSpeedRangeActive ? wsSpeedMinKn : 0;
+  const maxSpeed = wsSpeedRangeActive ? wsSpeedMaxKn : dataMax;
+  const xForSpeed = (kn)=> left + ((kn-minSpeed)/Math.max(1,(maxSpeed-minSpeed)))*(right-left);
   let svgParts = [];
   svgParts.push(`<defs>
     <marker id="wsArrPrimary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6"/></marker>
@@ -9118,7 +9160,7 @@ function wsDrawChart(primaryModel, modelColors, ref){
   for(let i=0;i<=4;i++){
     const x = left + i*(right-left)/4;
     svgParts.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="var(--border)" stroke-width="0.5"/>`);
-    const kn = Math.round((i*(right-left)/4)/(right-left)*maxSpeed);
+    const kn = Math.round(minSpeed + (i/4)*(maxSpeed-minSpeed));
     svgParts.push(`<text x="${x}" y="${bottom+16}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
   }
   svgParts.push(`<text x="${(left+right)/2}" y="${bottom+30}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
@@ -9131,8 +9173,8 @@ function wsDrawChart(primaryModel, modelColors, ref){
   }
   const interceptY = yForAlt(groundAmsl+interceptAgl);
   if(interceptY>=top && interceptY<=bottom){
-    svgParts.push(`<line x1="${left}" y1="${interceptY}" x2="${right}" y2="${interceptY}" stroke="#00e5c8" stroke-width="0.7" stroke-dasharray="3 2"/>`);
-    svgParts.push(`<text x="${right-2}" y="${interceptY-3}" font-size="7.5" fill="#00e5c8" text-anchor="end">intercept ${Math.round(interceptAgl)}m AGL</text>`);
+    svgParts.push(`<line x1="${left}" y1="${interceptY}" x2="${right}" y2="${interceptY}" stroke="#4169e1" stroke-width="0.7" stroke-dasharray="3 2"/>`);
+    svgParts.push(`<text x="${right-2}" y="${interceptY-3}" font-size="7.5" fill="#4169e1" text-anchor="end">intercept ${Math.round(interceptAgl)}m AGL</text>`);
   }
   if(lowAgl<=0){
     svgParts.push(`<text x="2" y="${bottom+3}" font-size="8" fill="var(--muted)">(0m AGL)</text>`);
@@ -9143,6 +9185,7 @@ function wsDrawChart(primaryModel, modelColors, ref){
     const color = modelColors[mk];
     if(prof.length>1){
       const pts = prof.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
+      svgParts.push(`<polyline points="${pts}" fill="none" stroke="#1a1a1a" stroke-width="2.6" opacity="0.55"/>`);
       svgParts.push(`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.4"/>`);
     }
     prof.forEach(p=>{
@@ -9171,11 +9214,11 @@ function wsDrawChart(primaryModel, modelColors, ref){
   // Primary model: solid curve + full wind barbs (point toward source = dir_deg directly) + degree labels
   if(primaryProf.length>1){
     const pts = primaryProf.map(p=>`${xForSpeed(p.speed_ms*KN_PER_MS)},${yForAlt(p.alt_m)}`).join(' ');
-    svgParts.push(`<polyline points="${pts}" fill="none" stroke="#00e5c8" stroke-width="1.8"/>`);
+    svgParts.push(`<polyline points="${pts}" fill="none" stroke="#4169e1" stroke-width="1.8"/>`);
   }
   primaryProf.forEach(p=>{
     const x=xForSpeed(p.speed_ms*KN_PER_MS), y=yForAlt(p.alt_m);
-    svgParts.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#00e5c8"/>`);
+    svgParts.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#4169e1"/>`);
     svgParts.push(wsBarbSvg(x, y, p.speed_ms*KN_PER_MS, p.dir_deg));
     svgParts.push(`<text x="${x-24}" y="${y+3}" font-size="7.5" fill="var(--text)" text-anchor="end">${Math.round(p.dir_deg)}°</text>`);
   });
@@ -9221,7 +9264,46 @@ function wsUpdateRangeSliderUI(){
   document.getElementById('wsRangeFill').style.height = Math.round((botFrac-topFrac)*trackH)+'px';
   document.getElementById('wsRangeTopLabel').textContent = Math.round(state.groundElev+wsRangeHighM)+'m';
   document.getElementById('wsRangeBottomLabel').textContent = Math.round(state.groundElev+wsRangeLowM)+'m';
+  if(wsSpeedRangeActive) wsUpdateSpeedRangeUI();
 }
+function wsUpdateSpeedRangeUI(){
+  if(wsSpeedMaxKn==null) return;
+  const wrapWidth = 270-52-30; // matches the wsSpeedRangeWrap padding-left/right set in the HTML
+  const fullMax = Math.max(wsSpeedMaxKn, 10);
+  const minFrac = wsSpeedMinKn/fullMax, maxFrac = wsSpeedMaxKn/fullMax;
+  document.getElementById('wsSpeedRangeHandleMin').style.left = Math.round(minFrac*wrapWidth-7)+'px';
+  document.getElementById('wsSpeedRangeHandleMax').style.left = Math.round(maxFrac*wrapWidth-7)+'px';
+  document.getElementById('wsSpeedRangeFill').style.left = Math.round(minFrac*wrapWidth)+'px';
+  document.getElementById('wsSpeedRangeFill').style.width = Math.round((maxFrac-minFrac)*wrapWidth)+'px';
+}
+let wsDraggingSpeedHandle = null;
+function wsSpeedHandleDrag(which){
+  return (e)=>{ wsDraggingSpeedHandle = which; e.preventDefault(); };
+}
+document.getElementById('wsSpeedRangeHandleMin').addEventListener('mousedown', wsSpeedHandleDrag('min'));
+document.getElementById('wsSpeedRangeHandleMin').addEventListener('touchstart', wsSpeedHandleDrag('min'));
+document.getElementById('wsSpeedRangeHandleMax').addEventListener('mousedown', wsSpeedHandleDrag('max'));
+document.getElementById('wsSpeedRangeHandleMax').addEventListener('touchstart', wsSpeedHandleDrag('max'));
+function wsHandleSpeedPointerMove(clientX){
+  if(!wsDraggingSpeedHandle) return;
+  const wrap = document.getElementById('wsSpeedRangeWrap');
+  const rect = wrap.getBoundingClientRect();
+  const padLeft = 52, padRight = 30; // matches CSS padding set on the wrap
+  const usableW = rect.width - padLeft - padRight;
+  const frac = Math.max(0, Math.min(1, (clientX-rect.left-padLeft)/usableW));
+  const fullMax = Math.max(wsSpeedMaxKn||10, 10);
+  const kn = Math.round(frac*fullMax);
+  if(wsDraggingSpeedHandle==='min') wsSpeedMinKn = Math.min(kn, wsSpeedMaxKn-1);
+  else wsSpeedMaxKn = Math.max(kn, wsSpeedMinKn+1);
+  const ref = wsGetReferencePoint();
+  const modelSel = document.getElementById('wxModelSelect').value;
+  const primaryModel = (modelSel==='auto' || !isModelValidForLocation(modelSel, ref.lat, ref.lon)) ? pickAutoModel(ref.lat, ref.lon) : modelSel;
+  wsDrawChart(primaryModel, wsLastModelColors, ref);
+}
+window.addEventListener('mousemove', (e)=>wsHandleSpeedPointerMove(e.clientX));
+window.addEventListener('touchmove', (e)=>{ if(wsDraggingSpeedHandle && e.touches[0]) wsHandleSpeedPointerMove(e.touches[0].clientX); });
+window.addEventListener('mouseup', ()=>{ wsDraggingSpeedHandle=null; });
+window.addEventListener('touchend', ()=>{ wsDraggingSpeedHandle=null; });
 function wsRangeHandleDrag(which){
   return (e)=>{
     wsDraggingHandle = which;
@@ -9234,6 +9316,10 @@ document.getElementById('wsRangeHandleBottom').addEventListener('mousedown', wsR
 document.getElementById('wsRangeHandleBottom').addEventListener('touchstart', wsRangeHandleDrag('bottom'));
 function wsHandlePointerMove(clientY){
   if(!wsDraggingHandle) return;
+  if(!wsSpeedRangeActive){
+    wsSpeedRangeActive = true;
+    document.getElementById('wsSpeedRangeWrap').style.display = 'block';
+  }
   const track = document.getElementById('wsRangeTrack');
   const rect = track.getBoundingClientRect();
   const frac = Math.max(0, Math.min(1, (clientY-rect.top)/rect.height));
@@ -9251,13 +9337,21 @@ window.addEventListener('mousemove', (e)=>wsHandlePointerMove(e.clientY));
 window.addEventListener('touchmove', (e)=>{ if(wsDraggingHandle && e.touches[0]) wsHandlePointerMove(e.touches[0].clientY); });
 window.addEventListener('mouseup', ()=>{ wsDraggingHandle=null; });
 window.addEventListener('touchend', ()=>{ wsDraggingHandle=null; });
+map.on('click', wsMapClickHandler);
 document.getElementById('btnWindSounding').addEventListener('click', ()=>{
   const panel = document.getElementById('windSoundingPanel');
   panel.style.display = panel.style.display==='none' ? 'block' : 'none';
   if(panel.style.display==='block'){
     try{ alignPanelToPositionCard(panel); }catch(e){ console.error('Wind sounding panel: alignment failed (panel still opened):', e); }
     wsRangeLowM = 0; wsRangeHighM = null;
+    wsSpeedRangeActive = false; wsSpeedMinKn = 0; wsSpeedMaxKn = null;
+    document.getElementById('wsSpeedRangeWrap').style.display = 'none';
     refreshWindSoundingPanel();
+  } else {
+    if(wsClickMarker){ map.removeLayer(wsClickMarker); wsClickMarker=null; wsMarkerLatLng=null; }
+    document.getElementById('wsSrcMarker').disabled = true;
+    document.getElementById('wsSrcMarker').checked = false;
+    document.getElementById('wsSrcCurrent').checked = true;
   }
 });
 document.getElementById('btnCloseWindSounding').addEventListener('click', ()=>{

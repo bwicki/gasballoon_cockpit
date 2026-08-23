@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.04-1100** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.05-1155** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -178,7 +178,13 @@ The primary (currently auto-selected or manually chosen) model gets full meteoro
 
 A "ø Avg" toggle computes and overlays a genuine per-altitude weighted average across the primary plus whichever comparison models are currently selected - weighted by both grid resolution (finer wins) and model-run age (fresher wins), not an unweighted mean.
 
-Y-axis is AMSL throughout; the intercept altitude (from Descent Parameters) is marked with a dashed line, and only the very bottom of the scale additionally shows the equivalent AGL value in parentheses, since AGL matters most near the ground. X-axis (wind speed in kn) is fully dynamic, scaling to whatever the actually-displayed data's range is. A vertical dual-handle range slider next to the chart lets the shown altitude band be narrowed in on.
+Y-axis is AMSL throughout; the intercept altitude (from Descent Parameters) is marked with a dashed line, and only the very bottom of the scale additionally shows the equivalent AGL value in parentheses, since AGL matters most near the ground. X-axis (wind speed in kn) is fully dynamic, scaling to whatever the actually-displayed data's range is. A vertical dual-handle range slider next to the chart lets the shown altitude band be narrowed in on; using it for the first time also reveals a second, horizontal dual-handle slider below the chart for narrowing the wind-speed range shown on the x-axis (hidden until then, since it isn't needed at the default full-range view).
+
+Button icon is a bold royal-blue zigzag in a dark grey frame, next to the E/H model badge in the header - the third design iteration after two earlier, more literal attempts (a framed sounding trace, several composite scenes with balloons/thermometers/wind roses) turned out too visually busy to read clearly at toolbar size.
+
+A third position option, "Marker location", is available alongside "Current position" and "Planned descent point" - tapping anywhere on the map while the panel is open drops a distinctive royal-blue ring marker there (separate from every other marker type in the app) and switches to showing that point's profile; the radio option stays disabled until a marker has actually been placed.
+
+Comparison models get a heavier black outline drawn behind their curve (in addition to the toggle button's own bold black border when active) so which models are currently selected reads clearly at a glance, both in the toggle row and in the chart itself.
 
 ## Known limitations
 

@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f6f3ec'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23e0483f' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='32' r='12' fill='none' stroke='%23e0483f' stroke-width='4.5'/%3E%3Ccircle cx='32' cy='32' r='4.5' fill='%23e0483f'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -342,24 +345,27 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
       <span id="gpsAcc" style="font-size:10px;">—</span>
     </div>
     <div class="sep"></div>
-    <div class="wx-chip" id="wxModelChip" style="align-items:flex-start;gap:1px;cursor:pointer;" title="Tap to choose a weather model or refresh">
-      <div style="display:flex;align-items:center;gap:4px;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-        <b id="wxModelName" style="font-size:12px;">Loading…</b>
-        <span id="ensembleModeBadge" style="display:none;align-items:center;justify-content:center;width:13px;height:13px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;" title="">—</span>
-        <button id="btnWindSounding" title="Detailed wind sounding" style="background:rgba(128,128,128,0.15);border:1px solid var(--border);border-radius:5px;padding:2px;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M6 21 L11 14 L9 10 L16 3" stroke="#4169e1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-        </button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="wx-chip" id="wxModelChip" style="align-items:flex-start;gap:1px;cursor:pointer;" title="Tap to choose a weather model or refresh">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <b id="wxModelName" style="font-size:12px;">Loading…</b>
+          <span id="ensembleModeBadge" style="display:none;align-items:center;justify-content:center;width:13px;height:13px;border-radius:3px;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;" title="">—</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:2px;color:var(--muted);font-size:9px;white-space:nowrap;">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 4v13M7 12l5 5 5-5"/></svg>
+          <span id="wxModelFetchAge">—</span>
+          <span style="opacity:0.4;margin:0 1px;">·</span>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          <span id="wxModelRunAge">—</span>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:2px;color:var(--muted);font-size:9px;white-space:nowrap;">
-        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 4v13M7 12l5 5 5-5"/></svg>
-        <span id="wxModelFetchAge">—</span>
-        <span style="opacity:0.4;margin:0 1px;">·</span>
-        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-        <span id="wxModelRunAge">—</span>
-      </div>
+      <button id="btnWindSounding" title="Detailed wind sounding" style="background:rgba(128,128,128,0.15);border:1px solid var(--border);border-radius:6px;padding:4px;margin:0;cursor:pointer;display:flex;align-items:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M6 21 L11 14 L9 10 L16 3" stroke="#4169e1" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </button>
+    </div>
     </div>
     <div id="wxModelPopover" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px 0;z-index:5000;flex-direction:column;min-width:190px;overflow:hidden;"></div>
     <button id="btnUseSondeData" class="iconbtn" style="display:none;background:var(--accent);color:#00201d;font-size:11px;padding:6px 8px;" title="Switch to loaded sonde data">Use sonde data</button>
@@ -1267,9 +1273,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div style="display:flex;gap:8px;">
           <div style="position:relative;flex-shrink:0;">
             <svg id="wsChartSvg" width="270" height="312" viewBox="0 0 270 312"></svg>
-            <div id="wsSpeedRangeWrap" style="display:none;position:absolute;top:264px;left:0;right:0;padding-left:66px;padding-right:30px;">
-              <div style="position:relative;height:16px;">
-                <div style="position:absolute;top:7px;left:0;right:0;height:2px;background:var(--panel);border-radius:1px;"></div>
+            <div id="wsSpeedRangeWrap" style="display:none;position:absolute;top:260px;left:0;right:0;">
+              <span id="wsSpeedMinLabel" style="position:absolute;top:0;left:40px;font-size:9px;color:var(--muted);">—</span>
+              <span id="wsSpeedMaxLabel" style="position:absolute;top:0;right:2px;font-size:9px;color:var(--muted);">—</span>
+              <div style="position:relative;height:16px;margin-top:14px;">
+                <div style="position:absolute;top:7px;left:66px;right:30px;height:2px;background:var(--panel);border-radius:1px;"></div>
                 <div id="wsSpeedRangeFill" style="position:absolute;top:7px;height:2px;background:#4169e1;border-radius:1px;"></div>
                 <div id="wsSpeedRangeHandleMin" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
                 <div id="wsSpeedRangeHandleMax" style="position:absolute;top:0;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ew-resize;"></div>
@@ -1278,12 +1286,16 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;padding-top:14px;">
             <span id="wsRangeTopLabel" style="font-size:9px;color:var(--muted);margin-bottom:4px;">—</span>
-            <div id="wsRangeTrack" style="position:relative;width:16px;height:200px;background:var(--panel);border-radius:8px;">
-              <div id="wsRangeFill" style="position:absolute;left:5px;width:6px;background:#4169e1;border-radius:3px;"></div>
+            <div id="wsRangeTrack" style="position:relative;width:16px;height:200px;">
+              <div style="position:absolute;top:0;bottom:0;left:7px;width:2px;background:var(--panel);border-radius:1px;"></div>
+              <div id="wsRangeFill" style="position:absolute;left:7px;width:2px;background:#4169e1;border-radius:1px;"></div>
               <div id="wsRangeHandleTop" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ns-resize;"></div>
               <div id="wsRangeHandleBottom" style="position:absolute;left:1px;width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid #4169e1;cursor:ns-resize;"></div>
             </div>
             <span id="wsRangeBottomLabel" style="font-size:9px;color:var(--muted);margin-top:4px;">—</span>
+            <button id="wsResetZoomBtn" title="Reset to original view" style="display:none;margin-top:8px;background:rgba(128,128,128,0.15);border:1px solid var(--border);border-radius:5px;padding:3px;cursor:pointer;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 16v-4h4"/></svg>
+            </button>
           </div>
         </div>
         <div style="font-size:8px;color:var(--muted);margin-top:6px;">barbs point toward source · arrows point toward flow · red = &gt;25° off primary</div>
@@ -1399,7 +1411,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.07-1330';
+const APP_VERSION = 'v260823.09-1500';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -2057,11 +2069,11 @@ const powerVectorStylesRaw = {
   // at once - harmless if a given name doesn't exist in a particular
   // tile, and the console logging above will confirm the real name(s) on
   // next use so this can be narrowed down.
-  telecoms_mast:               (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  telecoms_tower:               (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  telecoms_communication_tower: (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  communication_tower:          (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE,
-  mast:                          (p)=> powerCatVisible.telecomMast ? {radius:3.2, color:'#e14cc9', fillColor:'#e14cc9', fill:true, fillOpacity:0.8, weight:0.5} : HIDDEN_STYLE
+  telecoms_mast:               (p)=> powerCatVisible.telecomMast ? {radius:5, color:'#3a0d33', fillColor:'#e14cc9', fill:true, fillOpacity:0.9, weight:1.6} : HIDDEN_STYLE,
+  telecoms_tower:               (p)=> powerCatVisible.telecomMast ? {radius:5, color:'#3a0d33', fillColor:'#e14cc9', fill:true, fillOpacity:0.9, weight:1.6} : HIDDEN_STYLE,
+  telecoms_communication_tower: (p)=> powerCatVisible.telecomMast ? {radius:5, color:'#3a0d33', fillColor:'#e14cc9', fill:true, fillOpacity:0.9, weight:1.6} : HIDDEN_STYLE,
+  communication_tower:          (p)=> powerCatVisible.telecomMast ? {radius:5, color:'#3a0d33', fillColor:'#e14cc9', fill:true, fillOpacity:0.9, weight:1.6} : HIDDEN_STYLE,
+  mast:                          (p)=> powerCatVisible.telecomMast ? {radius:5, color:'#3a0d33', fillColor:'#e14cc9', fill:true, fillOpacity:0.9, weight:1.6} : HIDDEN_STYLE
 };
 // OpenInfraMap's combined tile endpoint (used here instead of per-category
 // tiles, since separate category tiles were retired in 2023) bundles
@@ -5951,6 +5963,21 @@ function setSubMode(mode){
       quickDescentHiddenLayers = null;
     }
   }
+  // Recurring report (23.08.2026): switching between the Quick/Staged tabs
+  // themselves never actually moved the map - only a fresh computation did
+  // (via the search functions' own zoom calls), so returning to a
+  // subfunction that already had a result sitting on the map left the view
+  // wherever it happened to be (often centred on the live position instead)
+  // rather than on that result. This is a genuinely different code path
+  // from the ones fixed earlier - those only fire after a brand new
+  // search, not on a plain tab switch with no new computation - reusing
+  // the exact same fitBounds logic the manual "center" buttons already use
+  // for each subfunction's own result.
+  if(mode==='staged' && state.lastStagedPlanResult && state.lastStagedPlanResult.landingHull && state.lastStagedPlanResult.landingHull.length){
+    map.fitBounds(state.lastStagedPlanResult.landingHull.map(p=>[p[1],p[0]]), {padding:[30,30]});
+  } else if(mode==='quick' && state.plannedLandingActive && state.plannedLandingPolygon && state.plannedLandingPolygon.length){
+    map.fitBounds(state.plannedLandingPolygon.map(p=>[p[1],p[0]]), {padding:[30,30]});
+  }
 }
 document.getElementById('btnCenterStaged').addEventListener('click', ()=>{
   if(state.lastStagedPlanResult && state.lastStagedPlanResult.landingHull && state.lastStagedPlanResult.landingHull.length){
@@ -9290,13 +9317,15 @@ function wsUpdateRangeSliderUI(){
 }
 function wsUpdateSpeedRangeUI(){
   if(wsSpeedMaxKn==null) return;
-  const wrapWidth = 270-66-30; // matches the wsSpeedRangeWrap padding-left/right set in the HTML
+  const trackLeft = 66, wrapWidth = 270-66-30; // matches the line's left/right set in the HTML
   const fullMax = Math.max(wsSpeedMaxKn, 10);
   const minFrac = wsSpeedMinKn/fullMax, maxFrac = wsSpeedMaxKn/fullMax;
-  document.getElementById('wsSpeedRangeHandleMin').style.left = Math.round(minFrac*wrapWidth-7)+'px';
-  document.getElementById('wsSpeedRangeHandleMax').style.left = Math.round(maxFrac*wrapWidth-7)+'px';
-  document.getElementById('wsSpeedRangeFill').style.left = Math.round(minFrac*wrapWidth)+'px';
+  document.getElementById('wsSpeedRangeHandleMin').style.left = Math.round(trackLeft+minFrac*wrapWidth-7)+'px';
+  document.getElementById('wsSpeedRangeHandleMax').style.left = Math.round(trackLeft+maxFrac*wrapWidth-7)+'px';
+  document.getElementById('wsSpeedRangeFill').style.left = Math.round(trackLeft+minFrac*wrapWidth)+'px';
   document.getElementById('wsSpeedRangeFill').style.width = Math.round((maxFrac-minFrac)*wrapWidth)+'px';
+  document.getElementById('wsSpeedMinLabel').textContent = Math.round(wsSpeedMinKn)+'kn';
+  document.getElementById('wsSpeedMaxLabel').textContent = Math.round(wsSpeedMaxKn)+'kn';
 }
 let wsDraggingSpeedHandle = null;
 function wsSpeedHandleDrag(which){
@@ -9336,11 +9365,24 @@ document.getElementById('wsRangeHandleTop').addEventListener('mousedown', wsRang
 document.getElementById('wsRangeHandleTop').addEventListener('touchstart', wsRangeHandleDrag('top'));
 document.getElementById('wsRangeHandleBottom').addEventListener('mousedown', wsRangeHandleDrag('bottom'));
 document.getElementById('wsRangeHandleBottom').addEventListener('touchstart', wsRangeHandleDrag('bottom'));
+document.getElementById('wsResetZoomBtn').addEventListener('click', ()=>{
+  wsRangeLowM = 0;
+  wsRangeHighM = Math.round(state.altAMSL - state.groundElev) + 1750;
+  wsSpeedMinKn = 0; wsSpeedMaxKn = null;
+  // The speed-range slider itself must stay visible after reset (per
+  // explicit instruction) - only its values go back to the full range,
+  // wsSpeedRangeActive itself is deliberately left untouched here.
+  const ref = wsGetReferencePoint();
+  const modelSel = document.getElementById('wxModelSelect').value;
+  const primaryModel = (modelSel==='auto' || !isModelValidForLocation(modelSel, ref.lat, ref.lon)) ? pickAutoModel(ref.lat, ref.lon) : modelSel;
+  wsDrawChart(primaryModel, wsLastModelColors, ref);
+});
 function wsHandlePointerMove(clientY){
   if(!wsDraggingHandle) return;
   if(!wsSpeedRangeActive){
     wsSpeedRangeActive = true;
     document.getElementById('wsSpeedRangeWrap').style.display = 'block';
+    document.getElementById('wsResetZoomBtn').style.display = 'flex';
   }
   const track = document.getElementById('wsRangeTrack');
   const rect = track.getBoundingClientRect();
@@ -9360,6 +9402,13 @@ window.addEventListener('touchmove', (e)=>{ if(wsDraggingHandle && e.touches[0])
 window.addEventListener('mouseup', ()=>{ wsDraggingHandle=null; });
 window.addEventListener('touchend', ()=>{ wsDraggingHandle=null; });
 map.on('click', wsMapClickHandler);
+function wsCloseCleanup(){
+  if(wsClickMarker){ map.removeLayer(wsClickMarker); wsClickMarker=null; wsMarkerLatLng=null; }
+  document.getElementById('wsSrcMarker').disabled = true;
+  document.getElementById('wsSrcMarker').checked = false;
+  document.getElementById('wsSrcCurrent').checked = true;
+  document.getElementById('wsResetZoomBtn').style.display = 'none';
+}
 document.getElementById('btnWindSounding').addEventListener('click', ()=>{
   const panel = document.getElementById('windSoundingPanel');
   panel.style.display = panel.style.display==='none' ? 'block' : 'none';
@@ -9370,14 +9419,12 @@ document.getElementById('btnWindSounding').addEventListener('click', ()=>{
     document.getElementById('wsSpeedRangeWrap').style.display = 'none';
     refreshWindSoundingPanel();
   } else {
-    if(wsClickMarker){ map.removeLayer(wsClickMarker); wsClickMarker=null; wsMarkerLatLng=null; }
-    document.getElementById('wsSrcMarker').disabled = true;
-    document.getElementById('wsSrcMarker').checked = false;
-    document.getElementById('wsSrcCurrent').checked = true;
+    wsCloseCleanup();
   }
 });
 document.getElementById('btnCloseWindSounding').addEventListener('click', ()=>{
   document.getElementById('windSoundingPanel').style.display = 'none';
+  wsCloseCleanup();
 });
 document.getElementById('wsSrcCurrent').addEventListener('change', refreshWindSoundingPanel);
 document.getElementById('wsSrcPlanned').addEventListener('change', refreshWindSoundingPanel);

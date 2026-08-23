@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.07-1330** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.09-1500** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -195,6 +195,41 @@ Comparison models get a heavier black outline drawn behind their curve (in addit
 **Avg toggle now matches the other model toggles' on/off styling** (thicker black border when active), and the primary model itself became toggleable too (default on) - its curve/barbs can be hidden the same way as any comparison model, though its underlying data stays available for the red-flag deviation check on comparison arrows regardless of whether it's currently drawn.
 
 **Location radio buttons fit on one line**: shortened labels (Current / Planned point / Marker) and reduced font size, since all three plus "Planned descent point"'s and "Marker location"'s full wording didn't fit the panel's 350px width on one row.
+
+## Monte-Carlo area investigation, done properly this time (23.08.2026)
+
+Previous investigations of this recurring report only checked static structural integrity (function/marker/layer names still present, click-handler registration order) - never whether the code actually RUNS without error, since that requires a real JS engine executing it, not just parsing it. Set up a genuine runtime test this time: loaded the actual `index.html` in a real DOM (jsdom) with stubbed Leaflet/Chart.js/fetch, actually executed the boot sequence, then actively called `recomputeAll()` and simulated a full `planDescentToTarget()` call with a realistic mocked wind-forecast response.
+
+**Result: the core Monte-Carlo computation chain ran end-to-end without any error** - the search found a result, the landing-area hull was computed (10-12 points), `state.plannedLandingActive` and `state.plannedLandingPolygon` were set correctly, and the zoom call fired as expected. This is a materially different (and much stronger) form of verification than anything done in earlier rounds - actual execution, not just inspection.
+
+Given the core logic is now verified to run correctly, the two most plausible remaining explanations are things outside the JS logic itself:
+
+1. **Browser HTTP caching of `index.html` itself** - no `Cache-Control` meta tags were present before this change, meaning a browser could serve a stale cached copy of the whole page depending on the hosting server's own caching headers (which aren't controllable from here). Added `Cache-Control: no-cache, no-store, must-revalidate` plus `Pragma`/`Expires` meta tags so the browser is explicitly told never to cache the page, regardless of server headers.
+2. The service worker (`sw.js`) was re-checked and confirmed to only cache map TILE requests, never `index.html` itself - ruled out as a cause.
+
+If the report persists after this, the next most useful thing would be the actual browser console output at the moment it happens, since the runtime logic itself is now confirmed correct in isolation.
+
+## Sub-mode switch never actually moved the map - the real root cause (23.08.2026)
+
+A recurring report ("zoom goes back to current position instead of the landing area when switching to Quick or Staged") turned out to have a genuinely different root cause than the earlier fixes to `planDescentToTarget` and `showStagedDescentPlan` - those only fire after a brand-new search computes a result and correctly zoom to it. `setSubMode()` - the function behind clicking the Quick/Staged tabs themselves - had no `fitBounds` call at all: switching back to a subfunction that already had a result sitting on the map (from earlier in the session) left the view wherever it happened to be, since nothing ever moved it there. Now reuses the exact same `fitBounds` logic the manual "center" buttons already used for each subfunction's own result, applied directly inside the tab-switch handler itself.
+
+## Wind sounding panel refinements (23.08.2026)
+
+**Header button**: restructured so it sits beside the whole two-row model chip (as a flex sibling) rather than nested inside the chip's first row - this lets it be sized independently (now 22px icon) without stretching the chip's own row height and pushing its second line down, which is what made it look oversized and gap-inducing in an earlier attempt.
+
+**Vertical range slider** restyled to match the thin-line horizontal slider (a 2px line rather than a 16px filled bar) for visual consistency. The horizontal speed-range slider now also shows its current min/max values as text labels at each end, matching the vertical slider's own top/bottom labels.
+
+**Reset-to-original-view button**: appears (bottom-right, below the vertical slider, at the horizontal slider's height) the first time the height slider is actually used, resetting both the altitude and speed ranges back to their full defaults - the horizontal speed slider itself stays visible after a reset rather than hiding again, per explicit instruction.
+
+**Marker cleanup on close**: previously only removed when re-clicking the toggle button to close the panel - now also removed via the panel's own "X" close button, via a shared cleanup function so both paths can't drift apart again.
+
+**Avg toggle** now uses the exact same on/off styling (thicker black border when active) as the model toggle buttons, and the **primary model itself became toggleable** too (default on) - hiding it only affects what's drawn, its data still backs the red-flag deviation check on comparison arrows regardless.
+
+**Location radio buttons** shortened (Current / Planned point / Marker) to fit on one line within the panel's width.
+
+## Telecom/antenna mast markers made bolder (23.08.2026)
+
+Radius increased (3.2→5) and given a dark contrasting outline (weight 0.5→1.6) instead of the previous barely-visible thin edge, so they read clearly against the map at typical zoom levels.
 
 ## Wind sounding panel - map click handler isolation
 

@@ -1354,8 +1354,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260821.06-1155';
-const APP_DATE = '21.08.2026';
+const APP_VERSION = 'v260823.01-0920';
+const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -7048,14 +7048,29 @@ function simulateDescentPath(startLat,startLon,startAltAMSL,startTimeOffsetS, in
   // before the first fix) does the trajectory fall back to the forecast
   // wind model at the CURRENT altitude instead. No blending between the
   // two - whichever one applies governs the entire cruise phase.
+  //
+  // Refinement found necessary (21.08.2026): GPS course-over-ground is
+  // derived from successive position fixes, and at low ground speed that
+  // calculation is dominated by GPS position jitter rather than genuine
+  // displacement - a basic, well-established GPS limitation, not specific
+  // to this app. A near-stationary or slow-moving receiver can report a
+  // "real" course reading (courseKnown correctly true) that's essentially
+  // noise, unrelated to actual heading - this produced a live report of
+  // the trajectory pointing NNW on GPS course while strong wind aloft was
+  // blowing SW, at only ~3.6kn reported ground speed. Below this minimum
+  // speed, GPS course is no longer trusted even when technically known,
+  // and the trajectory falls back to the forecast wind model instead -
+  // consistent with the "no reliable observation" case already handled.
+  const MIN_RELIABLE_COURSE_SPEED_KN = 2; // ~3.7km/h / ~1.0m/s
+  const gpsCourseReliable = state.courseKnown && state.speedKn>=MIN_RELIABLE_COURSE_SPEED_KN;
   let lastLoggedHourIdx = -1;
   let lat=startLat, lon=startLon, alt=startAltAMSL;
   const dt=15; // s steps
   let t=0;
   const path=[{lat,lon,alt,t}];
   const cruiseSpeedMs = state.speedKn/KN_PER_MS;
-  const gpsU = state.courseKnown ? cruiseSpeedMs*Math.sin(state.course*Math.PI/180) : null;
-  const gpsV = state.courseKnown ? cruiseSpeedMs*Math.cos(state.course*Math.PI/180) : null;
+  const gpsU = gpsCourseReliable ? cruiseSpeedMs*Math.sin(state.course*Math.PI/180) : null;
+  const gpsV = gpsCourseReliable ? cruiseSpeedMs*Math.cos(state.course*Math.PI/180) : null;
   if(startOverride){
     // Skip the cruise simulation entirely and start the descent phase
     // exactly from a manually-specified point (e.g. the draggable descent

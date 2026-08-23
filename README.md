@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.09-1500** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.10-1520** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -195,6 +195,12 @@ Comparison models get a heavier black outline drawn behind their curve (in addit
 **Avg toggle now matches the other model toggles' on/off styling** (thicker black border when active), and the primary model itself became toggleable too (default on) - its curve/barbs can be hidden the same way as any comparison model, though its underlying data stays available for the red-flag deviation check on comparison arrows regardless of whether it's currently drawn.
 
 **Location radio buttons fit on one line**: shortened labels (Current / Planned point / Marker) and reduced font size, since all three plus "Planned descent point"'s and "Marker location"'s full wording didn't fit the panel's 350px width on one row.
+
+## Entire page below the header went blank - the actual root cause (23.08.2026)
+
+Restructuring the header's model chip earlier the same day (to fix the wind-sounding button's sizing) introduced a genuine HTML bug: a new outer wrapper `<div>` was added around the chip and correctly closed, but the chip's own *original* closing `</div>` - now redundant - was left in place rather than removed. That stray extra `</div>` closed a much larger, unrelated ancestor container prematurely, which cascaded into the entire map/sidebar structure below it landing outside where it belonged in the DOM - rendering as a blank page below the header, exactly as reported and screenshotted.
+
+Found via a proper tag-balance audit: counting every `<div>` against every `</div>` across the whole body (297 vs 298, a 1-tag imbalance), then a stack-based parser that walks the tags in order and reports the exact line where the stack empties out despite a closing tag still following - which pointed directly at the stray tag. Both checks now confirm exactly balanced (297/297, stack empties cleanly at the very end) and are being added to the standing deployment checklist as a required step whenever HTML structure (not just JS) is touched, alongside the syntax/TDZ/brace checks already in place - none of the earlier checks would have caught this, since it's a markup nesting problem, not a JavaScript one.
 
 ## Monte-Carlo area investigation, done properly this time (23.08.2026)
 

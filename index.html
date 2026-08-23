@@ -366,7 +366,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </svg>
       </button>
     </div>
-    </div>
     <div id="wxModelPopover" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:6px 0;z-index:5000;flex-direction:column;min-width:190px;overflow:hidden;"></div>
     <button id="btnUseSondeData" class="iconbtn" style="display:none;background:var(--accent);color:#00201d;font-size:11px;padding:6px 8px;" title="Switch to loaded sonde data">Use sonde data</button>
     <div id="sondeActiveChip" style="display:none;align-items:center;gap:7px;padding:4px 6px 4px 9px;background:rgba(224,72,63,0.12);border:1px solid rgba(224,72,63,0.4);border-radius:6px;">
@@ -1411,7 +1410,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.09-1500';
+const APP_VERSION = 'v260823.10-1520';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 

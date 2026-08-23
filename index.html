@@ -1354,7 +1354,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.01-0920';
+const APP_VERSION = 'v260823.03-0955';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -7183,7 +7183,22 @@ function doRecompute(){
     updateAllWarningsReopenBtn();
   }
   document.getElementById('particleHeightSliderWrap').classList.remove('wind-data-unavailable');
-  if(groundWindLayer.active && groundWindLayer.canvas) groundWindLayer.canvas.style.display = 'block';
+  if(groundWindLayer.active && groundWindLayer.canvas){
+    groundWindLayer.canvas.style.display = 'block';
+    // Previously only computed once, at the moment the layer was first
+    // switched on - so if it was turned on early in a flight at a lower
+    // altitude and then left running (the normal case), this ceiling
+    // stayed frozen at that original value even as the balloon kept
+    // climbing, eventually preventing the slider from reaching the
+    // balloon's actual current altitude at all. Now kept current on every
+    // recompute instead, the same way the live landing area itself is.
+    const newMax = Math.round(state.altAMSL - state.groundElev) + 1750;
+    if(newMax !== particleHeightMaxAGL){
+      particleHeightMaxAGL = newMax;
+      if(particleHeightAGL > particleHeightMaxAGL) particleHeightAGL = particleHeightMaxAGL;
+      updateParticleHeightUI();
+    }
+  }
   document.getElementById('wxModelChip').classList.remove('no-wind-data-hatched-clickable');
   document.getElementById('modeMonitor').classList.remove('no-wind-data-hatched');
   document.getElementById('modePlan').classList.remove('no-wind-data-hatched');
@@ -7810,7 +7825,7 @@ function startGroundWindLayer(){
   setLayerLoadDot('tgGroundWind','loading');
   setTimeout(()=>{ if(groundWindLayer.active) setLayerLoadDot('tgGroundWind','ready'); }, 400);
   reopenBanner('groundWindLegendBar','groundWindLegendIcon');
-  particleHeightMaxAGL = Math.max(1000, Math.round(state.altAMSL - state.groundElev) + 1000);
+  particleHeightMaxAGL = Math.round(state.altAMSL - state.groundElev) + 1750;
   if(particleHeightAGL > particleHeightMaxAGL) particleHeightAGL = 100;
   updateParticleHeightUI();
   document.getElementById('particleHeightSliderWrap').classList.add('show');

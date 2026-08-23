@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.05-1155** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260823.06-1245** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
 
 ## What it is
 
@@ -185,6 +185,12 @@ Button icon is a bold royal-blue zigzag in a dark grey frame, next to the E/H mo
 A third position option, "Marker location", is available alongside "Current position" and "Planned descent point" - tapping anywhere on the map while the panel is open drops a distinctive royal-blue ring marker there (separate from every other marker type in the app) and switches to showing that point's profile; the radio option stays disabled until a marker has actually been placed.
 
 Comparison models get a heavier black outline drawn behind their curve (in addition to the toggle button's own bold black border when active) so which models are currently selected reads clearly at a glance, both in the toggle row and in the chart itself.
+
+**Y-axis label overlap fixed** (23.08.2026): AMSL and AGL numbers were sharing the same column and overlapping each other. Now in two separate columns - AGL only shown (and only up to the intercept altitude, per the earlier design decision) in the left column, AMSL throughout in a second column to its right. The intercept marking itself was moved from a text label at the chart's right edge into a small "intcpt" label in the AGL column, with the dashed line across the chart unchanged. A distinct green ground line (true 0m AGL) was also added, separate from the intercept line.
+
+## Wind sounding panel - map click handler isolation
+
+The wind-sounding panel's own map click handler (for placing the "Marker location" point) is registered strictly AFTER the main descent-planning click handler in the script, and Leaflet calls listeners for the same event in registration order - so it cannot block or interfere with that handler's own execution. It's additionally wrapped in its own try/catch regardless, so a failure inside it can never propagate anywhere else. A Monte-Carlo-area regression report investigated on 23.08.2026 could not be traced to any structural change in this feature or any other recent edit - all the core landing-area functions and their marker/layer references were re-verified intact.
 
 ## Known limitations
 

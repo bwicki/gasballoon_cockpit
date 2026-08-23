@@ -1277,7 +1277,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
             <span id="wsRangeBottomLabel" style="font-size:9px;color:var(--muted);margin-top:4px;">—</span>
           </div>
         </div>
-        <div id="wsSpeedRangeWrap" style="display:none;margin-top:8px;padding-left:52px;padding-right:30px;">
+        <div id="wsSpeedRangeWrap" style="display:none;margin-top:8px;padding-left:66px;padding-right:30px;">
           <div style="position:relative;height:16px;">
             <div style="position:absolute;top:7px;left:0;right:0;height:2px;background:var(--panel);border-radius:1px;"></div>
             <div id="wsSpeedRangeFill" style="position:absolute;top:7px;height:2px;background:#4169e1;border-radius:1px;"></div>
@@ -1398,7 +1398,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.05-1155';
+const APP_VERSION = 'v260823.06-1245';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8968,6 +8968,7 @@ let wsClickMarker = null; // the distinctive Leaflet marker shown at that point
 let wsSpeedRangeActive = false; // becomes true once the height slider has actually been used, revealing the speed-range slider too (per explicit instruction: only once height-zooming is in use, not shown by default)
 let wsSpeedMinKn = 0, wsSpeedMaxKn = null; // null max means "not yet set, use full data range"
 function wsMapClickHandler(e){
+  try{
   const panel = document.getElementById('windSoundingPanel');
   if(panel.style.display==='none') return;
   wsMarkerLatLng = e.latlng;
@@ -8988,6 +8989,15 @@ function wsMapClickHandler(e){
   radio.checked = true;
   document.getElementById('wsSrcMarkerLabel').style.opacity = '1';
   refreshWindSoundingPanel();
+  }catch(err){
+    // Never let a failure here escape uncaught - this is a supplementary
+    // feature and must not be able to affect any other map click handler,
+    // regardless of what goes wrong inside it (this handler is registered
+    // AFTER the main descent-planning click handler, so it shouldn't be
+    // ABLE to block that one even without this guard - but this removes
+    // any doubt).
+    console.error('Wind sounding map-click handler failed (isolated, does not affect anything else):', err);
+  }
 }
 function wsGetReferencePoint(){
   // "Planned descent point" resolves to whichever marker is actually
@@ -9125,7 +9135,8 @@ async function refreshWindSoundingPanel(){
 }
 function wsDrawChart(primaryModel, modelColors, ref){
   const svg = document.getElementById('wsChartSvg');
-  const W=270, H=300, left=52, right=240, top=14, bottom=244;
+  const W=270, H=300, left=66, right=240, top=14, bottom=244;
+  const aglColX=2, amslColX=30; // two separate label columns so AMSL and AGL numbers never overlap
   const groundAmsl = state.groundElev;
   const interceptAgl = parseFloat(document.getElementById('sIntH')?.value) || 400;
   const lowAgl = wsRangeLowM, highAgl = wsRangeHighM;
@@ -9164,20 +9175,26 @@ function wsDrawChart(primaryModel, modelColors, ref){
     svgParts.push(`<text x="${x}" y="${bottom+16}" font-size="9" fill="var(--muted)" text-anchor="middle">${kn}</text>`);
   }
   svgParts.push(`<text x="${(left+right)/2}" y="${bottom+30}" font-size="9" fill="var(--muted)" text-anchor="middle">wind speed (kn)</text>`);
-  // Y axis labels: AMSL throughout, AGL only shown additionally at/below intercept
+  // Y axis labels: two separate columns, AGL (left, only at/below intercept) and AMSL (right of that, every gridline) - previously shared one column and overlapped.
   for(let i=0;i<=5;i++){
     const y = top + i*(bottom-top)/5;
     const agl = highAgl - i*(highAgl-lowAgl)/5;
     const amsl = Math.round(groundAmsl + agl);
-    svgParts.push(`<text x="2" y="${y+3}" font-size="9" fill="var(--muted)">${amsl}m</text>`);
+    svgParts.push(`<text x="${amslColX}" y="${y+3}" font-size="9" fill="var(--muted)">${amsl}m</text>`);
+    if(agl<=interceptAgl+1 && agl>=lowAgl-1){
+      svgParts.push(`<text x="${aglColX}" y="${y+3}" font-size="8" fill="var(--muted)">${Math.round(agl)}</text>`);
+    }
   }
   const interceptY = yForAlt(groundAmsl+interceptAgl);
   if(interceptY>=top && interceptY<=bottom){
     svgParts.push(`<line x1="${left}" y1="${interceptY}" x2="${right}" y2="${interceptY}" stroke="#4169e1" stroke-width="0.7" stroke-dasharray="3 2"/>`);
-    svgParts.push(`<text x="${right-2}" y="${interceptY-3}" font-size="7.5" fill="#4169e1" text-anchor="end">intercept ${Math.round(interceptAgl)}m AGL</text>`);
+    svgParts.push(`<text x="${aglColX}" y="${interceptY-4}" font-size="6.5" fill="#4169e1">intcpt</text>`);
   }
-  if(lowAgl<=0){
-    svgParts.push(`<text x="2" y="${bottom+3}" font-size="8" fill="var(--muted)">(0m AGL)</text>`);
+  // Ground line - true 0m AGL, distinct green, separate from the intercept line above
+  const groundY = yForAlt(groundAmsl);
+  if(groundY>=top && groundY<=bottom){
+    svgParts.push(`<line x1="${left}" y1="${groundY}" x2="${right}" y2="${groundY}" stroke="#4caf50" stroke-width="1.2"/>`);
+    svgParts.push(`<text x="${aglColX}" y="${groundY+9}" font-size="6.5" fill="#4caf50">ground</text>`);
   }
   // Comparison model curves + simple arrows (point toward flow = dir+180) + degree labels, red-highlighted when >25 deg off primary at that level
   wsSelectedModels.forEach(mk=>{
@@ -9268,7 +9285,7 @@ function wsUpdateRangeSliderUI(){
 }
 function wsUpdateSpeedRangeUI(){
   if(wsSpeedMaxKn==null) return;
-  const wrapWidth = 270-52-30; // matches the wsSpeedRangeWrap padding-left/right set in the HTML
+  const wrapWidth = 270-66-30; // matches the wsSpeedRangeWrap padding-left/right set in the HTML
   const fullMax = Math.max(wsSpeedMaxKn, 10);
   const minFrac = wsSpeedMinKn/fullMax, maxFrac = wsSpeedMaxKn/fullMax;
   document.getElementById('wsSpeedRangeHandleMin').style.left = Math.round(minFrac*wrapWidth-7)+'px';
@@ -9288,7 +9305,7 @@ function wsHandleSpeedPointerMove(clientX){
   if(!wsDraggingSpeedHandle) return;
   const wrap = document.getElementById('wsSpeedRangeWrap');
   const rect = wrap.getBoundingClientRect();
-  const padLeft = 52, padRight = 30; // matches CSS padding set on the wrap
+  const padLeft = 66, padRight = 30; // matches CSS padding set on the wrap
   const usableW = rect.width - padLeft - padRight;
   const frac = Math.max(0, Math.min(1, (clientX-rect.left-padLeft)/usableW));
   const fullMax = Math.max(wsSpeedMaxKn||10, 10);

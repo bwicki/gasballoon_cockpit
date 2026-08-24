@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260824.14-1125** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
+**Current version: v260824.15-1140** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
 
 ## What it is
 
@@ -259,6 +259,14 @@ Consolidated into the one existing, correct mechanism: `positionSidebarHandle()`
 
 **"Unlandable Territory" heading added** above the power-infrastructure checkboxes in Terrain & Ground Features, with a short explanation of why they matter (overhead lines/towers/substations are a serious landing hazard, not just map clutter).
 
+## APRS lookup, automated regression tests, recently-used flight profiles (24.08.2026)
+
+**APRS lookup now actually works.** `cloudflare-worker.js` gained a second endpoint, `/aprs`, alongside the existing shared-store proxy - a pure relay to `api.aprs.fi` that works around aprs.fi's own API blocking direct browser requests via CORS, without changing anything about how the API key itself is managed: it stays a normal, per-installation field in Settings, only relayed through the worker rather than held by it. **The worker must be redeployed with the updated code for this to take effect** - the old deployed version doesn't have the `/aprs` route yet.
+
+**Automated regression test suite** (`test-helpers.js` + `test-suite.js`) replaces the ad-hoc, rewritten-from-scratch-each-time jsdom test scripts used throughout this app's development - several of which caught real, shipped bugs (a div-nesting bug that blanked the whole page, the worker's missing `User-Agent` header, WhatsApp messaging the pilot's own number instead of any contact). Run `node test-suite.js` before every deployment; it exits non-zero if anything fails, suitable for a CI step later if this ever gets one. Currently covers: static checks (syntax, div balance, TDZ, missing element IDs), a live app boot, the login flow (correct/incorrect credentials), new flight profile creation, the emergency WhatsApp channel messaging the right recipient, the Settings save-prompt's profile-visibility logic, the APRS worker-proxy routing, and the recently-used-profiles list. `test-helpers.js` exposes the shared jsdom harness (Leaflet/Chart.js stubs, silenced console noise) for writing further tests without rebuilding that setup again.
+
+**Flight profile "recently used"**: up to 3 recently opened/created profile names (never PINs - the PIN always stays a manual re-entry, since remembering it would be the actual security-relevant part) are kept in `localStorage` and shown as tap-to-fill chips next to the name field, both at the login gate and in Settings' "Load Existing Flightprofile" section. Clicking a chip only fills the name - PIN entry is unaffected.
+
 ## Cloudflare Worker proxy replaces the embedded raw GitHub token (24.08.2026)
 
 Following up on the embedded-token discussion: the raw GitHub PAT was removed from both `index.html` and `admin.html`'s source entirely. A small Cloudflare Worker (`cloudflare-worker.js`, deployed separately at Cloudflare, not part of this repo's own static files) now sits between both apps and the GitHub Gist API - it holds the real token only as a server-side Secret (never sent to the browser), and exposes a narrow GET/PUT interface guarded by its own `APP_SECRET` header check. Both apps now call the worker's URL instead of `api.github.com` directly. The `WORKER_URL`/`WORKER_APP_SECRET` constants embedded in the source are still technically visible client-side the same way the old token was, but their blast radius is much smaller - even if leaked, they only grant read/write access to this one narrow store through this one worker, not the broader GitHub account a real PAT would expose (no ability to create arbitrary new gists, access other repos, etc.). `admin.html` still keeps a raw-GitHub-token path (its own separate, clearly-marked "setup only" section) purely for the one-time act of creating a brand new Gist, since the worker can only read/write an existing one, not create one.
@@ -320,6 +328,15 @@ Radius increased (3.2→5) and given a dark contrasting outline (weight 0.5→1.
 ## Wind sounding panel - map click handler isolation
 
 The wind-sounding panel's own map click handler (for placing the "Marker location" point) is registered strictly AFTER the main descent-planning click handler in the script, and Leaflet calls listeners for the same event in registration order - so it cannot block or interfere with that handler's own execution. It's additionally wrapped in its own try/catch regardless, so a failure inside it can never propagate anywhere else. A Monte-Carlo-area regression report investigated on 23.08.2026 could not be traced to any structural change in this feature or any other recent edit - all the core landing-area functions and their marker/layer references were re-verified intact.
+
+## Running the regression tests
+
+```
+npm install jsdom --no-save
+node test-suite.js
+```
+
+Requires Node.js and network access only to install `jsdom` (all the tests themselves run against mocked network calls, no real credentials or live services touched). Exits with code 0 if everything passes, 1 otherwise. Run this after any change to `index.html` before deploying, not just occasionally - several real bugs shipped in this app's history would have been caught immediately by tests already in this suite, had it existed sooner.
 
 ## Known limitations
 

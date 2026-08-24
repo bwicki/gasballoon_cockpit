@@ -1,4 +1,4 @@
-// Gasballoon Cockpit - shared store proxy
+// Gasballoon Cockpit - shared store + aprs.fi proxy
 // Paste this whole file into the Cloudflare Worker's "Edit code" editor,
 // replacing the default template, then Deploy.
 //
@@ -12,6 +12,13 @@
 // directly, sending APP_SECRET in a header - the real GitHub token never
 // reaches the browser at all, so it can no longer be read from the page
 // source or dev tools on any device.
+//
+// A second path, /aprs, proxies aprs.fi lookups - not to hide a secret
+// (the aprs.fi API key stays a normal, per-installation Settings field,
+// unchanged), but purely because aprs.fi's own API blocks direct browser
+// requests via CORS. The worker just forwards the request server-side,
+// where CORS doesn't apply, and adds the necessary CORS headers to its
+// own response back to the browser.
 
 export default {
   async fetch(request, env) {
@@ -28,6 +35,24 @@ export default {
     const providedSecret = request.headers.get('X-App-Secret');
     if (providedSecret !== env.APP_SECRET) {
       return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+    }
+
+    const url = new URL(request.url);
+
+    if (url.pathname === '/aprs') {
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+      }
+      // Passed straight through from the app's own query string (name=,
+      // apikey=) - this endpoint is a pure relay, it doesn't hold or
+      // inspect any aprs.fi credential of its own.
+      const aprsUrl = `https://api.aprs.fi/api/get?${url.searchParams.toString()}&format=json`;
+      const r = await fetch(aprsUrl, { headers: { 'User-Agent': 'gbcockpit-worker' } });
+      const body = await r.text();
+      return new Response(body, {
+        status: r.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const githubHeaders = {

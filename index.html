@@ -340,6 +340,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div style="font-size:9px;color:var(--muted);text-align:center;">max 6 digits</div>
       </div>
     </div>
+    <div id="gateRecentProfiles" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px;"></div>
     <div class="err" id="gateProfileErr"></div>
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button onclick="checkGatePassword()" style="flex:1;width:auto;">Open existing</button>
@@ -480,6 +481,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <input type="text" id="settingsLoadProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Name" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;text-transform:uppercase;min-width:0;">
           <input type="text" id="settingsLoadProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;min-width:0;">
         </div>
+        <div id="settingsRecentProfiles" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;"></div>
         <button class="ghost" id="btnSettingsLoadProfile" style="margin-top:6px;">Load</button>
         <div id="settingsLoadProfileStatus" style="font-size:10px;color:var(--muted);margin-top:6px;min-height:14px;"></div>
         </div>
@@ -589,7 +591,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">APRS Stations (aprs.fi)</div>
-        <p style="font-size:10px;color:var(--bad);margin:0 0 6px;">⚠ Not currently functional: aprs.fi's API blocks direct browser requests via CORS - confirmed via a live test with a real key, not a temporary glitch. Left in place in case that changes, or a server-side relay becomes an option later.</p>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Routed through the same Cloudflare Worker as the shared login store, purely to work around aprs.fi's own API blocking direct browser requests via CORS - your API key below is only relayed through it, not held by it.</p>
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Looks up the specific callsigns below (e.g. other balloons) via aprs.fi - not a category or area search, since their API only supports looking up individual callsigns you already know (re-confirmed against their current official API docs). The API key goes in "API Keys &amp; Tokens" at the bottom of Settings. Only queried while this layer is switched on, per aprs.fi's own usage policy (no background pre-caching).</p>
         <textarea id="sAprsCallsigns" placeholder="One callsign per line, e.g.&#10;OE1XYZ-11&#10;DL2ABC-9" rows="3" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;font-family:var(--mono);resize:vertical;"></textarea>
 
@@ -1387,6 +1389,31 @@ const WORKER_APP_SECRET = '56RT+wdRw';
 const GATE_STORAGE_KEY = 'gblp_login_at_v2'; // timestamp (ms) of last successful login
 const SESSION_MAX_AGE_MS = 12*60*60*1000; // 12h, per explicit instruction
 const CURRENT_PROFILE_STORAGE_KEY = 'gblp_current_profile_v1';
+const RECENT_PROFILES_STORAGE_KEY = 'gblp_recent_profiles_v1'; // names only, never PINs - security-relevant, so the PIN always stays a manual re-entry even for a one-tap recent profile
+function getRecentProfiles(){
+  try{ return JSON.parse(localStorage.getItem(RECENT_PROFILES_STORAGE_KEY)||'[]'); }catch(e){ return []; }
+}
+function addRecentProfile(name){
+  if(!name) return;
+  try{
+    let list = getRecentProfiles().filter(n=>n!==name);
+    list.unshift(name);
+    list = list.slice(0,3); // most-recent-first, capped at 3
+    localStorage.setItem(RECENT_PROFILES_STORAGE_KEY, JSON.stringify(list));
+  }catch(e){}
+}
+function renderRecentProfileChips(containerId, nameFieldId){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const recents = getRecentProfiles();
+  if(!recents.length){ container.innerHTML = ''; return; }
+  container.innerHTML = recents.map(name=>
+    `<button type="button" class="recent-profile-chip" style="font-size:10px;padding:3px 8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;">${name}</button>`
+  ).join('');
+  container.querySelectorAll('.recent-profile-chip').forEach((btn,i)=>{
+    btn.addEventListener('click', ()=>{ document.getElementById(nameFieldId).value = recents[i]; });
+  });
+}
 
 async function fetchGistStore(){
   const r = await fetch(WORKER_URL, {headers: {'X-App-Secret': WORKER_APP_SECRET}});
@@ -1434,6 +1461,7 @@ async function startNewFlightProfileAtLogin(){
   catch(e){ profErrEl.textContent = 'Could not create the profile - check your connection.'; console.error(e); return; }
   state.currentFlightProfile = profileName;
   try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, profileName); }catch(e){}
+  addRecentProfile(profileName);
   updateFlightProfileFooterDisplay();
   localStorage.setItem(GATE_STORAGE_KEY, String(Date.now()));
   document.getElementById('passwordGate').style.display = 'none';
@@ -1463,6 +1491,7 @@ async function checkGatePassword(){
     }
     applyFlightProfileSettings(prof.settings);
     state.currentFlightProfile = profileName;
+    addRecentProfile(profileName);
   } else {
     state.currentFlightProfile = null; // nothing entered - stays local
   }
@@ -1486,7 +1515,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.14-1125';
+const APP_VERSION = 'v260824.15-1140';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -1521,7 +1550,9 @@ const state = {
     state.currentFlightProfile = localStorage.getItem(CURRENT_PROFILE_STORAGE_KEY) || null;
   } else {
     document.getElementById('gateUserCode').focus();
+    renderRecentProfileChips('gateRecentProfiles', 'gateProfileName');
   }
+  renderRecentProfileChips('settingsRecentProfiles', 'settingsLoadProfileName');
 }
 
 const G = 9.80665;
@@ -4219,8 +4250,13 @@ async function fetchAprsStations(){
     // Max 20 targets per aprs.fi query - chunk if the user configured more.
     const chunks = [];
     for(let i=0;i<callsigns.length;i+=20) chunks.push(callsigns.slice(i,i+20));
+    // Routed through the worker (not api.aprs.fi directly) since aprs.fi's
+    // own API blocks direct browser requests via CORS - the worker is a
+    // pure relay here, it doesn't hold or need its own aprs.fi credential,
+    // the user's own key (from Settings) is just passed through.
+    const aprsWorkerUrl = WORKER_URL.replace(/\/$/, '') + '/aprs';
     const results = await Promise.all(chunks.map(chunk=>
-      fetch(`https://api.aprs.fi/api/get?name=${encodeURIComponent(chunk.join(','))}&what=loc&apikey=${encodeURIComponent(apiKey)}&format=json`)
+      fetch(`${aprsWorkerUrl}?name=${encodeURIComponent(chunk.join(','))}&what=loc&apikey=${encodeURIComponent(apiKey)}`, {headers: {'X-App-Secret': WORKER_APP_SECRET}})
         .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     ));
     aprsLayer.clearLayers();
@@ -4242,7 +4278,6 @@ async function fetchAprsStations(){
     aprsFailCount = 0;
   }catch(e){
     console.error('APRS fetch failed:', e);
-    console.warn('APRS: this is very likely CORS-blocked, not a transient error - confirmed via a live browser test with real credentials. aprs.fi\'s API does not appear to send the headers needed for direct browser fetch().');
     if(aprsActive){
       aprsFailCount = (aprsFailCount||0)+1;
       setLayerLoadDot('tgAprs', 'error');
@@ -11027,6 +11062,9 @@ async function loadFlightProfileFromSettings(){
     applyFlightProfileSettings(prof.settings);
     state.currentFlightProfile = name;
     try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, name); }catch(e){}
+    addRecentProfile(name);
+    renderRecentProfileChips('settingsRecentProfiles', 'settingsLoadProfileName');
+    renderRecentProfileChips('gateRecentProfiles', 'gateProfileName');
     updateFlightProfileFooterDisplay();
     settingsDirty = false; // freshly loaded settings aren't "unsaved changes" - avoid an immediate, confusing save-prompt on close
     statusEl.style.color='var(--accent)'; statusEl.textContent = `Loaded "${name}".`;
@@ -11062,6 +11100,7 @@ async function confirmSaveToNewProfile(){
     await saveGistStore(store);
     state.currentFlightProfile = name;
     try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, name); }catch(e){}
+    addRecentProfile(name);
     updateFlightProfileFooterDisplay();
     document.getElementById('settingsNewProfileOverlay').style.display = 'none';
   }catch(e){ errEl.textContent = 'Save failed - check your connection.'; console.error(e); }

@@ -180,6 +180,17 @@ async function main() {
     }
   });
 
+  console.log('\n=== Settings panel positioning ===');
+  await withDom(html, {}, async (dom) => {
+    const topbar = dom.window.document.getElementById('topbar');
+    topbar.getBoundingClientRect = () => ({ top: 0, bottom: 44, left: 0, right: 800 });
+    const btnSettings = dom.window.document.getElementById('btnSettings');
+    btnSettings.getBoundingClientRect = () => ({ top: 5, bottom: 15, left: 700, right: 750 }); // sits partway inside the 44px header, not near its bottom
+    btnSettings.dispatchEvent(new dom.window.Event('click', { bubbles: true }));
+    const panelTop = parseFloat(dom.window.document.getElementById('settingsPanel').style.top);
+    record('Settings panel never starts above the header\'s own bottom edge', panelTop >= 44, `panel top: ${panelTop}px, header bottom: 44px`);
+  });
+
   console.log(`\n=== Result: ${passed} passed, ${failed} failed ===`);
   if (failed > 0) {
     console.log('\nFailures:');

@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260824.15-1140** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
+**Current version: v260824.16-1220** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
 
 ## What it is
 
@@ -258,6 +258,12 @@ Consolidated into the one existing, correct mechanism: `positionSidebarHandle()`
 **APRS category lookup - re-confirmed against the current official API docs and removed the misleading checkboxes**: aprs.fi's API genuinely only supports looking up specific callsigns you already know (`name=CALLSIGN1,CALLSIGN2,...`) - no category or area-based search exists in their documented API surface, re-verified directly against aprs.fi's own current API reference page and cross-checked against an independent third-party aprs.fi integration, which likewise only exposes callsign-based lookups. The "Balloons/Aircraft/Ships/Vehicles/People" checkboxes in Settings never controlled the search itself - they only filtered which of the already-callsign-found results got drawn on the map afterward, which read as misleadingly implying a category search was possible. Removed, along with their now-orphaned save/restore logic. The layer's CORS-blocked status itself (aprs.fi's API not sending browser-access headers) could not be independently re-tested this round - `api.aprs.fi` isn't reachable from this environment's own network access, and no current, aprs.fi-specific confirmation turned up in a general web search - the existing "confirmed via a live test with a real key" note in Settings stands as the most recent direct evidence available.
 
 **"Unlandable Territory" heading added** above the power-infrastructure checkboxes in Terrain & Ground Features, with a short explanation of why they matter (overhead lines/towers/substations are a serious landing hazard, not just map clutter).
+
+## Settings panel close button cut off, plus a color contrast fix (24.08.2026)
+
+**Close button clipping**: the panel's own close (✕) button sits only 8px from the panel's top edge, and the panel's own vertical position was anchored to whichever button/menu opened it - specifically, in the "More" menu case, to that menu's own top edge rather than the header bar's bottom edge. If the opening button/menu sat partway inside the (44px-tall) header rather than near its bottom, the panel could start partway inside the header too, visually crowding out the close button near the header's own content. Fixed by anchoring the panel's minimum top position to the header's own actual bottom edge in both cases (clicking `btnSettings` directly, or opening from within the "More" menu), verified live with a test simulating exactly that "button sits partway inside the header" scenario.
+
+**"Load Existing Flightprofile" color**: changed from turquoise (`#00e5c8`, poor contrast against a light background) to a bold magenta (`#d6336c`) - distinct from every other Settings group's own accent color, and readable against both light and dark backgrounds.
 
 ## APRS lookup, automated regression tests, recently-used flight profiles (24.08.2026)
 

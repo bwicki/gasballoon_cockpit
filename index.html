@@ -329,14 +329,22 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     </div>
     <div class="err" id="gateErr"></div>
     <hr style="border-color:var(--border);margin:14px 0 10px;">
-    <p style="margin:0 0 8px;">Open existing flight profile?</p>
+    <p style="margin:0 0 8px;">Open existing/Create new profile</p>
     <div style="display:flex;gap:6px;align-items:stretch;">
-      <input type="text" id="gateProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Flightprofile name" style="flex:1;text-align:center;margin-bottom:0;min-width:0;">
-      <input type="text" id="gateProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="width:64px;text-align:center;margin-bottom:0;">
+      <div style="flex:1;min-width:0;">
+        <input type="text" id="gateProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Flightprofile name" style="width:100%;text-align:center;margin-bottom:2px;box-sizing:border-box;">
+        <div style="font-size:9px;color:var(--muted);text-align:center;">max 8 characters</div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <input type="text" id="gateProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="width:100%;text-align:center;margin-bottom:2px;box-sizing:border-box;">
+        <div style="font-size:9px;color:var(--muted);text-align:center;">max 6 digits</div>
+      </div>
     </div>
     <div class="err" id="gateProfileErr"></div>
-    <button onclick="checkGatePassword()" style="margin-top:16px;">Open</button>
-    <button onclick="startNewFlightProfileAtLogin()" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:400;">New profile</button>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button onclick="checkGatePassword()" style="flex:1;width:auto;">Open existing</button>
+      <button onclick="startNewFlightProfileAtLogin()" style="flex:1;width:auto;">Create new</button>
+    </div>
   </div>
 </div>
 <div id="app">
@@ -463,6 +471,18 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <div style="position:relative;">
       <button class="iconbtn" id="btnSettings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg><span>Settings</span></button>
         <div id="settingsPanel">
+        <div class="settings-group" style="border-left:3px solid #00e5c8;padding:2px 0 2px 10px;margin:14px 0;">
+          <div style="display:flex;align-items:center;gap:6px;color:#00e5c8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Load Existing Flightprofile</span>
+          </div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Load a flight profile now, even if you started this session locally - useful if you only decided to use a shared profile after already opening Settings.</p>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="settingsLoadProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Name" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;text-transform:uppercase;min-width:0;">
+          <input type="text" id="settingsLoadProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;min-width:0;">
+        </div>
+        <button class="ghost" id="btnSettingsLoadProfile" style="margin-top:6px;">Load</button>
+        <div id="settingsLoadProfileStatus" style="font-size:10px;color:var(--muted);margin-top:6px;min-height:14px;"></div>
+        </div>
         <div class="settings-group" style="border-left:3px solid #8b98a5;padding:2px 0 2px 10px;margin:14px 0;">
           <div style="display:flex;align-items:center;gap:6px;color:#8b98a5;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>General</span>
@@ -570,16 +590,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">APRS Stations (aprs.fi)</div>
         <p style="font-size:10px;color:var(--bad);margin:0 0 6px;">⚠ Not currently functional: aprs.fi's API blocks direct browser requests via CORS - confirmed via a live test with a real key, not a temporary glitch. Left in place in case that changes, or a server-side relay becomes an option later.</p>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Looks up the specific callsigns below (e.g. other balloons) via aprs.fi - not a general area search, since their API only supports looking up callsigns you already know. The API key goes in "API Keys &amp; Tokens" at the bottom of Settings. Only queried while this layer is switched on, per aprs.fi's own usage policy (no background pre-caching).</p>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Looks up the specific callsigns below (e.g. other balloons) via aprs.fi - not a category or area search, since their API only supports looking up individual callsigns you already know (re-confirmed against their current official API docs). The API key goes in "API Keys &amp; Tokens" at the bottom of Settings. Only queried while this layer is switched on, per aprs.fi's own usage policy (no background pre-caching).</p>
         <textarea id="sAprsCallsigns" placeholder="One callsign per line, e.g.&#10;OE1XYZ-11&#10;DL2ABC-9" rows="3" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;font-family:var(--mono);resize:vertical;"></textarea>
-        <p style="font-size:10px;color:var(--muted);margin:6px 0 4px;">Show which classes (by APRS symbol):</p>
-        <div class="checkgrid">
-          <label><input type="checkbox" checked data-aprs-class="balloon">Balloons</label>
-          <label><input type="checkbox" checked data-aprs-class="aircraft">Aircraft</label>
-          <label><input type="checkbox" checked data-aprs-class="ship">Ships</label>
-          <label><input type="checkbox" checked data-aprs-class="vehicle">Vehicles</label>
-          <label><input type="checkbox" checked data-aprs-class="person">People/other</label>
-        </div>
 
         
         
@@ -605,6 +617,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;align-items:center;gap:6px;color:#3ddc6f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-11 4 7 3-5 5 9Z"/></svg><span>Terrain & Ground Features</span>
           </div>
+        <div class="subhead" style="margin-top:0;">Unlandable Territory</div>
+        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Power infrastructure and other ground hazards shown on the map as landing exclusion markers - a balloon basket coming down on or near overhead lines, towers, or substations is a serious, sometimes fatal risk. Toggle which categories are drawn.</p>
         <div class="checkgrid">
           <label><input type="checkbox" data-powercat="line" checked>Lines</label>
           <label><input type="checkbox" data-powercat="tower" checked>Towers</label>
@@ -665,7 +679,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <span style="font-size:12.5px;flex:1;">Total system mass (excl. gas)</span>
-          <input type="number" id="sBalloonMass" min="20" max="5000" step="5" value="300" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
+          <input type="number" id="sBalloonMass" min="20" max="5000" step="5" value="1120" style="width:90px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:13px;text-align:right;">
           <span style="font-size:12px;color:var(--muted);">kg</span>
         </div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 8px;">Envelope + basket + payload + ballast - needed so the ballast-equivalent from adiabatic heating is expressed as a properly scaled fraction of your actual system weight, not a fixed percentage.</p>
@@ -1472,7 +1486,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.07-0720';
+const APP_VERSION = 'v260824.12-0950';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -4202,7 +4216,6 @@ async function fetchAprsStations(){
       aprsFetchTimer = setTimeout(fetchAprsStations, 60000);
       return;
     }
-    const enabledClasses = new Set([...document.querySelectorAll('[data-aprs-class]')].filter(cb=>cb.checked).map(cb=>cb.dataset.aprsClass));
     // Max 20 targets per aprs.fi query - chunk if the user configured more.
     const chunks = [];
     for(let i=0;i<callsigns.length;i+=20) chunks.push(callsigns.slice(i,i+20));
@@ -4217,7 +4230,6 @@ async function fetchAprsStations(){
       (j.entries||[]).forEach(e=>{
         if(e.lat==null || e.lng==null) return;
         const cls = aprsSymbolToClass(e.symbol);
-        if(!enabledClasses.has(cls)) return;
         shown++;
         const ageMin = e.lasttime ? Math.round((Date.now()/1000 - e.lasttime)/60) : null;
         L.marker([parseFloat(e.lat), parseFloat(e.lng)], {icon: aprsClassIcon(cls, e.symbol), pane:'airTrafficPane'})
@@ -10096,7 +10108,16 @@ const EMERGENCY_FIELD_IDS = {
 };
 try{
   Object.entries(EMERGENCY_FIELD_IDS).forEach(([id,key])=>{
-    document.getElementById(id).value = localStorage.getItem(key) || '';
+    const el = document.getElementById(id);
+    el.value = localStorage.getItem(key) || '';
+    // The api-key-input confirmation guard (registered much earlier in
+    // this script, before this value was ever set) captured its OWN
+    // baseline while the field was still empty - programmatically setting
+    // .value here doesn't fire a 'change' event, so that baseline would
+    // otherwise stay stale/wrong for these three EmailJS credential
+    // fields specifically (the only EMERGENCY_FIELD_IDS entries that also
+    // carry the api-key-input class).
+    if(el.classList.contains('api-key-input')) el.dataset.prevValue = el.value;
   });
 }catch(e){}
 Object.entries(EMERGENCY_FIELD_IDS).forEach(([id,key])=>{
@@ -10207,9 +10228,15 @@ document.getElementById('btnEmergencyCopy').addEventListener('click', ()=>{
 // reachable via WhatsApp (i.e. have the app), and wa.me only prefills text,
 // it can't attach files/location beyond what's in the text itself.
 function sendEmergencyWhatsapp(){
-  const phone = document.getElementById('cfgPilotMobile').value.replace(/[^0-9]/g,'');
+  // wa.me links only accept a single recipient number each (unlike sms:
+  // URIs, which accept a comma-separated list) - open one tab per filled-in
+  // recipient, matching the "up to 5 recipients" the panel's own hint text
+  // already promises, rather than the earlier version which wrongly
+  // messaged the pilot's own number instead of any actual contact.
+  const recipients = [1,2,3,4,5].map(n=>document.getElementById('cfgSmsRecipient'+n).value.replace(/[^0-9]/g,'')).filter(Boolean);
+  if(!recipients.length) return; // nothing to send to - avoid logging a "sent" event for a no-op
   const text = encodeURIComponent(document.getElementById('emergencyMsgText').value);
-  window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  recipients.forEach(phone=>{ window.open(`https://wa.me/${phone}?text=${text}`, '_blank'); });
   logEmergencyEvent('whatsapp');
 }
 function sendEmergencySms(){
@@ -10902,8 +10929,6 @@ function saveConfig(){
     CONFIG_CHECKBOX_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.checked; });
     CONFIG_TOGGLE_BTN_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) cfg[id]=el.classList.contains('active'); });
     cfg.powerCat = {...powerCatVisible};
-    cfg.aprsClasses = {};
-    document.querySelectorAll('[data-aprs-class]').forEach(cb=>{ cfg.aprsClasses[cb.dataset.aprsClass] = cb.checked; });
     cfg.nightMode = state.night;
     localStorage.setItem('gblp_config_v1', JSON.stringify(cfg));
   }catch(e){ /* localStorage unavailable/full - config just won't persist */ }
@@ -10927,9 +10952,6 @@ function loadConfig(){
       Object.keys(cfg.powerCat).forEach(k=>{ const cb=document.querySelector(`[data-powercat="${k}"]`); if(cb) cb.checked=cfg.powerCat[k]; });
       forceRefreshPowerLayer();
       updatePowerLegendVisibility();
-    }
-    if(cfg.aprsClasses){
-      Object.keys(cfg.aprsClasses).forEach(k=>{ const cb=document.querySelector(`[data-aprs-class="${k}"]`); if(cb) cb.checked=cfg.aprsClasses[k]; });
     }
     if(cfg.nightMode && !state.night){ document.getElementById('btnDayNight').click(); }
   }catch(e){ /* corrupt/old config - ignore and keep defaults */ }
@@ -10988,6 +11010,30 @@ function settingsSaveChoice(choice){
     document.getElementById('settingsNewProfileName').focus();
   }
 }
+async function loadFlightProfileFromSettings(){
+  const name = document.getElementById('settingsLoadProfileName').value.trim().toUpperCase();
+  const pin = document.getElementById('settingsLoadProfilePin').value.trim();
+  const statusEl = document.getElementById('settingsLoadProfileStatus');
+  if(!name || !pin){ statusEl.style.color='var(--bad)'; statusEl.textContent = 'Enter both a name and a PIN.'; return; }
+  statusEl.style.color='var(--muted)'; statusEl.textContent = 'Loading…';
+  try{
+    const store = await fetchGistStore();
+    const prof = store.flightProfiles && store.flightProfiles[name];
+    if(!prof || prof.pin!==pin){
+      statusEl.style.color='var(--bad)'; statusEl.textContent = 'Unknown flight profile name or wrong PIN.';
+      return;
+    }
+    applyFlightProfileSettings(prof.settings);
+    state.currentFlightProfile = name;
+    try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, name); }catch(e){}
+    updateFlightProfileFooterDisplay();
+    settingsDirty = false; // freshly loaded settings aren't "unsaved changes" - avoid an immediate, confusing save-prompt on close
+    statusEl.style.color='var(--accent)'; statusEl.textContent = `Loaded "${name}".`;
+  }catch(e){
+    statusEl.style.color='var(--bad)'; statusEl.textContent = 'Failed to load - check your connection.'; console.error(e);
+  }
+}
+document.getElementById('btnSettingsLoadProfile').addEventListener('click', loadFlightProfileFromSettings);
 async function confirmSaveToExistingProfile(){
   const pin = document.getElementById('settingsSavePinInput').value.trim();
   const errEl = document.getElementById('settingsSavePinErr');

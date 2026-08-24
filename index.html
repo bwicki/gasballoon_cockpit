@@ -1251,7 +1251,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Staged Descent Plan</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px;"><span id="stagedPlanTotalTime">—</span> · <span id="stagedPlanBallastTotal">—</span></div>
         <div style="font-size:9px;color:var(--muted);margin-bottom:8px;">Expected landing location<br><span id="stagedPlanLandingInfo" style="color:var(--text);">—</span></div>
-        <div id="stagedPlanSvgWrap" style="width:100%;"></div>
+        <div id="stagedPlanSvgWrap" style="width:100%;position:relative;overflow-y:hidden;"></div>
       </div>
       <div id="windSoundingPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button id="btnCloseWindSounding" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
@@ -1410,7 +1410,7 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.12-1600';
+const APP_VERSION = 'v260823.13-1650';
 const APP_DATE = '23.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -5711,7 +5711,7 @@ function drawStagedPlanChart(result){
   // shape on the left, not a full-width precise plot - the actual numbers
   // live in the label column to its right, which is where collision with
   // the curve is avoided entirely (nothing is drawn ON TOP of the line).
-  const W=340, H=350, ML=80, plotW=55, MT=14, MB=40;
+  const W=340, H=350, ML=80, plotW=55, MT=22, MB=40;
   const plotH = H-MT-MB;
   const infoX = ML+plotW+6;
   const windX = infoX+44;
@@ -9416,12 +9416,13 @@ function wsCloseCleanup(){
   document.getElementById('wsSrcMarker').checked = false;
   document.getElementById('wsSrcCurrent').checked = true;
   document.getElementById('wsResetZoomBtn').style.display = 'none';
+  resetMapControlsPosition();
 }
 document.getElementById('btnWindSounding').addEventListener('click', ()=>{
   const panel = document.getElementById('windSoundingPanel');
   panel.style.display = panel.style.display==='none' ? 'block' : 'none';
   if(panel.style.display==='block'){
-    try{ alignPanelToPositionCard(panel); }catch(e){ console.error('Wind sounding panel: alignment failed (panel still opened):', e); }
+    try{ positionWindSoundingPanel(); }catch(e){ console.error('Wind sounding panel: alignment failed (panel still opened):', e); }
     wsRangeLowM = 0; wsRangeHighM = null;
     wsSpeedRangeActive = false; wsSpeedMinKn = 0; wsSpeedMaxKn = null;
     document.getElementById('wsSpeedRangeWrap').style.display = 'none';
@@ -9433,6 +9434,11 @@ document.getElementById('btnWindSounding').addEventListener('click', ()=>{
 document.getElementById('btnCloseWindSounding').addEventListener('click', ()=>{
   document.getElementById('windSoundingPanel').style.display = 'none';
   wsCloseCleanup();
+});
+window.addEventListener('resize', ()=>{
+  if(document.getElementById('windSoundingPanel').style.display!=='none'){
+    try{ positionWindSoundingPanel(); }catch(e){ console.error('Wind sounding panel: reposition on resize failed:', e); }
+  }
 });
 document.getElementById('wsSrcCurrent').addEventListener('change', refreshWindSoundingPanel);
 document.getElementById('wsSrcPlanned').addEventListener('change', refreshWindSoundingPanel);
@@ -9760,6 +9766,45 @@ if(topAlertStackEl && typeof ResizeObserver!=='undefined'){
     if(state.appMode==='plan') positionSubModeToggle();
     applyFlightDataBoxSnap();
   }).observe(topAlertStackEl);
+}
+// Wind sounding panel gets its own alignment logic, deliberately different
+// from alignPanelToPositionCard above: it always keeps its full width
+// (350px, or slightly less only on very narrow screens) anchored to the
+// screen's own right edge, rather than the sidebar's left edge - on a
+// narrower device (iPad) the sidebar-anchored approach could squeeze the
+// panel down to an unusably narrow width. Deliberately allowed to extend
+// into the map area on the left when needed - the right-side floating map
+// controls (style picker, zoom buttons, scale bar) are shifted left by
+// however far the panel actually overlaps them, rather than letting the
+// panel sit on top of and hide them.
+function positionWindSoundingPanel(){
+  const panel = document.getElementById('windSoundingPanel');
+  const margin = 8;
+  const desiredWidth = 350;
+  const width = Math.min(desiredWidth, window.innerWidth - margin*2);
+  panel.style.position = 'fixed';
+  panel.style.top = '60px';
+  panel.style.left = 'auto';
+  panel.style.right = margin+'px';
+  panel.style.width = width+'px';
+  // How far the panel's own left edge sits into the map area, measured
+  // from where the right-side Leaflet controls would normally start (their
+  // own default ~10px inset from the map's right edge) - only the amount
+  // beyond that inset needs compensating, so the controls aren't shifted
+  // unnecessarily far on wide screens where the panel doesn't reach them.
+  const mapEl = document.getElementById('map');
+  const mapRight = mapEl ? mapEl.getBoundingClientRect().right : window.innerWidth;
+  const panelLeftEdge = window.innerWidth - margin - width;
+  const overlapPx = Math.max(0, mapRight - panelLeftEdge + 10);
+  document.querySelectorAll('.leaflet-top.leaflet-right, .leaflet-bottom.leaflet-right, .map-controls-stack').forEach(el=>{
+    el.style.transition = 'margin-right 0.15s ease';
+    el.style.marginRight = overlapPx+'px';
+  });
+}
+function resetMapControlsPosition(){
+  document.querySelectorAll('.leaflet-top.leaflet-right, .leaflet-bottom.leaflet-right, .map-controls-stack').forEach(el=>{
+    el.style.marginRight = '';
+  });
 }
 function alignPanelToPositionCard(panelEl){
   // Reads the SIDEBAR's own position, not the "Current Position" card's -

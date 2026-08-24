@@ -353,8 +353,8 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
   <div id="topbar">
     <div style="position:relative;">
       <button id="btnHeaderMore" title="Menu" style="background:none;border:none;color:var(--text);cursor:pointer;padding:4px;display:flex;align-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:26px 0 4px;z-index:5000;flex-direction:column;min-width:170px;overflow:hidden;">
-        <button id="btnCloseHeaderMore" title="Close menu" style="position:absolute;top:4px;right:4px;background:none;border:none;color:var(--muted);cursor:pointer;width:20px;height:20px;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4 L20 20 M20 4 L4 20"/></svg></button>
+      <div id="headerMoreMenu" style="display:none;position:fixed;background:var(--panel2);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);padding:32px 0 4px;z-index:5000;flex-direction:column;min-width:170px;overflow:hidden;">
+        <button class="popover-close" id="btnCloseHeaderMore" title="Close menu">✕</button>
       </div>
     </div>
     <div class="wx-chip" style="gap:3px;">
@@ -711,7 +711,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <input type="text" id="cfgAircraftReg" placeholder="Aircraft registration, e.g. HB-XXX" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
         <input type="tel" id="cfgPilotMobile" placeholder="Pilot mobile number, e.g. +41791234567" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
         <input type="tel" id="cfgPilotSecondNumber" placeholder="Second number (e.g. SatPhone), optional" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <input type="email" id="cfgEmergencyEmail" placeholder="Emergency email address" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px;">Emergency email recipients (up to 5):</div>
+        <input type="email" id="cfgEmergencyEmail" placeholder="Recipient 1" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="email" id="cfgEmergencyEmail2" placeholder="Recipient 2 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="email" id="cfgEmergencyEmail3" placeholder="Recipient 3 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="email" id="cfgEmergencyEmail4" placeholder="Recipient 4 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
+        <input type="email" id="cfgEmergencyEmail5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
         <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px;">SMS recipients (up to 5, intl. format):</div>
         <input type="tel" id="cfgSmsRecipient1" placeholder="Recipient 1" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <input type="tel" id="cfgSmsRecipient2" placeholder="Recipient 2 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
@@ -824,7 +829,9 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <p id="emergencyModifyHint" style="display:none;font-size:10px;color:var(--muted);margin:0 0 8px;cursor:pointer;text-decoration:underline;">Modify contact details in Settings.</p>
         <button class="ghost" id="btnPrepareEmergencyMsg">Prepare message now</button>
         <div id="emergencyMsgPreview" style="display:none;margin-top:8px;">
-          <textarea id="emergencyMsgText" readonly style="width:100%;height:130px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);box-sizing:border-box;"></textarea>
+          <div id="emergencyMsgTitleLine" style="font-weight:700;font-size:12px;font-family:var(--mono);background:var(--panel);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;padding:6px;box-sizing:border-box;"></div>
+          <div id="emergencyMsgBodyLines" style="width:100%;min-height:110px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:0 0 6px 6px;padding:6px;font-size:11px;font-family:var(--mono);box-sizing:border-box;white-space:pre-wrap;user-select:text;"></div>
+          <textarea id="emergencyMsgText" readonly style="display:none;"></textarea>
           <div style="display:flex;gap:6px;margin-top:6px;">
             <button class="ghost" id="btnEmergencyCopy" style="flex:1;">Copy</button>
             <button class="ghost" id="btnEmergencyWhatsapp" style="flex:1;">WhatsApp</button>
@@ -1516,7 +1523,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.18-1340';
+const APP_VERSION = 'v260824.20-1520';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -10154,6 +10161,10 @@ const EMERGENCY_FIELD_IDS = {
   cfgPilotMobile: 'gblp_pilot_mobile',
   cfgPilotSecondNumber: 'gblp_pilot_second_number',
   cfgEmergencyEmail: 'gblp_emergency_email',
+  cfgEmergencyEmail2: 'gblp_emergency_email_2',
+  cfgEmergencyEmail3: 'gblp_emergency_email_3',
+  cfgEmergencyEmail4: 'gblp_emergency_email_4',
+  cfgEmergencyEmail5: 'gblp_emergency_email_5',
   cfgSmsRecipient1: 'gblp_sms_recipient_1',
   cfgSmsRecipient2: 'gblp_sms_recipient_2',
   cfgSmsRecipient3: 'gblp_sms_recipient_3',
@@ -10260,7 +10271,11 @@ function logEmergencyEvent(channel){
   }catch(e){}
 }
 function openEmergencyMessage(){
-  document.getElementById('emergencyMsgText').value = buildEmergencyMessage();
+  const fullText = buildEmergencyMessage();
+  document.getElementById('emergencyMsgText').value = fullText;
+  const lines = fullText.split('\n');
+  document.getElementById('emergencyMsgTitleLine').textContent = lines[0];
+  document.getElementById('emergencyMsgBodyLines').textContent = lines.slice(1).join('\n');
   document.getElementById('emergencyMsgPreview').style.display = 'block';
 }
 document.getElementById('btnPrepareEmergencyMsg').addEventListener('click', openEmergencyMessage);
@@ -10304,7 +10319,12 @@ function sendEmergencySms(){
   logEmergencyEvent('sms');
 }
 async function sendEmergencyEmail(){
-  const email = document.getElementById('cfgEmergencyEmail').value;
+  const recipients = [1,2,3,4,5].map(n=>{
+    const id = n===1 ? 'cfgEmergencyEmail' : 'cfgEmergencyEmail'+n;
+    return document.getElementById(id).value.trim();
+  }).filter(Boolean);
+  if(!recipients.length) return; // nothing to send to - avoid opening a blank mailto: or logging a "sent" event for a no-op
+  const email = recipients.join(',');
   const reg = document.getElementById('cfgAircraftReg').value.trim();
   const subject = encodeURIComponent(`${reg || 'Aircraft'} Emergency Position Report`);
   const messageText = document.getElementById('emergencyMsgText').value;
@@ -10323,7 +10343,20 @@ async function sendEmergencyEmail(){
     const originalText = btn.textContent;
     btn.textContent = 'Sending…'; btn.disabled = true;
     try{
-      await emailjs.send(serviceId, templateId, {message: messageText, subject: `${reg||'Aircraft'} Emergency Position Report`, to_email: email}, {publicKey});
+      // One emailjs.send() call PER recipient, each with its own single
+      // to_email - not a single call with a comma-separated list. EmailJS's
+      // own documentation describes the "To Email" template field as
+      // holding one recipient address (even when driven by a dynamic
+      // variable); their documented mechanism for additional recipients is
+      // separate Cc/Bcc template fields, not a comma-list inside one field.
+      // Whether a comma-separated to_email actually reaches everyone would
+      // depend on the specific mail provider behind the EmailJS service and
+      // isn't something EmailJS itself documents as supported - looping
+      // per-recipient here instead means this works correctly regardless
+      // of how the template happens to be configured.
+      await Promise.all(recipients.map(r=>
+        emailjs.send(serviceId, templateId, {message: messageText, subject: `${reg||'Aircraft'} Emergency Position Report`, to_email: r}, {publicKey})
+      ));
       btn.textContent = '✓ Sent silently'; 
       logEmergencyEvent('email-silent');
       setTimeout(()=>{ btn.textContent=originalText; btn.disabled=false; }, 3000);
@@ -10923,7 +10956,8 @@ const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','
 const PROFILE_LOCALSTORAGE_KEYS = [
   'gblp_config_v1', 'gblp_language',
   'gblp_pilot_name', 'gblp_aircraft_reg', 'gblp_pilot_mobile', 'gblp_pilot_second_number',
-  'gblp_emergency_email', 'gblp_sms_recipient_1', 'gblp_sms_recipient_2', 'gblp_sms_recipient_3',
+  'gblp_emergency_email', 'gblp_emergency_email_2', 'gblp_emergency_email_3', 'gblp_emergency_email_4',
+  'gblp_emergency_email_5', 'gblp_sms_recipient_1', 'gblp_sms_recipient_2', 'gblp_sms_recipient_3',
   'gblp_sms_recipient_4', 'gblp_sms_recipient_5', 'gblp_emailjs_service_id',
   'gblp_emailjs_template_id', 'gblp_emailjs_public_key'
 ];

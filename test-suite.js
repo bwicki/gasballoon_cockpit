@@ -240,6 +240,47 @@ async function main() {
     record('"Send on all channels" still includes SMS as one of its channels', smsStillFires, JSON.stringify(opened));
   });
 
+  console.log('\n=== Emergency message title/body split ===');
+  await withDom(html, {}, async (dom) => {
+    dom.window.document.getElementById('cfgAircraftReg').value = 'HB-TEST';
+    dom.window.openEmergencyMessage();
+    const title = dom.window.document.getElementById('emergencyMsgTitleLine').textContent;
+    const body = dom.window.document.getElementById('emergencyMsgBodyLines').textContent;
+    const fullValue = dom.window.document.getElementById('emergencyMsgText').value;
+    record('Title line shows the aircraft reg + EMERGENCY POSITION REPORT', title.includes('HB-TEST') && title.includes('EMERGENCY POSITION REPORT'), title);
+    record('Body does not repeat the title line', !body.startsWith('HB-TEST EMERGENCY'), body.split('\n')[0]);
+    record('Hidden textarea still holds the FULL message (title + body) for Copy/WhatsApp/SMS/Email to use', fullValue.startsWith(title) && fullValue.includes(body.split('\n')[0]||''), fullValue.slice(0,60));
+  });
+
+  console.log('\n=== Multiple emergency email recipients ===');
+  await withDom(html, {}, async (dom) => {
+    const opened = [];
+    dom.window.open = (url) => { opened.push(url); return {}; };
+    dom.window.document.getElementById('cfgEmergencyEmail').value = 'one@test.com';
+    dom.window.document.getElementById('cfgEmergencyEmail2').value = 'two@test.com';
+    dom.window.document.getElementById('cfgEmergencyEmail3').value = '';
+    dom.window.document.getElementById('emergencyMsgText').value = 'test message';
+    await dom.window.sendEmergencyEmail();
+    const mailtoUrl = opened.find(u => u.startsWith('mailto:'));
+    record('mailto: link includes both configured recipients, comma-separated', !!mailtoUrl && mailtoUrl.includes('one@test.com,two@test.com'), mailtoUrl);
+  });
+
+  console.log('\n=== EmailJS silent-send path: one call per recipient, not a comma-list ===');
+  await withDom(html, {}, async (dom) => {
+    const sendCalls = [];
+    dom.window.emailjs = { send: (serviceId, templateId, params) => { sendCalls.push(params.to_email); return Promise.resolve({status:200}); } };
+    dom.window.document.getElementById('cfgEmergencyEmail').value = 'one@test.com';
+    dom.window.document.getElementById('cfgEmergencyEmail2').value = 'two@test.com';
+    dom.window.document.getElementById('cfgEmailJsServiceId').value = 'svc';
+    dom.window.document.getElementById('cfgEmailJsTemplateId').value = 'tpl';
+    dom.window.document.getElementById('cfgEmailJsPublicKey').value = 'pub';
+    dom.window.document.getElementById('emergencyMsgText').value = 'test message';
+    await dom.window.sendEmergencyEmail();
+    record('emailjs.send() called once per recipient (not once with a comma-list)', sendCalls.length === 2, JSON.stringify(sendCalls));
+    record('Each call carries exactly one recipient address, no commas', sendCalls.every(v => !v.includes(',')), JSON.stringify(sendCalls));
+    record('Both configured recipients are covered across the calls', sendCalls.includes('one@test.com') && sendCalls.includes('two@test.com'), JSON.stringify(sendCalls));
+  });
+
   console.log(`\n=== Result: ${passed} passed, ${failed} failed ===`);
   if (failed > 0) {
     console.log('\nFailures:');

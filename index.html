@@ -1358,36 +1358,31 @@ if(document.readyState !== 'loading'){
 }
 
 // ---------- password gate ----------
-// ---------- Shared user/flight-profile store (GitHub Gist) ----------
-// Per explicit instruction: the data here (a handful of pilot names/simple
-// passwords and flight-profile settings) is not sensitive, so a single
-// shared token+gist embedded directly in the client-side source (visible
-// to anyone who views it, same as every other API key already in this
-// file) is an accepted, deliberate simplification - not an oversight. The
-// token is scoped to "gist" only, nothing broader. The actual token/ID
-// pair is created and managed via the separate AdminApp (admin.html) -
-// once created there, both are pasted in here and in admin.html.
-const GIST_TOKEN = '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';
-const GIST_ID = '54c1b07d253f7f16be8b98ee4ff273f3';
+// ---------- Shared user/flight-profile store (via Cloudflare Worker proxy) ----------
+// The real GitHub token is no longer embedded here at all - it lives only
+// as a server-side Secret inside the Cloudflare Worker (which the browser
+// never sees), replacing the earlier "hardcode the raw GitHub PAT
+// directly in the page source" approach. What's embedded here instead is
+// only WORKER_APP_SECRET, a much narrower credential of the app's own
+// choosing - even if that leaks, it only lets someone talk to this one,
+// narrow worker (read/write this one store), not the wider GitHub
+// account the way a real PAT would have.
+const WORKER_URL = 'https://gbcockpit-proxy.balthasar.workers.dev/';
+const WORKER_APP_SECRET = '56RT+wdRw';
 const GATE_STORAGE_KEY = 'gblp_login_at_v2'; // timestamp (ms) of last successful login
 const SESSION_MAX_AGE_MS = 12*60*60*1000; // 12h, per explicit instruction
 const CURRENT_PROFILE_STORAGE_KEY = 'gblp_current_profile_v1';
 
 async function fetchGistStore(){
-  const r = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-    headers: {'Accept':'application/vnd.github+json', 'Authorization':'Bearer '+GIST_TOKEN}
-  });
+  const r = await fetch(WORKER_URL, {headers: {'X-App-Secret': WORKER_APP_SECRET}});
   if(!r.ok) throw new Error('Could not reach the shared store (HTTP '+r.status+')');
-  const j = await r.json();
-  const file = j.files && j.files['gbcockpit-store.json'];
-  if(!file) throw new Error('Shared store Gist is missing its data file.');
-  return JSON.parse(file.content);
+  return await r.json();
 }
 async function saveGistStore(storeObj){
-  const r = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-    method: 'PATCH',
-    headers: {'Accept':'application/vnd.github+json', 'Authorization':'Bearer '+GIST_TOKEN},
-    body: JSON.stringify({files: {'gbcockpit-store.json': {content: JSON.stringify(storeObj, null, 2)}}})
+  const r = await fetch(WORKER_URL, {
+    method: 'PUT',
+    headers: {'X-App-Secret': WORKER_APP_SECRET},
+    body: JSON.stringify(storeObj, null, 2)
   });
   if(!r.ok) throw new Error('Could not save to the shared store (HTTP '+r.status+')');
 }
@@ -1447,7 +1442,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.02-0505';
+const APP_VERSION = 'v260824.03-0530';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 

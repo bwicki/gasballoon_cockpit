@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260824.02-0505** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
+**Current version: v260824.03-0530** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
 
 ## What it is
 
@@ -228,6 +228,12 @@ Given the core logic is now verified to run correctly, the two most plausible re
 2. The service worker (`sw.js`) was re-checked and confirmed to only cache map TILE requests, never `index.html` itself - ruled out as a cause.
 
 If the report persists after this, the next most useful thing would be the actual browser console output at the moment it happens, since the runtime logic itself is now confirmed correct in isolation.
+
+## Cloudflare Worker proxy replaces the embedded raw GitHub token (24.08.2026)
+
+Following up on the embedded-token discussion: the raw GitHub PAT was removed from both `index.html` and `admin.html`'s source entirely. A small Cloudflare Worker (`cloudflare-worker.js`, deployed separately at Cloudflare, not part of this repo's own static files) now sits between both apps and the GitHub Gist API - it holds the real token only as a server-side Secret (never sent to the browser), and exposes a narrow GET/PUT interface guarded by its own `APP_SECRET` header check. Both apps now call the worker's URL instead of `api.github.com` directly. The `WORKER_URL`/`WORKER_APP_SECRET` constants embedded in the source are still technically visible client-side the same way the old token was, but their blast radius is much smaller - even if leaked, they only grant read/write access to this one narrow store through this one worker, not the broader GitHub account a real PAT would expose (no ability to create arbitrary new gists, access other repos, etc.). `admin.html` still keeps a raw-GitHub-token path (its own separate, clearly-marked "setup only" section) purely for the one-time act of creating a brand new Gist, since the worker can only read/write an existing one, not create one.
+
+A live-tested, hard lesson along the way: the first GitHub token shared for this setup was a **fine-grained** token (`github_pat_...` prefix) - those cannot access the Gist API at all (confirmed via a live HTTP 403 "Resource not accessible by personal access token"), regardless of what permissions are granted on it, since Gists sit outside fine-grained tokens' repository-scoped permission model entirely. A **classic** token (`ghp_...` prefix) with just the `gist` scope was needed instead, and worked immediately.
 
 ## Sub-mode switch never actually moved the map - the real root cause (23.08.2026)
 

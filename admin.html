@@ -67,19 +67,34 @@ td input{width:100%;}
     <p style="font-size:11px;color:var(--muted);margin:0 0 10px;">The same Gist ID and token must be pasted into <code>index.html</code>'s own <code>GIST_ID</code>/<code>GIST_TOKEN</code> constants once known - this page only manages the data inside it, it doesn't control what the main app connects to.</p>
     <div class="grid2">
       <div>
-        <label style="font-size:11px;color:var(--muted);">Gist ID</label>
-        <input type="text" id="adminGistId" placeholder="leave empty to create a new one">
+        <label style="font-size:11px;color:var(--muted);">Worker URL</label>
+        <input type="text" id="adminWorkerUrl" placeholder="https://your-worker.workers.dev/">
       </div>
       <div>
-        <label style="font-size:11px;color:var(--muted);">GitHub Personal Access Token (gist scope)</label>
-        <input type="password" id="adminGistToken" placeholder="ghp_...">
+        <label style="font-size:11px;color:var(--muted);">App Secret</label>
+        <input type="password" id="adminAppSecret" placeholder="the APP_SECRET you set on the worker">
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;">
       <button onclick="loadStore()">Load</button>
-      <button class="ghost" onclick="createNewGist()">Create new Gist</button>
+      <button class="ghost" id="saveChangesBtn" disabled onclick="saveStore()">Save changes</button>
     </div>
     <div class="status" id="connectionStatus"></div>
+
+    <hr style="margin:14px 0;border-color:var(--border);">
+    <p style="font-size:11px;color:var(--muted);margin:0 0 8px;">First-time setup only - creating a brand new Gist needs a real, raw GitHub token directly (the worker only reads/writes an EXISTING Gist, it can't create one) - not needed again once a Gist and worker are already running.</p>
+    <div class="grid2">
+      <div>
+        <label style="font-size:11px;color:var(--muted);">Gist ID (leave empty to create new)</label>
+        <input type="text" id="adminGistId">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--muted);">GitHub Personal Access Token (gist scope) - for setup only</label>
+        <input type="password" id="adminGistToken" placeholder="ghp_...">
+      </div>
+    </div>
+    <button class="ghost small-btn" style="margin-top:8px;" onclick="createNewGist()">Create new Gist</button>
+    <div class="status" id="setupStatus"></div>
   </div>
 
   <div class="card" id="dataCard" style="display:none;">
@@ -98,16 +113,12 @@ td input{width:100%;}
       <tbody id="profilesTbody"></tbody>
     </table>
     <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">Profiles are created from within the main app itself (Settings → save flow) - this table only lets you rename, re-PIN, or delete existing ones, not create new blank ones with settings attached.</p>
-  </div>
-
-  <div class="card" id="saveCard" style="display:none;">
-    <button onclick="saveStore()">Save changes to Gist</button>
     <div class="status" id="saveStatus"></div>
   </div>
 </div>
 
 <script>
-const APP_VERSION = 'v260824.01-0445';
+const APP_VERSION = 'v260824.02-0530';
 document.getElementById('versionText').textContent = APP_VERSION;
 
 // ---------- master password gate ----------
@@ -145,12 +156,15 @@ async function checkAdminGate(){
 document.getElementById('gateAdminPw').addEventListener('keydown', e=>{ if(e.key==='Enter') checkAdminGate(); });
 document.getElementById('gateAdminPw').focus();
 
-// ---------- Gist connection - token/ID entered here, kept only in THIS
-// browser's localStorage (not hardcoded in this file's own source, unlike
-// the main app's copy - this page is the one place a real admin actually
-// types their own token in) ----------
-document.getElementById('adminGistId').value = localStorage.getItem('gbadmin_gist_id') || '54c1b07d253f7f16be8b98ee4ff273f3';
-document.getElementById('adminGistToken').value = localStorage.getItem('gbadmin_gist_token') || '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';
+// ---------- Worker connection (day-to-day use) - kept only in THIS
+// browser's localStorage, not hardcoded in this file's own source ----------
+document.getElementById('adminWorkerUrl').value = localStorage.getItem('gbadmin_worker_url') || 'https://gbcockpit-proxy.balthasar.workers.dev/';
+document.getElementById('adminAppSecret').value = localStorage.getItem('gbadmin_app_secret') || '56RT+wdRw';
+document.getElementById('adminWorkerUrl').addEventListener('change', e=>localStorage.setItem('gbadmin_worker_url', e.target.value.trim()));
+document.getElementById('adminAppSecret').addEventListener('change', e=>localStorage.setItem('gbadmin_app_secret', e.target.value.trim()));
+// ---------- Setup-only: raw GitHub token, for creating a brand new Gist ----------
+document.getElementById('adminGistId').value = localStorage.getItem('gbadmin_gist_id') || '';
+document.getElementById('adminGistToken').value = localStorage.getItem('gbadmin_gist_token') || '';
 document.getElementById('adminGistId').addEventListener('change', e=>localStorage.setItem('gbadmin_gist_id', e.target.value.trim()));
 document.getElementById('adminGistToken').addEventListener('change', e=>localStorage.setItem('gbadmin_gist_token', e.target.value.trim()));
 
@@ -158,7 +172,7 @@ let currentStore = null; // {users:{}, flightProfiles:{}}
 
 async function createNewGist(){
   const token = document.getElementById('adminGistToken').value.trim();
-  const statusEl = document.getElementById('connectionStatus');
+  const statusEl = document.getElementById('setupStatus');
   if(!token){ statusEl.className='status err'; statusEl.textContent='Enter a GitHub token first.'; return; }
   statusEl.className='status'; statusEl.textContent='Creating…';
   try{
@@ -177,29 +191,22 @@ async function createNewGist(){
     document.getElementById('adminGistId').value = j.id;
     localStorage.setItem('gbadmin_gist_id', j.id);
     statusEl.className='status ok';
-    statusEl.textContent = `Created. Gist ID: ${j.id} — paste this (and the token) into index.html's GIST_ID/GIST_TOKEN constants now.`;
-    currentStore = initial;
-    renderTables();
+    statusEl.textContent = `Created. Gist ID: ${j.id} — now set this as the GIST_ID secret on your Cloudflare Worker (together with this token as GITHUB_TOKEN).`;
   }catch(e){
     statusEl.className='status err'; statusEl.textContent='Failed to create Gist: '+e.message;
   }
 }
 
 async function loadStore(){
-  const id = document.getElementById('adminGistId').value.trim();
-  const token = document.getElementById('adminGistToken').value.trim();
+  const url = document.getElementById('adminWorkerUrl').value.trim();
+  const secret = document.getElementById('adminAppSecret').value.trim();
   const statusEl = document.getElementById('connectionStatus');
-  if(!id || !token){ statusEl.className='status err'; statusEl.textContent='Enter both a Gist ID and a token.'; return; }
+  if(!url || !secret){ statusEl.className='status err'; statusEl.textContent='Enter both the worker URL and the app secret.'; return; }
   statusEl.className='status'; statusEl.textContent='Loading…';
   try{
-    const r = await fetch(`https://api.github.com/gists/${id}`, {
-      headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token}
-    });
+    const r = await fetch(url, {headers:{'X-App-Secret': secret}});
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const j = await r.json();
-    const file = j.files && j.files['gbcockpit-store.json'];
-    if(!file) throw new Error('This Gist has no gbcockpit-store.json file.');
-    currentStore = JSON.parse(file.content);
+    currentStore = await r.json();
     currentStore.users = currentStore.users || {};
     currentStore.flightProfiles = currentStore.flightProfiles || {};
     statusEl.className='status ok'; statusEl.textContent='Loaded.';
@@ -212,7 +219,7 @@ async function loadStore(){
 function renderTables(){
   document.getElementById('dataCard').style.display = 'block';
   document.getElementById('profilesCard').style.display = 'block';
-  document.getElementById('saveCard').style.display = 'block';
+  document.getElementById('saveChangesBtn').disabled = false;
   const usersTbody = document.getElementById('usersTbody');
   usersTbody.innerHTML = '';
   Object.entries(currentStore.users).forEach(([code,pw])=>addUserRow(code,pw));
@@ -241,8 +248,8 @@ function addProfileRow(name, pin, hasSettings, settingsObj){
 
 async function saveStore(){
   const statusEl = document.getElementById('saveStatus');
-  const id = document.getElementById('adminGistId').value.trim();
-  const token = document.getElementById('adminGistToken').value.trim();
+  const url = document.getElementById('adminWorkerUrl').value.trim();
+  const secret = document.getElementById('adminAppSecret').value.trim();
   const newStore = {users:{}, flightProfiles:{}};
   document.querySelectorAll('#usersTbody tr').forEach(tr=>{
     const code = tr.querySelector('.u-code').value.trim().toUpperCase();
@@ -262,10 +269,10 @@ async function saveStore(){
   });
   statusEl.className='status'; statusEl.textContent='Saving…';
   try{
-    const r = await fetch(`https://api.github.com/gists/${id}`, {
-      method:'PATCH',
-      headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token},
-      body: JSON.stringify({files:{'gbcockpit-store.json':{content: JSON.stringify(newStore, null, 2)}}})
+    const r = await fetch(url, {
+      method:'PUT',
+      headers:{'X-App-Secret': secret},
+      body: JSON.stringify(newStore, null, 2)
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
     currentStore = newStore;

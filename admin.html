@@ -64,7 +64,7 @@ td input{width:100%;}
 
   <div class="card">
     <h2>Shared store connection</h2>
-    <p style="font-size:11px;color:var(--muted);margin:0 0 10px;">The same Gist ID and token must be pasted into <code>index.html</code>'s own <code>GIST_ID</code>/<code>GIST_TOKEN</code> constants once known - this page only manages the data inside it, it doesn't control what the main app connects to.</p>
+    <p style="font-size:11px;color:var(--muted);margin:0 0 10px;">This page manages the data inside the shared store via the Cloudflare Worker below. <code>index.html</code> itself only needs the same <code>WORKER_URL</code>/<code>WORKER_APP_SECRET</code> pasted into its own constants - it no longer talks to GitHub or knows the Gist ID directly.</p>
     <div class="grid2">
       <div>
         <label style="font-size:11px;color:var(--muted);">Worker URL</label>
@@ -100,10 +100,13 @@ td input{width:100%;}
   <div class="card" id="dataCard" style="display:none;">
     <h2>Users</h2>
     <table id="usersTable">
-      <thead><tr><th style="width:90px;">Code</th><th>Password</th><th style="width:50px;"></th></tr></thead>
+      <thead><tr><th style="width:110px;">User Code<br><span style="font-size:9px;font-weight:400;text-transform:none;color:var(--muted);">3 characters</span></th><th>Password<br><span style="font-size:9px;font-weight:400;text-transform:none;color:var(--muted);">(max 10 characters)</span></th><th style="width:50px;"></th></tr></thead>
       <tbody id="usersTbody"></tbody>
     </table>
-    <button class="ghost small-btn" style="margin-top:8px;" onclick="addUserRow()">+ Add user</button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="ghost small-btn" onclick="addUserRow()">+ Add user</button>
+      <button class="small-btn" onclick="saveStore()">Save</button>
+    </div>
   </div>
 
   <div class="card" id="profilesCard" style="display:none;">
@@ -118,7 +121,7 @@ td input{width:100%;}
 </div>
 
 <script>
-const APP_VERSION = 'v260824.02-0530';
+const APP_VERSION = 'v260824.04-0655';
 document.getElementById('versionText').textContent = APP_VERSION;
 
 // ---------- master password gate ----------
@@ -231,7 +234,7 @@ function renderTables(){
 function addUserRow(code, pw){
   const tr = document.createElement('tr');
   tr.innerHTML = `<td><input type="text" class="u-code" maxlength="3" style="text-transform:uppercase;" value="${code||''}"></td>
-    <td><input type="text" class="u-pw" maxlength="8" value="${pw||''}"></td>
+    <td><input type="text" class="u-pw" maxlength="10" value="${pw||''}"></td>
     <td class="row-actions"><button class="danger small-btn" onclick="this.closest('tr').remove()">✕</button></td>`;
   document.getElementById('usersTbody').appendChild(tr);
 }

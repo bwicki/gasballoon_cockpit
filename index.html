@@ -323,19 +323,19 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <h2>🎈 Gasballoon Cockpit</h2>
     <p>Enter your access code to continue</p>
     <div style="display:flex;gap:6px;margin-bottom:2px;">
-      <input type="text" id="gateUserCode" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC" style="width:76px;text-transform:uppercase;text-align:center;">
-      <input type="password" id="gatePw" maxlength="8" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password" style="flex:1;">
+      <input type="text" id="gateUserCode" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="User Code" style="width:100px;text-transform:uppercase;text-align:center;">
+      <input type="password" id="gatePw" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password" style="flex:1;">
     </div>
     <div class="err" id="gateErr"></div>
     <hr style="border-color:var(--border);margin:14px 0 10px;">
     <p style="margin:0 0 8px;">Open existing flight profile?</p>
     <div style="display:flex;gap:6px;align-items:stretch;">
-      <input type="text" id="gateProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Name" style="flex:1;text-align:center;margin-bottom:0;min-width:0;">
+      <input type="text" id="gateProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Flightprofile name" style="flex:1;text-align:center;margin-bottom:0;min-width:0;">
       <input type="text" id="gateProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="width:64px;text-align:center;margin-bottom:0;">
-      <button onclick="startNewFlightProfileAtLogin()" style="width:auto;white-space:nowrap;padding:0 10px;font-size:11px;">New profile</button>
     </div>
     <div class="err" id="gateProfileErr"></div>
-    <button onclick="checkGatePassword()" style="margin-top:16px;">Unlock</button>
+    <button onclick="checkGatePassword()" style="margin-top:16px;">Open</button>
+    <button onclick="startNewFlightProfileAtLogin()" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:400;">New profile</button>
   </div>
 </div>
 <div id="app">
@@ -1442,7 +1442,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.03-0530';
+const APP_VERSION = 'v260824.05-0700';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 

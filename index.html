@@ -474,11 +474,12 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div id="settingsPanel">
         <div class="settings-group" style="border-left:3px solid #d6336c;padding:2px 0 2px 10px;margin:14px 0;">
           <div style="display:flex;align-items:center;gap:6px;color:#d6336c;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Load Existing Flightprofile</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Flightprofile Data</span>
           </div>
+        <div id="settingsFlightProfileInfo" style="font-size:11px;color:var(--muted);margin-bottom:8px;">Currently loaded flightprofile: <b id="settingsFlightProfileName" style="color:var(--text);">(local)</b></div>
         <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Load a flight profile now, even if you started this session locally - useful if you only decided to use a shared profile after already opening Settings.</p>
         <div style="display:flex;gap:6px;">
-          <input type="text" id="settingsLoadProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Name" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;text-transform:uppercase;min-width:0;">
+          <input type="text" id="settingsLoadProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Flightprofile name" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;text-transform:uppercase;min-width:0;">
           <input type="text" id="settingsLoadProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;text-align:center;min-width:0;">
         </div>
         <div id="settingsRecentProfiles" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;"></div>
@@ -717,7 +718,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <input type="tel" id="cfgSmsRecipient3" placeholder="Recipient 3 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <input type="tel" id="cfgSmsRecipient4" placeholder="Recipient 4 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
         <input type="tel" id="cfgSmsRecipient5" placeholder="Recipient 5 (optional)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
-        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> emergency message. Stored only on this device.</p>
+        <p style="font-size:10px;color:var(--muted);margin:2px 0 0;">Used to pre-fill the <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M12 2 L22 20 H2 Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="var(--bad)"/></svg> emergency message.</p>
 
         
         
@@ -726,7 +727,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;align-items:center;gap:6px;color:#8b98a5;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Data & Backup</span>
           </div>
-        <div id="settingsFlightProfileInfo" style="font-size:11px;color:var(--muted);margin-bottom:8px;">Flight profile: <b id="settingsFlightProfileName" style="color:var(--text);">(local)</b></div>
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">Settings Profile</div>
@@ -828,11 +828,10 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;gap:6px;margin-top:6px;">
             <button class="ghost" id="btnEmergencyCopy" style="flex:1;">Copy</button>
             <button class="ghost" id="btnEmergencyWhatsapp" style="flex:1;">WhatsApp</button>
-            <button class="ghost" id="btnEmergencySms" style="flex:1;">SMS</button>
             <button class="ghost" id="btnEmergencyEmailSend" style="flex:1;">Email</button>
           </div>
           <button class="ghost" id="btnEmergencyAllChannels" style="margin-top:6px;background:var(--bad);color:#fff;">Send on all channels</button>
-          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">These open WhatsApp/SMS (up to 5 recipients)/Email with the message pre-filled - you still tap "send" yourself in each app. This page has no server, so it genuinely can't send anything silently in the background (see chat for why). Every attempt is logged in the Flight Log.</p>
+          <p style="font-size:10px;color:var(--muted);margin:6px 0 0;">These open WhatsApp/Email with the message pre-filled - you still tap "send" yourself in each app. "Send on all channels" also includes SMS (up to 5 recipients). This page has no server, so it genuinely can't send anything silently in the background (see chat for why). Every attempt is logged in the Flight Log.</p>
         </div>
       </div>
     </div>
@@ -1203,9 +1202,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
               </ul>
             </li>
             <li>Header icons turn map layers on/off (power lines, roads/places, airspace, ground wind, nature reserves, non-landable terrain, experimental region names). A small dot shows loading (yellow) / ready (green).</li>
+            <li>The blue zigzag icon next to the weather model name opens a detailed <b>wind sounding</b> - full wind barbs by altitude, comparison against other models, and a droppable map marker for checking wind anywhere.</li>
             <li><b>Test Mode</b> (top-right) lets you set a position manually - useful on the ground or if GPS drops out.</li>
             <li>The red warning-triangle button (left of Test Mode) prepares an emergency position report for WhatsApp/SMS/Email.</li>
             <li>Sliders under "Descent Parameters" drive both functions - drag the orange cross marker in Quick Descent, or use the Staged Descent sliders (total time budget, inter-stage rate) for the other subfunction.</li>
+            <li><b>Flight profiles</b> (Settings → Flightprofile Data, or at login) let a team share one set of settings, saved to and loaded from a common store by name + PIN - handy for switching devices or pilots mid-campaign.</li>
           </ul>
           <p style="font-size:12px;color:var(--warn);margin:10px 0 0;font-weight:600;">⚠ Fill in Settings first - your aircraft registration, pilot contact numbers, and SMS/email recipients all need to be set up there before the emergency button can send a useful report.</p>
           <div style="display:flex;gap:6px;margin-top:12px;">
@@ -1515,7 +1516,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.16-1220';
+const APP_VERSION = 'v260824.18-1340';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -6030,6 +6031,18 @@ function drawStagedPlanChart(result){
     ${infoRows}
     ${legendMarkup}
   </svg>`;
+  // Belt-and-braces on top of the CSS aspect-ratio above: explicitly
+  // measure the wrapper's own actually-rendered width (now that the SVG
+  // is in the DOM) and set the SVG's real height ATTRIBUTE from it,
+  // proportional to the viewBox - the height attribute directly sets the
+  // SVG's intrinsic size and doesn't depend on aspect-ratio CSS support
+  // one way or another, so this can't be affected by whatever iPad/Safari
+  // quirk kept undermining the CSS-only approach.
+  const svgEl = wrap.querySelector('svg');
+  if(svgEl){
+    const renderedWidth = wrap.clientWidth || wrap.getBoundingClientRect().width;
+    if(renderedWidth > 0) svgEl.setAttribute('height', Math.round(renderedWidth * (H/W)));
+  }
 }
 document.getElementById('subModeQuick').addEventListener('click', ()=>setSubMode('quick'));
 document.getElementById('subModeStaged').addEventListener('click', ()=>{
@@ -10325,7 +10338,6 @@ async function sendEmergencyEmail(){
   logEmergencyEvent('email');
 }
 document.getElementById('btnEmergencyWhatsapp').addEventListener('click', sendEmergencyWhatsapp);
-document.getElementById('btnEmergencySms').addEventListener('click', sendEmergencySms);
 document.getElementById('btnEmergencyEmailSend').addEventListener('click', sendEmergencyEmail);
 document.getElementById('btnEmergencyAllChannels').addEventListener('click', ()=>{
   // Fired synchronously within one user gesture so browsers don't block the
@@ -11168,13 +11180,16 @@ try{
   }
 }catch(e){}
 
+let tutorialAutoDismissTimer = null;
 function dismissTutorial(){
+  clearTimeout(tutorialAutoDismissTimer);
   document.getElementById('tutorialOverlay').classList.remove('show');
   try{ localStorage.setItem('gblp_tutorial_seen_v1', '1'); }catch(e){}
 }
 try{
   if(!localStorage.getItem('gblp_tutorial_seen_v1')){
     document.getElementById('tutorialOverlay').classList.add('show');
+    tutorialAutoDismissTimer = setTimeout(dismissTutorial, 20000);
   }
 }catch(e){}
 

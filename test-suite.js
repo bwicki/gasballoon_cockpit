@@ -191,6 +191,55 @@ async function main() {
     record('Settings panel never starts above the header\'s own bottom edge', panelTop >= 44, `panel top: ${panelTop}px, header bottom: 44px`);
   });
 
+  console.log('\n=== Staged descent race condition ===');
+  await withDom(html, {}, async (dom) => {
+    dom.window.eval(`
+      state.appMode='plan'; currentSubMode='staged';
+      state.altAMSL=3000; state.groundElev=450;
+      windAt = () => ({u:2, v:2});
+      stagedMarker = {getLatLng: () => ({lat:47.30, lng:8.30})};
+    `);
+    const p1 = dom.window.computeStagedReachableArea();
+    dom.window.eval('stagedMarker = {getLatLng: () => ({lat:47.50, lng:8.50})};');
+    const p2 = dom.window.computeStagedReachableArea();
+    await Promise.all([p1, p2]);
+    const markerLat = dom.window.eval('state.stagedGridContext').markerLat;
+    record('A second call arriving mid-flight waits for the FRESH result, not stale data from the position active when the first call started', markerLat === 47.5, `got markerLat=${markerLat}`);
+  });
+
+  console.log('\n=== Staged descent chart height (iPad fix) ===');
+  await withDom(html, {}, async (dom) => {
+    dom.window.eval(`
+      state.altAMSL=3000; state.groundElev=450;
+      windAt = () => ({u:2, v:2});
+      stagedMarker = {getLatLng: () => ({lat:47.30, lng:8.30})};
+      state.stagedMarkerT = 0;
+    `);
+    await dom.window.computeStagedReachableArea();
+    const result = dom.window.searchStagedDescentToTarget(47.35, 8.40);
+    const wrap = dom.window.document.getElementById('stagedPlanSvgWrap');
+    Object.defineProperty(wrap, 'clientWidth', { value: 310, configurable: true });
+    dom.window.drawStagedPlanChart(result);
+    const svg = wrap.querySelector('svg');
+    const heightAttr = svg ? parseInt(svg.getAttribute('height')) : null;
+    const expected = Math.round(310 * (350/340));
+    record('Chart SVG gets an explicit height attribute matching its rendered width (not left to browser intrinsic-sizing guesses)', heightAttr === expected, `got ${heightAttr}, expected ${expected}`);
+  });
+
+  console.log('\n=== SMS button removed, but still part of "all channels" ===');
+  const btnGone = !html.includes('id="btnEmergencySms"');
+  record('Standalone SMS button no longer exists in the HTML', btnGone);
+  await withDom(html, {}, async (dom) => {
+    const opened = [];
+    dom.window.open = (url) => { opened.push(url); return {}; };
+    dom.window.document.getElementById('cfgSmsRecipient1').value = '+41792223344';
+    dom.window.document.getElementById('cfgPilotMobile').value = '+41791110000';
+    dom.window.document.getElementById('emergencyMsgText').value = 'test';
+    dom.window.document.getElementById('btnEmergencyAllChannels').click();
+    const smsStillFires = opened.some(u => u.startsWith('sms:'));
+    record('"Send on all channels" still includes SMS as one of its channels', smsStillFires, JSON.stringify(opened));
+  });
+
   console.log(`\n=== Result: ${passed} passed, ${failed} failed ===`);
   if (failed > 0) {
     console.log('\nFailures:');

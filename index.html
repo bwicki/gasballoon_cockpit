@@ -1486,7 +1486,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.12-0950';
+const APP_VERSION = 'v260824.13-1020';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -8277,7 +8277,7 @@ function positionSidebarHandle(){
   const handle = document.getElementById('sidebarHandle');
   const sidebar = document.getElementById('sidebar');
   const collapsed = sidebar.classList.contains('collapsed');
-  const offset = collapsed ? 0 : sidebar.getBoundingClientRect().width;
+  let offset = collapsed ? 0 : sidebar.getBoundingClientRect().width;
   if(collapsed){
     handle.style.right = '0px';
     handle.textContent = '◀';
@@ -8285,16 +8285,31 @@ function positionSidebarHandle(){
     handle.style.right = offset + 'px';
     handle.textContent = '▶';
   }
-  // Leaflet's own controls (zoom, base-layer switcher) and our center-map
-  // button must stay anchored to the MAP's right edge, i.e. always just to
-  // the left of the sidebar - not the true screen edge, which the sidebar
-  // itself now occupies as an overlay when open.
+  // When the wind-sounding panel is open and extends further left than the
+  // sidebar itself (e.g. on a narrower screen like an iPad, where it's
+  // deliberately allowed to overlap into the map area rather than being
+  // squeezed too narrow), the map controls need to sit to ITS left instead
+  // - use whichever of the two reaches further left.
+  const windPanel = document.getElementById('windSoundingPanel');
+  if(windPanel && windPanel.style.display!=='none'){
+    const mapEl = document.getElementById('map');
+    const mapRight = mapEl ? mapEl.getBoundingClientRect().right : window.innerWidth;
+    const panelLeftEdge = windPanel.getBoundingClientRect().left;
+    const windPanelOffset = Math.max(0, mapRight - panelLeftEdge);
+    offset = Math.max(offset, windPanelOffset);
+  }
+  // Leaflet's own controls (zoom, base-layer switcher), the scale bar, and
+  // our center-map button stack must all stay anchored immediately to the
+  // left of whichever of the sidebar/wind-sounding panel currently reaches
+  // furthest - not the true screen edge, which those occupy as overlays.
   const topRight = document.querySelector('#map .leaflet-top.leaflet-right');
   const bottomRight = document.querySelector('#map .leaflet-bottom.leaflet-right');
   if(topRight) topRight.style.right = offset + 'px';
   if(bottomRight) bottomRight.style.right = offset + 'px';
   const controlsStack = document.getElementById('mapControlsStack');
   if(controlsStack) controlsStack.style.right = (offset + 10) + 'px';
+  const scaleBar = document.querySelector('.map-scale-bar');
+  if(scaleBar) scaleBar.style.right = (offset + 10) + 'px';
 }
 document.getElementById('sidebarHandle').addEventListener('click', ()=>{
   const sidebar = document.getElementById('sidebar');
@@ -9878,24 +9893,10 @@ function positionWindSoundingPanel(){
   panel.style.left = 'auto';
   panel.style.right = margin+'px';
   panel.style.width = width+'px';
-  // How far the panel's own left edge sits into the map area, measured
-  // from where the right-side Leaflet controls would normally start (their
-  // own default ~10px inset from the map's right edge) - only the amount
-  // beyond that inset needs compensating, so the controls aren't shifted
-  // unnecessarily far on wide screens where the panel doesn't reach them.
-  const mapEl = document.getElementById('map');
-  const mapRight = mapEl ? mapEl.getBoundingClientRect().right : window.innerWidth;
-  const panelLeftEdge = window.innerWidth - margin - width;
-  const overlapPx = Math.max(0, mapRight - panelLeftEdge + 10);
-  document.querySelectorAll('.leaflet-top.leaflet-right, .leaflet-bottom.leaflet-right, .map-controls-stack').forEach(el=>{
-    el.style.transition = 'margin-right 0.15s ease';
-    el.style.marginRight = overlapPx+'px';
-  });
+  positionSidebarHandle();
 }
 function resetMapControlsPosition(){
-  document.querySelectorAll('.leaflet-top.leaflet-right, .leaflet-bottom.leaflet-right, .map-controls-stack').forEach(el=>{
-    el.style.marginRight = '';
-  });
+  positionSidebarHandle();
 }
 function alignPanelToPositionCard(panelEl){
   // Reads the SIDEBAR's own position, not the "Current Position" card's -

@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260824.12-0950** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
+**Current version: v260824.13-1020** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
 
 ## What it is
 
@@ -228,6 +228,14 @@ Given the core logic is now verified to run correctly, the two most plausible re
 2. The service worker (`sw.js`) was re-checked and confirmed to only cache map TILE requests, never `index.html` itself - ruled out as a cause.
 
 If the report persists after this, the next most useful thing would be the actual browser console output at the moment it happens, since the runtime logic itself is now confirmed correct in isolation.
+
+## Map controls were hiding behind the sidebar, not sitting to its left - the real root cause (24.08.2026)
+
+The sidebar is an absolutely-positioned overlay on top of the map (`position:absolute; right:0`), not a flexbox sibling that shrinks the map's own container - `#map` itself is always full-width underneath it. The right-side map controls (base-layer picker, zoom buttons, wind-particle slider stack, scale bar) were positioned relative to that full-width container, so by default they sat hidden BEHIND the sidebar (which has a higher z-index), not visibly to its left.
+
+There was already a working mechanism for this - `positionSidebarHandle()` - which correctly offsets the Leaflet controls and the particle-slider stack via `style.right` whenever the sidebar's own width changes or it's collapsed/expanded. The scale bar wasn't included in it. Separately, the wind-sounding panel's own positioning code (`positionWindSoundingPanel()`/`resetMapControlsPosition()`) had been shifting the same elements again via `style.marginRight` - a second, independent mechanism stacking on top of the first rather than coordinating with it, which would have produced an incorrect, doubled-up shift whenever both were active at once.
+
+Consolidated into the one existing, correct mechanism: `positionSidebarHandle()` now also checks whether the wind-sounding panel is open and extends further left than the sidebar (as it deliberately can on a narrower screen like an iPad, rather than being squeezed too narrow) and uses whichever of the two reaches further left - and now also positions the scale bar, which it previously didn't. The wind-panel-specific functions now just call this one shared function instead of maintaining their own separate, conflicting positioning logic. Live-tested with simulated element geometry (`getBoundingClientRect` mocks, since jsdom doesn't do real layout) confirming both the sidebar-only case (elements offset exactly to the sidebar's width) and the wind-panel-open case on a narrow screen (elements correctly offset to the wind panel's further-left edge instead).
 
 ## Mid-session flight profile loading, plus two verification checks (24.08.2026)
 

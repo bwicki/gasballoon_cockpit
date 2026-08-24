@@ -85,6 +85,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 #passwordGate .box h2{margin:0 0 4px;color:var(--accent);font-size:16px;}
 #passwordGate .box p{color:var(--muted);font-size:12px;margin:0 0 16px;}
 #passwordGate input{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-size:16px;text-align:center;margin-bottom:10px;}
+#passwordGate input::placeholder{text-transform:none;}
 #passwordGate button{width:100%;background:var(--accent);color:#00201d;border:none;border-radius:8px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;}
 #passwordGate .err{color:var(--bad);font-size:12px;margin-top:8px;min-height:16px;}
 
@@ -323,7 +324,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
     <h2>🎈 Gasballoon Cockpit</h2>
     <p>Enter your access code to continue</p>
     <div style="display:flex;gap:6px;margin-bottom:2px;">
-      <input type="text" id="gateUserCode" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="User Code" style="width:100px;text-transform:uppercase;text-align:center;">
+      <input type="text" id="gateUserCode" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="User Code" style="width:118px;text-transform:uppercase;text-align:center;">
       <input type="password" id="gatePw" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password" style="flex:1;">
     </div>
     <div class="err" id="gateErr"></div>
@@ -1387,12 +1388,41 @@ async function saveGistStore(storeObj){
   if(!r.ok) throw new Error('Could not save to the shared store (HTTP '+r.status+')');
 }
 
-let gateNewProfileRequested = false; // set by the "New profile" button - proceeds without loading an existing profile, actual creation happens later via the Settings-close save flow
-function startNewFlightProfileAtLogin(){
-  gateNewProfileRequested = true;
-  document.getElementById('gateProfileName').value = '';
-  document.getElementById('gateProfilePin').value = '';
-  checkGatePassword();
+async function startNewFlightProfileAtLogin(){
+  const userCode = document.getElementById('gateUserCode').value.trim().toUpperCase();
+  const pw = document.getElementById('gatePw').value;
+  const errEl = document.getElementById('gateErr');
+  const profErrEl = document.getElementById('gateProfileErr');
+  errEl.textContent = ''; profErrEl.textContent = '';
+  if(!userCode || !pw){ errEl.textContent = 'Enter your 3-letter code and password.'; return; }
+  const profileName = document.getElementById('gateProfileName').value.trim().toUpperCase();
+  const profilePin = document.getElementById('gateProfilePin').value.trim();
+  if(!profileName || !profilePin){ profErrEl.textContent = 'Enter a flight profile name and PIN to create one.'; return; }
+  let store;
+  try{ store = await fetchGistStore(); }
+  catch(e){ errEl.textContent = 'Could not reach the shared login store - check your connection.'; console.error(e); return; }
+  if(!store.users || store.users[userCode]!==pw){
+    errEl.textContent = 'Incorrect code or password.';
+    document.getElementById('gatePw').value = '';
+    return;
+  }
+  store.flightProfiles = store.flightProfiles || {};
+  if(store.flightProfiles[profileName]){
+    profErrEl.textContent = 'That name is already taken - choose another.';
+    return;
+  }
+  // Empty settings object at creation time - nothing has been loaded/
+  // configured yet this early (the app itself hasn't booted), the actual
+  // settings get filled in later via the normal Settings-close save flow,
+  // once the person has actually changed something.
+  store.flightProfiles[profileName] = {pin: profilePin, settings: {}};
+  try{ await saveGistStore(store); }
+  catch(e){ profErrEl.textContent = 'Could not create the profile - check your connection.'; console.error(e); return; }
+  state.currentFlightProfile = profileName;
+  try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, profileName); }catch(e){}
+  updateFlightProfileFooterDisplay();
+  localStorage.setItem(GATE_STORAGE_KEY, String(Date.now()));
+  document.getElementById('passwordGate').style.display = 'none';
 }
 async function checkGatePassword(){
   const userCode = document.getElementById('gateUserCode').value.trim().toUpperCase();
@@ -1411,7 +1441,7 @@ async function checkGatePassword(){
   }
   const profileName = document.getElementById('gateProfileName').value.trim().toUpperCase();
   const profilePin = document.getElementById('gateProfilePin').value.trim();
-  if(!gateNewProfileRequested && profileName){
+  if(profileName){
     const prof = store.flightProfiles && store.flightProfiles[profileName];
     if(!prof || prof.pin!==profilePin){
       profErrEl.textContent = 'Unknown flight profile name or wrong PIN.';
@@ -1420,7 +1450,7 @@ async function checkGatePassword(){
     applyFlightProfileSettings(prof.settings);
     state.currentFlightProfile = profileName;
   } else {
-    state.currentFlightProfile = null; // "New profile" or nothing entered - stays local until explicitly saved as a named profile
+    state.currentFlightProfile = null; // nothing entered - stays local
   }
   try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, state.currentFlightProfile||''); }catch(e){}
   updateFlightProfileFooterDisplay();
@@ -1442,7 +1472,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.05-0700';
+const APP_VERSION = 'v260824.07-0720';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 

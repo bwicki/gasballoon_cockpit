@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260823.13-1650** (23.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this.
+**Current version: v260824.02-0505** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
 
 ## What it is
 
@@ -114,9 +114,19 @@ The ✈️ airspace layer draws real, class-filtered airspace boundaries from op
 
 Organized into color-coded groups: General (cache radius, transition altitude, units), Weather (model selection, sonde data, METAR/station sources, lightning), Air Traffic & Airspace, Terrain & Ground Features, Descent Planning (adiabatic model), Safety & Positioning (external GPS, emergency contact), and Data & Backup.
 
-**Tokens and keys**: every external service credential the app uses, gathered in one place and individually editable - Open-Meteo (commercial), openAIP, RapidAPI (air traffic), aprs.fi, Xweather, EmailJS, Dropbox, GitHub. As with any client-side app, these are visible in the page source to anyone who views it; changing one asks for confirmation first.
+**Tokens and keys**: every external service credential the app uses, gathered in one place and individually editable - Open-Meteo (commercial), openAIP, RapidAPI (air traffic), aprs.fi, Xweather, EmailJS. As with any client-side app, these are visible in the page source to anyone who views it; changing one asks for confirmation first.
 
-**Profile backup**: export/import as a JSON file (native share sheet on mobile), or back up encrypted to a GitHub Gist (AES-GCM + PBKDF2, password-protected).
+**Profile export/import**: as a JSON file (native share sheet on mobile) - independent of the shared flight-profile system below, useful for a one-off transfer between devices without needing the shared store at all.
+
+## Login and shared flight profiles (replaces the old Dropbox/encrypted-Gist backup system, 24.08.2026)
+
+The single fixed password gate was replaced with a 3-letter user code + password login, validated against a shared user table stored in a GitHub Gist (`GIST_ID`/`GIST_TOKEN` constants near the top of the script - a single shared token with only the `gist` scope, deliberately embedded directly in the client-side source rather than requiring per-user setup, since none of this data is sensitive). A session stays valid for 12h before the gate reappears.
+
+The same login screen also offers opening an existing **flight profile** (an 8-character name + 6-digit PIN) - a full settings snapshot shared across all users who know the PIN, stored in the same Gist. Opening one loads its settings immediately; a "New profile" button on the login screen proceeds without loading one (stays in local-only mode until explicitly saved as a named profile later). The currently active profile is shown in the footer, next to the version number ("Flightprofile: XXXX" or "(local)" when none is active).
+
+Closing Settings after changing anything prompts to save: to the currently-open flight profile (re-asks its PIN first), to a brand-new named profile (asks for a new name + PIN, rejecting an already-taken name), or only locally (the existing `localStorage`-based behavior, unchanged).
+
+**AdminApp** (`admin.html`, deployed alongside `index.html`): a separate, simple, master-password-protected page for managing the shared Gist directly - two editable tables (users: code+password; flight profiles: name+PIN, both shown in plain text, since none of it is sensitive), a "Create new Gist" button for first-time setup, and its own version number. The Gist ID/token are entered here by whoever administers it (kept only in that browser's own `localStorage`, not hardcoded in this file) - once a Gist exists, its ID and a `gist`-scoped token get pasted into `index.html`'s own constants so the main app can read/write it too.
 
 **Emergency contact**: pilot name, aircraft registration, mobile number, and email, with prepared-message sending over WhatsApp, SMS, or email (via mailto, or silently via EmailJS if configured).
 

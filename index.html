@@ -81,7 +81,7 @@ html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-b
 
 /* ---- password gate ---- */
 #passwordGate{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:5000;}
-#passwordGate .box{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(90vw,320px);text-align:center;}
+#passwordGate .box{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(92vw,380px);text-align:center;}
 #passwordGate .box h2{margin:0 0 4px;color:var(--accent);font-size:16px;}
 #passwordGate .box p{color:var(--muted);font-size:12px;margin:0 0 16px;}
 #passwordGate input{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-size:16px;text-align:center;margin-bottom:10px;}
@@ -302,11 +302,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 #chartExpandBox{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;width:min(92vw,640px);height:min(80vh,520px);position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;}
 #chartExpandCanvas{width:100%;height:100%;max-width:100%;max-height:100%;}
 #chartExpandClose{position:absolute;top:8px;right:8px;background:var(--bad);color:#fff;border:2px solid var(--panel2);border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;z-index:2;}
-#dropboxFolderPickerOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6000;align-items:center;justify-content:center;}
-#dropboxFolderPickerOverlay.show{display:flex;}
-#dropboxFolderPickerBox{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px;width:260px;max-height:70vh;display:flex;flex-direction:column;}
-#dropboxFolderPickerBreadcrumb{font-size:11px;color:var(--muted);margin-bottom:6px;word-break:break-all;}
-#dropboxFolderPickerList{overflow-y:auto;flex:1;border:1px solid var(--border);border-radius:8px;background:var(--panel);}
+
 .dbx-folder-row{padding:8px 10px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--border);}
 .dbx-folder-row:last-child{border-bottom:none;}
 .dbx-folder-row:active{background:var(--panel2);}
@@ -325,10 +321,21 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 <div id="passwordGate">
   <div class="box">
     <h2>🎈 Gasballoon Cockpit</h2>
-    <p>Enter password to continue</p>
-    <input type="password" id="gatePw" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password">
-    <button onclick="checkGatePassword()">Unlock</button>
+    <p>Enter your access code to continue</p>
+    <div style="display:flex;gap:6px;margin-bottom:2px;">
+      <input type="text" id="gateUserCode" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC" style="width:76px;text-transform:uppercase;text-align:center;">
+      <input type="password" id="gatePw" maxlength="8" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Password" style="flex:1;">
+    </div>
     <div class="err" id="gateErr"></div>
+    <hr style="border-color:var(--border);margin:14px 0 10px;">
+    <p style="margin:0 0 8px;">Open existing flight profile?</p>
+    <div style="display:flex;gap:6px;align-items:stretch;">
+      <input type="text" id="gateProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Name" style="flex:1;text-align:center;margin-bottom:0;min-width:0;">
+      <input type="text" id="gateProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="width:64px;text-align:center;margin-bottom:0;">
+      <button onclick="startNewFlightProfileAtLogin()" style="width:auto;white-space:nowrap;padding:0 10px;font-size:11px;">New profile</button>
+    </div>
+    <div class="err" id="gateProfileErr"></div>
+    <button onclick="checkGatePassword()" style="margin-top:16px;">Unlock</button>
   </div>
 </div>
 <div id="app">
@@ -702,24 +709,7 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <div style="display:flex;align-items:center;gap:6px;color:#8b98a5;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Data & Backup</span>
           </div>
-        <div id="dropboxFolderPickerRow" style="display:none;margin-bottom:6px;">
-          <div class="copyline"><div class="txt" id="dropboxFolderDisplay">/GBLP_Logs</div><button onclick="openDropboxFolderPicker()">Choose folder</button></div>
-        </div>
-        <button class="ghost" id="btnDropboxConnect">Connect Dropbox</button>
-        <div id="dropboxStatus" style="font-size:10px;color:var(--muted);margin-top:6px;">Not connected.</div>
-        <p style="font-size:10px;color:var(--muted);margin:8px 0 0;">One-time advanced setup (Dropbox app key + redirect URI) has moved to "API Keys &amp; Tokens" at the bottom of Settings.</p>
-        <input type="hidden" id="dropboxFolder" value="/GBLP_Logs">
-
-        <div id="dropboxFolderPickerOverlay">
-          <div id="dropboxFolderPickerBox">
-            <div id="dropboxFolderPickerBreadcrumb">/ (root)</div>
-            <div id="dropboxFolderPickerList"></div>
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="ghost" style="flex:1;" onclick="selectCurrentDropboxFolder()">Use this folder</button>
-              <button class="ghost" style="flex:1;" onclick="closeDropboxFolderPicker()">Cancel</button>
-            </div>
-          </div>
-        </div>
+        <div id="settingsFlightProfileInfo" style="font-size:11px;color:var(--muted);margin-bottom:8px;">Flight profile: <b id="settingsFlightProfileName" style="color:var(--text);">(local)</b></div>
 
         <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
         <div class="subhead" style="margin-top:0;">Settings Profile</div>
@@ -732,17 +722,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           </label>
         </div>
         <div id="profileActionStatus" style="font-size:10px;color:var(--muted);margin-top:6px;"></div>
-
-        <hr style="margin:10px 0;border-color:rgba(255,255,255,0.06);">
-        <div class="subhead" style="margin-top:0;">GitHub Backup (encrypted)</div>
-        <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Stores the same profile as an encrypted GitHub Gist - readable only with the password below, even though the Gist itself may be visible to anyone with the link. Requires a GitHub Personal Access Token with "gist" scope (set in API Keys &amp; Tokens below).</p>
-        <input type="password" id="profileGithubPassword" placeholder="Password (used to encrypt/decrypt)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px;">
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <button class="ghost" style="flex:1;" onclick="handleSaveProfileToGithub()">Save to GitHub</button>
-          <button class="ghost" style="flex:1;" onclick="handleLoadProfileFromGithub()">Load from GitHub</button>
-        </div>
-        <input type="text" id="profileGithubGistId" placeholder="Gist ID (auto-filled after first save)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);">
-        <div id="profileGithubStatus" style="font-size:10px;color:var(--muted);margin-top:6px;"></div>
 
         </div>
 
@@ -791,15 +770,6 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
           <input type="text" id="cfgEmailJsTemplateId" class="api-key-input" placeholder="EmailJS Template ID" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
           <input type="text" id="cfgEmailJsPublicKey" class="api-key-input" placeholder="EmailJS Public Key" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;margin-bottom:4px;">
           <p style="font-size:10px;color:var(--muted);margin:2px 0 10px;">Your EmailJS template needs a variable that receives the message body - name it <code>message</code> - and a "To email" set to the address you want the report sent to.</p>
-
-          <div class="subhead">Dropbox Auto-Backup</div>
-          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">Requires your own free Dropbox app key from dropbox.com/developers/apps, with the URL below registered as a Redirect URI there (under "OAuth 2"), and the <code>files.content.write</code> permission enabled. Needed once before first connecting Dropbox above.</p>
-          <div class="copyline" style="margin-bottom:6px;"><div class="txt" id="dropboxRedirectUriText" style="font-size:10.5px;">—</div><button onclick="copyDropboxRedirectUri()">Copy</button></div>
-          <input type="text" id="dropboxAppKey" class="api-key-input" placeholder="Dropbox App Key" value="wujo04yixt2tfxq" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:12px;">
-
-          <div class="subhead">GitHub Backup</div>
-          <p style="font-size:10px;color:var(--muted);margin:0 0 6px;">A Personal Access Token with just the "gist" scope, from github.com/settings/tokens - used only to save/load your encrypted settings profile as a Gist, nothing else.</p>
-          <input type="password" id="sGithubPat" class="api-key-input" placeholder="GitHub Personal Access Token" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;font-size:11px;font-family:var(--mono);">
         </details>
 
         <hr>
@@ -856,7 +826,11 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
 
   <div id="main">
     <div id="mapwrap">
-      <div id="versionChip" class="leaflet-control-attribution version-badge"></div>
+      <div class="version-badge" style="display:flex;align-items:center;gap:5px;">
+        <span id="versionChip" class="leaflet-control-attribution"></span>
+        <span style="opacity:0.5;">|</span>
+        <span id="footerFlightProfile">Flightprofile: (local)</span>
+      </div>
       <div id="flightDataBox" style="display:none;">
         <div id="flightDataBoxClose">✕</div>
         <div class="fdb-sq" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:1px solid #e5e9ec;">
@@ -1253,6 +1227,33 @@ canvas.mini-half{width:100% !important;height:110px !important;cursor:zoom-in;}
         <div style="font-size:9px;color:var(--muted);margin-bottom:8px;">Expected landing location<br><span id="stagedPlanLandingInfo" style="color:var(--text);">—</span></div>
         <div id="stagedPlanSvgWrap" style="width:100%;position:relative;overflow-y:hidden;"></div>
       </div>
+      <div id="settingsSaveOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6500;align-items:center;justify-content:center;">
+        <div id="settingsSaveBox" style="background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:20px;width:min(90vw,320px);text-align:center;">
+          <p style="margin:0 0 14px;font-weight:600;">Save changed settings?</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="ghost" id="settingsSaveToExistingBtn" style="display:none;" onclick="settingsSaveChoice('existing')"></button>
+            <button class="ghost" onclick="settingsSaveChoice('new')">To new flight profile</button>
+            <button class="ghost" onclick="settingsSaveChoice('local')">Only local</button>
+          </div>
+        </div>
+      </div>
+      <div id="settingsSavePinOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6600;align-items:center;justify-content:center;">
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:20px;width:min(90vw,300px);text-align:center;">
+          <p id="settingsSavePinPrompt" style="margin:0 0 12px;font-weight:600;">Re-enter the PIN for this flight profile</p>
+          <input type="text" id="settingsSavePinInput" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:16px;text-align:center;margin-bottom:10px;">
+          <div class="err" id="settingsSavePinErr" style="color:var(--bad);font-size:12px;margin-bottom:10px;min-height:16px;"></div>
+          <button class="ghost" style="width:100%;" onclick="confirmSaveToExistingProfile()">Save</button>
+        </div>
+      </div>
+      <div id="settingsNewProfileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6600;align-items:center;justify-content:center;">
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:20px;width:min(90vw,300px);text-align:center;">
+          <p style="margin:0 0 12px;font-weight:600;">New flight profile</p>
+          <input type="text" id="settingsNewProfileName" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Name (max 8 chars)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:16px;text-align:center;margin-bottom:8px;text-transform:uppercase;">
+          <input type="text" id="settingsNewProfilePin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="PIN (max 6 digits)" style="width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:16px;text-align:center;margin-bottom:10px;">
+          <div class="err" id="settingsNewProfileErr" style="color:var(--bad);font-size:12px;margin-bottom:10px;min-height:16px;"></div>
+          <button class="ghost" style="width:100%;" onclick="confirmSaveToNewProfile()">Create & save</button>
+        </div>
+      </div>
       <div id="windSoundingPanel" style="display:none;position:absolute;top:60px;left:8px;z-index:950;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;width:350px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.3);">
         <button id="btnCloseWindSounding" style="position:absolute;top:6px;right:6px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;z-index:1;">✕</button>
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Wind sounding</div>
@@ -1357,51 +1358,87 @@ if(document.readyState !== 'loading'){
 }
 
 // ---------- password gate ----------
-// Soft client-side gate only (GitHub Pages has no server-side auth - anyone
-// opening devtools can read this hash / bypass the check). Good enough to
-// keep casual visitors out, NOT real access control.
-//
-// To set your OWN password: open the browser console on this page and run
-//   crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourNewPassword'))
-//     .then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
-// then paste the resulting hash below, replacing GATE_HASH.
-const GATE_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // default password: 1234
-const GATE_STORAGE_KEY = 'gblp_unlocked_v1';
+// ---------- Shared user/flight-profile store (GitHub Gist) ----------
+// Per explicit instruction: the data here (a handful of pilot names/simple
+// passwords and flight-profile settings) is not sensitive, so a single
+// shared token+gist embedded directly in the client-side source (visible
+// to anyone who views it, same as every other API key already in this
+// file) is an accepted, deliberate simplification - not an oversight. The
+// token is scoped to "gist" only, nothing broader. The actual token/ID
+// pair is created and managed via the separate AdminApp (admin.html) -
+// once created there, both are pasted in here and in admin.html.
+const GIST_TOKEN = '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';
+const GIST_ID = '54c1b07d253f7f16be8b98ee4ff273f3';
+const GATE_STORAGE_KEY = 'gblp_login_at_v2'; // timestamp (ms) of last successful login
+const SESSION_MAX_AGE_MS = 12*60*60*1000; // 12h, per explicit instruction
+const CURRENT_PROFILE_STORAGE_KEY = 'gblp_current_profile_v1';
 
-async function sha256Hex(text){
-  if(window.crypto && crypto.subtle && crypto.subtle.digest){
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  // Fallback (e.g. when opened via file:// without a secure context, where
-  // SubtleCrypto is unavailable): simple non-cryptographic hash, good enough
-  // to keep local testing working. On real https hosting the strong hash above is used.
-  let h = 0;
-  for(let i=0;i<text.length;i++){ h = (Math.imul(31,h) + text.charCodeAt(i))|0; }
-  return 'fallback-'+(h>>>0).toString(16);
+async function fetchGistStore(){
+  const r = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    headers: {'Accept':'application/vnd.github+json', 'Authorization':'Bearer '+GIST_TOKEN}
+  });
+  if(!r.ok) throw new Error('Could not reach the shared store (HTTP '+r.status+')');
+  const j = await r.json();
+  const file = j.files && j.files['gbcockpit-store.json'];
+  if(!file) throw new Error('Shared store Gist is missing its data file.');
+  return JSON.parse(file.content);
+}
+async function saveGistStore(storeObj){
+  const r = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    method: 'PATCH',
+    headers: {'Accept':'application/vnd.github+json', 'Authorization':'Bearer '+GIST_TOKEN},
+    body: JSON.stringify({files: {'gbcockpit-store.json': {content: JSON.stringify(storeObj, null, 2)}}})
+  });
+  if(!r.ok) throw new Error('Could not save to the shared store (HTTP '+r.status+')');
+}
+
+let gateNewProfileRequested = false; // set by the "New profile" button - proceeds without loading an existing profile, actual creation happens later via the Settings-close save flow
+function startNewFlightProfileAtLogin(){
+  gateNewProfileRequested = true;
+  document.getElementById('gateProfileName').value = '';
+  document.getElementById('gateProfilePin').value = '';
+  checkGatePassword();
 }
 async function checkGatePassword(){
+  const userCode = document.getElementById('gateUserCode').value.trim().toUpperCase();
   const pw = document.getElementById('gatePw').value;
-  const hash = await sha256Hex(pw);
-  if(hash === GATE_HASH){
-    localStorage.setItem(GATE_STORAGE_KEY, '1');
-    document.getElementById('passwordGate').style.display = 'none';
-  } else {
-    document.getElementById('gateErr').textContent = 'Incorrect password';
+  const errEl = document.getElementById('gateErr');
+  const profErrEl = document.getElementById('gateProfileErr');
+  errEl.textContent = ''; profErrEl.textContent = '';
+  if(!userCode || !pw){ errEl.textContent = 'Enter your 3-letter code and password.'; return; }
+  let store;
+  try{ store = await fetchGistStore(); }
+  catch(e){ errEl.textContent = 'Could not reach the shared login store - check your connection.'; console.error(e); return; }
+  if(!store.users || store.users[userCode]!==pw){
+    errEl.textContent = 'Incorrect code or password.';
     document.getElementById('gatePw').value = '';
+    return;
   }
+  const profileName = document.getElementById('gateProfileName').value.trim().toUpperCase();
+  const profilePin = document.getElementById('gateProfilePin').value.trim();
+  if(!gateNewProfileRequested && profileName){
+    const prof = store.flightProfiles && store.flightProfiles[profileName];
+    if(!prof || prof.pin!==profilePin){
+      profErrEl.textContent = 'Unknown flight profile name or wrong PIN.';
+      return;
+    }
+    applyFlightProfileSettings(prof.settings);
+    state.currentFlightProfile = profileName;
+  } else {
+    state.currentFlightProfile = null; // "New profile" or nothing entered - stays local until explicitly saved as a named profile
+  }
+  try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, state.currentFlightProfile||''); }catch(e){}
+  updateFlightProfileFooterDisplay();
+  localStorage.setItem(GATE_STORAGE_KEY, String(Date.now()));
+  document.getElementById('passwordGate').style.display = 'none';
 }
 document.getElementById('gatePw').addEventListener('keydown', e=>{ if(e.key==='Enter') checkGatePassword(); });
-if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
-  // No secure context (e.g. opened via file:// for local testing) - the
-  // password check can't run reliably here, so skip the gate rather than
-  // false-block. On real https hosting (GitHub Pages) this branch won't fire.
-  console.warn('Gasballoon Cockpit: SubtleCrypto unavailable (no secure context) - password gate skipped for local testing.');
-  document.getElementById('passwordGate').style.display = 'none';
-} else if(localStorage.getItem(GATE_STORAGE_KEY) === '1'){
-  document.getElementById('passwordGate').style.display = 'none';
-} else {
-  document.getElementById('gatePw').focus();
+document.getElementById('gateProfilePin').addEventListener('keydown', e=>{ if(e.key==='Enter') checkGatePassword(); });
+function updateFlightProfileFooterDisplay(){
+  const el = document.getElementById('footerFlightProfile');
+  if(el) el.textContent = 'Flightprofile: '+(state.currentFlightProfile || '(local)');
+  const settingsEl = document.getElementById('settingsFlightProfileName');
+  if(settingsEl) settingsEl.textContent = state.currentFlightProfile || '(local)';
 }
 
 // ---------- version ----------
@@ -1410,8 +1447,8 @@ if(!(window.crypto && crypto.subtle && crypto.subtle.digest)){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260823.13-1650';
-const APP_DATE = '23.08.2026';
+const APP_VERSION = 'v260824.02-0505';
+const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
 // ---------- state ----------
@@ -1430,6 +1467,23 @@ const state = {
   lastFix: null, // {lat,lon,t} of the previous GPS fix, used to derive course/speed
   manualPositionSet: false, // whether a position has been tapped on the map while in manual/test mode
 };
+// Session check moved here (right after state exists) rather than staying
+// next to the rest of the gate logic above - that code runs at script
+// load, before state was declared yet, which would otherwise be a
+// temporal-dead-zone reference to state.currentFlightProfile before it exists.
+{
+  const lastLoginAt = parseInt(localStorage.getItem(GATE_STORAGE_KEY)||'0', 10);
+  if(Date.now() - lastLoginAt < SESSION_MAX_AGE_MS){
+    // Still within the 12h session - skip the gate, and restore whichever
+    // flight profile was active when this device last logged in (if any),
+    // so the footer/save-flow stay consistent across a page reload within
+    // the same session rather than silently reverting to "(local)".
+    document.getElementById('passwordGate').style.display = 'none';
+    state.currentFlightProfile = localStorage.getItem(CURRENT_PROFILE_STORAGE_KEY) || null;
+  } else {
+    document.getElementById('gateUserCode').focus();
+  }
+}
 
 const G = 9.80665;
 const KMH_PER_MS = 3.6;
@@ -10528,208 +10582,6 @@ try{
 }catch(e){}
 restartLogbookTimer();
 
-// ---------- Dropbox auto-backup (OAuth 2.0 PKCE, no server needed) ----------
-// PKCE is used (rather than the older implicit-grant "token" flow, which
-// Dropbox has been phasing out) since it doesn't require a client secret -
-// safe to run entirely from a static page. The redirect target is this same
-// page; on return, the authorization code in the URL is exchanged for an
-// access token client-side.
-const DROPBOX_REDIRECT_URI = location.origin + location.pathname;
-document.getElementById('dropboxRedirectUriText').textContent = DROPBOX_REDIRECT_URI;
-function copyDropboxRedirectUri(){
-  navigator.clipboard && navigator.clipboard.writeText(DROPBOX_REDIRECT_URI);
-}
-function base64UrlEncode(bytes){
-  let str = btoa(String.fromCharCode(...bytes));
-  return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-async function sha256(text){
-  const data = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return new Uint8Array(hash);
-}
-function randomString(len){
-  const arr = new Uint8Array(len);
-  crypto.getRandomValues(arr);
-  return base64UrlEncode(arr);
-}
-try{
-  document.getElementById('dropboxAppKey').value = localStorage.getItem('gblp_dropbox_appkey') || 'wujo04yixt2tfxq';
-  document.getElementById('dropboxFolder').value = localStorage.getItem('gblp_dropbox_folder') || '/GBLP_Logs';
-  document.getElementById('sGithubPat').value = localStorage.getItem('gblp_github_pat') || '';
-  document.getElementById('profileGithubGistId').value = localStorage.getItem('gblp_github_gist_id') || '';
-}catch(e){}
-document.getElementById('dropboxAppKey').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_dropbox_appkey', e.target.value); }catch(err){} });
-document.getElementById('dropboxFolder').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_dropbox_folder', e.target.value); }catch(err){} });
-document.getElementById('sGithubPat').addEventListener('change', e=>{ try{ localStorage.setItem('gblp_github_pat', e.target.value); }catch(err){} });
-document.getElementById('profileFileInput').addEventListener('change', async e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const statusEl = document.getElementById('profileActionStatus');
-  statusEl.textContent = 'Importing…';
-  try{
-    await importProfileFromFile(file);
-    statusEl.textContent = 'Profile imported - reload the page for every field to pick up the new values.';
-  }catch(err){
-    statusEl.textContent = 'Could not import this file: '+err.message;
-  }
-  e.target.value = '';
-});
-async function handleSaveProfileToGithub(){
-  const statusEl = document.getElementById('profileGithubStatus');
-  const password = document.getElementById('profileGithubPassword').value;
-  if(!password){ statusEl.textContent = 'Enter a password first - it encrypts the backup.'; return; }
-  statusEl.textContent = 'Saving…';
-  try{
-    const gistId = await saveProfileToGithub(password);
-    document.getElementById('profileGithubGistId').value = gistId;
-    statusEl.textContent = `Saved. Gist ID: ${gistId} (kept locally, and needed - together with the password - to load this backup on another device).`;
-  }catch(err){
-    statusEl.textContent = 'Save failed: '+err.message;
-  }
-}
-async function handleLoadProfileFromGithub(){
-  const statusEl = document.getElementById('profileGithubStatus');
-  const password = document.getElementById('profileGithubPassword').value;
-  const gistId = document.getElementById('profileGithubGistId').value.trim();
-  if(!gistId){ statusEl.textContent = 'Enter the Gist ID from the device that saved this backup.'; return; }
-  if(!password){ statusEl.textContent = 'Enter the password used when this backup was saved.'; return; }
-  statusEl.textContent = 'Loading…';
-  try{
-    await loadProfileFromGithub(gistId, password);
-    statusEl.textContent = 'Profile loaded - reload the page for every field to pick up the new values.';
-  }catch(err){
-    statusEl.textContent = 'Load failed: '+err.message+' (wrong password decrypts to garbage rather than a clear error, so double-check that too).';
-  }
-}
-document.getElementById('btnDropboxConnect').addEventListener('click', async ()=>{
-  const appKey = document.getElementById('dropboxAppKey').value.trim();
-  if(!appKey){ alert('Enter your Dropbox App Key first (see note above).'); return; }
-  const verifier = randomString(64);
-  try{ localStorage.setItem('gblp_dropbox_pkce_verifier', verifier); }catch(e){}
-  const challenge = base64UrlEncode(await sha256(verifier));
-  const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${encodeURIComponent(appKey)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(DROPBOX_REDIRECT_URI)}&token_access_type=offline`;
-  location.href = authUrl;
-});
-async function completeDropboxOAuthIfReturning(){
-  const params = new URLSearchParams(location.search);
-  const oauthError = params.get('error');
-  if(oauthError){
-    document.getElementById('dropboxStatus').textContent = '⚠ Dropbox returned an error: '+(params.get('error_description')||oauthError)+'. Check that the Redirect URI above is registered EXACTLY in your Dropbox app settings.';
-    history.replaceState(null, '', location.pathname);
-    return;
-  }
-  const code = params.get('code');
-  if(!code) return;
-  const appKey = localStorage.getItem('gblp_dropbox_appkey');
-  const verifier = localStorage.getItem('gblp_dropbox_pkce_verifier');
-  if(!appKey){ document.getElementById('dropboxStatus').textContent = '⚠ No App Key was saved before redirecting - enter it and try again.'; return; }
-  if(!verifier){ document.getElementById('dropboxStatus').textContent = '⚠ Lost the PKCE verifier (e.g. browser cleared session data mid-flow) - try connecting again.'; return; }
-  try{
-    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
-      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({
-        code, grant_type:'authorization_code', client_id: appKey,
-        code_verifier: verifier, redirect_uri: DROPBOX_REDIRECT_URI
-      })
-    });
-    const j = await r.json();
-    if(j.access_token){
-      localStorage.setItem('gblp_dropbox_token', j.access_token);
-      if(j.refresh_token) localStorage.setItem('gblp_dropbox_refresh_token', j.refresh_token);
-      document.getElementById('dropboxStatus').textContent = '✅ Connected.';
-    } else {
-      document.getElementById('dropboxStatus').textContent = '⚠ Connection failed: '+(j.error_description||JSON.stringify(j));
-    }
-  }catch(e){
-    document.getElementById('dropboxStatus').textContent = '⚠ Connection failed: '+e.message;
-  }
-  try{ localStorage.removeItem('gblp_dropbox_pkce_verifier'); }catch(e){}
-  // Clean the ?code=... out of the visible URL without reloading.
-  history.replaceState(null, '', location.pathname);
-}
-function updateDropboxStatus(){
-  const token = localStorage.getItem('gblp_dropbox_token');
-  document.getElementById('dropboxStatus').textContent = token ? '✅ Connected. Log backs up automatically.' : 'Not connected.';
-  document.getElementById('dropboxFolderPickerRow').style.display = token ? 'block' : 'none';
-  document.getElementById('dropboxFolderDisplay').textContent = document.getElementById('dropboxFolder').value || '/GBLP_Logs';
-}
-// ---- Dropbox folder picker (browses real folders via the API, instead of
-// typing a raw path by hand) ----
-let dropboxPickerPath = '';
-async function openDropboxFolderPicker(){
-  dropboxPickerPath = document.getElementById('dropboxFolder').value || '';
-  document.getElementById('dropboxFolderPickerOverlay').classList.add('show');
-  await loadDropboxFolderList(dropboxPickerPath);
-}
-function closeDropboxFolderPicker(){
-  document.getElementById('dropboxFolderPickerOverlay').classList.remove('show');
-}
-async function loadDropboxFolderList(path){
-  const token = localStorage.getItem('gblp_dropbox_token');
-  const listEl = document.getElementById('dropboxFolderPickerList');
-  document.getElementById('dropboxFolderPickerBreadcrumb').textContent = path || '/ (root)';
-  listEl.innerHTML = '<div class="dbx-folder-row" style="color:var(--muted);">Loading…</div>';
-  try{
-    const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-      method:'POST',
-      headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
-      body: JSON.stringify({path: path, limit:200})
-    });
-    const j = await r.json();
-    const folders = (j.entries||[]).filter(e=>e['.tag']==='folder').sort((a,b)=>a.name.localeCompare(b.name));
-    listEl.innerHTML = '';
-    if(path){
-      const up = document.createElement('div');
-      up.className = 'dbx-folder-row';
-      up.textContent = '⬆ ..';
-      up.onclick = ()=>{ dropboxPickerPath = path.split('/').slice(0,-1).join('/'); loadDropboxFolderList(dropboxPickerPath); };
-      listEl.appendChild(up);
-    }
-    if(!folders.length){
-      const empty = document.createElement('div');
-      empty.className = 'dbx-folder-row'; empty.style.color = 'var(--muted)';
-      empty.textContent = '(no subfolders here)';
-      listEl.appendChild(empty);
-    }
-    folders.forEach(f=>{
-      const row = document.createElement('div');
-      row.className = 'dbx-folder-row';
-      row.textContent = '📁 '+f.name;
-      row.onclick = ()=>{ dropboxPickerPath = f.path_display; loadDropboxFolderList(dropboxPickerPath); };
-      listEl.appendChild(row);
-    });
-  }catch(e){
-    listEl.innerHTML = '<div class="dbx-folder-row" style="color:var(--bad);">Could not load folders - check your connection.</div>';
-  }
-}
-function selectCurrentDropboxFolder(){
-  document.getElementById('dropboxFolder').value = dropboxPickerPath || '/GBLP_Logs';
-  try{ localStorage.setItem('gblp_dropbox_folder', document.getElementById('dropboxFolder').value); }catch(e){}
-  document.getElementById('dropboxFolderDisplay').textContent = document.getElementById('dropboxFolder').value;
-  closeDropboxFolderPicker();
-}
-async function uploadLogToDropbox(){
-  const token = localStorage.getItem('gblp_dropbox_token');
-  if(!token || !state.flightLog.length) return;
-  const folder = (document.getElementById('dropboxFolder').value || '/GBLP_Logs').replace(/\/+$/,'');
-  const path = `${folder}/gblp_flight_log.gpx`;
-  try{
-    await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method:'POST',
-      headers:{
-        'Authorization': 'Bearer '+token,
-        'Dropbox-API-Arg': JSON.stringify({path, mode:'overwrite', mute:true}),
-        'Content-Type':'application/octet-stream'
-      },
-      body: buildGpx()
-    });
-  }catch(e){ /* offline or token expired - will retry on the next scheduled upload */ }
-}
-completeDropboxOAuthIfReturning();
-updateDropboxStatus();
-setInterval(uploadLogToDropbox, 10*60*1000); // back up every 10 minutes
-
 // ---------- external Bluetooth GPS receiver (experimental, best-effort) ----------
 // Uses the Bluetooth SIG standard "Location and Navigation" service (0x1819)
 // and its "Location and Speed" characteristic (0x2A67). This is the closest
@@ -10958,19 +10810,15 @@ const CONFIG_INPUT_IDS = ['sInit','sRate','sIntH','sRate2','sScatter','sCacheRad
 const CONFIG_CHECKBOX_IDS = ['overheadOnly'];
 const CONFIG_TOGGLE_BTN_IDS = ['tgPower','tgRoads','tgAirspace','tgGroundWind','tgNatureReserves','tgFlightCharts','tgLandCover','tgRegionNames','tgSondeHub','tgMetar','tgRain'];
 // ---------- profile export/import (all settings, keys, emergency contact
-// info - shareable via file/WhatsApp/GitHub Gist so a new device can pick
-// up the same configuration instead of re-entering everything by hand) ----------
+// info - shareable via file/WhatsApp so a new device can pick up the same
+// configuration instead of re-entering everything by hand) ----------
 const PROFILE_LOCALSTORAGE_KEYS = [
-  'gblp_config_v1', 'gblp_language', 'gblp_dropbox_appkey', 'gblp_dropbox_folder',
+  'gblp_config_v1', 'gblp_language',
   'gblp_pilot_name', 'gblp_aircraft_reg', 'gblp_pilot_mobile', 'gblp_pilot_second_number',
   'gblp_emergency_email', 'gblp_sms_recipient_1', 'gblp_sms_recipient_2', 'gblp_sms_recipient_3',
   'gblp_sms_recipient_4', 'gblp_sms_recipient_5', 'gblp_emailjs_service_id',
-  'gblp_emailjs_template_id', 'gblp_emailjs_public_key', 'gblp_github_pat'
+  'gblp_emailjs_template_id', 'gblp_emailjs_public_key'
 ];
-// Deliberately NOT included: gblp_dropbox_token/refresh_token/pkce_verifier
-// (active OAuth session state, not a portable "setting" - reconnect Dropbox
-// on the new device instead) and gblp_flightlog_v1 (flight history, not
-// configuration - out of scope for a settings profile).
 function collectProfileData(){
   saveConfig(); // make sure gblp_config_v1 reflects the current on-screen state first
   const data = {};
@@ -10985,6 +10833,18 @@ function applyProfileData(profile){
   Object.entries(profile.data).forEach(([k,v])=>{
     if(PROFILE_LOCALSTORAGE_KEYS.includes(k)) localStorage.setItem(k, v);
   });
+}
+// Same underlying data shape as collectProfileData()/applyProfileData()
+// (a map of the same PROFILE_LOCALSTORAGE_KEYS), reused directly for
+// flight profiles stored in the shared Gist - but this one also calls
+// loadConfig() immediately afterward, since it's applied live during
+// login rather than expecting a page reload the way file-import does.
+function applyFlightProfileSettings(settingsObj){
+  applyProfileData({data: settingsObj});
+  loadConfig();
+}
+function collectCurrentSettingsForProfile(){
+  return collectProfileData().data;
 }
 async function exportProfile(){
   const profile = collectProfileData();
@@ -11008,76 +10868,6 @@ async function importProfileFromFile(file){
   const text = await file.text();
   const profile = JSON.parse(text);
   applyProfileData(profile);
-}
-
-// AES-GCM encryption with a password-derived key (PBKDF2), used for the
-// GitHub Gist backup - the Gist itself may be public, so the profile
-// content (API keys, emergency contacts) must not be readable without the
-// password.
-async function encryptWithPassword(plaintext, password){
-  const enc = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
-    {name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'}, baseKey,
-    {name:'AES-GCM', length:256}, false, ['encrypt']
-  );
-  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plaintext));
-  const toB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
-  return {salt:toB64(salt), iv:toB64(iv), ciphertext:toB64(ciphertext)};
-}
-async function decryptWithPassword(encObj, password){
-  const fromB64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
-  const enc = new TextEncoder();
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
-    {name:'PBKDF2', salt:fromB64(encObj.salt), iterations:150000, hash:'SHA-256'}, baseKey,
-    {name:'AES-GCM', length:256}, false, ['decrypt']
-  );
-  const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv:fromB64(encObj.iv)}, key, fromB64(encObj.ciphertext));
-  return new TextDecoder().decode(plainBuf);
-}
-
-// GitHub Gist backup - requires the user's own Personal Access Token with
-// "gist" scope (entered in API Keys & Tokens below). The Gist stores only
-// the AES-GCM-encrypted blob, never the plaintext profile.
-async function saveProfileToGithub(password){
-  const token = (document.getElementById('sGithubPat').value||'').trim();
-  if(!token) throw new Error('No GitHub Personal Access Token set in Settings (API Keys & Tokens).');
-  const profile = collectProfileData();
-  const encrypted = await encryptWithPassword(JSON.stringify(profile), password);
-  const gistExisting = (localStorage.getItem('gblp_github_gist_id')||'').trim();
-  const body = {
-    description: 'Gasballoon Cockpit encrypted profile backup',
-    public: false,
-    files: {'gbcockpit-profile.json.enc': {content: JSON.stringify(encrypted)}}
-  };
-  const url = gistExisting ? `https://api.github.com/gists/${gistExisting}` : 'https://api.github.com/gists';
-  const r = await fetch(url, {
-    method: gistExisting ? 'PATCH' : 'POST',
-    headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'},
-    body: JSON.stringify(body)
-  });
-  if(!r.ok) throw new Error('GitHub request failed: HTTP '+r.status);
-  const j = await r.json();
-  localStorage.setItem('gblp_github_gist_id', j.id);
-  return j.id;
-}
-async function loadProfileFromGithub(gistId, password){
-  const token = (document.getElementById('sGithubPat').value||'').trim();
-  const headers = {'Accept':'application/vnd.github+json'};
-  if(token) headers['Authorization'] = 'Bearer '+token; // needed for secret gists; public ones work without it too
-  const r = await fetch(`https://api.github.com/gists/${gistId}`, {headers});
-  if(!r.ok) throw new Error('GitHub request failed: HTTP '+r.status);
-  const j = await r.json();
-  const file = j.files && j.files['gbcockpit-profile.json.enc'];
-  if(!file) throw new Error('This Gist does not contain a recognizable profile backup.');
-  const encrypted = JSON.parse(file.content);
-  const plaintext = await decryptWithPassword(encrypted, password);
-  const profile = JSON.parse(plaintext);
-  applyProfileData(profile);
-  localStorage.setItem('gblp_github_gist_id', gistId);
 }
 
 function saveConfig(){
@@ -11120,11 +10910,90 @@ function loadConfig(){
   }catch(e){ /* corrupt/old config - ignore and keep defaults */ }
 }
 let saveConfigTimer=null;
-function scheduleSaveConfig(){ clearTimeout(saveConfigTimer); saveConfigTimer=setTimeout(saveConfig, 800); }
+let settingsDirty = false; // set true by any change while the panel is open, reset each time it's freshly opened
+function scheduleSaveConfig(){ clearTimeout(saveConfigTimer); saveConfigTimer=setTimeout(saveConfig, 800); settingsDirty = true; }
 document.getElementById('settingsPanel').addEventListener('input', scheduleSaveConfig);
 document.getElementById('settingsPanel').addEventListener('change', scheduleSaveConfig);
 document.getElementById('layerToggleGroup').addEventListener('click', scheduleSaveConfig);
 document.getElementById('btnDayNight').addEventListener('click', scheduleSaveConfig);
+// Settings can be closed several different ways (the generic "X" button,
+// clicking outside it, opening a different popover) - rather than hooking
+// a save-prompt check into every one of those separately (and risking
+// missing one later), a MutationObserver watches the panel's own "open"
+// class directly: whichever code path removes it, this fires once, right
+// after. Only shown if something was actually changed while it was open.
+{
+  let wasOpen = false;
+  const settingsPanelEl = document.getElementById('settingsPanel');
+  new MutationObserver(()=>{
+    const isOpen = settingsPanelEl.classList.contains('open');
+    if(isOpen && !wasOpen) settingsDirty = false; // freshly opened - start tracking again
+    if(!isOpen && wasOpen && settingsDirty) showSettingsSavePrompt();
+    wasOpen = isOpen;
+  }).observe(settingsPanelEl, {attributes:true, attributeFilter:['class']});
+}
+function showSettingsSavePrompt(){
+  const btn = document.getElementById('settingsSaveToExistingBtn');
+  if(state.currentFlightProfile){
+    btn.style.display = 'block';
+    btn.textContent = `To "${state.currentFlightProfile}" flight profile`;
+  } else {
+    btn.style.display = 'none';
+  }
+  document.getElementById('settingsSaveOverlay').style.display = 'flex';
+}
+function settingsSaveChoice(choice){
+  document.getElementById('settingsSaveOverlay').style.display = 'none';
+  if(choice==='local'){
+    return; // saveConfig() already wrote to localStorage as usual - nothing further to do
+  }
+  if(choice==='existing'){
+    document.getElementById('settingsSavePinPrompt').textContent = `Re-enter the PIN for "${state.currentFlightProfile}"`;
+    document.getElementById('settingsSavePinInput').value = '';
+    document.getElementById('settingsSavePinErr').textContent = '';
+    document.getElementById('settingsSavePinOverlay').style.display = 'flex';
+    document.getElementById('settingsSavePinInput').focus();
+    return;
+  }
+  if(choice==='new'){
+    document.getElementById('settingsNewProfileName').value = '';
+    document.getElementById('settingsNewProfilePin').value = '';
+    document.getElementById('settingsNewProfileErr').textContent = '';
+    document.getElementById('settingsNewProfileOverlay').style.display = 'flex';
+    document.getElementById('settingsNewProfileName').focus();
+  }
+}
+async function confirmSaveToExistingProfile(){
+  const pin = document.getElementById('settingsSavePinInput').value.trim();
+  const errEl = document.getElementById('settingsSavePinErr');
+  errEl.textContent = 'Saving…';
+  try{
+    const store = await fetchGistStore();
+    const prof = store.flightProfiles && store.flightProfiles[state.currentFlightProfile];
+    if(!prof || prof.pin!==pin){ errEl.textContent = 'Wrong PIN.'; return; }
+    prof.settings = collectCurrentSettingsForProfile();
+    await saveGistStore(store);
+    document.getElementById('settingsSavePinOverlay').style.display = 'none';
+  }catch(e){ errEl.textContent = 'Save failed - check your connection.'; console.error(e); }
+}
+async function confirmSaveToNewProfile(){
+  const name = document.getElementById('settingsNewProfileName').value.trim().toUpperCase();
+  const pin = document.getElementById('settingsNewProfilePin').value.trim();
+  const errEl = document.getElementById('settingsNewProfileErr');
+  if(!name || !pin){ errEl.textContent = 'Enter both a name and a PIN.'; return; }
+  errEl.textContent = 'Saving…';
+  try{
+    const store = await fetchGistStore();
+    store.flightProfiles = store.flightProfiles || {};
+    if(store.flightProfiles[name]){ errEl.textContent = 'That name is already taken - choose another.'; return; }
+    store.flightProfiles[name] = {pin, settings: collectCurrentSettingsForProfile()};
+    await saveGistStore(store);
+    state.currentFlightProfile = name;
+    try{ localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, name); }catch(e){}
+    updateFlightProfileFooterDisplay();
+    document.getElementById('settingsNewProfileOverlay').style.display = 'none';
+  }catch(e){ errEl.textContent = 'Save failed - check your connection.'; console.error(e); }
+}
 document.getElementById('btnResetDefaults').addEventListener('click', ()=>{
   if(confirm('Reset all settings to their defaults? This reloads the app.')){
     localStorage.removeItem('gblp_config_v1');

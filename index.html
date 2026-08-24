@@ -1486,7 +1486,7 @@ function updateFlightProfileFooterDisplay(){
 // at a glance (helpful for confirming a deployment actually picked up the
 // latest one, not a stale cached build). Increment the .zz counter on
 // every revision, update the time, and keep APP_DATE current (dd.mm.yyyy).
-const APP_VERSION = 'v260824.13-1020';
+const APP_VERSION = 'v260824.14-1125';
 const APP_DATE = '24.08.2026';
 document.getElementById('versionChip').textContent = APP_VERSION;
 
@@ -3138,7 +3138,7 @@ function renderStueveDiagram(profile){
   const step = Math.max(1, Math.floor(profile.length/7));
   for(let i=0;i<profile.length;i+=step) windLevels.push(profile[i]);
   const altLabels = [profile[0], profile[Math.floor(profile.length/2)], profile[profile.length-1]];
-  let svg = `<svg width="100%" viewBox="0 0 ${w} ${h}" style="background:rgba(255,255,255,0.03);border-radius:6px;">`;
+  let svg = `<svg width="100%" viewBox="0 0 ${w} ${h}" style="background:rgba(255,255,255,0.03);border-radius:6px;aspect-ratio:${w}/${h};display:block;">`;
   // Fine vertical gridlines at round temperature intervals, the defining
   // visual feature of a Stüve/skew-T style diagram.
   const gridStepC = 10;
@@ -5985,7 +5985,7 @@ function drawStagedPlanChart(result){
     legendMarkup += `<text x="${lx+14}" y="${H-13}" font-size="9" fill="var(--muted)">${it.label}</text>`;
   });
 
-  wrap.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
+  wrap.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;aspect-ratio:${W}/${H};display:block;">
     ${shading}
     ${gridlines}
     <path d="${pathD}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>

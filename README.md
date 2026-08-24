@@ -2,7 +2,7 @@
 
 A single-file HTML web app for gas balloon flight planning and in-flight monitoring: live position tracking, wind-based landing predictions, staged descent planning, weather stations, air traffic, and offline map caching - built for use on a tablet in the basket.
 
-**Current version: v260824.13-1020** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
+**Current version: v260824.14-1125** (24.08.2026) - this number always matches the `APP_VERSION` constant near the top of the script in `index.html`. Versioning scheme: `vYYMMDD.zz-HHMM` (date of the last change, a 2-digit counter that resets to 01 each new day, and the build time), so multiple same-day builds are unambiguous at a glance - the version is shown in the bottom-left corner of the app itself, useful for confirming a deployment actually picked up the latest build rather than a stale cached one. `cors_test.html`'s own version marker is kept in sync with this. `admin.html` is versioned independently.
 
 ## What it is
 
@@ -228,6 +228,12 @@ Given the core logic is now verified to run correctly, the two most plausible re
 2. The service worker (`sw.js`) was re-checked and confirmed to only cache map TILE requests, never `index.html` itself - ruled out as a cause.
 
 If the report persists after this, the next most useful thing would be the actual browser console output at the moment it happens, since the runtime logic itself is now confirmed correct in isolation.
+
+## Staged Descent chart on iPad - the actual root cause, finally (24.08.2026)
+
+Earlier attempts to fix this (giving the chart's wrapper `overflow-y:hidden`, increasing its top margin) were symptom management, not the real fix - the chart kept appearing cut off/shifted upward on iPad specifically, never on desktop. The real cause: the SVG had `width="100%"` but no explicit `height`, relying on the browser's own intrinsic-sizing fallback to compute a sensible height from the `viewBox`'s aspect ratio. Desktop browsers generally do this correctly; Safari/iPadOS has a known, different fallback behavior for percentage-width SVGs without an explicit height, which can produce a much shorter rendered box than the viewBox's actual proportions call for - clipping most of the chart's content (which is drawn lower in the 0-350 coordinate space) down to just its topmost sliver, which read as "shifted upward, not properly embedded."
+
+Fixed properly with an explicit `aspect-ratio` CSS property matching the SVG's own `viewBox` ratio, forcing every browser (including Safari) to compute the rendered height proportionally to whatever width it actually gets, rather than falling back to browser-specific intrinsic-sizing guesses. Applied to both the Staged Descent chart and the Stüve/radiosonde diagram, which shared the exact same vulnerable pattern (`width="100%"` + `viewBox`, no explicit height) even though only the former had actually been reported as broken.
 
 ## Map controls were hiding behind the sidebar, not sitting to its left - the real root cause (24.08.2026)
 

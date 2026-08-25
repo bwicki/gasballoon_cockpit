@@ -281,6 +281,24 @@ async function main() {
     record('Both configured recipients are covered across the calls', sendCalls.includes('one@test.com') && sendCalls.includes('two@test.com'), JSON.stringify(sendCalls));
   });
 
+  console.log('\n=== Profile file import (previously wired to nothing) ===');
+  await withDom(html, {}, async (dom) => {
+    let appliedWith = null;
+    dom.window.eval('applyProfileData = (p) => { window.__appliedWith = p; };');
+    const fakeFile = { text: () => Promise.resolve(JSON.stringify({data:{gblp_pilot_name:'Test Pilot'}})) };
+    await dom.window.importProfileFromFile(fakeFile);
+    const applied = dom.window.__appliedWith;
+    record('Selecting a file actually invokes applyProfileData with its parsed contents', applied && applied.data && applied.data.gblp_pilot_name === 'Test Pilot', JSON.stringify(applied));
+    const statusText = dom.window.document.getElementById('profileActionStatus').textContent;
+    record('Status line confirms the import succeeded', statusText.includes('Imported'), statusText);
+
+    // Invalid file (not JSON) should fail gracefully, not throw
+    const badFile = { text: () => Promise.resolve('not valid json{{{') };
+    let threw = false;
+    try{ await dom.window.importProfileFromFile(badFile); }catch(e){ threw = true; }
+    record('An invalid file does not throw - shows an error message instead', !threw && dom.window.document.getElementById('profileActionStatus').textContent.includes('⚠'));
+  });
+
   console.log(`\n=== Result: ${passed} passed, ${failed} failed ===`);
   if (failed > 0) {
     console.log('\nFailures:');

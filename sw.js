@@ -1,52 +1,98 @@
-// Gas Balloon Landing Predictor - tile cache service worker.
-// Cache-first (with background network refresh) for map TILE requests
-// only, so previously-cached tiles remain available if the connection
-// drops. Deliberately does NOT include api.open-meteo.com - that host
-// serves time-sensitive weather/elevation DATA, not tiles, and caching it
-// risks serving a stale forecast during a live flight. It was previously
-// included here, and very likely caused the intermittent "error (see
-// console)" seen specifically on iPad: if the Cache Storage API itself
-// misbehaves for any reason (a known reliability quirk on iOS Safari,
-// especially in installed/home-screen PWA mode), the whole request this
-// service worker took over would fail outright rather than just skipping
-// the cache. Weather/elevation requests now bypass this service worker
-// entirely, going straight to the network every time.
-const CACHE_NAME = 'gblp-tiles-v2';
-const TILE_HOSTS = [
-  'tile.openstreetmap.org',
-  'tile.opentopomap.org',
-  'server.arcgisonline.com',
-  'openinframap.org',
-  'api.tiles.openaip.net'
+/* GB Notion Frontend — keeps the app shell available offline.
+   The GitHub API is never served from cache.
+
+   One rule above all: a missing file must never stop a new version from taking over.
+   cache.addAll() rejects as a whole if a single request fails, and a worker whose install
+   fails is never activated — the app then keeps serving the previous version for ever,
+   which is exactly the sort of fault that hides every other change. Each file is therefore
+   cached on its own and a failure is noted and passed over. */
+const V = 'basket-reporting-v260825-01';
+
+/* the files the app cannot run without */
+const CORE = [
+  './',
+  './index.html',
+  './manifest.webmanifest'
 ];
 
-self.addEventListener('install', ()=>{ self.skipWaiting(); });
-self.addEventListener('activate', (event)=>{
-  event.waitUntil(
-    caches.keys().then(names=>Promise.all(
-      names.filter(n=>n!==CACHE_NAME).map(n=>caches.delete(n))
-    )).then(()=>self.clients.claim())
-  );
+/* everything else is nice to have offline and never worth failing an install for */
+const EXTRA = [
+  './readme.html',
+  './setup.html',
+  './notion.html',
+  './license.html',
+  './logo.png',
+  './favicon.ico',
+  './icons/favicon-16.png',
+  './icons/favicon-32.png',
+  './icons/apple-touch-180.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png'
+];
+
+async function cacheEach(cache, list) {
+  const missing = [];
+  await Promise.all(list.map(async url => {
+    try {
+      const r = await fetch(url, { cache: 'reload' });
+      if (!r || !r.ok) { missing.push(url + ' → ' + (r ? r.status : 'no response')); return; }
+      await cache.put(url, r);
+    } catch (err) { missing.push(url + ' → ' + err.message); }
+  }));
+  return missing;
+}
+
+self.addEventListener('install', e => {
+  e.waitUntil((async () => {
+    const c = await caches.open(V);
+    const gone = (await cacheEach(c, CORE)).concat(await cacheEach(c, EXTRA));
+    if (gone.length) console.warn('[sw] not cached, carrying on:', gone.join(' | '));
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener('fetch', (event)=>{
-  let url;
-  try { url = new URL(event.request.url); } catch(e){ return; }
-  if(event.request.method !== 'GET') return;
-  if(!TILE_HOSTS.some(h => url.hostname.includes(h))) return;
+self.addEventListener('activate', e => {
+  e.waitUntil((async () => {
+    const ks = await caches.keys();
+    /* the map tiles are gathered for a flight, not for a version — they outlive the shell */
+    await Promise.all(ks.filter(k => k !== V && k !== 'basket-tiles').map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
+});
 
-  event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache)=>{
-      const cached = await cache.match(event.request);
-      const networkFetch = fetch(event.request).then((resp)=>{
-        if(resp && resp.status === 200){
-          cache.put(event.request, resp.clone());
-        }
-        return resp;
-      }).catch(()=> cached);
-      // Serve cached immediately if we have it (fast + offline-safe);
-      // otherwise wait for the network.
-      return cached || networkFetch;
-    }).catch(()=>fetch(event.request)) // if the Cache Storage API itself fails for any reason, fall straight through to a normal network fetch rather than failing the request entirely
+self.addEventListener('message', e => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
+});
+
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  if (e.request.method !== 'GET') return;
+  if (url.hostname === 'api.github.com') return;            // always live
+  if (url.hostname === 'nominatim.openstreetmap.org') return;
+  if (url.origin !== self.location.origin) {
+    /* Map tiles: what is already held is served first, and anything fetched to draw the map
+       is kept on the way past. That is ordinary browser caching of what the crew actually
+       looked at — no background harvesting, which every tile provider's terms are about. */
+    e.respondWith((async () => {
+      const c = await caches.open('basket-tiles');
+      const hit = await c.match(e.request);
+      if (hit) return hit;
+      const r = await fetch(e.request);
+      if (r && r.ok && r.type !== 'opaque') { try { await c.put(e.request, r.clone()) } catch (err) {} }
+      return r;
+    })());
+    return;
+  }
+
+  /* network first, so a deploy takes effect at once; the cache carries the flight */
+  e.respondWith(
+    fetch(e.request)
+      .then(r => {
+        if (r && r.ok) { const copy = r.clone(); caches.open(V).then(c => c.put(e.request, copy)); }
+        return r;
+      })
+      .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
 });
